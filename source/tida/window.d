@@ -1,0 +1,515 @@
+/++
+    A module for working with windows in a cross-platform environment. 
+    A window is created in both Windows and Linux environments. OS X 
+    and other operating systems are currently not supported due to 
+    lack of testing on these platforms.
+
+    Authors: TodNaz
+    License: MIT
++/
+module tida.window;
+
+
+
+version(Windows) pragma(lib,"opengl32.lib");
+
+/// Simple window
+static immutable ubyte Simple = 0;
+
+// Window for created context.
+static immutable ubyte ContextIn = 1;
+
+static immutable ubyte Empty = 2;
+
+/++
+    Attributes for creating context.
++/
+public struct GLAttributes
+{
+    public
+    {
+        int redSize = 8; /// Red size
+        int greenSize = 8; /// Green size
+        int blueSize = 8; /// Blue size
+        int alphaSize = 8; /// Alpha channel size
+        int depthSize = 8; /// Depth size
+        int stencilSize = 8; /// Stencil size
+        int colorDepth = 32; /// Color depth
+    }
+}
+
+version(WebAssembly)
+{
+    public import tida.betterc.window;
+}
+
+static Window initWindow(ubyte type = Empty)(uint width,uint height,string caption) @trusted
+{
+    version(WebAssembly)
+    {
+        Window window = Window(width,height,caption);
+
+        if(type != Empty)
+            window.initialize!type();
+    }else
+    {
+        Window window = new Window(width,height,caption);
+
+        if(type != Empty)
+            window.initialize!type(100,100);
+    }
+
+    return window;
+}
+
+version(WebAssembly) {}
+else:
+
+/++
+    Class for describing and creating context for the window.
++/
+public class Context
+{
+    version(Posix)
+    {
+        import x11.X, x11.Xlib, x11.Xutil;
+        import dglx.glx;
+    }
+
+    version(Windows)
+    {
+        import core.sys.windows.windows;
+    }
+
+    import tida.runtime, tida.exception;
+
+    private
+    {
+        version(Posix)
+        {
+            GLXContext ctx;
+            XVisualInfo* visual;
+            GLXFBConfig bestFbcs;
+        }
+
+        version(Windows)
+        {
+            HDC deviceHandle;
+            HGLRC ctx;
+        }
+    }
+
+    public
+    {
+        GLAttributes attrib; /// Attributes for creating context.
+    }
+
+    version(Windows) public HDC DC() @trusted @property
+    {
+        return deviceHandle;
+    }
+
+    /++
+        Context.
+
+        Returns:
+            Context from x11 environment (`GLXContext`).
+    +/
+    version(Posix) public GLXContext xContext() @trusted
+    {
+        return ctx;
+    }
+
+    version(Windows) public HGLRC wContext() @trusted
+    {
+        return ctx;
+    }
+
+    version(Windows) public void wAttribInitialize(Window window) @trusted 
+    {
+        PIXELFORMATDESCRIPTOR pfd;
+
+        pfd.nSize = PIXELFORMATDESCRIPTOR.sizeof;
+        pfd.nVersion = 1;
+        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+        pfd.iPixelType = PFD_TYPE_RGBA;
+        pfd.cRedBits = cast(ubyte) attrib.redSize;
+        pfd.cGreenBits = cast(ubyte) attrib.greenSize;
+        pfd.cBlueBits = cast(ubyte) attrib.blueSize;
+        pfd.cAlphaBits = cast(ubyte) attrib.alphaSize;
+        pfd.cDepthBits = cast(ubyte) attrib.depthSize;
+        pfd.cStencilBits = cast(ubyte) attrib.stencilSize;
+
+        deviceHandle = GetDC(window.wWindow);
+
+        auto chsPixel = ChoosePixelFormat(deviceHandle, &pfd);
+        SetPixelFormat(deviceHandle, chsPixel, &pfd);
+    }
+
+    version(Windows) public void wContextInitialize(Window window) @trusted 
+    {
+        ctx = wglCreateContext(deviceHandle);
+    }
+
+    /++
+        Initializes the context parameters in the x11 environment.
+
+        All parameters are taken from the attrib variable. The default will always be double buffering.
+    +/
+    version(Posix) public void xAttribInitialize() @trusted
+    {
+        int[] glxAttribs = 
+            [
+                GLX_X_RENDERABLE    , True,
+                GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+                GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+                GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+                GLX_RED_SIZE        , attrib.redSize,
+                GLX_GREEN_SIZE      , attrib.greenSize,
+                GLX_BLUE_SIZE       , attrib.blueSize,
+                GLX_ALPHA_SIZE      , attrib.alphaSize,
+                GLX_DEPTH_SIZE      , attrib.depthSize,
+                GLX_STENCIL_SIZE    , attrib.stencilSize,
+                GLX_DOUBLEBUFFER    , True,
+                None
+            ];
+
+        int fbcount;
+        GLXFBConfig* fbc = glXChooseFBConfig(runtime.display, runtime.displayID, cast(int*) glxAttribs, &fbcount);
+
+        if(fbc is null)
+            throw new ContextException(ContextError.fbsNull,"fbc config is null!");
+
+        int bestFbc = -1, worstFbc = -1, bestNumSamp = -1, worstNumSamp = 999;
+
+        for(int i = 0; i < fbcount; ++i) {
+            XVisualInfo *vi = glXGetVisualFromFBConfig(runtime.display,fbc[i]);
+            if(vi !is null) 
+            {
+                int sampBuf, samples;
+
+                glXGetFBConfigAttrib(runtime.display,fbc[i],GLX_SAMPLE_BUFFERS,&sampBuf);
+                glXGetFBConfigAttrib(runtime.display,fbc[i],GLX_SAMPLES,&samples);
+
+                if(bestFbc < 0 || (sampBuf && samples > bestNumSamp)) {
+                    bestFbc = i;
+                    bestNumSamp = samples;
+                }
+
+                if(worstFbc < 0 || !sampBuf || samples < worstNumSamp)
+                    worstFbc = i;
+
+                worstNumSamp = samples;
+            }
+
+            XFree(vi);
+        }
+
+        bestFbcs = fbc[bestFbc];
+        XFree(fbc);
+
+        visual = glXGetVisualFromFBConfig(runtime.display, bestFbcs);
+    }
+
+    /++
+        Creates a context in the x11 environment.
+    +/
+    version(Posix) public void xContextInitialize() @trusted
+    {
+        ctx = glXCreateNewContext(runtime.display, bestFbcs, GLX_RGBA_TYPE, null, true);
+    }
+
+    ///
+    version(Posix) public XVisualInfo* xGetVisual() @trusted
+    {
+        return visual;
+    }
+
+    /++
+        Initializes the parameters of the context.
+    +/
+    public void attribInitialize(Window window) @trusted
+    {
+        version(Posix) xAttribInitialize();
+        version(Windows) wAttribInitialize(window);
+    }
+
+    /++
+        Initializes the context.
+    +/
+    public void initialize(Window window) @trusted
+    {
+        version(Posix) xContextInitialize();
+        version(Windows) wContextInitialize(window);
+    }
+
+    ~this() @trusted
+    {
+        version(Posix) glXDestroyContext(runtime.display, ctx);
+    }
+}
+
+///
+public class Window
+{
+    version(Posix)
+    {
+        import x11.X, x11.Xlib, x11.Xutil, dglx.glx;
+    }
+
+    version(Windows)
+    {
+        import core.sys.windows.windows;
+    }
+
+    import tida.runtime, tida.color, tida.exception;
+    import std.utf;
+
+    private
+    {
+        uint _width;
+        uint _height;
+
+        string _title;
+        Color!ubyte _background = Color!ubyte(255,255,255);
+
+        version(Posix)
+        {
+            x11.Xlib.Window window;
+        }
+
+        version(Windows)
+        {
+            HWND window;
+        }
+
+        Context context;
+    }
+
+    /++
+        Initialization of window parameters.
+
+        Params:
+            newWidth = The width of the window when created.
+            newHeight = The height of the window when created.
+            newTitle = The title of the window when created.
+    +/
+    this(uint newWidth,uint newHeight,string newTitle) @safe
+    {
+        _width = newWidth;
+        _height = newHeight;
+        _title = newTitle;
+    }
+
+    /++
+        Initializes the window according to the parameters.
+
+        Params:
+            Type = What type of window to initialize.
+            posX = The x-axis position.
+            posY = The y-axis position.
+    +/
+    public void initialize(ubyte Type)(int posX = 100,int posY = 100) @safe
+    {
+        static if(Type == Simple)
+        {
+            version(Posix) xWindowSimpleInitialize(posX,posY);
+            version(Window) wWindowInit(posX,posY);
+        }else
+        static if(Type == ContextIn)
+        {
+            version(Posix)
+            {
+                context = new Context();
+                context.attribInitialize(this);
+
+                xWindowInit(posX,posY,context.xGetVisual());
+
+                context.xContextInitialize();
+
+                contextSet(context);
+                
+                xWindowShow();
+            }
+
+            version(Windows)
+            {
+                wWindowInit(posX,posY);
+
+                context = new Context();
+                context.attribInitialize(this);
+                context.initialize(this);
+
+                contextSet(context);
+
+                wWindowShow();
+            }
+        }
+    }
+
+    version(Windows) public void wWindowInit(int posX,int posY) @trusted
+    {
+        extern(Windows) auto _wndProc(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam) nothrow
+        {
+            return DefWindowProc(hWnd, message, wParam, lParam);
+        }
+
+        WNDCLASSEX wc;
+
+        wc.cbSize = wc.sizeof;
+        wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+        wc.lpfnWndProc = &_wndProc;
+        wc.hInstance = runtime.hInstance;
+        wc.hCursor = LoadCursor(null, IDC_ARROW);
+        wc.lpszClassName = _title.toUTFz!(wchar*);
+
+        RegisterClassEx(&wc);
+
+        window = CreateWindow(_title.toUTFz!(wchar*),_title.toUTFz!(wchar*),
+                 WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+                 posX,posY,width,height,null,null,runtime.hInstance,null);
+
+        if(window is null)
+            throw new WindowException(WindowError.noCreate,"Window is not create!");
+    }  
+
+    /++
+        Initializes the window for the context.
+
+        Params:
+            posX = The x-axis position.
+            posY = The y-axis position.
+            visual = Information from context for create window.
+    +/
+    version(Posix) public void xWindowInit(int posX,int posY,XVisualInfo* visual = null) @trusted
+    {
+        XSetWindowAttributes windowAttribs;
+        windowAttribs.border_pixel = Color!ubyte(0,0,0).conv!uint;
+        windowAttribs.background_pixel = _background.conv!uint;
+        windowAttribs.override_redirect = True;
+        windowAttribs.colormap = XCreateColormap(runtime.display, RootWindow(runtime.display, runtime.displayID), 
+                                                 visual.visual, AllocNone);
+
+        window = XCreateWindow(runtime.display, RootWindow(runtime.display, runtime.displayID), posX, posY, 
+                               width, height,0,visual.depth,InputOutput,visual.visual,
+                               CWBackPixel|CWColormap|CWBorderPixel|CWEventMask, &windowAttribs);
+
+        XStoreName(runtime.display, window, _title.toUTFz!(char*));
+    }
+
+    /++
+        Created simple window in environment x11.
+
+        Params:
+            posX = 
+    +/
+    version(Posix) public void xWindowSimpleInitialize(int posX,int posY) @trusted
+    {
+        window = XCreateSimpleWindow(runtime.display, RootWindow(runtime.display,runtime.displayID),
+                                     posX,posY,width,height,1,Color!ubyte(0,0,0).conv!uint,_background.conv!uint);
+
+        XStoreName(runtime.display, window, _title.toUTFz!(char*));
+    }
+
+    /++
+        Show window in workspace.
+    +/
+    version(Posix) public void xWindowShow() @trusted
+    {
+        XMapWindow(runtime.display, window);
+    }
+
+    version(Windows) public void wWindowShow() @trusted
+    {
+        ShowWindow(window, 1);
+    }
+
+    /++
+        Sets an _initialized_ context.
+
+        Params:
+            context = Initialized context.
+    +/
+    public void contextSet(Context context) @trusted
+    {
+        version(Posix)
+        {
+            xContextSet(context.xContext);
+        }
+
+        version(Windows)
+        {
+            wContextSet(context.wContext);
+        }
+    }
+
+    version(Windows) public void wContextSet(HGLRC ctx) @trusted
+    {
+        wglMakeCurrent(context.DC,ctx);
+    }
+
+    /++
+        Sets an _initialized_ context of x11 environment.
+    +/
+    version(Posix) public void xContextSet(GLXContext ctx) @trusted
+    {
+        glXMakeCurrent(runtime.display, xWindow, ctx);
+    }
+
+    public void swapBuffers() @trusted
+    {
+        version(Posix) xSwapBuffers();
+        version(Windows) wSwapBuffers();
+    }
+
+    version(Windows) public void wSwapBuffers() @trusted
+    {
+        SwapBuffers(context.DC);
+    }
+
+    /++
+        Swaps buffers in x11 environment. 
+    +/
+    version(Posix) public void xSwapBuffers() @trusted
+    {
+        glXSwapBuffers(runtime.display, xWindow);
+    }
+
+    /++
+        Window in x11 environment.
+    +/
+    version(Posix) x11.Xlib.Window xWindow() @trusted @property nothrow 
+    {
+        return window;
+    }
+
+    version(Windows) HWND wWindow() @trusted @property nothrow
+    {
+        return window;
+    }
+
+    /// Window width.
+    public immutable(uint) width() @safe @property nothrow
+    {
+        return _width;
+    }
+
+    /// Window height.
+    public immutable(uint) height() @safe @property nothrow
+    {
+        return _height;
+    }
+
+    ~this() @trusted
+    {
+        version(Posix)
+        {
+            XDestroyWindow(runtime.display, window);
+        }
+
+        version(Windows)
+        {
+            DestroyWindow(window);
+        }
+    }
+}

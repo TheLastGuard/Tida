@@ -1,0 +1,25 @@
+name "tida"
+description "Tida is a library for creating 2D games, which is written with manual window creation and rendering using opengl and other tools for D games."
+authors "TodNaz"
+copyright "Copyright © 2020, TodNaz"
+license "MIT"
+versions "GL_AllowDeprecated"
+
+configuration "Posix" {
+    platforms "posix"
+    dependency "x11" version="~>1.0.21"
+    dependency "bindbc-opengl" version="~>0.13.0"
+    targetType "executable"
+}
+
+configuration "Windows" {
+    platforms "windows"
+    dependency "bindbc-opengl" version="~>0.13.0"
+    targetType "executable"
+}
+
+configuration "Web" {
+	platforms "wasm"
+	buildOptions "betterC"
+	targetType "executable"
+}
