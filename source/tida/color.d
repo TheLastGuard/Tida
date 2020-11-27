@@ -8,9 +8,21 @@
 +/
 module tida.color;
 
+public enum PixelFormat
+{
+    RGB,
+    RGBA,
+    ARGB
+}
+
+public Color!ubyte grayscale(ubyte gsc) @safe
+{
+    return rgb(gsc,gsc,gsc);
+}
+
 public Color!ubyte rgb(ubyte r,ubyte g,ubyte b) @safe
 {
-    return Color!ubyte(r,g,b);
+    return Color!ubyte(r,g,b,255);
 }
 
 public Color!ubyte rgba(ubyte r,ubyte g,ubyte b,ubyte a) @safe
@@ -198,10 +210,10 @@ public struct Color(T)
 {
     public
     {
-        T red    = T.max;
-        T green  = T.max;
-        T blue   = T.max;
-        T alpha  = T.max;
+        T red;
+        T green;
+        T blue;
+        T alpha;
 
         alias r = red;
         alias g = green;
@@ -209,12 +221,47 @@ public struct Color(T)
         alias a = alpha;
     }
 
-    public T conv(T)() @safe
+    public T conv(T)(PixelFormat format = PixelFormat.RGBA) @safe
     {
         static if(is(T : ulong) || is(T : uint))
         {
-            return ((r & 0xff) << 24) + ((g & 0xff) << 16) + ((b & 0xff) << 8) + (a & 0xff);
+            if(format == PixelFormat.RGBA)
+                return ((r & 0xff) << 24) + ((g & 0xff) << 16) + ((b & 0xff) << 8) + (a & 0xff);
+            else
+            if(format == PixelFormat.RGB)
+                return ((r & 0xff) << 16) + ((g & 0xff) << 8) + ((b & 0xff));
+            else
+            if(format == PixelFormat.ARGB)
+                return ((a & 0xff) << 24) + ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+            else
+                return 0;
         }
+    }
+
+    public T[] fromBytes(PixelFormat format) @safe
+    {
+        if(format == PixelFormat.RGBA)
+            return [r,g,b,a];
+        else
+        if(format == PixelFormat.RGB)
+            return [r,g,b];
+        else
+        if(format == PixelFormat.ARGB)
+            return [a,r,g,b];
+
+        return [];
+    }
+
+    public T[] fromBytes(PixelFormat format)() @safe
+    {
+        static if(format == PixelFormat.RGBA)
+            return [r,g,b,a];
+        else
+        static if(format == PixelFormat.RGB)
+            return [r,g,b];
+        else
+        static if(format == PixelFormat.ARGB)
+            return [a,r,g,b];
     }
 
     public float rf() @safe

@@ -9,16 +9,15 @@
 +/
 module tida.window;
 
-
-
 version(Windows) pragma(lib,"opengl32.lib");
 
 /// Simple window
 static immutable ubyte Simple = 0;
 
-// Window for created context.
+/// Window for created context.
 static immutable ubyte ContextIn = 1;
 
+/// The shell is empty. Only needed in WebAssembly mode.
 static immutable ubyte Empty = 2;
 
 /++
@@ -43,7 +42,18 @@ version(WebAssembly)
     public import tida.betterc.window;
 }
 
-static Window initWindow(ubyte type = Empty)(uint width,uint height,string caption) @trusted
+/++
+    Initializes the window. Cross-platform variant between Desktop and WebAssembly.
+
+    Params:
+        type = Window type.
+        width = Window width.
+        height = Window height.
+        caption = Window title.
+
+    Returns: Window structure
++/
+static Window initWindow(ubyte type)(uint width,uint height,string caption) @trusted
 {
     version(WebAssembly)
     {
@@ -246,6 +256,7 @@ public class Context
     ~this() @trusted
     {
         version(Posix) glXDestroyContext(runtime.display, ctx);
+        version(Windows) wglDeleteContext(ctx);
     }
 }
 
@@ -262,13 +273,13 @@ public class Window
         import core.sys.windows.windows;
     }
 
-    import tida.runtime, tida.color, tida.exception;
+    import tida.runtime, tida.color, tida.exception, tida.graph.image;
     import std.utf;
 
     private
     {
-        uint _width;
-        uint _height;
+        int _width;
+        int _height;
 
         string _title;
         Color!ubyte _background = Color!ubyte(255,255,255);
@@ -294,11 +305,17 @@ public class Window
             newHeight = The height of the window when created.
             newTitle = The title of the window when created.
     +/
-    this(uint newWidth,uint newHeight,string newTitle) @safe
+    this(int newWidth,int newHeight,string newTitle) @safe
     {
         _width = newWidth;
         _height = newHeight;
         _title = newTitle;
+    }
+
+    invariant
+    {
+        assert(_width > 0,"This width is not allowed.");
+        assert(_height > 0,"This height is not allowed.");
     }
 
     /++
@@ -344,9 +361,17 @@ public class Window
 
                 wWindowShow();
             }
-        }
+        }else
+            static assert(null,"It is impossible not to initialize the window if you have called such a command.");
     }
 
+    /++
+        Initializes the window for the context.
+
+        Params:
+            posX = The x-axis position.
+            posY = The y-axis position.
+    +/
     version(Windows) public void wWindowInit(int posX,int posY) @trusted
     {
         extern(Windows) auto _wndProc(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam) nothrow
@@ -401,7 +426,8 @@ public class Window
         Created simple window in environment x11.
 
         Params:
-            posX = 
+            posX = The x-axis position.
+            posY = The y-axis position.
     +/
     version(Posix) public void xWindowSimpleInitialize(int posX,int posY) @trusted
     {
@@ -419,6 +445,7 @@ public class Window
         XMapWindow(runtime.display, window);
     }
 
+    /// ditto
     version(Windows) public void wWindowShow() @trusted
     {
         ShowWindow(window, 1);
@@ -443,6 +470,9 @@ public class Window
         }
     }
 
+    /++
+        Sets an _initialized_ context of windows environment.
+    +/
     version(Windows) public void wContextSet(HGLRC ctx) @trusted
     {
         wglMakeCurrent(context.DC,ctx);
@@ -462,6 +492,9 @@ public class Window
         version(Windows) wSwapBuffers();
     }
 
+    /++
+        Swaps buffers in windows environment. 
+    +/
     version(Windows) public void wSwapBuffers() @trusted
     {
         SwapBuffers(context.DC);
@@ -483,9 +516,111 @@ public class Window
         return window;
     }
 
+    /++
+        Window in windows environment.
+    +/
     version(Windows) HWND wWindow() @trusted @property nothrow
     {
         return window;
+    }
+
+    version(Windows) public int wGetX() @trusted
+    {
+        RECT rect;
+
+        GetWindowRect(window,&rect);
+
+        return rect.left;
+    }
+
+    version(Windows) public int wGetY() @trusted
+    {
+        RECT rect;
+
+        GetWindowRect(window,&rect);
+
+        return rect.top;
+    }
+
+    version(Posix) public int xGetX() @trusted
+    {
+        XWindowAttributes xwa;
+        XGetWindowAttributes(runtime.display, window, &xwa);
+
+        return xwa.x;
+    }
+
+    version(Posix) public int xGetY() @trusted
+    {
+        XWindowAttributes xwa;
+        XGetWindowAttributes(runtime.display, window, &xwa);
+
+        return xwa.y;
+    }
+
+    public int x() @safe @property
+    {
+        version(Windows) return wGetX();
+        version(Posix)   return xGetX();
+    }
+
+    public int y() @safe @property
+    {
+        version(Windows) return wGetY();
+        version(Posix)   return xGetY();
+    }
+
+    version(Windows) public void wResize(immutable uint newWidth,immutable uint newHeight) @trusted
+    {
+        SetWindowPos(window, null, wGetX(),wGetY(),newWidth,newHeight, 0);
+    }
+
+    version(Windows) public void wMove(immutable int posX,immutable int posY) @trusted
+    {
+        SetWindowPos(window, null, posX, posY, width, height, 0);
+    }
+
+    version(Posix) public void xResize(immutable uint newWidth,immutable uint newHeight) @trusted
+    {
+        XResizeWindow(runtime.display, window, newWidth, newHeight);
+    }
+
+    version(Posix) public void xMove(immutable int posX,immutable int posY) @trusted
+    {
+        XMoveWindow(runtime.display, window, posX, posY);
+    }
+
+    public void move(immutable int posX,immutable int posY) @safe 
+    {
+        version(Posix) xMove(posX,posY);
+        version(Windows) wMove(posX,posY);
+    }
+
+    public void resize(immutable uint newWidth,immutable uint newHeight) @safe
+    {
+        version(Posix) xResize(newWidth,newHeight);
+        version(Windows) wResize(newWidth,newHeight);
+
+        _width = newWidth;
+        _height = newHeight;
+    }
+
+    version(Posix) public void xIcon(Image image) @trusted
+    {
+        Atom wmIcon     = XInternAtom(runtime.display,"_NET_WM_ICON", false);
+        Atom cardinal   = XInternAtom(runtime.display,"CARDINAL",false);
+
+        uint[] pixels = [image.width,image.height] ~ image.colors(PixelFormat.ARGB);
+
+        XChangeProperty(runtime.display, window, wmIcon, cardinal,
+                32, PropModeReplace, cast(ubyte*) pixels.ptr,cast(int) pixels.length);
+
+        XFlush(runtime.display);
+    }
+
+    public void icon(Image image) @trusted @property
+    {
+        version(Posix) xIcon(image);
     }
 
     /// Window width.

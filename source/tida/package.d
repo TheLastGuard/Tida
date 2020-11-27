@@ -11,4 +11,5 @@ public
 	import tida.window;
 	import tida.color;
 	import tida.event;
+	import tida.vector;
 }
