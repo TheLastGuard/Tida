@@ -46,6 +46,8 @@ public class TidaRuntime
         import core.sys.windows.windows;
     }
 
+    import tida.graph.text;
+
     private
     {
         string[] mainArguments;
@@ -65,6 +67,8 @@ public class TidaRuntime
     this(string[] args) @safe
     {
         mainArguments = args;
+
+        FreeTypeLoad();
     }
 
     /++

@@ -4,21 +4,97 @@
     and other operating systems are currently not supported due to 
     lack of testing on these platforms.
 
+    The window is created primarily not in the constructor, in the constructor 
+    the window parameters are initialized for its creation. All this is created 
+    by the `initialize` method, with an indication of the template parameter, 
+    which window to create.
+
+    A window can be created either with a ready-made context or without it 
+    (i.e., created manually)(Please note that the context is strictly created 
+    only for the opengl library).
+
+    Creating a simple window is done with a simple `initialize` function:
+    ---
+    /*
+        We just allocate memory for the window, this is not yet the 
+        stages of its creation.
+    */
+    Window window = new Window(640,480,"MyTitle");
+
+    /*
+        Creates a simple window with no graphics context.
+    */
+    window.initialize!Simple;
+    ---
+
+    There are two ways to create a context:
+    1. Initialize the window immediately with the context:
+    ---
+    window.initialize!ContextIn;
+    ---
+    2. Create it manually:
+    ---
+    window.initialize!Simple;
+
+    Context context = new Context();
+
+    /*
+        Indicates the attributes of the context.
+    */
+    context.attrib = GLAttributes(...);
+    context.attribInitialize(window);
+    context.initialize(window);
+
+    /*
+        Sets the context to this window.
+    */
+    window.contextSet(context);
+    ---
+
+    Then you can draw something on the window, control it and so on.
+
+    Also, please note that creating multiple windows is currently not supported.
+
+    TODO: 
+        * Make it possible to create several windows at the same time.
+          Namely, to make `shared` methods for working in different threads, 
+          both for the window and for the context, event handler and render.
+
     Authors: TodNaz
     License: MIT
 +/
 module tida.window;
 
+/+
+    Needed for the WGL function.
++/
 version(Windows) pragma(lib,"opengl32.lib");
 
-/// Simple window
+/++
+    A property to create just a window, without creating a context. 
+    Initialize it like this:
+    ---
+    window.initialize!Simple;
+    ---
++/
 static immutable ubyte Simple = 0;
 
-/// Window for created context.
+/++
+    Property for creating a window with a context for graphics. 
+    It is initialized like this:
+    ---
+    window.initialize!ContextIn;
+    ---
++/
 static immutable ubyte ContextIn = 1;
 
+/++
+    Property for creating a window on another thread. It is not used now.
++/
+static immutable ubyte ParrarelContext = 2;
+
 /// The shell is empty. Only needed in WebAssembly mode.
-static immutable ubyte Empty = 2;
+static immutable ubyte Empty = 3;
 
 /++
     Attributes for creating context.
@@ -40,36 +116,6 @@ public struct GLAttributes
 version(WebAssembly)
 {
     public import tida.betterc.window;
-}
-
-/++
-    Initializes the window. Cross-platform variant between Desktop and WebAssembly.
-
-    Params:
-        type = Window type.
-        width = Window width.
-        height = Window height.
-        caption = Window title.
-
-    Returns: Window structure
-+/
-static Window initWindow(ubyte type)(uint width,uint height,string caption) @trusted
-{
-    version(WebAssembly)
-    {
-        Window window = Window(width,height,caption);
-
-        if(type != Empty)
-            window.initialize!type();
-    }else
-    {
-        Window window = new Window(width,height,caption);
-
-        if(type != Empty)
-            window.initialize!type(100,100);
-    }
-
-    return window;
 }
 
 version(WebAssembly) {}
@@ -114,27 +160,29 @@ public class Context
         GLAttributes attrib; /// Attributes for creating context.
     }
 
-    version(Windows) public HDC DC() @trusted @property
+    /// 
+    version(Windows) public HDC DC() @safe nothrow
     {
         return deviceHandle;
     }
 
     /++
-        Context.
-
-        Returns:
-            Context from x11 environment (`GLXContext`).
+        Context from x11 environment (`GLXContext`).
     +/
-    version(Posix) public GLXContext xContext() @trusted
+    version(Posix) public GLXContext xContext() @safe @property nothrow
     {
         return ctx;
     }
 
-    version(Windows) public HGLRC wContext() @trusted
+    /++
+        Context from windows environment ('HGLRC').
+    +/
+    version(Windows) public HGLRC wContext() @safe @property nothrow
     {
         return ctx;
     }
 
+    ///
     version(Windows) public void wAttribInitialize(Window window) @trusted 
     {
         PIXELFORMATDESCRIPTOR pfd;
@@ -156,6 +204,7 @@ public class Context
         SetPixelFormat(deviceHandle, chsPixel, &pfd);
     }
 
+    ///
     version(Windows) public void wContextInitialize(Window window) @trusted 
     {
         ctx = wglCreateContext(deviceHandle);
@@ -166,7 +215,7 @@ public class Context
 
         All parameters are taken from the attrib variable. The default will always be double buffering.
     +/
-    version(Posix) public void xAttribInitialize() @trusted
+    version(Posix) public void xAttribInitialize() @trusted @live
     {
         int[] glxAttribs = 
             [
@@ -185,7 +234,9 @@ public class Context
             ];
 
         int fbcount;
-        GLXFBConfig* fbc = glXChooseFBConfig(runtime.display, runtime.displayID, cast(int*) glxAttribs, &fbcount);
+        scope GLXFBConfig* fbc = glXChooseFBConfig(runtime.display, runtime.displayID, cast(int*) glxAttribs, &fbcount);
+
+        scope(exit) XFree(fbc);
 
         if(fbc is null)
             throw new ContextException(ContextError.fbsNull,"fbc config is null!");
@@ -216,7 +267,6 @@ public class Context
         }
 
         bestFbcs = fbc[bestFbc];
-        XFree(fbc);
 
         visual = glXGetVisualFromFBConfig(runtime.display, bestFbcs);
     }
@@ -230,7 +280,7 @@ public class Context
     }
 
     ///
-    version(Posix) public XVisualInfo* xGetVisual() @trusted
+    version(Posix) public XVisualInfo* xGetVisual() @safe nothrow
     {
         return visual;
     }
@@ -238,7 +288,7 @@ public class Context
     /++
         Initializes the parameters of the context.
     +/
-    public void attribInitialize(Window window) @trusted
+    public void attribInitialize(Window window) @safe
     {
         version(Posix) xAttribInitialize();
         version(Windows) wAttribInitialize(window);
@@ -247,7 +297,7 @@ public class Context
     /++
         Initializes the context.
     +/
-    public void initialize(Window window) @trusted
+    public void initialize(Window window) @safe
     {
         version(Posix) xContextInitialize();
         version(Windows) wContextInitialize(window);
@@ -260,7 +310,9 @@ public class Context
     }
 }
 
-///
+/++
+    Window.
++/
 public class Window
 {
     version(Posix)
@@ -300,6 +352,9 @@ public class Window
     /++
         Initialization of window parameters.
 
+        Note:
+            * The window will not be created, but the parameters for its creation will be initialized.
+
         Params:
             newWidth = The width of the window when created.
             newHeight = The height of the window when created.
@@ -314,12 +369,17 @@ public class Window
 
     invariant
     {
-        assert(_width > 0,"This width is not allowed.");
-        assert(_height > 0,"This height is not allowed.");
+        assert(_width > 0,"A window cannot be without content!.");
+        assert(_height > 0,"A window cannot be without content!");
     }
 
     /++
         Initializes the window according to the parameters.
+
+        A window can be created with the following parameters:
+        * `Simple` - Will create a simple window with no context when 
+                     you need to manually create it.
+        * `ContextIn` - Creates a window with a context for graphics.
 
         Params:
             Type = What type of window to initialize.
@@ -327,6 +387,12 @@ public class Window
             posY = The y-axis position.
     +/
     public void initialize(ubyte Type)(int posX = 100,int posY = 100) @safe
+    in
+    {
+        assert(posX > 0,"The position of the window cannot be negative!");
+        assert(posY > 0,"The position of the window cannot be negative!");
+    }
+    do
     {
         static if(Type == Simple)
         {
@@ -486,6 +552,9 @@ public class Window
         glXMakeCurrent(runtime.display, xWindow, ctx);
     }
 
+    /++
+        Swaps buffers.
+    +/
     public void swapBuffers() @trusted
     {
         version(Posix) xSwapBuffers();
@@ -524,6 +593,7 @@ public class Window
         return window;
     }
 
+    ///
     version(Windows) public int wGetX() @trusted
     {
         RECT rect;
@@ -533,6 +603,7 @@ public class Window
         return rect.left;
     }
 
+    ///
     version(Windows) public int wGetY() @trusted
     {
         RECT rect;
@@ -542,6 +613,7 @@ public class Window
         return rect.top;
     }
 
+    ///
     version(Posix) public int xGetX() @trusted
     {
         XWindowAttributes xwa;
@@ -550,6 +622,7 @@ public class Window
         return xwa.x;
     }
 
+    ///
     version(Posix) public int xGetY() @trusted
     {
         XWindowAttributes xwa;
@@ -558,45 +631,81 @@ public class Window
         return xwa.y;
     }
 
+    /++
+        X-axis position of the window.
+    +/
     public int x() @safe @property
     {
         version(Windows) return wGetX();
         version(Posix)   return xGetX();
     }
 
+    /++
+        Y-axis position of the window.
+    +/
     public int y() @safe @property
     {
         version(Windows) return wGetY();
         version(Posix)   return xGetY();
     }
 
+    ///
     version(Windows) public void wResize(immutable uint newWidth,immutable uint newHeight) @trusted
     {
         SetWindowPos(window, null, wGetX(),wGetY(),newWidth,newHeight, 0);
     }
 
+    ///
     version(Windows) public void wMove(immutable int posX,immutable int posY) @trusted
     {
         SetWindowPos(window, null, posX, posY, width, height, 0);
     }
 
+    ///
     version(Posix) public void xResize(immutable uint newWidth,immutable uint newHeight) @trusted
     {
         XResizeWindow(runtime.display, window, newWidth, newHeight);
     }
 
+    ///
     version(Posix) public void xMove(immutable int posX,immutable int posY) @trusted
     {
         XMoveWindow(runtime.display, window, posX, posY);
     }
 
+    /++
+        Moves the window to the specified location.
+
+        Params:
+            posX = New X-axis position window.
+            posY = New Y-axis position window.
+    +/
     public void move(immutable int posX,immutable int posY) @safe 
+    in
+    {
+        assert(posX > 0,"The position of the window cannot be negative!");
+        assert(posY > 0,"The position of the window cannot be negative!");
+    }
+    do
     {
         version(Posix) xMove(posX,posY);
         version(Windows) wMove(posX,posY);
     }
 
+    /++
+        Resizes the window.
+
+        Params:
+            newWidth = Window width.
+            newHeight = Window height.
+    +/
     public void resize(immutable uint newWidth,immutable uint newHeight) @safe
+    in
+    {
+        assert(newWidth > 0,"A window cannot be without content!");
+        assert(newHeight > 0,"A window cannot be without content!");
+    }
+    do
     {
         version(Posix) xResize(newWidth,newHeight);
         version(Windows) wResize(newWidth,newHeight);
@@ -605,6 +714,28 @@ public class Window
         _height = newHeight;
     }
 
+    ///
+    version(Posix) public void xHide() @trusted
+    {
+        XUnmapWindow(runtime.display, window);
+    }
+
+    ///
+    version(Windows) public void wHide() @trusted
+    {
+        ShowWindow(window,SW_HIDE);
+    }
+
+    /++
+        Hides the window.
+    +/
+    public void hide() @safe
+    {
+        version(Posix) xHide();
+        version(Windows) wHide();
+    }
+
+    ///
     version(Posix) public void xIcon(Image image) @trusted
     {
         Atom wmIcon     = XInternAtom(runtime.display,"_NET_WM_ICON", false);
@@ -618,9 +749,36 @@ public class Window
         XFlush(runtime.display);
     }
 
-    public void icon(Image image) @trusted @property
+    ///
+    public void icon(Image image) @safe @property @disable
     {
         version(Posix) xIcon(image);
+    }
+
+    ///
+    public void resizeEvent(uint rWidth,uint rHeight) @safe @disable 
+    {
+        _width = rWidth;
+        _height = rHeight;
+    }
+
+    /// Window title.
+    public immutable(string) title() @safe @property nothrow
+    {
+        return _title;
+    }
+
+    /// ditto
+    public immutable(string) title() @safe @property nothrow const
+    {
+        return _title;
+    }
+
+    /// ditto
+    public void title(string newTitle) @trusted @property nothrow
+    {
+        version(Posix) XStoreName(runtime.display, xWindow, newTitle.toUTFz!(char*));
+        version(Windows) SetWindowTextA(wWindow,newTitle.toUTFz!(char*));
     }
 
     /// Window width.
@@ -629,10 +787,29 @@ public class Window
         return _width;
     }
 
+    /// ditto
+    public immutable(uint) width() @safe @property nothrow const
+    {
+        return _width;
+    }
+
     /// Window height.
     public immutable(uint) height() @safe @property nothrow
     {
         return _height;
+    }
+
+    /// ditto
+    public immutable(uint) height() @safe @property nothrow const
+    {
+        return _height;
+    }
+
+    override string toString() @safe const
+    {
+        import std.conv : to;
+
+        return "Window(width: "~width.to!string~",height: "~height.to!string~",title: "~title~")";
     }
 
     ~this() @trusted

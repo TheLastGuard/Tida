@@ -37,6 +37,7 @@ public struct Vector(T)
         this.y = _y;
     }
 
+    ///
     this(T[2] vec) @safe nothrow
     {
         this.x = vec[0];
@@ -70,6 +71,7 @@ public struct Vector(T)
     {
         if (a is b)
             return true;
+
         return a.x == b.x && a.y == b.y;
     }
 
@@ -179,6 +181,7 @@ public struct Vector(T)
         else
             return sqrt(sqr(this.x) + sqr(this.y));
     }
+    
     public string toString() @trusted
     {
         import std.conv;

@@ -8,6 +8,9 @@
 +/
 module tida.color;
 
+/++
+    Pixel format. Needed for conversion.
++/
 public enum PixelFormat
 {
     RGB,
@@ -15,35 +18,74 @@ public enum PixelFormat
     ARGB
 }
 
+/++
+    Converts grayscale to the library's standard color scheme.
+
+    Params:
+        gsc = Grayscale value.
+
+    Example:
+    ---
+    auto color = grayscale(128);
+    ---
+
+    Returns: RGBA
++/
 public Color!ubyte grayscale(ubyte gsc) @safe
 {
     return rgb(gsc,gsc,gsc);
 }
 
+/++
+    Creates an RGB color.
+
+    Params:
+        r = Red.
+        g = Green.
+        b = Blue. 
+
+    Returns: RGBA
++/
 public Color!ubyte rgb(ubyte r,ubyte g,ubyte b) @safe
 {
     return Color!ubyte(r,g,b,255);
 }
 
+/++
+    Creates an RGBA color.
+
+    Params:
+        r = Red.
+        g = Green.
+        b = Blue. 
+        a = Alpha.
+
+    Returns: RGBA
++/
 public Color!ubyte rgba(ubyte r,ubyte g,ubyte b,ubyte a) @safe
 {
     return Color!ubyte(r,g,b,a);
 }
 
+/++
+    Convert HSL to RGBA color.
+
+    Params:
+        str = HSL color.
+
+    Returns: RGBA
++/
 public Color!ubyte toRGB(HSL str) @safe
 {
     ubyte r = 0;
     ubyte g = 0;
     ubyte b = 0;
 
-    float hue = str.h;
-    float saturation = str.s;
-    float lightness = str.l;
+    immutable hue = str.h;
+    immutable saturation = str.s / 100;
+    immutable lightness = str.l / 100;
 
-    saturation = saturation / 100;
-    lightness  = lightness / 100;
-
-    if (saturation == 0)
+    if(saturation == 0)
     {
         r = g = b = cast(ubyte) (lightness * ubyte.max);
     }
@@ -83,6 +125,14 @@ public Color!ubyte toRGB(HSL str) @safe
     return rgb(r, g, b);
 }
 
+/++
+    Convert HSB to RGBA color.
+
+    Params:
+        str = HSB color.
+
+    Returns: RGBA
++/
 public Color!ubyte toRGB(HSB str) @safe
 {
     import std.math : trunc;
@@ -90,11 +140,8 @@ public Color!ubyte toRGB(HSB str) @safe
     double r = 0, g = 0, b = 0;
 
     double hue = str.h;
-    double saturation = str.saturation;
-    double value = str.v;
-
-    saturation = saturation / 100;
-    value = value / 100;
+    immutable saturation = str.saturation / 100;
+    immutable value = str.v / 100;
 
     if (saturation == 0)
     {
@@ -163,13 +210,14 @@ public Color!ubyte toRGB(HSB str) @safe
     return rgb(cast(byte) (r * 255), cast(byte) (g * 255), cast(byte) (b * 255));
 }
 
+/// HSL color structure
 public struct HSL
 {
     public
     {
-        float hue;
-        float saturation;
-        float lightness;
+        float hue; ///
+        float saturation; ///
+        float lightness; ///
 
         alias h = hue;
         alias s = saturation;
@@ -179,13 +227,14 @@ public struct HSL
 
 alias HSV = HSB;
 
+/// HSB color structure 
 public struct HSB
 {
     public
     {
-        float hue;
-        float saturation;
-        float brightness;
+        float hue; ///
+        float saturation; ///
+        float brightness; ///
         alias value = brightness;
 
         alias h = hue;
@@ -195,25 +244,29 @@ public struct HSB
     }
 }
 
+///
 public struct CMYK
 {
     public
     {
-        float c;
-        float m;
-        float y;
-        float k;
+        float c; ///
+        float m; ///
+        float y; ///
+        float k; ///
     }
 }
 
+/++
+    Color description structure.
++/
 public struct Color(T)
 {
     public
     {
-        T red;
-        T green;
-        T blue;
-        T alpha;
+        T red; /// Red component
+        T green; /// Green component
+        T blue; /// Blue component
+        T alpha; /// Alpha cpmponent
 
         alias r = red;
         alias g = green;
@@ -221,6 +274,13 @@ public struct Color(T)
         alias a = alpha;
     }
 
+    /++
+        Converts a color to the specified type and format.
+
+        Params:
+            T = Type.
+            format = Pixel format.
+    +/
     public T conv(T)(PixelFormat format = PixelFormat.RGBA) @safe
     {
         static if(is(T : ulong) || is(T : uint))
@@ -238,6 +298,32 @@ public struct Color(T)
         }
     }
 
+    /// ditto
+    public immutable(T) conv(T)(PixelFormat format = PixelFormat.RGBA) @safe immutable
+    {
+        static if(is(T : ulong) || is(T : uint))
+        {
+            if(format == PixelFormat.RGBA)
+                return ((r & 0xff) << 24) + ((g & 0xff) << 16) + ((b & 0xff) << 8) + (a & 0xff);
+            else
+            if(format == PixelFormat.RGB)
+                return ((r & 0xff) << 16) + ((g & 0xff) << 8) + ((b & 0xff));
+            else
+            if(format == PixelFormat.ARGB)
+                return ((a & 0xff) << 24) + ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+            else
+                return 0;
+        }
+    }
+
+    /++
+        Converts a color to a sequence of bytes in the specified format.
+
+        Params:
+            format = Pixel format.
+
+        Returns: Sequence of bytes. 
+    +/
     public T[] fromBytes(PixelFormat format) @safe
     {
         if(format == PixelFormat.RGBA)
@@ -252,34 +338,65 @@ public struct Color(T)
         return [];
     }
 
-    public T[] fromBytes(PixelFormat format)() @safe
+    /// ditto
+    public immutable(T[]) fromBytes(PixelFormat format) @safe immutable
     {
-        static if(format == PixelFormat.RGBA)
+        if(format == PixelFormat.RGBA)
             return [r,g,b,a];
         else
-        static if(format == PixelFormat.RGB)
+        if(format == PixelFormat.RGB)
             return [r,g,b];
         else
-        static if(format == PixelFormat.ARGB)
+        if(format == PixelFormat.ARGB)
             return [a,r,g,b];
+
+        return [];
     }
 
+    ///
     public float rf() @safe
     {
         return cast(float) r / cast(float) T.max;
     }
 
+    ///
     public float gf() @safe
     {
         return cast(float) g / cast(float) T.max;
     }
 
+    ///
     public float bf() @safe
     {
         return cast(float) b / cast(float) T.max;
     }
 
+    ///
     public float af() @safe
+    {
+        return cast(float) a / cast(float) T.max;
+    }
+
+    ///
+    public float rf() @safe immutable
+    {
+        return cast(float) r / cast(float) T.max;
+    }
+
+    ///
+    public float gf() @safe immutable
+    {
+        return cast(float) g / cast(float) T.max;
+    }
+
+    ///
+    public float bf() @safe immutable
+    {
+        return cast(float) b / cast(float) T.max;
+    }
+
+    ///
+    public float af() @safe immutable
     {
         return cast(float) a / cast(float) T.max;
     }

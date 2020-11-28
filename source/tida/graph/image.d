@@ -1,5 +1,6 @@
 /++
-    
+    A module for describing an image. This module provides control 
+    of the image both with a surface and with a texture.
 
     Authors: TodNaz
     License: MIT
@@ -8,7 +9,8 @@ module tida.graph.image;
 
 import tida.graph.drawable;
 
-public class Image : IDrawable, IDrawableEx
+/// Image.
+public class Image : IDrawable, IDrawableEx, IDrawableColor
 {
     import tida.color;
     import tida.vector;
@@ -24,21 +26,45 @@ public class Image : IDrawable, IDrawableEx
         uint _glID;
     }
 
+    /// Empty initilization.
     this() @safe
     {
         _pixels = null;
     }
 
+    /++
+        Creates a surface with the specified size. Note that it is 
+        not yet a texture, and you don’t need to draw it right away, 
+        to do this, convert it to a texture.
+
+        Params:
+            newWidth = Image width.
+            newHeight = Image height.
+    +/
     this(uint newWidth,uint newHeight) @safe
     {
-        create(width,height);
+        this.create(width,height);
     }
 
+    /++
+        Loads a surface from a file. Supported formats are described here:
+        `https://code.dlang.org/packages/imageformats`
+
+        Params:
+            path = Relative or full path to the image file.
+    +/
     this(string path) @safe
     {
-        load(path);
+        this.load(path);
     }
 
+    /++
+        Gives a sequence of bytes that encodes a color in 
+        the specified color format.
+
+        Params:
+            format = Pixel format.
+    +/
     public ubyte[] bytes(PixelFormat format = PixelFormat.RGBA) @safe
     {
         ubyte[] tryPixels;
@@ -49,6 +75,12 @@ public class Image : IDrawable, IDrawableEx
         return tryPixels;
     }
 
+    /++
+        Returns a sequence of pixels in the format `0xRRGGBBAA` (Depending on the format).
+
+        Params:
+            format = Pixel format.
+    +/
     public uint[] colors(PixelFormat format = PixelFormat.RGBA) @safe
     {
         uint[] tryPixels;
@@ -59,23 +91,37 @@ public class Image : IDrawable, IDrawableEx
         return tryPixels;
     }
 
-    public override string toString() @safe
+    public override string toString() @safe const
     {
         import std.conv : to;
 
         return "Image(width: "~width.to!string~",height: "~height.to!string~")";
     }
 
+    /++
+        A sequence of pixels.
+    +/
     public Color!ubyte[] pixels() @safe @property
     {
         return _pixels;
     }
 
+    /++
+        A sequence of pixels.
+    +/
     public void pixels(Color!ubyte[] otherPixels) @trusted @property
     {
         _pixels = otherPixels;
     }
 
+    /++
+        Set the pixel at the specified location.
+
+        Params:
+            x = The x-axis position pixel.
+            y = The y-axis position pixel.
+            color = Pixel.
+    +/
     public void setPixel(size_t x,size_t y,Color!ubyte color) @trusted
     {
         if(x >= width || y >= height)
@@ -86,35 +132,44 @@ public class Image : IDrawable, IDrawableEx
                 ] = color;  
     }
 
+    /++
+        Returns the pixel at the specified location.
+
+        Params:
+            x = The x-axis position pixel.
+            y = The y-axis position pixel.
+    +/
     public Color!ubyte getPixel(size_t x,size_t y) @trusted
     {
         return _pixels[(width * y) + x];
     }
 
+    /++
+        Attaches an image to itself at the specified position.
+    +/
     public void blit(Image otherImage,Vecf pos) @trusted
     {
-        for(size_t x = pos.intX; x <= pos.intX + otherImage.width; x++)
+        for(size_t x = pos.intX; x < pos.intX + otherImage.width; x++)
         {
-            for(size_t y = pos.intY; y <= pos.intY + otherImage.height; y++)
+            for(size_t y = pos.intY; y < pos.intY + otherImage.height; y++)
             {
                 setPixel(x,y,otherImage.getPixel(x - pos.intX,y - pos.intY));
             }
         }
     }
 
-    public ubyte[] bytes(PixelFormat format)() @safe
-    {
-        ubyte[] tryPixels;
+    /++
+        Creates a surface with the specified size. Note that it is 
+        not yet a texture, and you don’t need to draw it right away, 
+        to do this, convert it to a texture.
 
-        foreach(pixel; _pixels)
-            tryPixels ~= pixel.fromBytes!format;
-
-        return tryPixels;
-    }
-
+        Params:
+            newWidth = Image width.
+            newHeight = Image height.
+    +/
     public void create(uint newWidth,uint newHeight) @safe
     {
-        _pixels = new Color!ubyte[](width * height);
+        _pixels = new Color!ubyte[](newWidth * newHeight);
 
         foreach(ref e; _pixels) {
             e = rgba(0,0,0,0);
@@ -124,6 +179,13 @@ public class Image : IDrawable, IDrawableEx
         _height = newHeight;
     }
 
+    /++
+        Loads a surface from a file. Supported formats are described here:
+        `https://code.dlang.org/packages/imageformats`
+
+        Params:
+            path = Relative or full path to the image file.
+    +/
     public void load(string path) @trusted
     {
         import std.file : exists;
@@ -144,7 +206,16 @@ public class Image : IDrawable, IDrawableEx
         }
     }
 
-    public void fromTexture() @safe
+    /// Whether the picture is a texture.
+    public bool isTexture() @safe
+    {
+        return _glID != 0;
+    }
+
+    /++
+        Convert to a texture for rendering to the window.
+    +/
+    public Image fromTexture() @safe
     {
         GL.genTextures(1,_glID);
 
@@ -161,18 +232,41 @@ public class Image : IDrawable, IDrawableEx
         GL.texImage2D(_width,_height,tryPixels);
 
         GL.bindTexture(0);
+
+        return this;
     }
 
+    /++
+        The width of the picture.
+    +/
     public immutable(uint) width() @safe @property
     {
         return _width;
     }
 
+    /// ditto
+    public immutable(uint) width() @safe @property const
+    {
+        return _width;
+    }
+
+    /++
+        The height of the picture.
+    +/
     public immutable(uint) height() @safe @property
     {
         return _height;
     }
 
+    /// ditto
+    public immutable(uint) height() @safe @property const
+    {
+        return _height;
+    }
+
+    /++
+        Creates a copy of the picture. Doesn't create a copy of the texture.
+    +/
     public Image dup() @safe @property
     {
         Image image = new Image();
@@ -214,8 +308,6 @@ public class Image : IDrawable, IDrawableEx
         GL.rotate(angle,0f,0f,1f);
         GL.translate(-(position.x + center.x),-(position.y + center.y),0);
 
-        //position += position + center;
-
         GL.draw!Rectangle({
             GL.texCoord2i(0,0); GL.vertex(position);
             GL.texCoord2i(0,1); GL.vertex(position + Vecf(0,size.y));
@@ -229,6 +321,27 @@ public class Image : IDrawable, IDrawableEx
         GL.loadIdentity();
     }
 
+    override void drawColor(Renderer renderer,Vecf position,Color!ubyte color)
+    {
+        GL.color = color;
+
+        GL.bindTexture(_glID);
+        GL.enable(GL_TEXTURE_2D);
+
+        GL.draw!Rectangle({
+            GL.texCoord2i(0,0); GL.vertex(position);
+            GL.texCoord2i(0,1); GL.vertex(position + Vecf(0,height));
+            GL.texCoord2i(1,1); GL.vertex(position + Vecf(width,height));
+            GL.texCoord2i(1,0); GL.vertex(position + Vecf(width,0));
+        });
+
+        GL.disable(GL_TEXTURE_2D);
+        GL.bindTexture(0);
+    }
+
+    /++
+        Destroys the texture, not the image.
+    +/
     public void freeTexture() @trusted
     {
         if(_glID != 0) {
@@ -237,8 +350,30 @@ public class Image : IDrawable, IDrawableEx
         }
     }
 
-    ~this() @safe
+    /++
+        Frees up space for pixels. Does not destroy texture.
+    +/
+    public void freePixels() @trusted
+    {
+        if(_pixels !is null) {
+            _pixels = null;
+        }
+    }
+
+    /++
+        Frees memory completely from texture and pixels.
+    +/
+    public void free() @trusted
     {
         freeTexture();
+        freePixels();
+
+        _width = 0;
+        _height = 0;
+    }
+
+    ~this() @safe
+    {
+        free();
     }
 }

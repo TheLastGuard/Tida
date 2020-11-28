@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+<html>    <head>        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+        <link rel="stylesheet" type="text/css" href="css/proj_docs.css">
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+        <script type="text/javascript" src="js/sidebar.js"></script>
+        <script type="text/javascript" src="js/listanchors.js"></script>
+        <title>tida.vector</title>
+        
+        
+    </head>
+    <body>        
+        <div class="container">            
+<div class="sidebar-underbar"></div>
+<div class="sidebar">    <div class="head">        <h2>tida</h2>
+        <p><span class="smallprint"><b>version:</b> ~master <span class="separator"><br></span>
+            </span>
+        </p>
+        <p><a href="index.html">overview</a></p>
+    </div>
+    
+    <ul>
+
+	
+
+	<li><a title="" href="tida--app.html"><span >app</span></a></li>
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >dglx</span></a><ul>
+			
+
+	<li><a title="" href="tida--dglx.glx.html"><span >glx</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >emscript</span></a><ul>
+			
+
+	<li><a title="" href="tida--emscript.emscripten.html"><span >emscripten</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+	
+		<li class="expand-container open"><a title='
+		' class='expand-toggle' href='#'><span >tida</span></a><ul><li><a title='
+		' href="
+			tida--tida.html"><span >package</span></a></li>
+			
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >betterc</span></a><ul>
+			
+
+	<li><a title="" href="tida--tida.betterc.runtime.html"><span >runtime</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.betterc.window.html"><span >window</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+
+	<li><a title="Color description module. Contains a structure for manipulating colors like RGB" href="tida--tida.color.html"><span >color</span></a></li>
+
+
+
+	<li><a title="Event handler module." href="tida--tida.event.html"><span >event</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.exception.html"><span >exception</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.fps.html"><span >fps</span></a></li>
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >graph</span></a><ul>
+			
+
+	<li><a title="" href="tida--tida.graph.drawable.html"><span >drawable</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.graph.gl.html"><span >gl</span></a></li>
+
+
+
+	<li><a title="A module for describing an image. This module provides control" href="tida--tida.graph.image.html"><span >image</span></a></li>
+
+
+
+	<li><a title="Module for drawing in a window using opengl." href="tida--tida.graph.render.html"><span >render</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.graph.text.html"><span >text</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+
+	<li><a title="Module for system information." href="tida--tida.info.html"><span >info</span></a></li>
+
+
+
+	<li><a title="Runtime module. Serves to save some globally significant variables in the library." href="tida--tida.runtime.html"><span >runtime</span></a></li>
+
+
+
+	<li><a title="Module for information about positioning elements." href="tida--tida.vector.html"><span >vector</span></a></li>
+
+
+
+	<li><a title="A module for working with windows in a cross-platform environment." href="tida--tida.window.html"><span >window</span></a></li>
+
+</ul></li>
+	
+	
+
+
+
+
+</ul>
+</div>
+            <div class="content">                <h1>tida.vector</h1>
+                
+                <div class="quickindex" id="quickindex"></div>
+                
+                <div class="ddoc_summary">Module for information about positioning elements.
+</div><div class="ddoc_authors"><span class="ddoc_authors_header">Authors:</span>
+ TodNaz
+</div>
+<div class="ddoc_license"><span class="ddoc_license_header">License:</span>
+ MIT</div>
+<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".sqr"></span><div class="quickindex" id="quickindex.sqr"></div>@safe T <code class="ddoc_psymbol">sqr</code><span class="ddoc_template_param_list" title="Template parameter list">(T)</span>(T <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Vector"></span><div class="quickindex" id="quickindex.Vector"></div>struct <code class="ddoc_psymbol">Vector</code>(T);
+<br></div></dt>
+<dd><div class="ddoc_summary"><code class="ddoc_psymbol">Vector</code> structure. Two-dimensional, because the framework does not
+    imply 3D capabilities.</div><dl class="ddoc_members"><div class="ddoc_struct_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Vector.x"></span><div class="quickindex" id="quickindex.Vector.x"></div>T <code class="ddoc_psymbol">x</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">X-Axis</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Vector.y"></span><div class="quickindex" id="quickindex.Vector.y"></div>T <code class="ddoc_psymbol">y</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Y-Axis</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Vector.this"></span><div class="quickindex" id="quickindex.Vector.this"></div>nothrow @safe this(T <span class="ddoc_param">_x</span>, T <span class="ddoc_param">_y</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Vector init.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Vector.intX"></span><div class="quickindex" id="quickindex.Vector.intX"></div>nothrow @safe int <code class="ddoc_psymbol">intX</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Gives x coordinate in int format
+</div><div class="ddoc_returns"><span class="ddoc_returns_header">Returns:</span>
+ int</div>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Vector.intY"></span><div class="quickindex" id="quickindex.Vector.intY"></div>nothrow @safe int <code class="ddoc_psymbol">intY</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Gives y coordinate in int format
+</div><div class="ddoc_returns"><span class="ddoc_returns_header">Returns:</span>
+ int</div>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Vector.length"></span><div class="quickindex" id="quickindex.Vector.length"></div>@safe T <code class="ddoc_psymbol">length</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Return <code class="ddoc_psymbol">length</code> Vector.</div></dd>
+</div></dl>
+</dd>
+</div></dl>
+
+                
+            </div>
+        </div>
+        
+        <script type="text/javascript">jQuery(document).ready(listanchors);</script>
+        
+        
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+     </body>
+</html>

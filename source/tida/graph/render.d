@@ -8,22 +8,24 @@ module tida.graph.render;
 
 import tida.window;
 
-static Renderer initRender(Window window) @safe
-{
-    return new Renderer(window);
-}
-
+/++
+    What type of rendering.
++/
 enum BlendMode {
-    noBlend,
-    Blend
+    noBlend, // Without alpha channel
+    Blend /// With an alpha channel.
 };
 
+/++
+    Object to draw in a specific window.
++/
 public class Renderer
 {
     import tida.color;
     import tida.vector;
     import tida.graph.gl;
     import tida.graph.drawable;
+    import tida.graph.text;
 
     private
     {
@@ -32,6 +34,12 @@ public class Renderer
         Vecf size;
     }
 
+    /++
+        Render initialization.
+
+        Params:
+            window = Window render. 
+    +/
     this(Window window) @safe
     {
         GL.initialize();
@@ -49,8 +57,34 @@ public class Renderer
 
         GL.matrixMode(GL_MODELVIEW);
         GL.loadIdentity();
+
+        blend = BlendMode.Blend;
     }
 
+    ///
+    public void reshape() @safe
+    {
+        size = Vecf(toRender.width,toRender.height);
+
+        GL.viewport(0,0,toRender.width,toRender.height);
+
+        GL.matrixMode(GL_PROJECTION);
+        GL.loadIdentity();
+
+        GL.ortho(0.0, size.x, size.y, 0.0, 1.0, -1.0);
+
+        GL.matrixMode(GL_MODELVIEW);
+        GL.loadIdentity();
+
+        drawning();
+    }
+
+    /++
+        Object rendering mode.
+
+        Params:
+            blend = Rendering mode. 
+    +/
     public void blend(BlendMode blend) @trusted
     {
         if(blend == BlendMode.Blend) {
@@ -171,6 +205,15 @@ public class Renderer
         });
     }
 
+    /++
+        Draws a circle.
+
+        Params:
+            position = Circle position.
+            radious = Circle radious.
+            color = Circle color.
+            isFill = Circle is filled.
+    +/
     public void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe
     {
         GL.color = color;
@@ -247,14 +290,41 @@ public class Renderer
         }
     }
 
+    /++
+        Draws characters rendered by the text class.
+
+        Params:
+            symbols = Symbols rendered.
+            position = Text position.
+    +/
+    public void draw(Symbol[] symbols,Vecf position) @safe
+    {
+        foreach(s; symbols) 
+        {
+            if(!s.image.isTexture)
+                s.image.fromTexture();
+
+            drawColor(s.image,position - Vecf(0,s.position.y),s.color);
+            position.x += s.image.width + s.position.x;
+        }
+    }
+
+    ///
     public void draw(IDrawable drawable,Vecf position) @safe
     {
         drawable.draw(this,position);
     }
 
+    ///
     public void drawEx(IDrawableEx drawable,Vecf position,float angle,Vecf center,Vecf size) @safe
     {
         drawable.drawEx(this,position,angle,center,size);
+    }
+
+    ///
+    public void drawColor(IDrawableColor drawable,Vecf position,Color!ubyte color) @safe
+    {
+        drawable.drawColor(this,position,color);
     }
 
     /++
@@ -263,5 +333,15 @@ public class Renderer
     public void drawning() @safe
     {
         toRender.swapBuffers();
+    }
+
+    ///
+    public void drawning(void delegate() @safe func) @safe
+    {
+        this.clear();
+
+        func();
+
+        this.drawning();
     }
 }

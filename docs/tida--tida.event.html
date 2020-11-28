@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+<html>    <head>        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+        <link rel="stylesheet" type="text/css" href="css/proj_docs.css">
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+        <script type="text/javascript" src="js/sidebar.js"></script>
+        <script type="text/javascript" src="js/listanchors.js"></script>
+        <title>tida.event</title>
+        
+        
+    </head>
+    <body>        
+        <div class="container">            
+<div class="sidebar-underbar"></div>
+<div class="sidebar">    <div class="head">        <h2>tida</h2>
+        <p><span class="smallprint"><b>version:</b> ~master <span class="separator"><br></span>
+            </span>
+        </p>
+        <p><a href="index.html">overview</a></p>
+    </div>
+    
+    <ul>
+
+	
+
+	<li><a title="" href="tida--app.html"><span >app</span></a></li>
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >dglx</span></a><ul>
+			
+
+	<li><a title="" href="tida--dglx.glx.html"><span >glx</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >emscript</span></a><ul>
+			
+
+	<li><a title="" href="tida--emscript.emscripten.html"><span >emscripten</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+	
+		<li class="expand-container open"><a title='
+		' class='expand-toggle' href='#'><span >tida</span></a><ul><li><a title='
+		' href="
+			tida--tida.html"><span >package</span></a></li>
+			
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >betterc</span></a><ul>
+			
+
+	<li><a title="" href="tida--tida.betterc.runtime.html"><span >runtime</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.betterc.window.html"><span >window</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+
+	<li><a title="Color description module. Contains a structure for manipulating colors like RGB" href="tida--tida.color.html"><span >color</span></a></li>
+
+
+
+	<li><a title="Event handler module." href="tida--tida.event.html"><span >event</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.exception.html"><span >exception</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.fps.html"><span >fps</span></a></li>
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >graph</span></a><ul>
+			
+
+	<li><a title="" href="tida--tida.graph.drawable.html"><span >drawable</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.graph.gl.html"><span >gl</span></a></li>
+
+
+
+	<li><a title="A module for describing an image. This module provides control" href="tida--tida.graph.image.html"><span >image</span></a></li>
+
+
+
+	<li><a title="Module for drawing in a window using opengl." href="tida--tida.graph.render.html"><span >render</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.graph.text.html"><span >text</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+
+	<li><a title="Module for system information." href="tida--tida.info.html"><span >info</span></a></li>
+
+
+
+	<li><a title="Runtime module. Serves to save some globally significant variables in the library." href="tida--tida.runtime.html"><span >runtime</span></a></li>
+
+
+
+	<li><a title="Module for information about positioning elements." href="tida--tida.vector.html"><span >vector</span></a></li>
+
+
+
+	<li><a title="A module for working with windows in a cross-platform environment." href="tida--tida.window.html"><span >window</span></a></li>
+
+</ul></li>
+	
+	
+
+
+
+
+</ul>
+</div>
+            <div class="content">                <h1>tida.event</h1>
+                
+                <div class="quickindex" id="quickindex"></div>
+                
+                <div class="ddoc_summary">Event handler module.
+</div><div class="ddoc_authors"><span class="ddoc_authors_header">Authors:</span>
+ TodNaz
+</div>
+<div class="ddoc_license"><span class="ddoc_license_header">License:</span>
+ MIT</div>
+<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".initEventHandler"></span><div class="quickindex" id="quickindex.initEventHandler"></div>static @trusted EventHandler <code class="ddoc_psymbol">initEventHandler</code>(Window <span class="ddoc_param">window</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Initializes an event handler.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">Window <span class="ddoc_param">window</span></td>
+<td class="ddoc_param_desc">For which <span class="ddoc_param">window</span> to process events.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler"></span><div class="quickindex" id="quickindex.EventHandler"></div>class <code class="ddoc_psymbol">EventHandler</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Event handler.</div><dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.this"></span><div class="quickindex" id="quickindex.EventHandler.this"></div>@trusted this(tida.<span class="ddoc_param">window</span>.Window <span class="ddoc_param">window</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Initializes an event handler.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">tida.<span class="ddoc_param">window</span>.Window <span class="ddoc_param">window</span></td>
+<td class="ddoc_param_desc">For which <span class="ddoc_param">window</span> to process events.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.update"></span><div class="quickindex" id="quickindex.EventHandler.update"></div>@safe bool <code class="ddoc_psymbol">update</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Updates the event queue. Returns whether there are events in the queue.
+        On each call, the queue is advanced.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.getKeyDown"></span><div class="quickindex" id="quickindex.EventHandler.getKeyDown"></div>@safe auto <code class="ddoc_psymbol">getKeyDown</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns the pressed key.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.getKeyRelease"></span><div class="quickindex" id="quickindex.EventHandler.getKeyRelease"></div>@safe auto <code class="ddoc_psymbol">getKeyRelease</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns the released key.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.getKey"></span><div class="quickindex" id="quickindex.EventHandler.getKey"></div>@safe auto <code class="ddoc_psymbol">getKey</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns the key.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.isKeyDown"></span><div class="quickindex" id="quickindex.EventHandler.isKeyDown"></div>@safe bool <code class="ddoc_psymbol">isKeyDown</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns a state indicating whether a key is pressed.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.isKeyUp"></span><div class="quickindex" id="quickindex.EventHandler.isKeyUp"></div>@safe bool <code class="ddoc_psymbol">isKeyUp</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns a state indicating whether a key is released.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.getMouseDown"></span><div class="quickindex" id="quickindex.EventHandler.getMouseDown"></div>@safe auto <code class="ddoc_psymbol">getMouseDown</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns the pressed mouse button.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.getMouseUp"></span><div class="quickindex" id="quickindex.EventHandler.getMouseUp"></div>@safe auto <code class="ddoc_psymbol">getMouseUp</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns the released mouse button.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.isResize"></span><div class="quickindex" id="quickindex.EventHandler.isResize"></div>@safe bool <code class="ddoc_psymbol">isResize</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns whether the window has been resized.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.resizeWindowSize"></span><div class="quickindex" id="quickindex.EventHandler.resizeWindowSize"></div>@safe int[2] <code class="ddoc_psymbol">resizeWindowSize</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns whether the window has been resized.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.mouse"></span><div class="quickindex" id="quickindex.EventHandler.mouse"></div>@property @safe int[2] <code class="ddoc_psymbol">mouse</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns <code class="ddoc_psymbol">mouse</code> position.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.isQuit"></span><div class="quickindex" id="quickindex.EventHandler.isQuit"></div>@safe bool <code class="ddoc_psymbol">isQuit</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Do they close the window.</div></dd>
+</div></dl>
+</dd>
+</div></dl>
+
+                
+            </div>
+        </div>
+        
+        <script type="text/javascript">jQuery(document).ready(listanchors);</script>
+        
+        
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+     </body>
+</html>

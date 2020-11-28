@@ -6,19 +6,6 @@
 +/
 module tida.event;
 
-import tida.window;
-
-/++
-    Initializes an event handler.
-
-    Params:
-        window = For which window to process events.
-+/
-static EventHandler initEventHandler(Window window) @trusted
-{
-    return new EventHandler(window);
-}
-
 /// Event handler.
 public class EventHandler
 {
@@ -34,7 +21,7 @@ public class EventHandler
         import core.sys.windows.windows;
     }
 
-    import tida.runtime;
+    import tida.runtime, tida.window;
 
     private
     {
@@ -76,6 +63,14 @@ public class EventHandler
         }
     }
 
+    public void handle(void delegate() @safe func) @safe @property
+    {
+        while(this.update)
+        {
+            func();
+        }
+    }
+
     /++
         Updates the event queue. Returns whether there are events in the queue. 
         On each call, the queue is advanced.
@@ -86,6 +81,7 @@ public class EventHandler
         version(Windows) return wUpdate();
     }
 
+    ///
     version(Windows) public bool wUpdate() @trusted
     {
         TranslateMessage(&msg); 
@@ -94,6 +90,7 @@ public class EventHandler
         return PeekMessage(&msg, window.wWindow,0,0,PM_REMOVE) != 0;
     }
 
+    ///
     version(Posix) public bool xUpdate() @trusted
     {
         auto pen = XPending(runtime.display);
@@ -104,31 +101,37 @@ public class EventHandler
         return pen != 0;
     }  
 
+    ///
     version(Posix) public bool xIsKeyDown() @trusted
     {
         return event.type == KeyPress;
     }
 
+    ///
     version(Posix) public bool xIsKeyUp() @trusted
     {
         return event.type == KeyRelease;
     }
 
+    ///
     version(Windows) public bool wIsKeyDown() @trusted
     {
         return msg.message == WM_KEYDOWN;
     }
 
+    ///
     version(Windows) public bool wIsKeyUp() @trusted
     {
         return msg.message == WM_KEYUP;
     }
 
+    ///
     version(Posix) public auto xGetKey() @trusted
     {
         return event.xkey.keycode;
     }
 
+    ///
     version(Windows) public auto wGetKey() @trusted
     {
         return msg.wParam;
@@ -179,21 +182,25 @@ public class EventHandler
         version(Windows) return wIsKeyUp();
     }
 
+    ///
     version(Posix) public bool xIsMouseDown() @trusted
     {
         return event.type == ButtonPress;
     }
 
+    ///
     version(Posix) public bool xIsMouseUp() @trusted
     {
         return event.type == ButtonRelease;
     }
 
+    ///
     version(Posix) public auto xGetMouseButton() @trusted
     {
         return event.xbutton.button;
     }
 
+    ///
     version(Windows) public bool wIsMouseDown() @trusted
     {
         return msg.message == WM_LBUTTONDOWN ||
@@ -201,6 +208,7 @@ public class EventHandler
                msg.message == WM_MBUTTONDOWN;
     }
 
+    ///
     version(Windows) public bool wIsMouseUp() @trusted
     {
         return msg.message == WM_LBUTTONUP ||
@@ -208,6 +216,7 @@ public class EventHandler
                msg.message == WM_MBUTTONUP;
     }
 
+    ///
     version(Windows) public auto wGetMouseButton() @trusted
     {
         if(msg.message == WM_LBUTTONUP || msg.message == WM_LBUTTONDOWN)
@@ -240,6 +249,7 @@ public class EventHandler
         version(Windows) return wIsMouseUp ? wGetMouseButton() : 0;
     }
 
+    ///
     version(Posix) public int[2] xMousePosition() @trusted
     {
         int x,y;
@@ -253,6 +263,7 @@ public class EventHandler
         return [x,y];
     }
 
+    ///
     version(Windows) public int[2] wMousePosition() @trusted
     {
         POINT p;
@@ -264,6 +275,52 @@ public class EventHandler
         return [p.x,p.y];
     }
 
+    ///
+    version(Posix) public bool xIsResize() @trusted
+    {
+        return event.type == ResizeRequest;
+    }
+
+    ///
+    version(Windows) public bool wIsResize() @trusted
+    {
+        return msg.message == WM_SIZE;
+    }
+
+    /++
+        Returns whether the window has been resized.
+    +/
+    public bool isResize() @safe
+    {
+        version(Posix) return xIsResize();
+        version(Windows) return wIsResize();
+    } 
+
+    ///
+    version(Posix) public int[2] xResizeWindowSize() @trusted
+    {
+        return [event.xresizerequest.width,event.xresizerequest.height];
+    }
+
+    ///
+    version(Windows) public int[2] wResizeWindowSize() @trusted
+    {
+        RECT rect;
+
+        GetWindowRect(window.wWindow,&rect);
+
+        return [rect.right,rect.bottom];
+    }
+
+    /++
+        Returns whether the window has been resized.
+    +/
+    public int[2] resizeWindowSize() @safe
+    {
+        version(Posix) return xResizeWindowSize();
+        version(Windows) return wResizeWindowSize();
+    }
+
     /++
         Returns mouse position.
     +/
@@ -273,11 +330,13 @@ public class EventHandler
         version(Windows) return wMousePosition();
     }
 
+    ///
     version(Posix) public bool xIsQuit() @trusted
     {
         return event.xclient.data.l[0] == destroyWindowEvent;
     }
 
+    ///
     version(Windows) public bool wIsQuit() @trusted
     {
         return msg.message == WM_QUIT || msg.message == WM_CLOSE || 
@@ -294,6 +353,7 @@ public class EventHandler
     }
 }
 
+///
 static enum MouseButton
 {
     left = 1,
@@ -301,7 +361,7 @@ static enum MouseButton
     middle = 2
 }
 
-version(Posix)
+version(Posix)///
 static enum Key
 {
     Escape = 9,
@@ -423,7 +483,7 @@ static enum Key
     KPPoint = 91
 }
 
-version(Windows)
+version(Windows)///
 static enum Key
 {
     Escape = 0x1B,

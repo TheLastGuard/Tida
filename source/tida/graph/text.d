@@ -1,19 +1,35 @@
 /++
+    Module for rendering text using the `FreeType` library.
 
+    Authors: TodNaz
+    License: MIT
 +/
 module tida.graph.text;
 
 import bindbc.freetype;
 
+/// 
 __gshared FT_Library FTlibrary;
 
-static this()
+/++
+    Loads the `FreeType` library.
++/
+public void FreeTypeLoad() @trusted
 {
-    loadFreeType();
+    immutable retBind = loadFreeType();
 
-    FT_Init_FreeType(&FTlibrary);
+    if(retBind == FTSupport.noLibrary)
+        throw new Exception("Not find FreeType library!");
+
+    immutable ret = FT_Init_FreeType(&FTlibrary);
+
+    if(ret)
+        throw new Exception("Not load FreeType library!");
 }
 
+/++
+    Font object.
++/
 public class Font
 {
     private
@@ -22,16 +38,29 @@ public class Font
         size_t _size;
     }
 
+    /++
+        Returns a font object loaded from another library.
+    +/
     public FT_Face face() @safe @property
     {
         return _face;
     }
 
+    /++
+        Font size
+    +/
     public size_t size() @safe @property
     {
         return _size;
     }
 
+    /++
+        Loads a font.
+
+        Params:
+            path = The path to the font.
+            size = Font size.
+    +/
     public void load(string path,size_t size) @trusted
     {
         import std.file : exists;
@@ -42,45 +71,101 @@ public class Font
 
         FT_New_Face(FTlibrary,path.toStringz,0,&_face);
 
-        FT_Set_Char_Size(_face,size*64,0,100, 0);
+        FT_Set_Char_Size(_face,cast(int) size*32,0,300,300);
+    }
+
+    /++
+        Free face.
+    +/
+    public void free() @trusted
+    {
+        FT_Done_Face(_face);
+    }
+
+    ~this() @safe
+    {
+        free();
     }
 }
 
-import tida.graph.image;
-
-public Image[] imageText(Font font,string text) @trusted
+/++
+    Symbol object. Needed for rendering.
++/
+public class Symbol
 {
-    import tida.color;
-    import std.stdio;
+    import tida.graph.image, tida.vector, tida.color;
 
-    Image[] iChars;
-
-    foreach(c; text)
+    public
     {
-        auto Char = new Image();
-
-        if(FT_Load_Char(font.face, c, FT_LOAD_RENDER))
-            throw new Exception("Text render error!");
-
-        auto bitmap = font.face.glyph.bitmap;
-
-        auto relX = font.face.glyph.bitmap_left;
-        auto relY = font.face.glyph.bitmap_top;
-
-        Char.create(cast(uint) (bitmap.width + relX),cast(uint) (bitmap.rows + relY));
-
-        writeln(Char);
-
-        auto pixels = Char.pixels;
-
-        for(size_t i = (relY * bitmap.width) + relX, j = 0;
-            j < bitmap.width * bitmap.rows; i++,j++)
-        {
-            pixels[i] = grayscale(bitmap.buffer[j]);
-        }
-
-        iChars ~= Char;
+        Image image; /// Symbol render image
+        Vecf position; /// Symbol releative position
+        Color!ubyte color; /// Symbol color
     }
 
-    return iChars;
+    ///
+    this(Image img,Vecf pos,Color!ubyte color = rgb(255,255,255)) @safe
+    {
+        image = img;
+        position = pos;
+        this.color = color;
+    }
+}
+
+/++
+    Object for rendering text. Use the `renderSymbol` function to render symbols.
++/
+public class Text
+{
+    import tida.graph.image, tida.color, tida.vector;
+
+    private
+    {
+        Font _font;
+    }
+
+    /++
+        Object constructor.
+
+        Params:
+            newFont = The font to use.
+    +/
+    this(Font newFont) @safe
+    {
+        _font = newFont;
+    }
+
+    /++
+        A function to render a character and set the position of each of them to form words.
+
+        Params:
+            symbol = Text for rendering.
+            color = Text color.
+    +/
+    public Symbol[] renderSymbols(string symbols,Color!ubyte color = rgba(255,255,255,255)) @trusted
+    {
+        Symbol[] fSymbols;
+
+        foreach(s; symbols)
+        {
+            FT_Load_Char(_font.face, s, FT_LOAD_RENDER);
+
+            auto glyph = _font.face.glyph;
+            auto bitmap = _font.face.glyph.bitmap;
+
+            auto Char = new Image();
+
+            Char.create(bitmap.width,bitmap.rows);
+
+            auto pixels = Char.pixels;
+
+            foreach(i; 0 .. bitmap.width * bitmap.rows)
+            {
+                pixels[i] = bitmap.buffer[i] > 128 ? grayscale(bitmap.buffer[i]) : Color!ubyte(0,0,0,0);
+            }
+
+            fSymbols ~= new Symbol(Char,Vecf(glyph.bitmap_left,glyph.bitmap_top),color); 
+        }
+
+        return fSymbols;
+    }
 }

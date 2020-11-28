@@ -1,0 +1,300 @@
+
+<!DOCTYPE html>
+<html>    <head>        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+        <link rel="stylesheet" type="text/css" href="css/proj_docs.css">
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+        <script type="text/javascript" src="js/sidebar.js"></script>
+        <script type="text/javascript" src="js/listanchors.js"></script>
+        <title>tida.graph.image</title>
+        
+        
+    </head>
+    <body>        
+        <div class="container">            
+<div class="sidebar-underbar"></div>
+<div class="sidebar">    <div class="head">        <h2>tida</h2>
+        <p><span class="smallprint"><b>version:</b> ~master <span class="separator"><br></span>
+            </span>
+        </p>
+        <p><a href="index.html">overview</a></p>
+    </div>
+    
+    <ul>
+
+	
+
+	<li><a title="" href="tida--app.html"><span >app</span></a></li>
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >dglx</span></a><ul>
+			
+
+	<li><a title="" href="tida--dglx.glx.html"><span >glx</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >emscript</span></a><ul>
+			
+
+	<li><a title="" href="tida--emscript.emscripten.html"><span >emscripten</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+	
+		<li class="expand-container open"><a title='
+		' class='expand-toggle' href='#'><span >tida</span></a><ul><li><a title='
+		' href="
+			tida--tida.html"><span >package</span></a></li>
+			
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >betterc</span></a><ul>
+			
+
+	<li><a title="" href="tida--tida.betterc.runtime.html"><span >runtime</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.betterc.window.html"><span >window</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+
+	<li><a title="Color description module. Contains a structure for manipulating colors like RGB" href="tida--tida.color.html"><span >color</span></a></li>
+
+
+
+	<li><a title="Event handler module." href="tida--tida.event.html"><span >event</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.exception.html"><span >exception</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.fps.html"><span >fps</span></a></li>
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >graph</span></a><ul>
+			
+
+	<li><a title="" href="tida--tida.graph.drawable.html"><span >drawable</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.graph.gl.html"><span >gl</span></a></li>
+
+
+
+	<li><a title="A module for describing an image. This module provides control" href="tida--tida.graph.image.html"><span >image</span></a></li>
+
+
+
+	<li><a title="Module for drawing in a window using opengl." href="tida--tida.graph.render.html"><span >render</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.graph.text.html"><span >text</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+
+	<li><a title="Module for system information." href="tida--tida.info.html"><span >info</span></a></li>
+
+
+
+	<li><a title="Runtime module. Serves to save some globally significant variables in the library." href="tida--tida.runtime.html"><span >runtime</span></a></li>
+
+
+
+	<li><a title="Module for information about positioning elements." href="tida--tida.vector.html"><span >vector</span></a></li>
+
+
+
+	<li><a title="A module for working with windows in a cross-platform environment." href="tida--tida.window.html"><span >window</span></a></li>
+
+</ul></li>
+	
+	
+
+
+
+
+</ul>
+</div>
+            <div class="content">                <h1>tida.graph.image</h1>
+                
+                <div class="quickindex" id="quickindex"></div>
+                
+                <div class="ddoc_summary">A module for describing an <code class="ddoc_psymbol">image</code>. This module provides control
+    of the <code class="ddoc_psymbol">image</code> both with a surface and with a texture.
+</div><div class="ddoc_authors"><span class="ddoc_authors_header">Authors:</span>
+ TodNaz
+</div>
+<div class="ddoc_license"><span class="ddoc_license_header">License:</span>
+ MIT</div>
+<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image"></span><div class="quickindex" id="quickindex.Image"></div>class <code class="ddoc_psymbol">Image</code>: <span class="ddoc_psuper_symbol">tida.graph.drawable.IDrawable</span>, <span class="ddoc_psuper_symbol">tida.graph.drawable.IDrawableEx</span>, <span class="ddoc_psuper_symbol">tida.graph.drawable.IDrawableColor</span>;
+<br></div></dt>
+<dd><div class="ddoc_summary"><code class="ddoc_psymbol">Image</code>.</div><dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.this"></span><div class="quickindex" id="quickindex.Image.this"></div>@safe this();
+<br></div></dt>
+<dd><div class="ddoc_summary">Empty initilization.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.this.2"></span><div class="quickindex" id="quickindex.Image.this.2"></div>@safe this(uint <span class="ddoc_param">newWidth</span>, uint <span class="ddoc_param">newHeight</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Creates a surface with the specified size. Note that it is
+        not yet a texture, and you don’t need to draw it right away,
+        to do this, convert it to a texture.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">uint <span class="ddoc_param">newWidth</span></td>
+<td class="ddoc_param_desc">Image width.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">uint <span class="ddoc_param">newHeight</span></td>
+<td class="ddoc_param_desc">Image height.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.this.3"></span><div class="quickindex" id="quickindex.Image.this.3"></div>@safe this(string <span class="ddoc_param">path</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Loads a surface from a file. Supported formats are described here:
+        <code class="d_inlinecode donthyphenate notranslate">https://code.dlang.org/packages/imageformats</code>
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">string <span class="ddoc_param">path</span></td>
+<td class="ddoc_param_desc">Relative or full <span class="ddoc_param">path</span> to the image file.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.bytes"></span><div class="quickindex" id="quickindex.Image.bytes"></div>@safe ubyte[] <code class="ddoc_psymbol">bytes</code>(PixelFormat <span class="ddoc_param">format</span> = PixelFormat.RGBA);
+<br></div></dt>
+<dd><div class="ddoc_summary">Gives a sequence of <code class="ddoc_psymbol">bytes</code> that encodes a color in
+        the specified color <span class="ddoc_param">format</span>.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">PixelFormat <span class="ddoc_param">format</span></td>
+<td class="ddoc_param_desc">Pixel <span class="ddoc_param">format</span>.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.colors"></span><div class="quickindex" id="quickindex.Image.colors"></div>@safe uint[] <code class="ddoc_psymbol">colors</code>(PixelFormat <span class="ddoc_param">format</span> = PixelFormat.RGBA);
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns a sequence of pixels in the <span class="ddoc_param">format</span> <code class="d_inlinecode donthyphenate notranslate">0xRRGGBBAA</code> (Depending on the <span class="ddoc_param">format</span>).
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">PixelFormat <span class="ddoc_param">format</span></td>
+<td class="ddoc_param_desc">Pixel <span class="ddoc_param">format</span>.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.pixels"></span><div class="quickindex" id="quickindex.Image.pixels"></div>@property @safe Color!ubyte[] <code class="ddoc_psymbol">pixels</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">A sequence of <code class="ddoc_psymbol">pixels</code>.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.pixels.2"></span><div class="quickindex" id="quickindex.Image.pixels.2"></div>@property @trusted void <code class="ddoc_psymbol">pixels</code>(Color!ubyte[] <span class="ddoc_param">otherPixels</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">A sequence of <code class="ddoc_psymbol">pixels</code>.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.setPixel"></span><div class="quickindex" id="quickindex.Image.setPixel"></div>@trusted void <code class="ddoc_psymbol">setPixel</code>(size_t <span class="ddoc_param">x</span>, size_t <span class="ddoc_param">y</span>, Color!ubyte <span class="ddoc_param">color</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Set the pixel at the specified location.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">size_t <span class="ddoc_param">x</span></td>
+<td class="ddoc_param_desc">The <span class="ddoc_param">x</span>-axis position pixel.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">size_t <span class="ddoc_param">y</span></td>
+<td class="ddoc_param_desc">The <span class="ddoc_param">y</span>-axis position pixel.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">Color!ubyte <span class="ddoc_param">color</span></td>
+<td class="ddoc_param_desc">Pixel.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.getPixel"></span><div class="quickindex" id="quickindex.Image.getPixel"></div>@trusted Color!ubyte <code class="ddoc_psymbol">getPixel</code>(size_t <span class="ddoc_param">x</span>, size_t <span class="ddoc_param">y</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns the pixel at the specified location.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">size_t <span class="ddoc_param">x</span></td>
+<td class="ddoc_param_desc">The <span class="ddoc_param">x</span>-axis position pixel.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">size_t <span class="ddoc_param">y</span></td>
+<td class="ddoc_param_desc">The <span class="ddoc_param">y</span>-axis position pixel.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.blit"></span><div class="quickindex" id="quickindex.Image.blit"></div>@trusted void <code class="ddoc_psymbol">blit</code>(Image <span class="ddoc_param">otherImage</span>, Vecf <span class="ddoc_param">pos</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Attaches an image to itself at the specified position.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.create"></span><div class="quickindex" id="quickindex.Image.create"></div>@safe void <code class="ddoc_psymbol">create</code>(uint <span class="ddoc_param">newWidth</span>, uint <span class="ddoc_param">newHeight</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Creates a surface with the specified size. Note that it is
+        not yet a texture, and you don’t need to draw it right away,
+        to do this, convert it to a texture.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">uint <span class="ddoc_param">newWidth</span></td>
+<td class="ddoc_param_desc">Image width.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">uint <span class="ddoc_param">newHeight</span></td>
+<td class="ddoc_param_desc">Image height.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.load"></span><div class="quickindex" id="quickindex.Image.load"></div>@trusted void <code class="ddoc_psymbol">load</code>(string <span class="ddoc_param">path</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Loads a surface from a file. Supported formats are described here:
+        <code class="d_inlinecode donthyphenate notranslate">https://code.dlang.org/packages/imageformats</code>
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">string <span class="ddoc_param">path</span></td>
+<td class="ddoc_param_desc">Relative or full <span class="ddoc_param">path</span> to the image file.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.fromTexture"></span><div class="quickindex" id="quickindex.Image.fromTexture"></div>@safe Image <code class="ddoc_psymbol">fromTexture</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Convert to a texture for rendering to the window.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.width"></span><div class="quickindex" id="quickindex.Image.width"></div>@property @safe immutable(uint) <code class="ddoc_psymbol">width</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">The <code class="ddoc_psymbol">width</code> of the picture.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.height"></span><div class="quickindex" id="quickindex.Image.height"></div>@property @safe immutable(uint) <code class="ddoc_psymbol">height</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">The <code class="ddoc_psymbol">height</code> of the picture.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.dup"></span><div class="quickindex" id="quickindex.Image.dup"></div>@property @safe Image <code class="ddoc_psymbol">dup</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Creates a copy of the picture. Doesn't create a copy of the texture.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.freeTexture"></span><div class="quickindex" id="quickindex.Image.freeTexture"></div>@trusted void <code class="ddoc_psymbol">freeTexture</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Destroys the texture, not the image.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.freePixels"></span><div class="quickindex" id="quickindex.Image.freePixels"></div>@trusted void <code class="ddoc_psymbol">freePixels</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Frees up space for pixels. Does not destroy texture.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Image.free"></span><div class="quickindex" id="quickindex.Image.free"></div>@trusted void <code class="ddoc_psymbol">free</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Frees memory completely from texture and pixels.</div></dd>
+</div></dl>
+</dd>
+</div></dl>
+
+                
+            </div>
+        </div>
+        
+        <script type="text/javascript">jQuery(document).ready(listanchors);</script>
+        
+        
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+     </body>
+</html>

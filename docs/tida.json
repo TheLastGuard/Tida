@@ -1,0 +1,6117 @@
+[
+ {
+  "name" : "app",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/app.d",
+  "members" : [
+   {
+    "name" : "tida",
+    "kind" : "import",
+    "line" : 3,
+    "char" : 8,
+    "protection" : "private"
+   },
+   {
+    "name" : "std.conv",
+    "kind" : "import",
+    "line" : 4,
+    "char" : 8,
+    "protection" : "private"
+   },
+   {
+    "name" : "main",
+    "kind" : "function",
+    "line" : 6,
+    "char" : 5,
+    "deco" : "FAAyaZi",
+    "parameters" : [
+     {
+      "name" : "args",
+      "deco" : "AAya"
+     }
+    ],
+    "endline" : 80,
+    "endchar" : 1
+   },
+   {
+    "name" : "_d_cmain!()",
+    "kind" : "mixin",
+    "line" : 6,
+    "char" : 5
+   }
+  ]
+ },
+ {
+  "name" : "dglx.glx",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/dglx/glx.d",
+  "members" : [
+   {
+    "name" : "bindbc.loader",
+    "kind" : "import",
+    "line" : 5,
+    "char" : 8,
+    "protection" : "private"
+   },
+   {
+    "name" : "x11.X",
+    "kind" : "import",
+    "line" : 6,
+    "char" : 8,
+    "protection" : "private"
+   },
+   {
+    "name" : "x11.Xlib",
+    "kind" : "import",
+    "line" : 6,
+    "char" : 15,
+    "protection" : "private"
+   },
+   {
+    "name" : "x11.Xutil",
+    "kind" : "import",
+    "line" : 6,
+    "char" : 25,
+    "protection" : "private"
+   },
+   {
+    "name" : "GLXLibrary",
+    "kind" : "alias",
+    "line" : 8,
+    "char" : 1,
+    "deco" : "S6bindbc6loader9sharedlib9SharedLib"
+   },
+   {
+    "name" : "glxLib",
+    "kind" : "variable",
+    "line" : 10,
+    "char" : 22,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "S6bindbc6loader9sharedlib9SharedLib",
+    "originalType" : "GLXLibrary"
+   },
+   {
+    "name" : "__GLXFBConfigRec",
+    "kind" : "struct",
+    "line" : 12,
+    "char" : 1
+   },
+   {
+    "name" : "__GLXcontextRec",
+    "kind" : "struct",
+    "line" : 13,
+    "char" : 1
+   },
+   {
+    "name" : "GLX_X_RENDERABLE",
+    "kind" : "variable",
+    "line" : 15,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "32786"
+   },
+   {
+    "name" : "GLX_DRAWABLE_TYPE",
+    "kind" : "variable",
+    "line" : 16,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "32784"
+   },
+   {
+    "name" : "GLX_RENDER_TYPE",
+    "kind" : "variable",
+    "line" : 17,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "32785"
+   },
+   {
+    "name" : "GLX_X_VISUAL_TYPE",
+    "kind" : "variable",
+    "line" : 18,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "34"
+   },
+   {
+    "name" : "GLX_RED_SIZE",
+    "kind" : "variable",
+    "line" : 19,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "8"
+   },
+   {
+    "name" : "GLX_GREEN_SIZE",
+    "kind" : "variable",
+    "line" : 20,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "9"
+   },
+   {
+    "name" : "GLX_BLUE_SIZE",
+    "kind" : "variable",
+    "line" : 21,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "10"
+   },
+   {
+    "name" : "GLX_ALPHA_SIZE",
+    "kind" : "variable",
+    "line" : 22,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "11"
+   },
+   {
+    "name" : "GLX_DEPTH_SIZE",
+    "kind" : "variable",
+    "line" : 23,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "12"
+   },
+   {
+    "name" : "GLX_STENCIL_SIZE",
+    "kind" : "variable",
+    "line" : 24,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "13"
+   },
+   {
+    "name" : "GLX_DOUBLEBUFFER",
+    "kind" : "variable",
+    "line" : 25,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "5"
+   },
+   {
+    "name" : "GLX_BUFFER_SIZE",
+    "kind" : "variable",
+    "line" : 26,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "2"
+   },
+   {
+    "name" : "GLX_WINDOW_BIT",
+    "kind" : "variable",
+    "line" : 28,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "1"
+   },
+   {
+    "name" : "GLX_RGBA_BIT",
+    "kind" : "variable",
+    "line" : 29,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "1"
+   },
+   {
+    "name" : "GLX_TRUE_COLOR",
+    "kind" : "variable",
+    "line" : 30,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "32770"
+   },
+   {
+    "name" : "GLX_RGBA_TYPE",
+    "kind" : "variable",
+    "line" : 31,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "32788"
+   },
+   {
+    "name" : "GLX_SAMPLE_BUFFERS",
+    "kind" : "variable",
+    "line" : 33,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "100000"
+   },
+   {
+    "name" : "GLX_SAMPLES",
+    "kind" : "variable",
+    "line" : 34,
+    "char" : 18,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yi",
+    "originalType" : "int",
+    "init" : "100001"
+   },
+   {
+    "name" : "GLXDrawable",
+    "kind" : "alias",
+    "line" : 36,
+    "char" : 1,
+    "deco" : "m"
+   },
+   {
+    "name" : "GLXFBConfig",
+    "kind" : "alias",
+    "line" : 37,
+    "char" : 1,
+    "deco" : "PS4dglx3glx16__GLXFBConfigRec"
+   },
+   {
+    "name" : "GLXContext",
+    "kind" : "alias",
+    "line" : 38,
+    "char" : 1,
+    "deco" : "PS4dglx3glx15__GLXcontextRec"
+   },
+   {
+    "name" : "FglXQueryVersion",
+    "kind" : "alias",
+    "line" : 40,
+    "char" : 1,
+    "deco" : "PUPS3x114Xlib9_XDisplayPiQcZb",
+    "originalType" : "bool function(Display* dpy, int* maj, int* min)"
+   },
+   {
+    "name" : "FglXChooseFBConfig",
+    "kind" : "alias",
+    "line" : 41,
+    "char" : 1,
+    "deco" : "PUPS3x114Xlib9_XDisplayixPiPiZPPS4dglx3glx16__GLXFBConfigRec",
+    "originalType" : "GLXFBConfig* function(Display* dpy, int screen, const int* attribList, int* nitems)"
+   },
+   {
+    "name" : "FglXGetVisualFromFBConfig",
+    "kind" : "alias",
+    "line" : 42,
+    "char" : 1,
+    "deco" : "PUPS3x114Xlib9_XDisplayPS4dglx3glx16__GLXFBConfigRecZPSQBz5Xutil11XVisualInfo",
+    "originalType" : "XVisualInfo* function(Display* dpy, GLXFBConfig config)"
+   },
+   {
+    "name" : "FglXGetFBConfigAttrib",
+    "kind" : "alias",
+    "line" : 43,
+    "char" : 1,
+    "deco" : "PUPS3x114Xlib9_XDisplayPS4dglx3glx16__GLXFBConfigReciPiZi",
+    "originalType" : "int function(Display* dpy, GLXFBConfig config, int attribute, int* value)"
+   },
+   {
+    "name" : "FglXQueryExtensionsString",
+    "kind" : "alias",
+    "line" : 44,
+    "char" : 1,
+    "deco" : "PUPS3x114Xlib9_XDisplayiZxPa",
+    "originalType" : "const(char*) function(Display* dpy, int screen)"
+   },
+   {
+    "name" : "FglXCreateNewContext",
+    "kind" : "alias",
+    "line" : 45,
+    "char" : 1,
+    "deco" : "PUPS3x114Xlib9_XDisplayPS4dglx3glx16__GLXFBConfigReciPSQBeQBc15__GLXcontextRecbZQBb",
+    "originalType" : "GLXContext function(Display* dpy, GLXFBConfig config, int renderType, GLXContext shareList, bool direct)"
+   },
+   {
+    "name" : "FglXMakeCurrent",
+    "kind" : "alias",
+    "line" : 48,
+    "char" : 1,
+    "deco" : "PUPS3x114Xlib9_XDisplaymPS4dglx3glx15__GLXcontextRecZb",
+    "originalType" : "bool function(Display* dpy, GLXDrawable drawable, GLXContext ctx)"
+   },
+   {
+    "name" : "FglXDestroyContext",
+    "kind" : "alias",
+    "line" : 49,
+    "char" : 1,
+    "deco" : "PUPS3x114Xlib9_XDisplayPS4dglx3glx15__GLXcontextRecZv",
+    "originalType" : "void function(Display* dpy, GLXContext ctx)"
+   },
+   {
+    "name" : "FglXSwapBuffers",
+    "kind" : "alias",
+    "line" : 50,
+    "char" : 1,
+    "deco" : "PUPS3x114Xlib9_XDisplaymZv",
+    "originalType" : "void function(Display* dpy, GLXDrawable drawable)"
+   },
+   {
+    "name" : "glXQueryVersion",
+    "kind" : "variable",
+    "line" : 54,
+    "char" : 22,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "PUPS3x114Xlib9_XDisplayPiQcZb",
+    "originalType" : "FglXQueryVersion"
+   },
+   {
+    "name" : "glXChooseFBConfig",
+    "kind" : "variable",
+    "line" : 55,
+    "char" : 24,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "PUPS3x114Xlib9_XDisplayixPiPiZPPS4dglx3glx16__GLXFBConfigRec",
+    "originalType" : "FglXChooseFBConfig"
+   },
+   {
+    "name" : "glXGetVisualFromFBConfig",
+    "kind" : "variable",
+    "line" : 56,
+    "char" : 31,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "PUPS3x114Xlib9_XDisplayPS4dglx3glx16__GLXFBConfigRecZPSQBz5Xutil11XVisualInfo",
+    "originalType" : "FglXGetVisualFromFBConfig"
+   },
+   {
+    "name" : "glXGetFBConfigAttrib",
+    "kind" : "variable",
+    "line" : 57,
+    "char" : 27,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "PUPS3x114Xlib9_XDisplayPS4dglx3glx16__GLXFBConfigReciPiZi",
+    "originalType" : "FglXGetFBConfigAttrib"
+   },
+   {
+    "name" : "glXQueryExtensionsString",
+    "kind" : "variable",
+    "line" : 58,
+    "char" : 31,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "PUPS3x114Xlib9_XDisplayiZxPa",
+    "originalType" : "FglXQueryExtensionsString"
+   },
+   {
+    "name" : "glXCreateNewContext",
+    "kind" : "variable",
+    "line" : 59,
+    "char" : 26,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "PUPS3x114Xlib9_XDisplayPS4dglx3glx16__GLXFBConfigReciPSQBeQBc15__GLXcontextRecbZQBb",
+    "originalType" : "FglXCreateNewContext"
+   },
+   {
+    "name" : "glXMakeCurrent",
+    "kind" : "variable",
+    "line" : 60,
+    "char" : 21,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "PUPS3x114Xlib9_XDisplaymPS4dglx3glx15__GLXcontextRecZb",
+    "originalType" : "FglXMakeCurrent"
+   },
+   {
+    "name" : "glXDestroyContext",
+    "kind" : "variable",
+    "line" : 61,
+    "char" : 24,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "PUPS3x114Xlib9_XDisplayPS4dglx3glx15__GLXcontextRecZv",
+    "originalType" : "FglXDestroyContext"
+   },
+   {
+    "name" : "glXSwapBuffers",
+    "kind" : "variable",
+    "line" : 62,
+    "char" : 21,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "PUPS3x114Xlib9_XDisplaymZv",
+    "originalType" : "FglXSwapBuffers"
+   },
+   {
+    "name" : "GLXLoadLibrary",
+    "kind" : "function",
+    "line" : 65,
+    "char" : 13,
+    "deco" : "FNeZv",
+    "endline" : 114,
+    "endchar" : 1
+   }
+  ]
+ },
+ {
+  "name" : "emscript.emscripten",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/emscript/emscripten.d",
+  "comment" : "\n",
+  "members" : []
+ },
+ {
+  "name" : "tida",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/package.d",
+  "comment" : "\n\tAuthors: TodNaz\n\tLicense: MIT\n",
+  "members" : [
+   {
+    "name" : "tida.runtime",
+    "kind" : "import",
+    "line" : 10,
+    "char" : 9
+   },
+   {
+    "name" : "tida.window",
+    "kind" : "import",
+    "line" : 11,
+    "char" : 9
+   },
+   {
+    "name" : "tida.color",
+    "kind" : "import",
+    "line" : 12,
+    "char" : 9
+   },
+   {
+    "name" : "tida.event",
+    "kind" : "import",
+    "line" : 13,
+    "char" : 9
+   },
+   {
+    "name" : "tida.vector",
+    "kind" : "import",
+    "line" : 14,
+    "char" : 9
+   },
+   {
+    "name" : "tida.info",
+    "kind" : "import",
+    "line" : 15,
+    "char" : 9
+   },
+   {
+    "name" : "tida.graph.render",
+    "kind" : "import",
+    "line" : 16,
+    "char" : 9
+   },
+   {
+    "name" : "tida.graph.image",
+    "kind" : "import",
+    "line" : 17,
+    "char" : 9
+   },
+   {
+    "name" : "tida.graph.text",
+    "kind" : "import",
+    "line" : 18,
+    "char" : 9
+   },
+   {
+    "name" : "tida.fps",
+    "kind" : "import",
+    "line" : 19,
+    "char" : 9
+   }
+  ]
+ },
+ {
+  "name" : "tida.betterc.runtime",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/betterc/runtime.d",
+  "comment" : "\n",
+  "members" : [
+   {
+    "name" : "__runtime",
+    "kind" : "variable",
+    "line" : 6,
+    "char" : 24,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "PS4tida7betterc7runtime11TidaRuntime"
+   },
+   {
+    "name" : "runtime",
+    "kind" : "function",
+    "line" : 8,
+    "char" : 21,
+    "deco" : "FNeZPS4tida7betterc7runtime11TidaRuntime",
+    "endline" : 11,
+    "endchar" : 1
+   },
+   {
+    "name" : "TidaRuntime",
+    "kind" : "struct",
+    "line" : 13,
+    "char" : 1,
+    "members" : [
+     {
+      "name" : "initialize",
+      "kind" : "function",
+      "line" : 15,
+      "char" : 14,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeZv",
+      "endline" : 20,
+      "endchar" : 2
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.betterc.window",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/betterc/window.d",
+  "comment" : "\n",
+  "members" : []
+ },
+ {
+  "name" : "tida.color",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/color.d",
+  "comment" : "    Color description module. Contains a structure for manipulating colors like RGB, there,\n    and other ways to set colors. Mostly the RGB format is used, and the use of other formats\n    will be converted to RGB.\n\n    Authors: TodNaz\n    License: MIT\n",
+  "members" : [
+   {
+    "name" : "PixelFormat",
+    "kind" : "enum",
+    "line" : 11,
+    "char" : 8,
+    "baseDeco" : "i",
+    "members" : [
+     {
+      "name" : "RGB",
+      "kind" : "enum member",
+      "value" : "0",
+      "line" : 13,
+      "char" : 5
+     },
+     {
+      "name" : "RGBA",
+      "kind" : "enum member",
+      "value" : "1",
+      "line" : 14,
+      "char" : 5
+     },
+     {
+      "name" : "ARGB",
+      "kind" : "enum member",
+      "value" : "2",
+      "line" : 15,
+      "char" : 5
+     }
+    ]
+   },
+   {
+    "name" : "grayscale",
+    "kind" : "function",
+    "line" : 18,
+    "char" : 20,
+    "deco" : "FNfhZS4tida5color__T5ColorThZQj",
+    "parameters" : [
+     {
+      "name" : "gsc",
+      "deco" : "h"
+     }
+    ],
+    "endline" : 21,
+    "endchar" : 1
+   },
+   {
+    "name" : "rgb",
+    "kind" : "function",
+    "line" : 23,
+    "char" : 20,
+    "deco" : "FNfhhhZS4tida5color__T5ColorThZQj",
+    "parameters" : [
+     {
+      "name" : "r",
+      "deco" : "h"
+     },
+     {
+      "name" : "g",
+      "deco" : "h"
+     },
+     {
+      "name" : "b",
+      "deco" : "h"
+     }
+    ],
+    "endline" : 26,
+    "endchar" : 1
+   },
+   {
+    "name" : "rgba",
+    "kind" : "function",
+    "line" : 28,
+    "char" : 20,
+    "deco" : "FNfhhhhZS4tida5color__T5ColorThZQj",
+    "parameters" : [
+     {
+      "name" : "r",
+      "deco" : "h"
+     },
+     {
+      "name" : "g",
+      "deco" : "h"
+     },
+     {
+      "name" : "b",
+      "deco" : "h"
+     },
+     {
+      "name" : "a",
+      "deco" : "h"
+     }
+    ],
+    "endline" : 31,
+    "endchar" : 1
+   },
+   {
+    "name" : "toRGB",
+    "kind" : "function",
+    "line" : 33,
+    "char" : 20,
+    "deco" : "FNfS4tida5color3HSLZSQrQo__T5ColorThZQj",
+    "parameters" : [
+     {
+      "name" : "str",
+      "deco" : "S4tida5color3HSL"
+     }
+    ],
+    "endline" : 84,
+    "endchar" : 1
+   },
+   {
+    "name" : "toRGB",
+    "kind" : "function",
+    "line" : 86,
+    "char" : 20,
+    "deco" : "FNfS4tida5color3HSBZSQrQo__T5ColorThZQj",
+    "parameters" : [
+     {
+      "name" : "str",
+      "deco" : "S4tida5color3HSB"
+     }
+    ],
+    "endline" : 164,
+    "endchar" : 1
+   },
+   {
+    "name" : "HSL",
+    "kind" : "struct",
+    "line" : 166,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "hue",
+      "kind" : "variable",
+      "line" : 170,
+      "char" : 15,
+      "deco" : "f",
+      "offset" : 0
+     },
+     {
+      "name" : "saturation",
+      "kind" : "variable",
+      "line" : 171,
+      "char" : 15,
+      "deco" : "f",
+      "offset" : 4
+     },
+     {
+      "name" : "lightness",
+      "kind" : "variable",
+      "line" : 172,
+      "char" : 15,
+      "deco" : "f",
+      "offset" : 8
+     },
+     {
+      "name" : "h",
+      "kind" : "alias",
+      "line" : 174,
+      "char" : 9,
+      "originalType" : "hue"
+     },
+     {
+      "name" : "s",
+      "kind" : "alias",
+      "line" : 175,
+      "char" : 9,
+      "originalType" : "saturation"
+     },
+     {
+      "name" : "l",
+      "kind" : "alias",
+      "line" : 176,
+      "char" : 9,
+      "originalType" : "lightness"
+     }
+    ]
+   },
+   {
+    "name" : "HSV",
+    "kind" : "alias",
+    "line" : 180,
+    "char" : 1,
+    "deco" : "S4tida5color3HSB"
+   },
+   {
+    "name" : "HSB",
+    "kind" : "struct",
+    "line" : 182,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "hue",
+      "kind" : "variable",
+      "line" : 186,
+      "char" : 15,
+      "deco" : "f",
+      "offset" : 0
+     },
+     {
+      "name" : "saturation",
+      "kind" : "variable",
+      "line" : 187,
+      "char" : 15,
+      "deco" : "f",
+      "offset" : 4
+     },
+     {
+      "name" : "brightness",
+      "kind" : "variable",
+      "line" : 188,
+      "char" : 15,
+      "deco" : "f",
+      "offset" : 8
+     },
+     {
+      "name" : "value",
+      "kind" : "alias",
+      "line" : 189,
+      "char" : 9,
+      "originalType" : "brightness"
+     },
+     {
+      "name" : "h",
+      "kind" : "alias",
+      "line" : 191,
+      "char" : 9,
+      "originalType" : "hue"
+     },
+     {
+      "name" : "s",
+      "kind" : "alias",
+      "line" : 192,
+      "char" : 9,
+      "originalType" : "saturation"
+     },
+     {
+      "name" : "b",
+      "kind" : "alias",
+      "line" : 193,
+      "char" : 9,
+      "originalType" : "brightness"
+     },
+     {
+      "name" : "v",
+      "kind" : "alias",
+      "line" : 194,
+      "char" : 9,
+      "originalType" : "value"
+     }
+    ]
+   },
+   {
+    "name" : "CMYK",
+    "kind" : "struct",
+    "line" : 198,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "c",
+      "kind" : "variable",
+      "line" : 202,
+      "char" : 15,
+      "deco" : "f",
+      "offset" : 0
+     },
+     {
+      "name" : "m",
+      "kind" : "variable",
+      "line" : 203,
+      "char" : 15,
+      "deco" : "f",
+      "offset" : 4
+     },
+     {
+      "name" : "y",
+      "kind" : "variable",
+      "line" : 204,
+      "char" : 15,
+      "deco" : "f",
+      "offset" : 8
+     },
+     {
+      "name" : "k",
+      "kind" : "variable",
+      "line" : 205,
+      "char" : 15,
+      "deco" : "f",
+      "offset" : 12
+     }
+    ]
+   },
+   {
+    "kind" : "template",
+    "line" : 209,
+    "char" : 8,
+    "name" : "Color",
+    "parameters" : [
+     {
+      "name" : "T",
+      "kind" : "type"
+     }
+    ],
+    "members" : [
+     {
+      "name" : "Color",
+      "kind" : "struct",
+      "line" : 209,
+      "char" : 8,
+      "members" : [
+       {
+        "name" : "red",
+        "kind" : "variable",
+        "line" : 213,
+        "char" : 11,
+        "type" : "T"
+       },
+       {
+        "name" : "green",
+        "kind" : "variable",
+        "line" : 214,
+        "char" : 11,
+        "type" : "T"
+       },
+       {
+        "name" : "blue",
+        "kind" : "variable",
+        "line" : 215,
+        "char" : 11,
+        "type" : "T"
+       },
+       {
+        "name" : "alpha",
+        "kind" : "variable",
+        "line" : 216,
+        "char" : 11,
+        "type" : "T"
+       },
+       {
+        "name" : "r",
+        "kind" : "alias",
+        "line" : 218,
+        "char" : 9,
+        "type" : "red"
+       },
+       {
+        "name" : "g",
+        "kind" : "alias",
+        "line" : 219,
+        "char" : 9,
+        "type" : "green"
+       },
+       {
+        "name" : "b",
+        "kind" : "alias",
+        "line" : 220,
+        "char" : 9,
+        "type" : "blue"
+       },
+       {
+        "name" : "a",
+        "kind" : "alias",
+        "line" : 221,
+        "char" : 9,
+        "type" : "alpha"
+       },
+       {
+        "kind" : "template",
+        "line" : 224,
+        "char" : 14,
+        "name" : "conv",
+        "parameters" : [
+         {
+          "name" : "T",
+          "kind" : "type"
+         }
+        ],
+        "members" : [
+         {
+          "name" : "conv",
+          "kind" : "function",
+          "line" : 224,
+          "char" : 14,
+          "type" : "@safe T(PixelFormat format = PixelFormat.RGBA)",
+          "parameters" : [
+           {
+            "name" : "format",
+            "type" : "PixelFormat",
+            "default" : "PixelFormat.RGBA"
+           }
+          ],
+          "endline" : 239,
+          "endchar" : 5
+         }
+        ]
+       },
+       {
+        "kind" : "template",
+        "line" : 241,
+        "char" : 25,
+        "name" : "conv",
+        "parameters" : [
+         {
+          "name" : "T",
+          "kind" : "type"
+         }
+        ],
+        "members" : [
+         {
+          "name" : "conv",
+          "kind" : "function",
+          "line" : 241,
+          "char" : 25,
+          "type" : "immutable @safe immutable(T)(PixelFormat format = PixelFormat.RGBA)",
+          "parameters" : [
+           {
+            "name" : "format",
+            "type" : "PixelFormat",
+            "default" : "PixelFormat.RGBA"
+           }
+          ],
+          "endline" : 256,
+          "endchar" : 5
+         }
+        ]
+       },
+       {
+        "name" : "fromBytes",
+        "kind" : "function",
+        "line" : 258,
+        "char" : 16,
+        "type" : "@safe T[](PixelFormat format)",
+        "parameters" : [
+         {
+          "name" : "format",
+          "type" : "PixelFormat"
+         }
+        ],
+        "endline" : 270,
+        "endchar" : 5
+       },
+       {
+        "name" : "fromBytes",
+        "kind" : "function",
+        "line" : 272,
+        "char" : 27,
+        "type" : "immutable @safe immutable(T[])(PixelFormat format)",
+        "parameters" : [
+         {
+          "name" : "format",
+          "type" : "PixelFormat"
+         }
+        ],
+        "endline" : 284,
+        "endchar" : 5
+       },
+       {
+        "name" : "rf",
+        "kind" : "function",
+        "line" : 286,
+        "char" : 18,
+        "type" : "@safe float()",
+        "endline" : 289,
+        "endchar" : 5
+       },
+       {
+        "name" : "gf",
+        "kind" : "function",
+        "line" : 291,
+        "char" : 18,
+        "type" : "@safe float()",
+        "endline" : 294,
+        "endchar" : 5
+       },
+       {
+        "name" : "bf",
+        "kind" : "function",
+        "line" : 296,
+        "char" : 18,
+        "type" : "@safe float()",
+        "endline" : 299,
+        "endchar" : 5
+       },
+       {
+        "name" : "af",
+        "kind" : "function",
+        "line" : 301,
+        "char" : 18,
+        "type" : "@safe float()",
+        "endline" : 304,
+        "endchar" : 5
+       },
+       {
+        "name" : "rf",
+        "kind" : "function",
+        "line" : 306,
+        "char" : 18,
+        "type" : "immutable @safe float()",
+        "endline" : 309,
+        "endchar" : 5
+       },
+       {
+        "name" : "gf",
+        "kind" : "function",
+        "line" : 311,
+        "char" : 18,
+        "type" : "immutable @safe float()",
+        "endline" : 314,
+        "endchar" : 5
+       },
+       {
+        "name" : "bf",
+        "kind" : "function",
+        "line" : 316,
+        "char" : 18,
+        "type" : "immutable @safe float()",
+        "endline" : 319,
+        "endchar" : 5
+       },
+       {
+        "name" : "af",
+        "kind" : "function",
+        "line" : 321,
+        "char" : 18,
+        "type" : "immutable @safe float()",
+        "endline" : 324,
+        "endchar" : 5
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.event",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/event.d",
+  "comment" : "    Event handler module.\n\n    Authors: TodNaz\n    License: MIT\n",
+  "members" : [
+   {
+    "name" : "tida.window",
+    "kind" : "import",
+    "line" : 9,
+    "char" : 8,
+    "protection" : "private"
+   },
+   {
+    "name" : "initEventHandler",
+    "kind" : "function",
+    "comment" : "    Initializes an event handler.\n\n    Params:\n        window = For which window to process events.\n",
+    "line" : 17,
+    "char" : 21,
+    "storageClass" : [
+     "static"
+    ],
+    "deco" : "FNeC4tida6window6WindowZCQv5event12EventHandler",
+    "parameters" : [
+     {
+      "name" : "window",
+      "deco" : "C4tida6window6Window"
+     }
+    ],
+    "endline" : 20,
+    "endchar" : 1
+   },
+   {
+    "name" : "EventHandler",
+    "kind" : "class",
+    "comment" : "Event handler.\n",
+    "line" : 23,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "x11.Xlib",
+      "kind" : "import",
+      "line" : 27,
+      "char" : 16,
+      "protection" : "private"
+     },
+     {
+      "name" : "x11.X",
+      "kind" : "import",
+      "line" : 28,
+      "char" : 16,
+      "protection" : "private"
+     },
+     {
+      "name" : "x11.Xutil",
+      "kind" : "import",
+      "line" : 29,
+      "char" : 16,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.runtime",
+      "kind" : "import",
+      "line" : 37,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "window",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 41,
+      "char" : 28,
+      "deco" : "C4tida6window6Window",
+      "offset" : 16
+     },
+     {
+      "name" : "destroyWindowEvent",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 45,
+      "char" : 18,
+      "deco" : "m",
+      "originalType" : "Atom",
+      "offset" : 24
+     },
+     {
+      "name" : "event",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 46,
+      "char" : 20,
+      "deco" : "S3x114Xlib6XEvent",
+      "offset" : 32
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "comment" : "        Initializes an event handler.\n\n        Params:\n            window = For which window to process events.\n",
+      "line" : 61,
+      "char" : 5,
+      "deco" : "FNeC4tida6window6WindowZCQv5event12EventHandler",
+      "originalType" : "@trusted (tida.window.Window window)",
+      "parameters" : [
+       {
+        "name" : "window",
+        "deco" : "C4tida6window6Window"
+       }
+      ],
+      "endline" : 77,
+      "endchar" : 5
+     },
+     {
+      "name" : "handle",
+      "kind" : "function",
+      "line" : 79,
+      "char" : 17,
+      "deco" : "FNdNfDFNfZvZv",
+      "parameters" : [
+       {
+        "name" : "func",
+        "deco" : "DFNfZv"
+       }
+      ],
+      "endline" : 85,
+      "endchar" : 5
+     },
+     {
+      "name" : "update",
+      "kind" : "function",
+      "comment" : "        Updates the event queue. Returns whether there are events in the queue.\n        On each call, the queue is advanced.\n",
+      "line" : 91,
+      "char" : 17,
+      "deco" : "FNfZb",
+      "endline" : 95,
+      "endchar" : 5
+     },
+     {
+      "name" : "xUpdate",
+      "kind" : "function",
+      "line" : 105,
+      "char" : 32,
+      "deco" : "FNeZb",
+      "endline" : 113,
+      "endchar" : 5
+     },
+     {
+      "name" : "xIsKeyDown",
+      "kind" : "function",
+      "line" : 115,
+      "char" : 32,
+      "deco" : "FNeZb",
+      "endline" : 118,
+      "endchar" : 5
+     },
+     {
+      "name" : "xIsKeyUp",
+      "kind" : "function",
+      "line" : 120,
+      "char" : 32,
+      "deco" : "FNeZb",
+      "endline" : 123,
+      "endchar" : 5
+     },
+     {
+      "name" : "xGetKey",
+      "kind" : "function",
+      "line" : 135,
+      "char" : 32,
+      "storageClass" : [
+       "auto"
+      ],
+      "deco" : "FNeZk",
+      "originalType" : "@trusted ()",
+      "endline" : 138,
+      "endchar" : 5
+     },
+     {
+      "name" : "getKeyDown",
+      "kind" : "function",
+      "comment" : "        Returns the pressed key.\n",
+      "line" : 148,
+      "char" : 17,
+      "storageClass" : [
+       "auto"
+      ],
+      "deco" : "FNfZk",
+      "originalType" : "@safe ()",
+      "endline" : 152,
+      "endchar" : 5
+     },
+     {
+      "name" : "getKeyRelease",
+      "kind" : "function",
+      "comment" : "        Returns the released key.\n",
+      "line" : 157,
+      "char" : 17,
+      "storageClass" : [
+       "auto"
+      ],
+      "deco" : "FNfZk",
+      "originalType" : "@safe ()",
+      "endline" : 161,
+      "endchar" : 5
+     },
+     {
+      "name" : "getKey",
+      "kind" : "function",
+      "comment" : "        Returns the key.\n",
+      "line" : 166,
+      "char" : 17,
+      "storageClass" : [
+       "auto"
+      ],
+      "deco" : "FNfZk",
+      "originalType" : "@safe ()",
+      "endline" : 170,
+      "endchar" : 5
+     },
+     {
+      "name" : "isKeyDown",
+      "kind" : "function",
+      "comment" : "        Returns a state indicating whether a key is pressed.\n",
+      "line" : 175,
+      "char" : 17,
+      "deco" : "FNfZb",
+      "endline" : 179,
+      "endchar" : 5
+     },
+     {
+      "name" : "isKeyUp",
+      "kind" : "function",
+      "comment" : "        Returns a state indicating whether a key is released.\n",
+      "line" : 184,
+      "char" : 17,
+      "deco" : "FNfZb",
+      "endline" : 188,
+      "endchar" : 5
+     },
+     {
+      "name" : "xIsMouseDown",
+      "kind" : "function",
+      "line" : 190,
+      "char" : 32,
+      "deco" : "FNeZb",
+      "endline" : 193,
+      "endchar" : 5
+     },
+     {
+      "name" : "xIsMouseUp",
+      "kind" : "function",
+      "line" : 195,
+      "char" : 32,
+      "deco" : "FNeZb",
+      "endline" : 198,
+      "endchar" : 5
+     },
+     {
+      "name" : "xGetMouseButton",
+      "kind" : "function",
+      "line" : 200,
+      "char" : 32,
+      "storageClass" : [
+       "auto"
+      ],
+      "deco" : "FNeZk",
+      "originalType" : "@trusted ()",
+      "endline" : 203,
+      "endchar" : 5
+     },
+     {
+      "name" : "getMouseDown",
+      "kind" : "function",
+      "comment" : "        Returns the pressed mouse button.\n",
+      "line" : 236,
+      "char" : 17,
+      "storageClass" : [
+       "auto"
+      ],
+      "deco" : "FNfZk",
+      "originalType" : "@safe ()",
+      "endline" : 240,
+      "endchar" : 5
+     },
+     {
+      "name" : "getMouseUp",
+      "kind" : "function",
+      "comment" : "        Returns the released mouse button.\n",
+      "line" : 245,
+      "char" : 17,
+      "storageClass" : [
+       "auto"
+      ],
+      "deco" : "FNfZk",
+      "originalType" : "@safe ()",
+      "endline" : 249,
+      "endchar" : 5
+     },
+     {
+      "name" : "xMousePosition",
+      "kind" : "function",
+      "line" : 251,
+      "char" : 34,
+      "deco" : "FNeZG2i",
+      "endline" : 262,
+      "endchar" : 5
+     },
+     {
+      "name" : "xIsResize",
+      "kind" : "function",
+      "line" : 275,
+      "char" : 32,
+      "deco" : "FNeZb",
+      "endline" : 278,
+      "endchar" : 5
+     },
+     {
+      "name" : "isResize",
+      "kind" : "function",
+      "comment" : "        Returns whether the window has been resized.\n",
+      "line" : 288,
+      "char" : 17,
+      "deco" : "FNfZb",
+      "endline" : 292,
+      "endchar" : 5
+     },
+     {
+      "name" : "xResizeWindowSize",
+      "kind" : "function",
+      "line" : 294,
+      "char" : 34,
+      "deco" : "FNeZG2i",
+      "endline" : 297,
+      "endchar" : 5
+     },
+     {
+      "name" : "resizeWindowSize",
+      "kind" : "function",
+      "comment" : "        Returns whether the window has been resized.\n",
+      "line" : 311,
+      "char" : 19,
+      "deco" : "FNfZG2i",
+      "endline" : 315,
+      "endchar" : 5
+     },
+     {
+      "name" : "mouse",
+      "kind" : "function",
+      "comment" : "        Returns mouse position.\n",
+      "line" : 320,
+      "char" : 19,
+      "deco" : "FNdNfZG2i",
+      "endline" : 324,
+      "endchar" : 5
+     },
+     {
+      "name" : "xIsQuit",
+      "kind" : "function",
+      "line" : 326,
+      "char" : 32,
+      "deco" : "FNeZb",
+      "endline" : 329,
+      "endchar" : 5
+     },
+     {
+      "name" : "isQuit",
+      "kind" : "function",
+      "comment" : "        Do they close the window.\n",
+      "line" : 340,
+      "char" : 17,
+      "deco" : "FNfZb",
+      "endline" : 344,
+      "endchar" : 5
+     }
+    ]
+   },
+   {
+    "name" : "MouseButton",
+    "kind" : "enum",
+    "line" : 347,
+    "char" : 8,
+    "baseDeco" : "i",
+    "members" : [
+     {
+      "name" : "left",
+      "kind" : "enum member",
+      "value" : "1",
+      "line" : 349,
+      "char" : 5
+     },
+     {
+      "name" : "right",
+      "kind" : "enum member",
+      "value" : "3",
+      "line" : 350,
+      "char" : 5
+     },
+     {
+      "name" : "middle",
+      "kind" : "enum member",
+      "value" : "2",
+      "line" : 351,
+      "char" : 5
+     }
+    ]
+   },
+   {
+    "name" : "Key",
+    "kind" : "enum",
+    "line" : 355,
+    "char" : 8,
+    "baseDeco" : "i",
+    "members" : [
+     {
+      "name" : "Escape",
+      "kind" : "enum member",
+      "value" : "9",
+      "line" : 357,
+      "char" : 5
+     },
+     {
+      "name" : "F1",
+      "kind" : "enum member",
+      "value" : "67",
+      "line" : 358,
+      "char" : 5
+     },
+     {
+      "name" : "F2",
+      "kind" : "enum member",
+      "value" : "68",
+      "line" : 359,
+      "char" : 5
+     },
+     {
+      "name" : "F3",
+      "kind" : "enum member",
+      "value" : "69",
+      "line" : 360,
+      "char" : 5
+     },
+     {
+      "name" : "F4",
+      "kind" : "enum member",
+      "value" : "70",
+      "line" : 361,
+      "char" : 5
+     },
+     {
+      "name" : "F5",
+      "kind" : "enum member",
+      "value" : "71",
+      "line" : 362,
+      "char" : 5
+     },
+     {
+      "name" : "F6",
+      "kind" : "enum member",
+      "value" : "72",
+      "line" : 363,
+      "char" : 5
+     },
+     {
+      "name" : "F7",
+      "kind" : "enum member",
+      "value" : "73",
+      "line" : 364,
+      "char" : 5
+     },
+     {
+      "name" : "F8",
+      "kind" : "enum member",
+      "value" : "74",
+      "line" : 365,
+      "char" : 5
+     },
+     {
+      "name" : "F9",
+      "kind" : "enum member",
+      "value" : "75",
+      "line" : 366,
+      "char" : 5
+     },
+     {
+      "name" : "F10",
+      "kind" : "enum member",
+      "value" : "76",
+      "line" : 367,
+      "char" : 5
+     },
+     {
+      "name" : "F11",
+      "kind" : "enum member",
+      "value" : "95",
+      "line" : 368,
+      "char" : 5
+     },
+     {
+      "name" : "F12",
+      "kind" : "enum member",
+      "value" : "96",
+      "line" : 369,
+      "char" : 5
+     },
+     {
+      "name" : "PrintScrn",
+      "kind" : "enum member",
+      "value" : "111",
+      "line" : 370,
+      "char" : 5
+     },
+     {
+      "name" : "ScrollLock",
+      "kind" : "enum member",
+      "value" : "78",
+      "line" : 371,
+      "char" : 5
+     },
+     {
+      "name" : "Pause",
+      "kind" : "enum member",
+      "value" : "110",
+      "line" : 372,
+      "char" : 5
+     },
+     {
+      "name" : "Backtick",
+      "kind" : "enum member",
+      "value" : "49",
+      "line" : 373,
+      "char" : 5
+     },
+     {
+      "name" : "K1",
+      "kind" : "enum member",
+      "value" : "10",
+      "line" : 374,
+      "char" : 5
+     },
+     {
+      "name" : "K2",
+      "kind" : "enum member",
+      "value" : "11",
+      "line" : 375,
+      "char" : 5
+     },
+     {
+      "name" : "K3",
+      "kind" : "enum member",
+      "value" : "12",
+      "line" : 376,
+      "char" : 5
+     },
+     {
+      "name" : "K4",
+      "kind" : "enum member",
+      "value" : "13",
+      "line" : 377,
+      "char" : 5
+     },
+     {
+      "name" : "K5",
+      "kind" : "enum member",
+      "value" : "14",
+      "line" : 378,
+      "char" : 5
+     },
+     {
+      "name" : "K6",
+      "kind" : "enum member",
+      "value" : "15",
+      "line" : 379,
+      "char" : 5
+     },
+     {
+      "name" : "K7",
+      "kind" : "enum member",
+      "value" : "16",
+      "line" : 380,
+      "char" : 5
+     },
+     {
+      "name" : "K8",
+      "kind" : "enum member",
+      "value" : "17",
+      "line" : 381,
+      "char" : 5
+     },
+     {
+      "name" : "K9",
+      "kind" : "enum member",
+      "value" : "18",
+      "line" : 382,
+      "char" : 5
+     },
+     {
+      "name" : "K0",
+      "kind" : "enum member",
+      "value" : "19",
+      "line" : 383,
+      "char" : 5
+     },
+     {
+      "name" : "Minus",
+      "kind" : "enum member",
+      "value" : "20",
+      "line" : 384,
+      "char" : 5
+     },
+     {
+      "name" : "Equal",
+      "kind" : "enum member",
+      "value" : "21",
+      "line" : 385,
+      "char" : 5
+     },
+     {
+      "name" : "Backspace",
+      "kind" : "enum member",
+      "value" : "22",
+      "line" : 386,
+      "char" : 5
+     },
+     {
+      "name" : "Insert",
+      "kind" : "enum member",
+      "value" : "106",
+      "line" : 387,
+      "char" : 5
+     },
+     {
+      "name" : "Home",
+      "kind" : "enum member",
+      "value" : "97",
+      "line" : 388,
+      "char" : 5
+     },
+     {
+      "name" : "PageUp",
+      "kind" : "enum member",
+      "value" : "99",
+      "line" : 389,
+      "char" : 5
+     },
+     {
+      "name" : "NumLock",
+      "kind" : "enum member",
+      "value" : "77",
+      "line" : 390,
+      "char" : 5
+     },
+     {
+      "name" : "KPSlash",
+      "kind" : "enum member",
+      "value" : "112",
+      "line" : 391,
+      "char" : 5
+     },
+     {
+      "name" : "KPStar",
+      "kind" : "enum member",
+      "value" : "63",
+      "line" : 392,
+      "char" : 5
+     },
+     {
+      "name" : "KPMinus",
+      "kind" : "enum member",
+      "value" : "82",
+      "line" : 393,
+      "char" : 5
+     },
+     {
+      "name" : "Tab",
+      "kind" : "enum member",
+      "value" : "23",
+      "line" : 394,
+      "char" : 5
+     },
+     {
+      "name" : "Q",
+      "kind" : "enum member",
+      "value" : "24",
+      "line" : 395,
+      "char" : 5
+     },
+     {
+      "name" : "W",
+      "kind" : "enum member",
+      "value" : "25",
+      "line" : 396,
+      "char" : 5
+     },
+     {
+      "name" : "E",
+      "kind" : "enum member",
+      "value" : "26",
+      "line" : 397,
+      "char" : 5
+     },
+     {
+      "name" : "R",
+      "kind" : "enum member",
+      "value" : "27",
+      "line" : 398,
+      "char" : 5
+     },
+     {
+      "name" : "T",
+      "kind" : "enum member",
+      "value" : "28",
+      "line" : 399,
+      "char" : 5
+     },
+     {
+      "name" : "Y",
+      "kind" : "enum member",
+      "value" : "29",
+      "line" : 400,
+      "char" : 5
+     },
+     {
+      "name" : "U",
+      "kind" : "enum member",
+      "value" : "30",
+      "line" : 401,
+      "char" : 5
+     },
+     {
+      "name" : "I",
+      "kind" : "enum member",
+      "value" : "31",
+      "line" : 402,
+      "char" : 5
+     },
+     {
+      "name" : "O",
+      "kind" : "enum member",
+      "value" : "32",
+      "line" : 403,
+      "char" : 5
+     },
+     {
+      "name" : "P",
+      "kind" : "enum member",
+      "value" : "33",
+      "line" : 404,
+      "char" : 5
+     },
+     {
+      "name" : "SqBrackLeft",
+      "kind" : "enum member",
+      "value" : "34",
+      "line" : 406,
+      "char" : 5
+     },
+     {
+      "name" : "SqBrackRight",
+      "kind" : "enum member",
+      "value" : "35",
+      "line" : 407,
+      "char" : 5
+     },
+     {
+      "name" : "SquareBracketLeft",
+      "kind" : "enum member",
+      "value" : "34",
+      "line" : 408,
+      "char" : 5
+     },
+     {
+      "name" : "SquareBracketRight",
+      "kind" : "enum member",
+      "value" : "35",
+      "line" : 409,
+      "char" : 5
+     },
+     {
+      "name" : "Return",
+      "kind" : "enum member",
+      "value" : "36",
+      "line" : 411,
+      "char" : 5
+     },
+     {
+      "name" : "Delete",
+      "kind" : "enum member",
+      "value" : "107",
+      "line" : 412,
+      "char" : 5
+     },
+     {
+      "name" : "End",
+      "kind" : "enum member",
+      "value" : "103",
+      "line" : 413,
+      "char" : 5
+     },
+     {
+      "name" : "PageDown",
+      "kind" : "enum member",
+      "value" : "105",
+      "line" : 414,
+      "char" : 5
+     },
+     {
+      "name" : "KP7",
+      "kind" : "enum member",
+      "value" : "79",
+      "line" : 416,
+      "char" : 5
+     },
+     {
+      "name" : "KP8",
+      "kind" : "enum member",
+      "value" : "80",
+      "line" : 417,
+      "char" : 5
+     },
+     {
+      "name" : "KP9",
+      "kind" : "enum member",
+      "value" : "81",
+      "line" : 418,
+      "char" : 5
+     },
+     {
+      "name" : "CapsLock",
+      "kind" : "enum member",
+      "value" : "66",
+      "line" : 420,
+      "char" : 5
+     },
+     {
+      "name" : "A",
+      "kind" : "enum member",
+      "value" : "38",
+      "line" : 421,
+      "char" : 5
+     },
+     {
+      "name" : "S",
+      "kind" : "enum member",
+      "value" : "39",
+      "line" : 422,
+      "char" : 5
+     },
+     {
+      "name" : "D",
+      "kind" : "enum member",
+      "value" : "40",
+      "line" : 423,
+      "char" : 5
+     },
+     {
+      "name" : "F",
+      "kind" : "enum member",
+      "value" : "41",
+      "line" : 424,
+      "char" : 5
+     },
+     {
+      "name" : "G",
+      "kind" : "enum member",
+      "value" : "42",
+      "line" : 425,
+      "char" : 5
+     },
+     {
+      "name" : "H",
+      "kind" : "enum member",
+      "value" : "43",
+      "line" : 426,
+      "char" : 5
+     },
+     {
+      "name" : "J",
+      "kind" : "enum member",
+      "value" : "44",
+      "line" : 427,
+      "char" : 5
+     },
+     {
+      "name" : "K",
+      "kind" : "enum member",
+      "value" : "45",
+      "line" : 428,
+      "char" : 5
+     },
+     {
+      "name" : "L",
+      "kind" : "enum member",
+      "value" : "46",
+      "line" : 429,
+      "char" : 5
+     },
+     {
+      "name" : "Semicolons",
+      "kind" : "enum member",
+      "value" : "47",
+      "line" : 430,
+      "char" : 5
+     },
+     {
+      "name" : "Apostrophe",
+      "kind" : "enum member",
+      "value" : "48",
+      "line" : 431,
+      "char" : 5
+     },
+     {
+      "name" : "KP4",
+      "kind" : "enum member",
+      "value" : "83",
+      "line" : 433,
+      "char" : 5
+     },
+     {
+      "name" : "KP5",
+      "kind" : "enum member",
+      "value" : "84",
+      "line" : 434,
+      "char" : 5
+     },
+     {
+      "name" : "KP6",
+      "kind" : "enum member",
+      "value" : "85",
+      "line" : 435,
+      "char" : 5
+     },
+     {
+      "name" : "ShiftLeft",
+      "kind" : "enum member",
+      "value" : "50",
+      "line" : 437,
+      "char" : 5
+     },
+     {
+      "name" : "International",
+      "kind" : "enum member",
+      "value" : "94",
+      "line" : 438,
+      "char" : 5
+     },
+     {
+      "name" : "Z",
+      "kind" : "enum member",
+      "value" : "52",
+      "line" : 440,
+      "char" : 5
+     },
+     {
+      "name" : "X",
+      "kind" : "enum member",
+      "value" : "53",
+      "line" : 441,
+      "char" : 5
+     },
+     {
+      "name" : "C",
+      "kind" : "enum member",
+      "value" : "54",
+      "line" : 442,
+      "char" : 5
+     },
+     {
+      "name" : "V",
+      "kind" : "enum member",
+      "value" : "55",
+      "line" : 443,
+      "char" : 5
+     },
+     {
+      "name" : "B",
+      "kind" : "enum member",
+      "value" : "56",
+      "line" : 444,
+      "char" : 5
+     },
+     {
+      "name" : "N",
+      "kind" : "enum member",
+      "value" : "57",
+      "line" : 445,
+      "char" : 5
+     },
+     {
+      "name" : "M",
+      "kind" : "enum member",
+      "value" : "58",
+      "line" : 446,
+      "char" : 5
+     },
+     {
+      "name" : "Comma",
+      "kind" : "enum member",
+      "value" : "59",
+      "line" : 447,
+      "char" : 5
+     },
+     {
+      "name" : "Point",
+      "kind" : "enum member",
+      "value" : "60",
+      "line" : 448,
+      "char" : 5
+     },
+     {
+      "name" : "Slash",
+      "kind" : "enum member",
+      "value" : "61",
+      "line" : 449,
+      "char" : 5
+     },
+     {
+      "name" : "ShiftRight",
+      "kind" : "enum member",
+      "value" : "62",
+      "line" : 451,
+      "char" : 5
+     },
+     {
+      "name" : "BackSlash",
+      "kind" : "enum member",
+      "value" : "51",
+      "line" : 453,
+      "char" : 5
+     },
+     {
+      "name" : "Up",
+      "kind" : "enum member",
+      "value" : "98",
+      "line" : 454,
+      "char" : 5
+     },
+     {
+      "name" : "KP1",
+      "kind" : "enum member",
+      "value" : "87",
+      "line" : 456,
+      "char" : 5
+     },
+     {
+      "name" : "KP2",
+      "kind" : "enum member",
+      "value" : "88",
+      "line" : 457,
+      "char" : 5
+     },
+     {
+      "name" : "KP3",
+      "kind" : "enum member",
+      "value" : "89",
+      "line" : 458,
+      "char" : 5
+     },
+     {
+      "name" : "KPEnter",
+      "kind" : "enum member",
+      "value" : "108",
+      "line" : 460,
+      "char" : 5
+     },
+     {
+      "name" : "CtrlLeft",
+      "kind" : "enum member",
+      "value" : "37",
+      "line" : 461,
+      "char" : 5
+     },
+     {
+      "name" : "SuperLeft",
+      "kind" : "enum member",
+      "value" : "115",
+      "line" : 462,
+      "char" : 5
+     },
+     {
+      "name" : "AltLeft",
+      "kind" : "enum member",
+      "value" : "64",
+      "line" : 463,
+      "char" : 5
+     },
+     {
+      "name" : "Space",
+      "kind" : "enum member",
+      "value" : "65",
+      "line" : 464,
+      "char" : 5
+     },
+     {
+      "name" : "AltRight",
+      "kind" : "enum member",
+      "value" : "113",
+      "line" : 465,
+      "char" : 5
+     },
+     {
+      "name" : "LogoRight",
+      "kind" : "enum member",
+      "value" : "116",
+      "line" : 466,
+      "char" : 5
+     },
+     {
+      "name" : "Menu",
+      "kind" : "enum member",
+      "value" : "117",
+      "line" : 467,
+      "char" : 5
+     },
+     {
+      "name" : "CtrlRight",
+      "kind" : "enum member",
+      "value" : "109",
+      "line" : 468,
+      "char" : 5
+     },
+     {
+      "name" : "Left",
+      "kind" : "enum member",
+      "value" : "100",
+      "line" : 469,
+      "char" : 5
+     },
+     {
+      "name" : "Down",
+      "kind" : "enum member",
+      "value" : "104",
+      "line" : 470,
+      "char" : 5
+     },
+     {
+      "name" : "Right",
+      "kind" : "enum member",
+      "value" : "102",
+      "line" : 471,
+      "char" : 5
+     },
+     {
+      "name" : "KP0",
+      "kind" : "enum member",
+      "value" : "90",
+      "line" : 472,
+      "char" : 5
+     },
+     {
+      "name" : "KPPoint",
+      "kind" : "enum member",
+      "value" : "91",
+      "line" : 473,
+      "char" : 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.exception",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/exception.d",
+  "comment" : "\n",
+  "members" : [
+   {
+    "name" : "ContextError",
+    "kind" : "enum",
+    "line" : 6,
+    "char" : 8,
+    "baseDeco" : "i",
+    "members" : [
+     {
+      "name" : "fbsNull",
+      "kind" : "enum member",
+      "value" : "0",
+      "line" : 8,
+      "char" : 2
+     },
+     {
+      "name" : "noContext",
+      "kind" : "enum member",
+      "value" : "1",
+      "line" : 9,
+      "char" : 2
+     }
+    ]
+   },
+   {
+    "kind" : "template",
+    "line" : 12,
+    "char" : 8,
+    "name" : "ExceptionError",
+    "parameters" : [
+     {
+      "name" : "T",
+      "kind" : "type"
+     }
+    ],
+    "members" : [
+     {
+      "name" : "ExceptionError",
+      "kind" : "class",
+      "line" : 12,
+      "char" : 8,
+      "members" : [
+       {
+        "name" : "error",
+        "kind" : "variable",
+        "line" : 16,
+        "char" : 5,
+        "type" : "T"
+       },
+       {
+        "name" : "this",
+        "kind" : "constructor",
+        "line" : 19,
+        "char" : 2,
+        "type" : "(T error, string message)",
+        "parameters" : [
+         {
+          "name" : "error",
+          "type" : "T"
+         },
+         {
+          "name" : "message",
+          "type" : "string"
+         }
+        ],
+        "endline" : 23,
+        "endchar" : 2
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name" : "ContextException",
+    "kind" : "class",
+    "line" : 26,
+    "char" : 8,
+    "base" : "tida.exception.ExceptionError!(tida.exception.ContextError).ExceptionError",
+    "members" : [
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 28,
+      "char" : 2,
+      "deco" : "FNfE4tida9exception12ContextErrorAyaZCQBiQBg16ContextException",
+      "originalType" : "@safe (ContextError error, string message)",
+      "parameters" : [
+       {
+        "name" : "error",
+        "deco" : "E4tida9exception12ContextError"
+       },
+       {
+        "name" : "message",
+        "deco" : "Aya"
+       }
+      ],
+      "endline" : 31,
+      "endchar" : 2
+     }
+    ]
+   },
+   {
+    "name" : "WindowError",
+    "kind" : "enum",
+    "line" : 34,
+    "char" : 8,
+    "baseDeco" : "i",
+    "members" : [
+     {
+      "name" : "noCreate",
+      "kind" : "enum member",
+      "value" : "0",
+      "line" : 36,
+      "char" : 2
+     }
+    ]
+   },
+   {
+    "name" : "WindowException",
+    "kind" : "class",
+    "line" : 39,
+    "char" : 8,
+    "base" : "tida.exception.ExceptionError!(tida.exception.WindowError).ExceptionError",
+    "members" : [
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 41,
+      "char" : 2,
+      "deco" : "FNfE4tida9exception11WindowErrorAyaZCQBhQBf15WindowException",
+      "originalType" : "@safe (WindowError error, string message)",
+      "parameters" : [
+       {
+        "name" : "error",
+        "deco" : "E4tida9exception11WindowError"
+       },
+       {
+        "name" : "message",
+        "deco" : "Aya"
+       }
+      ],
+      "endline" : 44,
+      "endchar" : 2
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.fps",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/fps.d",
+  "comment" : "\n",
+  "members" : [
+   {
+    "name" : "FPSManager",
+    "kind" : "class",
+    "line" : 6,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "std.datetime",
+      "kind" : "import",
+      "line" : 8,
+      "char" : 9,
+      "protection" : "private"
+     },
+     {
+      "name" : "maxFps",
+      "kind" : "variable",
+      "comment" : "Maximum FPS\n",
+      "line" : 12,
+      "char" : 15,
+      "deco" : "m",
+      "init" : "60LU",
+      "offset" : 16
+     },
+     {
+      "name" : "time",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 17,
+      "char" : 18,
+      "deco" : "S4core4time__T12MonoTimeImplVEQBdQBb9ClockTypei0ZQBj",
+      "originalType" : "MonoTime",
+      "offset" : 24
+     },
+     {
+      "name" : "lastTime",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 18,
+      "char" : 18,
+      "deco" : "S4core4time__T12MonoTimeImplVEQBdQBb9ClockTypei0ZQBj",
+      "originalType" : "MonoTime",
+      "offset" : 32
+     },
+     {
+      "name" : "_deltatime",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 20,
+      "char" : 14,
+      "deco" : "l",
+      "offset" : 40
+     },
+     {
+      "name" : "_fps",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 21,
+      "char" : 14,
+      "deco" : "l",
+      "init" : "0L",
+      "offset" : 48
+     },
+     {
+      "name" : "__frames",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 23,
+      "char" : 14,
+      "deco" : "l",
+      "init" : "0L",
+      "offset" : 56
+     },
+     {
+      "name" : "fps",
+      "kind" : "function",
+      "comment" : "        Give current FPS.\n\n        Returns:\n            float - FPS\n",
+      "line" : 32,
+      "char" : 29,
+      "deco" : "FNdNfZym",
+      "endline" : 35,
+      "endchar" : 5
+     },
+     {
+      "name" : "opCall",
+      "kind" : "function",
+      "comment" : "\n",
+      "line" : 38,
+      "char" : 22,
+      "deco" : "FNfZym",
+      "endline" : 41,
+      "endchar" : 5
+     },
+     {
+      "name" : "deltatime",
+      "kind" : "function",
+      "comment" : "        Returns deltatime\n",
+      "line" : 46,
+      "char" : 29,
+      "deco" : "FNdNfZym",
+      "endline" : 49,
+      "endchar" : 5
+     },
+     {
+      "name" : "start",
+      "kind" : "function",
+      "comment" : "        Starts counting.\n",
+      "line" : 54,
+      "char" : 17,
+      "deco" : "FNeZv",
+      "endline" : 57,
+      "endchar" : 5
+     },
+     {
+      "name" : "rate",
+      "kind" : "function",
+      "comment" : "        Delay process itself.\n",
+      "line" : 62,
+      "char" : 17,
+      "deco" : "FNeZv",
+      "endline" : 75,
+      "endchar" : 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.graph.drawable",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/graph/drawable.d",
+  "comment" : "\n",
+  "members" : [
+   {
+    "name" : "IDrawable",
+    "kind" : "interface",
+    "line" : 6,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "tida.window",
+      "kind" : "import",
+      "line" : 8,
+      "char" : 9,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.vector",
+      "kind" : "import",
+      "line" : 9,
+      "char" : 9,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.graph.render",
+      "kind" : "import",
+      "line" : 10,
+      "char" : 9,
+      "protection" : "private"
+     },
+     {
+      "name" : "draw",
+      "kind" : "function",
+      "line" : 12,
+      "char" : 14,
+      "storageClass" : [
+       "abstract"
+      ],
+      "deco" : "FNeC4tida5graph6render8RendererSQBc6vector__T6VectorTfZQkZv",
+      "originalType" : "@trusted void(Renderer renderer, Vecf position)",
+      "parameters" : [
+       {
+        "name" : "renderer",
+        "deco" : "C4tida5graph6render8Renderer"
+       },
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name" : "IDrawableEx",
+    "kind" : "interface",
+    "line" : 15,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "tida.window",
+      "kind" : "import",
+      "line" : 17,
+      "char" : 9,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.vector",
+      "kind" : "import",
+      "line" : 18,
+      "char" : 9,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.graph.render",
+      "kind" : "import",
+      "line" : 19,
+      "char" : 9,
+      "protection" : "private"
+     },
+     {
+      "name" : "drawEx",
+      "kind" : "function",
+      "line" : 21,
+      "char" : 14,
+      "storageClass" : [
+       "abstract"
+      ],
+      "deco" : "FNeC4tida5graph6render8RendererSQBc6vector__T6VectorTfZQkfQBbQBeZv",
+      "originalType" : "@trusted void(Renderer renderer, Vecf position, float angle, Vecf center, Vecf size)",
+      "parameters" : [
+       {
+        "name" : "renderer",
+        "deco" : "C4tida5graph6render8Renderer"
+       },
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "angle",
+        "deco" : "f"
+       },
+       {
+        "name" : "center",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "size",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name" : "IDrawableColor",
+    "kind" : "interface",
+    "line" : 24,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "tida.window",
+      "kind" : "import",
+      "line" : 26,
+      "char" : 9,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.vector",
+      "kind" : "import",
+      "line" : 27,
+      "char" : 9,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.color",
+      "kind" : "import",
+      "line" : 28,
+      "char" : 9,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.graph.render",
+      "kind" : "import",
+      "line" : 29,
+      "char" : 9,
+      "protection" : "private"
+     },
+     {
+      "name" : "drawColor",
+      "kind" : "function",
+      "line" : 31,
+      "char" : 14,
+      "storageClass" : [
+       "abstract"
+      ],
+      "deco" : "FNeC4tida5graph6render8RendererSQBc6vector__T6VectorTfZQkSQCc5color__T5ColorThZQjZv",
+      "originalType" : "@trusted void(Renderer renderer, Vecf position, Color!ubyte color)",
+      "parameters" : [
+       {
+        "name" : "renderer",
+        "deco" : "C4tida5graph6render8Renderer"
+       },
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.graph.gl",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/graph/gl.d",
+  "comment" : "\n",
+  "members" : [
+   {
+    "name" : "bindbc.opengl",
+    "kind" : "import",
+    "line" : 17,
+    "char" : 19
+   },
+   {
+    "name" : "Lines",
+    "kind" : "enum member",
+    "value" : "GL_LINES",
+    "line" : 21,
+    "char" : 5
+   },
+   {
+    "name" : "Triangle",
+    "kind" : "enum member",
+    "value" : "GL_TRIANGLES",
+    "line" : 22,
+    "char" : 5
+   },
+   {
+    "name" : "Polygons",
+    "kind" : "enum member",
+    "value" : "GL_POLYGON",
+    "line" : 23,
+    "char" : 5
+   },
+   {
+    "name" : "Rectangle",
+    "kind" : "enum member",
+    "value" : "GL_QUADS",
+    "line" : 24,
+    "char" : 5
+   },
+   {
+    "name" : "Points",
+    "kind" : "enum member",
+    "value" : "GL_POINTS",
+    "line" : 25,
+    "char" : 5
+   },
+   {
+    "name" : "GL",
+    "kind" : "struct",
+    "line" : 28,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "tida.color",
+      "kind" : "import",
+      "line" : 30,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.vector",
+      "kind" : "import",
+      "line" : 31,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.exception",
+      "kind" : "import",
+      "line" : 35,
+      "char" : 16,
+      "protection" : "private"
+     },
+     {
+      "name" : "initialize",
+      "kind" : "function",
+      "line" : 38,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeZv",
+      "endline" : 44,
+      "endchar" : 5
+     },
+     {
+      "name" : "viewport",
+      "kind" : "function",
+      "line" : 46,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeiiiiZv",
+      "parameters" : [
+       {
+        "name" : "x",
+        "deco" : "i"
+       },
+       {
+        "name" : "y",
+        "deco" : "i"
+       },
+       {
+        "name" : "width",
+        "deco" : "i"
+       },
+       {
+        "name" : "height",
+        "deco" : "i"
+       }
+      ],
+      "endline" : 49,
+      "endchar" : 5
+     },
+     {
+      "name" : "clearColor",
+      "kind" : "function",
+      "line" : 51,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNdNeS4tida5color__T5ColorThZQjZv",
+      "parameters" : [
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj"
+       }
+      ],
+      "endline" : 54,
+      "endchar" : 5
+     },
+     {
+      "name" : "clear",
+      "kind" : "function",
+      "line" : 56,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeZv",
+      "endline" : 59,
+      "endchar" : 5
+     },
+     {
+      "name" : "translate",
+      "kind" : "function",
+      "line" : 61,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNefffZv",
+      "parameters" : [
+       {
+        "name" : "x",
+        "deco" : "f"
+       },
+       {
+        "name" : "y",
+        "deco" : "f"
+       },
+       {
+        "name" : "z",
+        "deco" : "f"
+       }
+      ],
+      "endline" : 64,
+      "endchar" : 5
+     },
+     {
+      "name" : "rotate",
+      "kind" : "function",
+      "line" : 66,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeffffZv",
+      "parameters" : [
+       {
+        "name" : "angle",
+        "deco" : "f"
+       },
+       {
+        "name" : "x",
+        "deco" : "f"
+       },
+       {
+        "name" : "y",
+        "deco" : "f"
+       },
+       {
+        "name" : "z",
+        "deco" : "f"
+       }
+      ],
+      "endline" : 69,
+      "endchar" : 5
+     },
+     {
+      "name" : "pushMatrix",
+      "kind" : "function",
+      "line" : 71,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeZv",
+      "endline" : 74,
+      "endchar" : 5
+     },
+     {
+      "name" : "popMatrix",
+      "kind" : "function",
+      "line" : 76,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeZv",
+      "endline" : 79,
+      "endchar" : 5
+     },
+     {
+      "kind" : "template",
+      "line" : 81,
+      "char" : 17,
+      "name" : "draw",
+      "parameters" : [
+       {
+        "name" : "mode",
+        "kind" : "value",
+        "deco" : "k"
+       }
+      ],
+      "members" : [
+       {
+        "name" : "draw",
+        "kind" : "function",
+        "line" : 81,
+        "char" : 17,
+        "type" : "@trusted void(void delegate() @safe func)",
+        "parameters" : [
+         {
+          "name" : "func",
+          "type" : "void delegate() @safe"
+         }
+        ],
+        "endline" : 86,
+        "endchar" : 5
+       }
+      ]
+     },
+     {
+      "name" : "genTextures",
+      "kind" : "function",
+      "line" : 88,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeiKkZv",
+      "parameters" : [
+       {
+        "name" : "nums",
+        "deco" : "i"
+       },
+       {
+        "name" : "texID",
+        "deco" : "k",
+        "storageClass" : [
+         "ref"
+        ]
+       }
+      ],
+      "endline" : 91,
+      "endchar" : 5
+     },
+     {
+      "name" : "enable",
+      "kind" : "function",
+      "line" : 93,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeiZv",
+      "parameters" : [
+       {
+        "name" : "mode",
+        "deco" : "i"
+       }
+      ],
+      "endline" : 96,
+      "endchar" : 5
+     },
+     {
+      "name" : "disable",
+      "kind" : "function",
+      "line" : 98,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeiZv",
+      "parameters" : [
+       {
+        "name" : "mode",
+        "deco" : "i"
+       }
+      ],
+      "endline" : 101,
+      "endchar" : 5
+     },
+     {
+      "name" : "texCoord2i",
+      "kind" : "function",
+      "line" : 103,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeiiZv",
+      "parameters" : [
+       {
+        "name" : "a",
+        "deco" : "i"
+       },
+       {
+        "name" : "b",
+        "deco" : "i"
+       }
+      ],
+      "endline" : 106,
+      "endchar" : 5
+     },
+     {
+      "name" : "bindTexture",
+      "kind" : "function",
+      "line" : 108,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeiZv",
+      "parameters" : [
+       {
+        "name" : "texID",
+        "deco" : "i"
+       }
+      ],
+      "endline" : 111,
+      "endchar" : 5
+     },
+     {
+      "name" : "texParameteri",
+      "kind" : "function",
+      "line" : 113,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeiiZv",
+      "parameters" : [
+       {
+        "name" : "a",
+        "deco" : "i"
+       },
+       {
+        "name" : "b",
+        "deco" : "i"
+       }
+      ],
+      "endline" : 116,
+      "endchar" : 5
+     },
+     {
+      "name" : "texImage2D",
+      "kind" : "function",
+      "line" : 118,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNekkAhZv",
+      "parameters" : [
+       {
+        "name" : "width",
+        "deco" : "k"
+       },
+       {
+        "name" : "height",
+        "deco" : "k"
+       },
+       {
+        "name" : "pixels",
+        "deco" : "Ah"
+       }
+      ],
+      "endline" : 121,
+      "endchar" : 5
+     },
+     {
+      "name" : "vertex",
+      "kind" : "function",
+      "line" : 123,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeS4tida6vector__T6VectorTfZQkQBcZv",
+      "originalType" : "@trusted void(Vecf vector, Vecf size = Vecf())",
+      "parameters" : [
+       {
+        "name" : "vector",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "size",
+        "deco" : "S4tida6vector__T6VectorTfZQk",
+        "default" : "Vector(0.0F, 0.0F)"
+       }
+      ],
+      "endline" : 126,
+      "endchar" : 5
+     },
+     {
+      "name" : "color",
+      "kind" : "function",
+      "line" : 128,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeS4tida5color__T5ColorThZQjZv",
+      "parameters" : [
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj"
+       }
+      ],
+      "endline" : 131,
+      "endchar" : 5
+     },
+     {
+      "name" : "ortho",
+      "kind" : "function",
+      "line" : 133,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeffffffZv",
+      "parameters" : [
+       {
+        "name" : "a",
+        "deco" : "f"
+       },
+       {
+        "name" : "b",
+        "deco" : "f"
+       },
+       {
+        "name" : "c",
+        "deco" : "f"
+       },
+       {
+        "name" : "d",
+        "deco" : "f"
+       },
+       {
+        "name" : "e",
+        "deco" : "f"
+       },
+       {
+        "name" : "f",
+        "deco" : "f"
+       }
+      ],
+      "endline" : 136,
+      "endchar" : 5
+     },
+     {
+      "name" : "matrixMode",
+      "kind" : "function",
+      "line" : 138,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeiZv",
+      "parameters" : [
+       {
+        "name" : "mode",
+        "deco" : "i"
+       }
+      ],
+      "endline" : 141,
+      "endchar" : 5
+     },
+     {
+      "name" : "loadIdentity",
+      "kind" : "function",
+      "line" : 143,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeZv",
+      "endline" : 146,
+      "endchar" : 5
+     },
+     {
+      "name" : "releative",
+      "kind" : "function",
+      "line" : 148,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeKS4tida6vector__T6VectorTfZQkQBcZv",
+      "originalType" : "@trusted void(ref Vecf position, Vecf size)",
+      "parameters" : [
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk",
+        "storageClass" : [
+         "ref"
+        ]
+       },
+       {
+        "name" : "size",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       }
+      ],
+      "endline" : 152,
+      "endchar" : 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.graph.image",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/graph/image.d",
+  "comment" : "    A module for describing an image. This module provides control\n    of the image both with a surface and with a texture.\n\n    Authors: TodNaz\n    License: MIT\n",
+  "members" : [
+   {
+    "name" : "tida.graph.drawable",
+    "kind" : "import",
+    "line" : 10,
+    "char" : 8,
+    "protection" : "private"
+   },
+   {
+    "name" : "Image",
+    "kind" : "class",
+    "comment" : "Image.\n",
+    "line" : 13,
+    "char" : 8,
+    "interfaces" : [
+     "tida.graph.drawable.IDrawable",
+     "tida.graph.drawable.IDrawableEx",
+     "tida.graph.drawable.IDrawableColor"
+    ],
+    "members" : [
+     {
+      "name" : "tida.color",
+      "kind" : "import",
+      "line" : 15,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.vector",
+      "kind" : "import",
+      "line" : 16,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.graph.gl",
+      "kind" : "import",
+      "line" : 17,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.graph.render",
+      "kind" : "import",
+      "line" : 18,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "imageformats",
+      "kind" : "import",
+      "line" : 19,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "_pixels",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 23,
+      "char" : 23,
+      "deco" : "AS4tida5color__T5ColorThZQj",
+      "offset" : 40
+     },
+     {
+      "name" : "_width",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 24,
+      "char" : 14,
+      "deco" : "k",
+      "offset" : 56
+     },
+     {
+      "name" : "_height",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 25,
+      "char" : 14,
+      "deco" : "k",
+      "offset" : 60
+     },
+     {
+      "name" : "_glID",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 26,
+      "char" : 14,
+      "deco" : "k",
+      "offset" : 64
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "comment" : "Empty initilization.\n",
+      "line" : 30,
+      "char" : 5,
+      "deco" : "FNfZC4tida5graph5image5Image",
+      "originalType" : "@safe ()",
+      "endline" : 33,
+      "endchar" : 5
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "comment" : "        Creates a surface with the specified size. Note that it is\n        not yet a texture, and you don’t need to draw it right away,\n        to do this, convert it to a texture.\n\n        Params:\n            newWidth = Image width.\n            newHeight = Image height.\n",
+      "line" : 44,
+      "char" : 5,
+      "deco" : "FNfkkZC4tida5graph5image5Image",
+      "originalType" : "@safe (uint newWidth, uint newHeight)",
+      "parameters" : [
+       {
+        "name" : "newWidth",
+        "deco" : "k"
+       },
+       {
+        "name" : "newHeight",
+        "deco" : "k"
+       }
+      ],
+      "endline" : 47,
+      "endchar" : 5
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "comment" : "        Loads a surface from a file. Supported formats are described here:\n        `https://code.dlang.org/packages/imageformats`\n\n        Params:\n            path = Relative or full path to the image file.\n",
+      "line" : 56,
+      "char" : 5,
+      "deco" : "FNfAyaZC4tida5graph5image5Image",
+      "originalType" : "@safe (string path)",
+      "parameters" : [
+       {
+        "name" : "path",
+        "deco" : "Aya"
+       }
+      ],
+      "endline" : 59,
+      "endchar" : 5
+     },
+     {
+      "name" : "bytes",
+      "kind" : "function",
+      "comment" : "        Gives a sequence of bytes that encodes a color in\n        the specified color format.\n\n        Params:\n            format = Pixel format.\n",
+      "line" : 68,
+      "char" : 20,
+      "deco" : "FNfE4tida5color11PixelFormatZAh",
+      "originalType" : "@safe ubyte[](PixelFormat format = PixelFormat.RGBA)",
+      "parameters" : [
+       {
+        "name" : "format",
+        "deco" : "E4tida5color11PixelFormat",
+        "default" : "cast(PixelFormat)1"
+       }
+      ],
+      "endline" : 76,
+      "endchar" : 5
+     },
+     {
+      "name" : "colors",
+      "kind" : "function",
+      "comment" : "        Returns a sequence of pixels in the format `0xRRGGBBAA` (Depending on the format).\n\n        Params:\n            format = Pixel format.\n",
+      "line" : 84,
+      "char" : 19,
+      "deco" : "FNfE4tida5color11PixelFormatZAk",
+      "originalType" : "@safe uint[](PixelFormat format = PixelFormat.RGBA)",
+      "parameters" : [
+       {
+        "name" : "format",
+        "deco" : "E4tida5color11PixelFormat",
+        "default" : "cast(PixelFormat)1"
+       }
+      ],
+      "endline" : 92,
+      "endchar" : 5
+     },
+     {
+      "name" : "toString",
+      "kind" : "function",
+      "line" : 94,
+      "char" : 28,
+      "storageClass" : [
+       "override"
+      ],
+      "deco" : "FNfZAya",
+      "endline" : 99,
+      "endchar" : 5,
+      "overrides" : [
+       "object.Object.toString"
+      ]
+     },
+     {
+      "name" : "pixels",
+      "kind" : "function",
+      "comment" : "        A sequence of pixels.\n",
+      "line" : 104,
+      "char" : 26,
+      "deco" : "FNdNfZAS4tida5color__T5ColorThZQj",
+      "endline" : 107,
+      "endchar" : 5
+     },
+     {
+      "name" : "pixels",
+      "kind" : "function",
+      "comment" : "        A sequence of pixels.\n",
+      "line" : 112,
+      "char" : 17,
+      "deco" : "FNdNeAS4tida5color__T5ColorThZQjZv",
+      "parameters" : [
+       {
+        "name" : "otherPixels",
+        "deco" : "AS4tida5color__T5ColorThZQj"
+       }
+      ],
+      "endline" : 115,
+      "endchar" : 5
+     },
+     {
+      "name" : "setPixel",
+      "kind" : "function",
+      "comment" : "        Set the pixel at the specified location.\n\n        Params:\n            x = The x-axis position pixel.\n            y = The y-axis position pixel.\n            color = Pixel.\n",
+      "line" : 125,
+      "char" : 17,
+      "deco" : "FNemmS4tida5color__T5ColorThZQjZv",
+      "originalType" : "@trusted void(size_t x, size_t y, Color!ubyte color)",
+      "parameters" : [
+       {
+        "name" : "x",
+        "deco" : "m"
+       },
+       {
+        "name" : "y",
+        "deco" : "m"
+       },
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj"
+       }
+      ],
+      "endline" : 133,
+      "endchar" : 5
+     },
+     {
+      "name" : "getPixel",
+      "kind" : "function",
+      "comment" : "        Returns the pixel at the specified location.\n\n        Params:\n            x = The x-axis position pixel.\n            y = The y-axis position pixel.\n",
+      "line" : 142,
+      "char" : 24,
+      "deco" : "FNemmZS4tida5color__T5ColorThZQj",
+      "originalType" : "@trusted Color!ubyte(size_t x, size_t y)",
+      "parameters" : [
+       {
+        "name" : "x",
+        "deco" : "m"
+       },
+       {
+        "name" : "y",
+        "deco" : "m"
+       }
+      ],
+      "endline" : 145,
+      "endchar" : 5
+     },
+     {
+      "name" : "blit",
+      "kind" : "function",
+      "comment" : "        Attaches an image to itself at the specified position.\n",
+      "line" : 150,
+      "char" : 17,
+      "deco" : "FNeC4tida5graph5image5ImageSQy6vector__T6VectorTfZQkZv",
+      "originalType" : "@trusted void(Image otherImage, Vecf pos)",
+      "parameters" : [
+       {
+        "name" : "otherImage",
+        "deco" : "C4tida5graph5image5Image"
+       },
+       {
+        "name" : "pos",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       }
+      ],
+      "endline" : 159,
+      "endchar" : 5
+     },
+     {
+      "name" : "create",
+      "kind" : "function",
+      "comment" : "        Creates a surface with the specified size. Note that it is\n        not yet a texture, and you don’t need to draw it right away,\n        to do this, convert it to a texture.\n\n        Params:\n            newWidth = Image width.\n            newHeight = Image height.\n",
+      "line" : 170,
+      "char" : 17,
+      "deco" : "FNfkkZv",
+      "parameters" : [
+       {
+        "name" : "newWidth",
+        "deco" : "k"
+       },
+       {
+        "name" : "newHeight",
+        "deco" : "k"
+       }
+      ],
+      "endline" : 180,
+      "endchar" : 5
+     },
+     {
+      "name" : "load",
+      "kind" : "function",
+      "comment" : "        Loads a surface from a file. Supported formats are described here:\n        `https://code.dlang.org/packages/imageformats`\n\n        Params:\n            path = Relative or full path to the image file.\n",
+      "line" : 189,
+      "char" : 17,
+      "deco" : "FNeAyaZv",
+      "parameters" : [
+       {
+        "name" : "path",
+        "deco" : "Aya"
+       }
+      ],
+      "endline" : 207,
+      "endchar" : 5
+     },
+     {
+      "name" : "isTexture",
+      "kind" : "function",
+      "line" : 209,
+      "char" : 17,
+      "deco" : "FNfZb",
+      "endline" : 212,
+      "endchar" : 5
+     },
+     {
+      "name" : "fromTexture",
+      "kind" : "function",
+      "comment" : "        Convert to a texture for rendering to the window.\n",
+      "line" : 217,
+      "char" : 18,
+      "deco" : "FNfZC4tida5graph5image5Image",
+      "endline" : 236,
+      "endchar" : 5
+     },
+     {
+      "name" : "width",
+      "kind" : "function",
+      "comment" : "        The width of the picture.\n",
+      "line" : 241,
+      "char" : 28,
+      "deco" : "FNdNfZyk",
+      "endline" : 244,
+      "endchar" : 5
+     },
+     {
+      "name" : "height",
+      "kind" : "function",
+      "comment" : "        The height of the picture.\n",
+      "line" : 249,
+      "char" : 28,
+      "deco" : "FNdNfZyk",
+      "endline" : 252,
+      "endchar" : 5
+     },
+     {
+      "name" : "dup",
+      "kind" : "function",
+      "comment" : "        Creates a copy of the picture. Doesn't create a copy of the texture.\n",
+      "line" : 257,
+      "char" : 18,
+      "deco" : "FNdNfZC4tida5graph5image5Image",
+      "endline" : 266,
+      "endchar" : 5
+     },
+     {
+      "name" : "draw",
+      "kind" : "function",
+      "line" : 268,
+      "char" : 19,
+      "storageClass" : [
+       "override"
+      ],
+      "deco" : "FNeC4tida5graph6render8RendererSQBc6vector__T6VectorTfZQkZv",
+      "originalType" : "@trusted void(Renderer render, Vecf position)",
+      "parameters" : [
+       {
+        "name" : "render",
+        "deco" : "C4tida5graph6render8Renderer"
+       },
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       }
+      ],
+      "endline" : 284,
+      "endchar" : 5,
+      "overrides" : [
+       "tida.graph.drawable.IDrawable.draw"
+      ]
+     },
+     {
+      "name" : "drawEx",
+      "kind" : "function",
+      "line" : 286,
+      "char" : 19,
+      "storageClass" : [
+       "override"
+      ],
+      "deco" : "FNfC4tida5graph6render8RendererSQBc6vector__T6VectorTfZQkfQBbQBeZv",
+      "originalType" : "void(Renderer renderer, Vecf position, float angle, Vecf center, Vecf size)",
+      "parameters" : [
+       {
+        "name" : "renderer",
+        "deco" : "C4tida5graph6render8Renderer"
+       },
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "angle",
+        "deco" : "f"
+       },
+       {
+        "name" : "center",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "size",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       }
+      ],
+      "endline" : 311,
+      "endchar" : 5,
+      "overrides" : [
+       "tida.graph.drawable.IDrawableEx.drawEx"
+      ]
+     },
+     {
+      "name" : "drawColor",
+      "kind" : "function",
+      "line" : 313,
+      "char" : 19,
+      "storageClass" : [
+       "override"
+      ],
+      "deco" : "FNfC4tida5graph6render8RendererSQBc6vector__T6VectorTfZQkSQCc5color__T5ColorThZQjZv",
+      "originalType" : "void(Renderer renderer, Vecf position, Color!ubyte color)",
+      "parameters" : [
+       {
+        "name" : "renderer",
+        "deco" : "C4tida5graph6render8Renderer"
+       },
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj"
+       }
+      ],
+      "endline" : 329,
+      "endchar" : 5,
+      "overrides" : [
+       "tida.graph.drawable.IDrawableColor.drawColor"
+      ]
+     },
+     {
+      "name" : "freeTexture",
+      "kind" : "function",
+      "comment" : "        Destroys the texture, not the image.\n",
+      "line" : 334,
+      "char" : 17,
+      "deco" : "FNeZv",
+      "endline" : 340,
+      "endchar" : 5
+     },
+     {
+      "name" : "freePixels",
+      "kind" : "function",
+      "comment" : "        Frees up space for pixels. Does not destroy texture.\n",
+      "line" : 345,
+      "char" : 17,
+      "deco" : "FNeZv",
+      "endline" : 350,
+      "endchar" : 5
+     },
+     {
+      "name" : "free",
+      "kind" : "function",
+      "comment" : "        Frees memory completely from texture and pixels.\n",
+      "line" : 355,
+      "char" : 17,
+      "deco" : "FNeZv",
+      "endline" : 362,
+      "endchar" : 5
+     },
+     {
+      "name" : "~this",
+      "kind" : "destructor",
+      "line" : 364,
+      "char" : 5,
+      "deco" : "FNfZv",
+      "endline" : 367,
+      "endchar" : 5
+     },
+     {
+      "name" : "__xdtor",
+      "kind" : "alias"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.graph.render",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/graph/render.d",
+  "comment" : "    Module for drawing in a window using opengl.\n\n    Authors: TodNaz\n    License: MIT\n",
+  "members" : [
+   {
+    "name" : "tida.window",
+    "kind" : "import",
+    "line" : 9,
+    "char" : 8,
+    "protection" : "private"
+   },
+   {
+    "name" : "initRender",
+    "kind" : "function",
+    "line" : 11,
+    "char" : 17,
+    "storageClass" : [
+     "static"
+    ],
+    "deco" : "FNfC4tida6window6WindowZCQv5graph6render8Renderer",
+    "parameters" : [
+     {
+      "name" : "window",
+      "deco" : "C4tida6window6Window"
+     }
+    ],
+    "endline" : 14,
+    "endchar" : 1
+   },
+   {
+    "name" : "BlendMode",
+    "kind" : "enum",
+    "line" : 16,
+    "char" : 1,
+    "baseDeco" : "i",
+    "members" : [
+     {
+      "name" : "noBlend",
+      "kind" : "enum member",
+      "value" : "0",
+      "line" : 17,
+      "char" : 5
+     },
+     {
+      "name" : "Blend",
+      "kind" : "enum member",
+      "value" : "1",
+      "line" : 18,
+      "char" : 5
+     }
+    ]
+   },
+   {
+    "name" : "Renderer",
+    "kind" : "class",
+    "line" : 21,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "tida.color",
+      "kind" : "import",
+      "line" : 23,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.vector",
+      "kind" : "import",
+      "line" : 24,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.graph.gl",
+      "kind" : "import",
+      "line" : 25,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.graph.drawable",
+      "kind" : "import",
+      "line" : 26,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.graph.text",
+      "kind" : "import",
+      "line" : 27,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "toRender",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 31,
+      "char" : 16,
+      "deco" : "C4tida6window6Window",
+      "originalType" : "Window",
+      "offset" : 16
+     },
+     {
+      "name" : "_background",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 32,
+      "char" : 21,
+      "deco" : "S4tida5color__T5ColorThZQj",
+      "offset" : 24
+     },
+     {
+      "name" : "size",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 33,
+      "char" : 14,
+      "deco" : "S4tida6vector__T6VectorTfZQk",
+      "originalType" : "Vecf",
+      "offset" : 28
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 36,
+      "char" : 5,
+      "deco" : "FNfC4tida6window6WindowZCQv5graph6render8Renderer",
+      "originalType" : "@safe (Window window)",
+      "parameters" : [
+       {
+        "name" : "window",
+        "deco" : "C4tida6window6Window"
+       }
+      ],
+      "endline" : 53,
+      "endchar" : 5
+     },
+     {
+      "name" : "reshape",
+      "kind" : "function",
+      "line" : 55,
+      "char" : 17,
+      "deco" : "FNfZv",
+      "endline" : 70,
+      "endchar" : 5
+     },
+     {
+      "name" : "blend",
+      "kind" : "function",
+      "line" : 72,
+      "char" : 17,
+      "deco" : "FNeE4tida5graph6render9BlendModeZv",
+      "parameters" : [
+       {
+        "name" : "blend",
+        "deco" : "E4tida5graph6render9BlendMode"
+       }
+      ],
+      "endline" : 80,
+      "endchar" : 5
+     },
+     {
+      "name" : "background",
+      "kind" : "function",
+      "comment" : "        The background.\n",
+      "line" : 85,
+      "char" : 17,
+      "deco" : "FNdNfS4tida5color__T5ColorThZQjZv",
+      "parameters" : [
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj"
+       }
+      ],
+      "endline" : 89,
+      "endchar" : 5
+     },
+     {
+      "name" : "background",
+      "kind" : "function",
+      "comment" : "ditto\n",
+      "line" : 92,
+      "char" : 24,
+      "deco" : "FNdNfZS4tida5color__T5ColorThZQj",
+      "endline" : 95,
+      "endchar" : 5
+     },
+     {
+      "name" : "clear",
+      "kind" : "function",
+      "comment" : "        Clears what is drawn.\n",
+      "line" : 100,
+      "char" : 17,
+      "deco" : "FNfZv",
+      "endline" : 103,
+      "endchar" : 5
+     },
+     {
+      "name" : "triangle",
+      "kind" : "function",
+      "comment" : "        Draws only a regular triangle.\n\n        Params:\n            points = Tringle vertex.\n            color = Triangle color.\n            isFill = Triangle is filled.\n",
+      "line" : 113,
+      "char" : 17,
+      "deco" : "FNfG3S4tida6vector__T6VectorTfZQkSQBc5color__T5ColorThZQjbZv",
+      "originalType" : "@safe void(Vecf[3] points, Color!ubyte color, bool isFill = true)",
+      "parameters" : [
+       {
+        "name" : "points",
+        "deco" : "G3S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj"
+       },
+       {
+        "name" : "isFill",
+        "deco" : "b",
+        "default" : "true"
+       }
+      ],
+      "endline" : 135,
+      "endchar" : 5
+     },
+     {
+      "name" : "rectangle",
+      "kind" : "function",
+      "comment" : "        Draws a rectangle.\n\n        Params:\n            position = Rectangle position.\n            width = Rectangle width.\n            height = Rectangle height.\n            color = Rectangle color.\n            isFill = Rectangle is filled.\n",
+      "line" : 147,
+      "char" : 17,
+      "deco" : "FNfS4tida6vector__T6VectorTfZQkffSQBe5color__T5ColorThZQjbZv",
+      "originalType" : "@safe void(Vecf position, float width, float height, Color!ubyte color, bool isFill = true)",
+      "parameters" : [
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "width",
+        "deco" : "f"
+       },
+       {
+        "name" : "height",
+        "deco" : "f"
+       },
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj"
+       },
+       {
+        "name" : "isFill",
+        "deco" : "b",
+        "default" : "true"
+       }
+      ],
+      "endline" : 173,
+      "endchar" : 5
+     },
+     {
+      "name" : "line",
+      "kind" : "function",
+      "comment" : "        Draws a line.\n\n        Params:\n            points = Line vertex.\n            color = Line color.\n",
+      "line" : 182,
+      "char" : 17,
+      "deco" : "FNfG2S4tida6vector__T6VectorTfZQkSQBc5color__T5ColorThZQjZv",
+      "originalType" : "@safe void(Vecf[2] points, Color!ubyte color)",
+      "parameters" : [
+       {
+        "name" : "points",
+        "deco" : "G2S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj"
+       }
+      ],
+      "endline" : 190,
+      "endchar" : 5
+     },
+     {
+      "name" : "circle",
+      "kind" : "function",
+      "comment" : "        Draws a circle.\n\n        Params:\n            position = Circle position.\n            radious = Circle radious.\n            color = Circle color.\n            isFill = Circle is filled.\n",
+      "line" : 201,
+      "char" : 17,
+      "deco" : "FNfS4tida6vector__T6VectorTfZQkfSQBd5color__T5ColorThZQjbZv",
+      "originalType" : "@safe void(Vecf position, float radious, Color!ubyte color, bool isFill)",
+      "parameters" : [
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "radious",
+        "deco" : "f"
+       },
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj"
+       },
+       {
+        "name" : "isFill",
+        "deco" : "b"
+       }
+      ],
+      "endline" : 275,
+      "endchar" : 5
+     },
+     {
+      "name" : "draw",
+      "kind" : "function",
+      "comment" : "        Draws characters rendered by the text class.\n\n        Params:\n            symbols = Symbols rendered.\n            position = Text position.\n",
+      "line" : 284,
+      "char" : 17,
+      "deco" : "FNfAC4tida5graph4text6SymbolSQy6vector__T6VectorTfZQkZv",
+      "originalType" : "@safe void(Symbol[] symbols, Vecf position)",
+      "parameters" : [
+       {
+        "name" : "symbols",
+        "deco" : "AC4tida5graph4text6Symbol"
+       },
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       }
+      ],
+      "endline" : 294,
+      "endchar" : 5
+     },
+     {
+      "name" : "draw",
+      "kind" : "function",
+      "comment" : "\n",
+      "line" : 297,
+      "char" : 17,
+      "deco" : "FNfC4tida5graph8drawable9IDrawableSQBf6vector__T6VectorTfZQkZv",
+      "originalType" : "@safe void(IDrawable drawable, Vecf position)",
+      "parameters" : [
+       {
+        "name" : "drawable",
+        "deco" : "C4tida5graph8drawable9IDrawable"
+       },
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       }
+      ],
+      "endline" : 300,
+      "endchar" : 5
+     },
+     {
+      "name" : "drawEx",
+      "kind" : "function",
+      "comment" : "\n",
+      "line" : 303,
+      "char" : 17,
+      "deco" : "FNfC4tida5graph8drawable11IDrawableExSQBi6vector__T6VectorTfZQkfQBbQBeZv",
+      "originalType" : "@safe void(IDrawableEx drawable, Vecf position, float angle, Vecf center, Vecf size)",
+      "parameters" : [
+       {
+        "name" : "drawable",
+        "deco" : "C4tida5graph8drawable11IDrawableEx"
+       },
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "angle",
+        "deco" : "f"
+       },
+       {
+        "name" : "center",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "size",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       }
+      ],
+      "endline" : 306,
+      "endchar" : 5
+     },
+     {
+      "name" : "drawColor",
+      "kind" : "function",
+      "comment" : "\n",
+      "line" : 309,
+      "char" : 17,
+      "deco" : "FNfC4tida5graph8drawable14IDrawableColorSQBl6vector__T6VectorTfZQkSQCl5color__T5ColorThZQjZv",
+      "originalType" : "@safe void(IDrawableColor drawable, Vecf position, Color!ubyte color)",
+      "parameters" : [
+       {
+        "name" : "drawable",
+        "deco" : "C4tida5graph8drawable14IDrawableColor"
+       },
+       {
+        "name" : "position",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj"
+       }
+      ],
+      "endline" : 312,
+      "endchar" : 5
+     },
+     {
+      "name" : "drawning",
+      "kind" : "function",
+      "comment" : "        Display the drawing canvas.\n",
+      "line" : 317,
+      "char" : 17,
+      "deco" : "FNfZv",
+      "endline" : 320,
+      "endchar" : 5
+     },
+     {
+      "name" : "drawning",
+      "kind" : "function",
+      "comment" : "\n",
+      "line" : 323,
+      "char" : 17,
+      "deco" : "FNfDFNfZvZv",
+      "parameters" : [
+       {
+        "name" : "func",
+        "deco" : "DFNfZv"
+       }
+      ],
+      "endline" : 330,
+      "endchar" : 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.graph.text",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/graph/text.d",
+  "comment" : "\n",
+  "members" : [
+   {
+    "name" : "bindbc.freetype",
+    "kind" : "import",
+    "line" : 6,
+    "char" : 8,
+    "protection" : "private"
+   },
+   {
+    "name" : "FTlibrary",
+    "kind" : "variable",
+    "line" : 8,
+    "char" : 22,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "PS6bindbc8freetype4bindQo13FT_LibraryRec",
+    "originalType" : "FT_Library"
+   },
+   {
+    "name" : "FreeTypeLoad",
+    "kind" : "function",
+    "line" : 10,
+    "char" : 13,
+    "deco" : "FNeZv",
+    "endline" : 21,
+    "endchar" : 1
+   },
+   {
+    "name" : "Font",
+    "kind" : "class",
+    "line" : 23,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "_face",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 27,
+      "char" : 17,
+      "deco" : "PS6bindbc8freetype4bindQo10FT_FaceRec",
+      "originalType" : "FT_Face",
+      "offset" : 16
+     },
+     {
+      "name" : "_size",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 28,
+      "char" : 16,
+      "deco" : "m",
+      "originalType" : "size_t",
+      "offset" : 24
+     },
+     {
+      "name" : "face",
+      "kind" : "function",
+      "line" : 31,
+      "char" : 20,
+      "deco" : "FNdNfZPS6bindbc8freetype4bindQo10FT_FaceRec",
+      "originalType" : "@property @safe FT_Face()",
+      "endline" : 34,
+      "endchar" : 5
+     },
+     {
+      "name" : "size",
+      "kind" : "function",
+      "line" : 36,
+      "char" : 19,
+      "deco" : "FNdNfZm",
+      "originalType" : "@property @safe size_t()",
+      "endline" : 39,
+      "endchar" : 5
+     },
+     {
+      "name" : "load",
+      "kind" : "function",
+      "line" : 41,
+      "char" : 17,
+      "deco" : "FNeAyamZv",
+      "originalType" : "@trusted void(string path, size_t size)",
+      "parameters" : [
+       {
+        "name" : "path",
+        "deco" : "Aya"
+       },
+       {
+        "name" : "size",
+        "deco" : "m"
+       }
+      ],
+      "endline" : 52,
+      "endchar" : 5
+     }
+    ]
+   },
+   {
+    "name" : "Symbol",
+    "kind" : "class",
+    "line" : 55,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "tida.graph.image",
+      "kind" : "import",
+      "line" : 57,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.vector",
+      "kind" : "import",
+      "line" : 57,
+      "char" : 30,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.color",
+      "kind" : "import",
+      "line" : 57,
+      "char" : 43,
+      "protection" : "private"
+     },
+     {
+      "name" : "image",
+      "kind" : "variable",
+      "line" : 61,
+      "char" : 15,
+      "deco" : "C4tida5graph5image5Image",
+      "originalType" : "Image",
+      "offset" : 16
+     },
+     {
+      "name" : "position",
+      "kind" : "variable",
+      "line" : 62,
+      "char" : 14,
+      "deco" : "S4tida6vector__T6VectorTfZQk",
+      "originalType" : "Vecf",
+      "offset" : 24
+     },
+     {
+      "name" : "color",
+      "kind" : "variable",
+      "line" : 63,
+      "char" : 21,
+      "deco" : "S4tida5color__T5ColorThZQj",
+      "offset" : 32
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 66,
+      "char" : 5,
+      "deco" : "FNfC4tida5graph5image5ImageSQy6vector__T6VectorTfZQkSQBx5color__T5ColorThZQjZCQCwQCu4text6Symbol",
+      "originalType" : "@safe (Image img, Vecf pos, Color!ubyte color = rgb(255, 255, 255))",
+      "parameters" : [
+       {
+        "name" : "img",
+        "deco" : "C4tida5graph5image5Image"
+       },
+       {
+        "name" : "pos",
+        "deco" : "S4tida6vector__T6VectorTfZQk"
+       },
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj",
+        "default" : "rgb(cast(ubyte)255u, cast(ubyte)255u, cast(ubyte)255u)"
+       }
+      ],
+      "endline" : 71,
+      "endchar" : 5
+     }
+    ]
+   },
+   {
+    "name" : "Text",
+    "kind" : "class",
+    "line" : 74,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "tida.graph.image",
+      "kind" : "import",
+      "line" : 76,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.color",
+      "kind" : "import",
+      "line" : 76,
+      "char" : 30,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.vector",
+      "kind" : "import",
+      "line" : 76,
+      "char" : 42,
+      "protection" : "private"
+     },
+     {
+      "name" : "_font",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 80,
+      "char" : 14,
+      "deco" : "C4tida5graph4text4Font",
+      "originalType" : "Font",
+      "offset" : 16
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 83,
+      "char" : 5,
+      "deco" : "FNfC4tida5graph4text4FontZCQxQuQq4Text",
+      "originalType" : "@safe (Font newFont)",
+      "parameters" : [
+       {
+        "name" : "newFont",
+        "deco" : "C4tida5graph4text4Font"
+       }
+      ],
+      "endline" : 86,
+      "endchar" : 5
+     },
+     {
+      "name" : "renderSymbols",
+      "kind" : "function",
+      "line" : 88,
+      "char" : 21,
+      "deco" : "FNeAyaS4tida5color__T5ColorThZQjZACQBc5graph4text6Symbol",
+      "originalType" : "@trusted Symbol[](string symbols, Color!ubyte color = rgba(255, 255, 255, 255))",
+      "parameters" : [
+       {
+        "name" : "symbols",
+        "deco" : "Aya"
+       },
+       {
+        "name" : "color",
+        "deco" : "S4tida5color__T5ColorThZQj",
+        "default" : "rgba(cast(ubyte)255u, cast(ubyte)255u, cast(ubyte)255u, cast(ubyte)255u)"
+       }
+      ],
+      "endline" : 114,
+      "endchar" : 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.info",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/info.d",
+  "comment" : "    Module for system information.\n\n    Authors: TodNaz\n    License: MIT\n",
+  "members" : [
+   {
+    "name" : "Display",
+    "kind" : "class",
+    "comment" : "    Class for monitor information\n",
+    "line" : 12,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "tida.runtime",
+      "kind" : "import",
+      "line" : 14,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "x11.Xlib",
+      "kind" : "import",
+      "line" : 18,
+      "char" : 16,
+      "protection" : "private"
+     },
+     {
+      "name" : "width",
+      "kind" : "variable",
+      "comment" : "Display width\n",
+      "line" : 28,
+      "char" : 14,
+      "deco" : "k",
+      "offset" : 16
+     },
+     {
+      "name" : "height",
+      "kind" : "variable",
+      "comment" : "Display height\n",
+      "line" : 29,
+      "char" : 14,
+      "deco" : "k",
+      "offset" : 20
+     },
+     {
+      "name" : "getWidth",
+      "kind" : "function",
+      "comment" : "        Returns the width of the monitor.\n",
+      "line" : 35,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNekZk",
+      "originalType" : "@trusted uint(uint screenID = 0)",
+      "parameters" : [
+       {
+        "name" : "screenID",
+        "deco" : "k",
+        "default" : "0u"
+       }
+      ],
+      "endline" : 52,
+      "endchar" : 5
+     },
+     {
+      "name" : "getHeight",
+      "kind" : "function",
+      "comment" : "        Returns the height of the monitor.\n",
+      "line" : 57,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNekZk",
+      "originalType" : "@trusted uint(uint screenID = 0)",
+      "parameters" : [
+       {
+        "name" : "screenID",
+        "deco" : "k",
+        "default" : "0u"
+       }
+      ],
+      "endline" : 74,
+      "endchar" : 5
+     },
+     {
+      "name" : "information",
+      "kind" : "function",
+      "comment" : "        Returns information about the display.\n",
+      "line" : 79,
+      "char" : 27,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNfZC4tida4info7Display",
+      "endline" : 87,
+      "endchar" : 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.runtime",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/runtime.d",
+  "comment" : "    Runtime module. Serves to save some globally significant variables in the library.\n\n    To create a runtime, you just need to call one function for this:\n    ---\n    TidaRuntime.initialize(args);\n    ---\n\n    So it will automatically remember the program arguments and create all the\n    conditions for creating a window.\n\n    Authors: TodNaz\n    License: MIT\n",
+  "members" : [
+   {
+    "name" : "__runtime",
+    "kind" : "variable",
+    "line" : 23,
+    "char" : 23,
+    "storageClass" : [
+     "__gshared"
+    ],
+    "deco" : "C4tida7runtime11TidaRuntime",
+    "originalType" : "TidaRuntime",
+    "init" : "null"
+   },
+   {
+    "name" : "runtime",
+    "kind" : "function",
+    "comment" : "\n",
+    "line" : 26,
+    "char" : 20,
+    "deco" : "FNbNeZC4tida7runtime11TidaRuntime",
+    "endline" : 29,
+    "endchar" : 1
+   },
+   {
+    "name" : "TidaRuntime",
+    "kind" : "class",
+    "comment" : "    Ranttime. Required to create windows.\n",
+    "line" : 34,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "x11.X",
+      "kind" : "import",
+      "line" : 38,
+      "char" : 16,
+      "protection" : "private"
+     },
+     {
+      "name" : "x11.Xlib",
+      "kind" : "import",
+      "line" : 39,
+      "char" : 16,
+      "protection" : "private"
+     },
+     {
+      "name" : "x11.Xutil",
+      "kind" : "import",
+      "line" : 40,
+      "char" : 16,
+      "protection" : "private"
+     },
+     {
+      "name" : "dglx.glx",
+      "kind" : "import",
+      "line" : 41,
+      "char" : 16,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.graph.text",
+      "kind" : "import",
+      "line" : 49,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "mainArguments",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 53,
+      "char" : 18,
+      "deco" : "AAya",
+      "offset" : 16
+     },
+     {
+      "name" : "_xDisplay",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 57,
+      "char" : 22,
+      "deco" : "PS3x114Xlib9_XDisplay",
+      "originalType" : "Display*",
+      "offset" : 32
+     },
+     {
+      "name" : "_xDisplayID",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 58,
+      "char" : 17,
+      "deco" : "i",
+      "offset" : 40
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "line" : 67,
+      "char" : 5,
+      "deco" : "FNfAAyaZC4tida7runtime11TidaRuntime",
+      "originalType" : "@safe (string[] args)",
+      "parameters" : [
+       {
+        "name" : "args",
+        "deco" : "AAya"
+       }
+      ],
+      "endline" : 72,
+      "endchar" : 5
+     },
+     {
+      "name" : "initialize",
+      "kind" : "function",
+      "comment" : "        Creates and initializes a runtime for the program.\n",
+      "line" : 77,
+      "char" : 17,
+      "storageClass" : [
+       "static"
+      ],
+      "deco" : "FNeAAyaZv",
+      "parameters" : [
+       {
+        "name" : "args",
+        "deco" : "AAya",
+        "default" : "[]"
+       }
+      ],
+      "endline" : 90,
+      "endchar" : 5
+     },
+     {
+      "name" : "args",
+      "kind" : "function",
+      "comment" : "Returns the arguments that were passed at runtime.\n",
+      "line" : 93,
+      "char" : 21,
+      "deco" : "FNbNdNfZAAya",
+      "endline" : 96,
+      "endchar" : 5
+     },
+     {
+      "name" : "display",
+      "kind" : "function",
+      "comment" : "Returns a display open in x11 environment.\n",
+      "line" : 99,
+      "char" : 36,
+      "deco" : "FNbNdNeZPS3x114Xlib9_XDisplay",
+      "originalType" : "nothrow @property @trusted Display*()",
+      "endline" : 102,
+      "endchar" : 5
+     },
+     {
+      "name" : "displayID",
+      "kind" : "function",
+      "comment" : "Returns a display identificator.\n",
+      "line" : 105,
+      "char" : 31,
+      "deco" : "FNbNdNfZi",
+      "endline" : 108,
+      "endchar" : 5
+     },
+     {
+      "name" : "xDisplayOpen",
+      "kind" : "function",
+      "comment" : "Opens the display in x11 environment.\n",
+      "line" : 111,
+      "char" : 32,
+      "deco" : "FNbNdNeZv",
+      "endline" : 115,
+      "endchar" : 5
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.vector",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/vector.d",
+  "comment" : "    Module for information about positioning elements.\n\n    Authors: TodNaz\n    License: MIT\n",
+  "members" : [
+   {
+    "name" : "Vecf",
+    "kind" : "alias",
+    "line" : 9,
+    "char" : 1,
+    "deco" : "S4tida6vector__T6VectorTfZQk"
+   },
+   {
+    "kind" : "template",
+    "comment" : "\n",
+    "line" : 12,
+    "char" : 3,
+    "name" : "sqr",
+    "parameters" : [
+     {
+      "name" : "T",
+      "kind" : "type"
+     }
+    ],
+    "members" : [
+     {
+      "name" : "sqr",
+      "kind" : "function",
+      "line" : 12,
+      "char" : 3,
+      "type" : "@safe T(T value)",
+      "parameters" : [
+       {
+        "name" : "value",
+        "type" : "T"
+       }
+      ],
+      "endline" : 15,
+      "endchar" : 1
+     }
+    ]
+   },
+   {
+    "kind" : "template",
+    "comment" : "    Vector structure. Two-dimensional, because the framework does not\n    imply 3D capabilities.\n",
+    "line" : 21,
+    "char" : 8,
+    "name" : "Vector",
+    "parameters" : [
+     {
+      "name" : "T",
+      "kind" : "type"
+     }
+    ],
+    "members" : [
+     {
+      "name" : "Vector",
+      "kind" : "struct",
+      "line" : 21,
+      "char" : 8,
+      "members" : [
+       {
+        "name" : "std.math",
+        "kind" : "import",
+        "line" : 23,
+        "char" : 12,
+        "protection" : "private",
+        "selective" : [
+         "sqrt"
+        ]
+       },
+       {
+        "name" : "x",
+        "kind" : "variable",
+        "comment" : "X-Axis\n",
+        "line" : 27,
+        "char" : 11,
+        "type" : "T",
+        "init" : "0"
+       },
+       {
+        "name" : "y",
+        "kind" : "variable",
+        "comment" : "Y-Axis\n",
+        "line" : 28,
+        "char" : 11,
+        "type" : "T",
+        "init" : "0"
+       },
+       {
+        "name" : "this",
+        "kind" : "constructor",
+        "comment" : "        Vector init.\n",
+        "line" : 34,
+        "char" : 5,
+        "type" : "nothrow @safe (T _x, T _y)",
+        "parameters" : [
+         {
+          "name" : "_x",
+          "type" : "T"
+         },
+         {
+          "name" : "_y",
+          "type" : "T"
+         }
+        ],
+        "endline" : 38,
+        "endchar" : 5
+       },
+       {
+        "name" : "this",
+        "kind" : "constructor",
+        "line" : 40,
+        "char" : 5,
+        "type" : "nothrow @safe (T[2] vec)",
+        "parameters" : [
+         {
+          "name" : "vec",
+          "type" : "T[2]"
+         }
+        ],
+        "endline" : 44,
+        "endchar" : 5
+       },
+       {
+        "name" : "X",
+        "kind" : "alias",
+        "line" : 46,
+        "char" : 5,
+        "type" : "x"
+       },
+       {
+        "name" : "Y",
+        "kind" : "alias",
+        "line" : 47,
+        "char" : 5,
+        "type" : "y"
+       },
+       {
+        "name" : "intX",
+        "kind" : "function",
+        "comment" : "        Gives x coordinate in int format\n        Returns:\n            int\n",
+        "line" : 54,
+        "char" : 16,
+        "type" : "nothrow @safe int()",
+        "endline" : 57,
+        "endchar" : 5
+       },
+       {
+        "name" : "intY",
+        "kind" : "function",
+        "comment" : "        Gives y coordinate in int format\n        Returns:\n            int\n",
+        "line" : 64,
+        "char" : 16,
+        "type" : "nothrow @safe int()",
+        "endline" : 67,
+        "endchar" : 5
+       },
+       {
+        "name" : "opEquals",
+        "kind" : "function",
+        "line" : 69,
+        "char" : 17,
+        "type" : "nothrow @safe bool(Vector a, Vector b)",
+        "parameters" : [
+         {
+          "name" : "a",
+          "type" : "Vector"
+         },
+         {
+          "name" : "b",
+          "type" : "Vector"
+         }
+        ],
+        "endline" : 74,
+        "endchar" : 5
+       },
+       {
+        "name" : "opEquals",
+        "kind" : "function",
+        "line" : 76,
+        "char" : 17,
+        "type" : "nothrow @safe bool(Vector!T rhs)",
+        "parameters" : [
+         {
+          "name" : "rhs",
+          "type" : "Vector!T"
+         }
+        ],
+        "endline" : 81,
+        "endchar" : 5
+       },
+       {
+        "name" : "__unittest_L84_C11",
+        "kind" : "function",
+        "line" : 84,
+        "char" : 11,
+        "storageClass" : [
+         "@safe"
+        ],
+        "endline" : 93,
+        "endchar" : 5
+       },
+       {
+        "kind" : "template",
+        "line" : 93,
+        "char" : 21,
+        "name" : "opBinary",
+        "parameters" : [
+         {
+          "name" : "op",
+          "kind" : "value",
+          "type" : "string"
+         }
+        ],
+        "members" : [
+         {
+          "name" : "opBinary",
+          "kind" : "function",
+          "line" : 93,
+          "char" : 21,
+          "type" : "nothrow @safe Vector!T(Vector rhs)",
+          "parameters" : [
+           {
+            "name" : "rhs",
+            "type" : "Vector"
+           }
+          ],
+          "endline" : 103,
+          "endchar" : 5
+         }
+        ]
+       },
+       {
+        "kind" : "template",
+        "line" : 105,
+        "char" : 21,
+        "name" : "opBinary",
+        "parameters" : [
+         {
+          "name" : "op",
+          "kind" : "value",
+          "type" : "string"
+         }
+        ],
+        "members" : [
+         {
+          "name" : "opBinary",
+          "kind" : "function",
+          "line" : 105,
+          "char" : 21,
+          "type" : "nothrow @safe Vector!T(T num)",
+          "parameters" : [
+           {
+            "name" : "num",
+            "type" : "T"
+           }
+          ],
+          "endline" : 115,
+          "endchar" : 5
+         }
+        ]
+       },
+       {
+        "name" : "__unittest_L118_C11",
+        "kind" : "function",
+        "line" : 118,
+        "char" : 11,
+        "storageClass" : [
+         "@safe"
+        ],
+        "endline" : 129,
+        "endchar" : 5
+       },
+       {
+        "kind" : "template",
+        "line" : 129,
+        "char" : 17,
+        "name" : "opOpAssign",
+        "parameters" : [
+         {
+          "name" : "op",
+          "kind" : "value",
+          "type" : "string"
+         }
+        ],
+        "members" : [
+         {
+          "name" : "opOpAssign",
+          "kind" : "function",
+          "line" : 129,
+          "char" : 17,
+          "type" : "nothrow @safe void(Vector rhs)",
+          "parameters" : [
+           {
+            "name" : "rhs",
+            "type" : "Vector"
+           }
+          ],
+          "endline" : 141,
+          "endchar" : 5
+         }
+        ]
+       },
+       {
+        "kind" : "template",
+        "line" : 143,
+        "char" : 17,
+        "name" : "opOpAssign",
+        "parameters" : [
+         {
+          "name" : "op",
+          "kind" : "value",
+          "type" : "string"
+         }
+        ],
+        "members" : [
+         {
+          "name" : "opOpAssign",
+          "kind" : "function",
+          "line" : 143,
+          "char" : 17,
+          "type" : "nothrow @safe void(T num)",
+          "parameters" : [
+           {
+            "name" : "num",
+            "type" : "T"
+           }
+          ],
+          "endline" : 155,
+          "endchar" : 5
+         }
+        ]
+       },
+       {
+        "name" : "__unittest_L158_C11",
+        "kind" : "function",
+        "line" : 158,
+        "char" : 11,
+        "storageClass" : [
+         "@safe"
+        ],
+        "endline" : 172,
+        "endchar" : 5
+       },
+       {
+        "name" : "length",
+        "kind" : "function",
+        "comment" : "        Return length Vector.\n",
+        "line" : 172,
+        "char" : 14,
+        "type" : "@safe T()",
+        "endline" : 181,
+        "endchar" : 5
+       },
+       {
+        "name" : "toString",
+        "kind" : "function",
+        "line" : 182,
+        "char" : 19,
+        "type" : "@trusted string()",
+        "endline" : 186,
+        "endchar" : 5
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "name" : "tida.window",
+  "kind" : "module",
+  "file" : "/home/todnaz/Projects/Tida/source/tida/window.d",
+  "comment" : "    A module for working with windows in a cross-platform environment.\n    A window is created in both Windows and Linux environments. OS X\n    and other operating systems are currently not supported due to\n    lack of testing on these platforms.\n\n    The window is created primarily not in the constructor, in the constructor\n    the window parameters are initialized for its creation. All this is created\n    by the `initialize` method, with an indication of the template parameter,\n    which window to create.\n\n    A window can be created either with a ready-made context or without it\n    (i.e., created manually)(Please note that the context is strictly created\n    only for the opengl library).\n\n    Creating a simple window is done with a simple `initialize` function:\n    ---\n    /*\n        We just allocate memory for the window, this is not yet the\n        stages of its creation.\n    */\n    Window window = new Window(640,480,\"MyTitle\");\n\n    /*\n        Creates a simple window with no graphics context.\n    */\n    window.initialize!Simple;\n    ---\n\n    There are two ways to create a context:\n    1. Initialize the window immediately with the context:\n    ---\n    window.initialize!ContextIn;\n    ---\n    2. Create it manually:\n    ---\n    window.initialize!Simple;\n\n    Context context = new Context();\n\n    /*\n        Indicates the attributes of the context.\n    */\n    context.attrib = GLAttributes(...);\n    context.attribInitialize(window);\n    context.initialize(window);\n\n    /*\n        Sets the context to this window.\n    */\n    window.contextSet(context);\n    ---\n\n    Then you can draw something on the window, control it and so on.\n\n    Also, please note that creating multiple windows is currently not supported.\n\n    TODO:\n        * Make it possible to create several windows at the same time.\n          Namely, to make `shared` methods for working in different threads,\n          both for the window and for the context, event handler and render.\n\n    Authors: TodNaz\n    License: MIT\n",
+  "members" : [
+   {
+    "name" : "Simple",
+    "kind" : "variable",
+    "comment" : "    A property to create just a window, without creating a context.\n    Initialize it like this:\n    ---\n    window.initialize!Simple;\n    ---\n",
+    "line" : 80,
+    "char" : 24,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yh",
+    "originalType" : "ubyte",
+    "init" : "cast(ubyte)0u"
+   },
+   {
+    "name" : "ContextIn",
+    "kind" : "variable",
+    "comment" : "    Property for creating a window with a context for graphics.\n    It is initialized like this:\n    ---\n    window.initialize!ContextIn;\n    ---\n",
+    "line" : 89,
+    "char" : 24,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yh",
+    "originalType" : "ubyte",
+    "init" : "cast(ubyte)1u"
+   },
+   {
+    "name" : "ParrarelContext",
+    "kind" : "variable",
+    "comment" : "    Property for creating a window on another thread. It is not used now.\n",
+    "line" : 94,
+    "char" : 24,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yh",
+    "originalType" : "ubyte",
+    "init" : "cast(ubyte)2u"
+   },
+   {
+    "name" : "Empty",
+    "kind" : "variable",
+    "comment" : "The shell is empty. Only needed in WebAssembly mode.\n",
+    "line" : 97,
+    "char" : 24,
+    "storageClass" : [
+     "static",
+     "immutable"
+    ],
+    "deco" : "yh",
+    "originalType" : "ubyte",
+    "init" : "cast(ubyte)3u"
+   },
+   {
+    "name" : "GLAttributes",
+    "kind" : "struct",
+    "comment" : "    Attributes for creating context.\n",
+    "line" : 102,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "redSize",
+      "kind" : "variable",
+      "comment" : "Red size\n",
+      "line" : 106,
+      "char" : 13,
+      "deco" : "i",
+      "init" : "8",
+      "offset" : 0
+     },
+     {
+      "name" : "greenSize",
+      "kind" : "variable",
+      "comment" : "Green size\n",
+      "line" : 107,
+      "char" : 13,
+      "deco" : "i",
+      "init" : "8",
+      "offset" : 4
+     },
+     {
+      "name" : "blueSize",
+      "kind" : "variable",
+      "comment" : "Blue size\n",
+      "line" : 108,
+      "char" : 13,
+      "deco" : "i",
+      "init" : "8",
+      "offset" : 8
+     },
+     {
+      "name" : "alphaSize",
+      "kind" : "variable",
+      "comment" : "Alpha channel size\n",
+      "line" : 109,
+      "char" : 13,
+      "deco" : "i",
+      "init" : "8",
+      "offset" : 12
+     },
+     {
+      "name" : "depthSize",
+      "kind" : "variable",
+      "comment" : "Depth size\n",
+      "line" : 110,
+      "char" : 13,
+      "deco" : "i",
+      "init" : "8",
+      "offset" : 16
+     },
+     {
+      "name" : "stencilSize",
+      "kind" : "variable",
+      "comment" : "Stencil size\n",
+      "line" : 111,
+      "char" : 13,
+      "deco" : "i",
+      "init" : "8",
+      "offset" : 20
+     },
+     {
+      "name" : "colorDepth",
+      "kind" : "variable",
+      "comment" : "Color depth\n",
+      "line" : 112,
+      "char" : 13,
+      "deco" : "i",
+      "init" : "32",
+      "offset" : 24
+     }
+    ]
+   },
+   {
+    "name" : "Context",
+    "kind" : "class",
+    "comment" : "    Class for describing and creating context for the window.\n",
+    "line" : 127,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "x11.X",
+      "kind" : "import",
+      "line" : 131,
+      "char" : 16,
+      "protection" : "private"
+     },
+     {
+      "name" : "x11.Xlib",
+      "kind" : "import",
+      "line" : 131,
+      "char" : 23,
+      "protection" : "private"
+     },
+     {
+      "name" : "x11.Xutil",
+      "kind" : "import",
+      "line" : 131,
+      "char" : 33,
+      "protection" : "private"
+     },
+     {
+      "name" : "dglx.glx",
+      "kind" : "import",
+      "line" : 132,
+      "char" : 16,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.runtime",
+      "kind" : "import",
+      "line" : 140,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.exception",
+      "kind" : "import",
+      "line" : 140,
+      "char" : 26,
+      "protection" : "private"
+     },
+     {
+      "name" : "ctx",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 146,
+      "char" : 24,
+      "deco" : "PS4dglx3glx15__GLXcontextRec",
+      "originalType" : "GLXContext",
+      "offset" : 16
+     },
+     {
+      "name" : "visual",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 147,
+      "char" : 26,
+      "deco" : "PS3x115Xutil11XVisualInfo",
+      "offset" : 24
+     },
+     {
+      "name" : "bestFbcs",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 148,
+      "char" : 25,
+      "deco" : "PS4dglx3glx16__GLXFBConfigRec",
+      "originalType" : "GLXFBConfig",
+      "offset" : 32
+     },
+     {
+      "name" : "attrib",
+      "kind" : "variable",
+      "comment" : "Attributes for creating context.\n",
+      "line" : 160,
+      "char" : 22,
+      "deco" : "S4tida6window12GLAttributes",
+      "offset" : 40
+     },
+     {
+      "name" : "xContext",
+      "kind" : "function",
+      "comment" : "        Context from x11 environment (`GLXContext`).\n",
+      "line" : 172,
+      "char" : 38,
+      "deco" : "FNbNdNfZPS4dglx3glx15__GLXcontextRec",
+      "originalType" : "nothrow @property @safe GLXContext()",
+      "endline" : 175,
+      "endchar" : 5
+     },
+     {
+      "name" : "xAttribInitialize",
+      "kind" : "function",
+      "comment" : "        Initializes the context parameters in the x11 environment.\n\n        All parameters are taken from the attrib variable. The default will always be double buffering.\n",
+      "line" : 218,
+      "char" : 32,
+      "deco" : "FNeZv",
+      "endline" : 271,
+      "endchar" : 5
+     },
+     {
+      "name" : "xContextInitialize",
+      "kind" : "function",
+      "comment" : "        Creates a context in the x11 environment.\n",
+      "line" : 276,
+      "char" : 32,
+      "deco" : "FNeZv",
+      "endline" : 279,
+      "endchar" : 5
+     },
+     {
+      "name" : "xGetVisual",
+      "kind" : "function",
+      "comment" : "\n",
+      "line" : 282,
+      "char" : 40,
+      "deco" : "FNbNfZPS3x115Xutil11XVisualInfo",
+      "endline" : 285,
+      "endchar" : 5
+     },
+     {
+      "name" : "attribInitialize",
+      "kind" : "function",
+      "comment" : "        Initializes the parameters of the context.\n",
+      "line" : 290,
+      "char" : 17,
+      "deco" : "FNfC4tida6window6WindowZv",
+      "parameters" : [
+       {
+        "name" : "window",
+        "deco" : "C4tida6window6Window"
+       }
+      ],
+      "endline" : 294,
+      "endchar" : 5
+     },
+     {
+      "name" : "initialize",
+      "kind" : "function",
+      "comment" : "        Initializes the context.\n",
+      "line" : 299,
+      "char" : 17,
+      "deco" : "FNfC4tida6window6WindowZv",
+      "parameters" : [
+       {
+        "name" : "window",
+        "deco" : "C4tida6window6Window"
+       }
+      ],
+      "endline" : 303,
+      "endchar" : 5
+     },
+     {
+      "name" : "~this",
+      "kind" : "destructor",
+      "line" : 305,
+      "char" : 5,
+      "deco" : "FNeZv",
+      "endline" : 309,
+      "endchar" : 5
+     },
+     {
+      "name" : "__xdtor",
+      "kind" : "alias"
+     }
+    ]
+   },
+   {
+    "name" : "Window",
+    "kind" : "class",
+    "comment" : "    Window.\n",
+    "line" : 315,
+    "char" : 8,
+    "members" : [
+     {
+      "name" : "x11.X",
+      "kind" : "import",
+      "line" : 319,
+      "char" : 16,
+      "protection" : "private"
+     },
+     {
+      "name" : "x11.Xlib",
+      "kind" : "import",
+      "line" : 319,
+      "char" : 23,
+      "protection" : "private"
+     },
+     {
+      "name" : "x11.Xutil",
+      "kind" : "import",
+      "line" : 319,
+      "char" : 33,
+      "protection" : "private"
+     },
+     {
+      "name" : "dglx.glx",
+      "kind" : "import",
+      "line" : 319,
+      "char" : 44,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.runtime",
+      "kind" : "import",
+      "line" : 327,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.color",
+      "kind" : "import",
+      "line" : 327,
+      "char" : 26,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.exception",
+      "kind" : "import",
+      "line" : 327,
+      "char" : 38,
+      "protection" : "private"
+     },
+     {
+      "name" : "tida.graph.image",
+      "kind" : "import",
+      "line" : 327,
+      "char" : 54,
+      "protection" : "private"
+     },
+     {
+      "name" : "std.utf",
+      "kind" : "import",
+      "line" : 328,
+      "char" : 12,
+      "protection" : "private"
+     },
+     {
+      "name" : "_width",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 332,
+      "char" : 13,
+      "deco" : "i",
+      "offset" : 16
+     },
+     {
+      "name" : "_height",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 333,
+      "char" : 13,
+      "deco" : "i",
+      "offset" : 20
+     },
+     {
+      "name" : "_title",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 335,
+      "char" : 16,
+      "deco" : "Aya",
+      "offset" : 24
+     },
+     {
+      "name" : "_background",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 336,
+      "char" : 21,
+      "deco" : "S4tida5color__T5ColorThZQj",
+      "init" : "Color(cast(ubyte)255u, cast(ubyte)255u, cast(ubyte)255u, cast(ubyte)0u)",
+      "offset" : 40
+     },
+     {
+      "name" : "window",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 340,
+      "char" : 29,
+      "deco" : "m",
+      "originalType" : "x11.Xlib.Window",
+      "offset" : 48
+     },
+     {
+      "name" : "context",
+      "kind" : "variable",
+      "protection" : "private",
+      "line" : 348,
+      "char" : 17,
+      "deco" : "C4tida6window7Context",
+      "originalType" : "Context",
+      "offset" : 56
+     },
+     {
+      "name" : "this",
+      "kind" : "constructor",
+      "comment" : "        Initialization of window parameters.\n\n        Note:\n            * The window will not be created, but the parameters for its creation will be initialized.\n\n        Params:\n            newWidth = The width of the window when created.\n            newHeight = The height of the window when created.\n            newTitle = The title of the window when created.\n",
+      "line" : 362,
+      "char" : 5,
+      "deco" : "FNfiiAyaZC4tida6window6Window",
+      "originalType" : "@safe (int newWidth, int newHeight, string newTitle)",
+      "parameters" : [
+       {
+        "name" : "newWidth",
+        "deco" : "i"
+       },
+       {
+        "name" : "newHeight",
+        "deco" : "i"
+       },
+       {
+        "name" : "newTitle",
+        "deco" : "Aya"
+       }
+      ],
+      "endline" : 367,
+      "endchar" : 5
+     },
+     {
+      "name" : "__invariant1",
+      "kind" : "function",
+      "line" : 369,
+      "char" : 5,
+      "deco" : "xFZv",
+      "endline" : 388,
+      "endchar" : 5
+     },
+     {
+      "kind" : "template",
+      "comment" : "        Initializes the window according to the parameters.\n\n        A window can be created with the following parameters:\n        * `Simple` - Will create a simple window with no context when\n                     you need to manually create it.\n        * `ContextIn` - Creates a window with a context for graphics.\n\n        Params:\n            Type = What type of window to initialize.\n            posX = The x-axis position.\n            posY = The y-axis position.\n",
+      "line" : 388,
+      "char" : 17,
+      "name" : "initialize",
+      "parameters" : [
+       {
+        "name" : "Type",
+        "kind" : "value",
+        "deco" : "h"
+       }
+      ],
+      "members" : [
+       {
+        "name" : "initialize",
+        "kind" : "function",
+        "line" : 388,
+        "char" : 17,
+        "type" : "@safe void(int posX = 100, int posY = 100)",
+        "parameters" : [
+         {
+          "name" : "posX",
+          "deco" : "i",
+          "default" : "100"
+         },
+         {
+          "name" : "posY",
+          "deco" : "i",
+          "default" : "100"
+         }
+        ],
+        "endline" : 425,
+        "endchar" : 5
+       }
+      ]
+     },
+     {
+      "name" : "xWindowInit",
+      "kind" : "function",
+      "comment" : "        Initializes the window for the context.\n\n        Params:\n            posX = The x-axis position.\n            posY = The y-axis position.\n            visual = Information from context for create window.\n",
+      "line" : 468,
+      "char" : 32,
+      "deco" : "FNeiiPS3x115Xutil11XVisualInfoZv",
+      "parameters" : [
+       {
+        "name" : "posX",
+        "deco" : "i"
+       },
+       {
+        "name" : "posY",
+        "deco" : "i"
+       },
+       {
+        "name" : "visual",
+        "deco" : "PS3x115Xutil11XVisualInfo",
+        "default" : "null"
+       }
+      ],
+      "endline" : 482,
+      "endchar" : 5
+     },
+     {
+      "name" : "xWindowSimpleInitialize",
+      "kind" : "function",
+      "comment" : "        Created simple window in environment x11.\n\n        Params:\n            posX = The x-axis position.\n            posY = The y-axis position.\n",
+      "line" : 491,
+      "char" : 32,
+      "deco" : "FNeiiZv",
+      "parameters" : [
+       {
+        "name" : "posX",
+        "deco" : "i"
+       },
+       {
+        "name" : "posY",
+        "deco" : "i"
+       }
+      ],
+      "endline" : 497,
+      "endchar" : 5
+     },
+     {
+      "name" : "xWindowShow",
+      "kind" : "function",
+      "comment" : "        Show window in workspace.\n",
+      "line" : 502,
+      "char" : 32,
+      "deco" : "FNeZv",
+      "endline" : 505,
+      "endchar" : 5
+     },
+     {
+      "name" : "contextSet",
+      "kind" : "function",
+      "comment" : "        Sets an _initialized_ context.\n\n        Params:\n            context = Initialized context.\n",
+      "line" : 519,
+      "char" : 17,
+      "deco" : "FNeC4tida6window7ContextZv",
+      "parameters" : [
+       {
+        "name" : "context",
+        "deco" : "C4tida6window7Context"
+       }
+      ],
+      "endline" : 530,
+      "endchar" : 5
+     },
+     {
+      "name" : "xContextSet",
+      "kind" : "function",
+      "comment" : "        Sets an _initialized_ context of x11 environment.\n",
+      "line" : 543,
+      "char" : 32,
+      "deco" : "FNePS4dglx3glx15__GLXcontextRecZv",
+      "originalType" : "@trusted void(GLXContext ctx)",
+      "parameters" : [
+       {
+        "name" : "ctx",
+        "deco" : "PS4dglx3glx15__GLXcontextRec"
+       }
+      ],
+      "endline" : 546,
+      "endchar" : 5
+     },
+     {
+      "name" : "swapBuffers",
+      "kind" : "function",
+      "comment" : "        Swaps buffers.\n",
+      "line" : 551,
+      "char" : 17,
+      "deco" : "FNeZv",
+      "endline" : 555,
+      "endchar" : 5
+     },
+     {
+      "name" : "xSwapBuffers",
+      "kind" : "function",
+      "comment" : "        Swaps buffers in x11 environment.\n",
+      "line" : 568,
+      "char" : 32,
+      "deco" : "FNeZv",
+      "endline" : 571,
+      "endchar" : 5
+     },
+     {
+      "name" : "xWindow",
+      "kind" : "function",
+      "comment" : "        Window in x11 environment.\n",
+      "line" : 576,
+      "char" : 36,
+      "deco" : "FNbNdNeZm",
+      "originalType" : "nothrow @property @trusted x11.Xlib.Window()",
+      "endline" : 579,
+      "endchar" : 5
+     },
+     {
+      "name" : "xGetX",
+      "kind" : "function",
+      "line" : 607,
+      "char" : 31,
+      "deco" : "FNeZi",
+      "endline" : 613,
+      "endchar" : 5
+     },
+     {
+      "name" : "xGetY",
+      "kind" : "function",
+      "line" : 615,
+      "char" : 31,
+      "deco" : "FNeZi",
+      "endline" : 621,
+      "endchar" : 5
+     },
+     {
+      "name" : "x",
+      "kind" : "function",
+      "comment" : "        X-axis position of the window.\n",
+      "line" : 626,
+      "char" : 16,
+      "deco" : "FNdNfZi",
+      "endline" : 630,
+      "endchar" : 5
+     },
+     {
+      "name" : "y",
+      "kind" : "function",
+      "comment" : "        Y-axis position of the window.\n",
+      "line" : 635,
+      "char" : 16,
+      "deco" : "FNdNfZi",
+      "endline" : 639,
+      "endchar" : 5
+     },
+     {
+      "name" : "xResize",
+      "kind" : "function",
+      "line" : 651,
+      "char" : 32,
+      "deco" : "FNeykykZv",
+      "originalType" : "@trusted void(immutable uint newWidth, immutable uint newHeight)",
+      "parameters" : [
+       {
+        "name" : "newWidth",
+        "deco" : "yk"
+       },
+       {
+        "name" : "newHeight",
+        "deco" : "yk"
+       }
+      ],
+      "endline" : 654,
+      "endchar" : 5
+     },
+     {
+      "name" : "xMove",
+      "kind" : "function",
+      "line" : 656,
+      "char" : 32,
+      "deco" : "FNeyiyiZv",
+      "originalType" : "@trusted void(immutable int posX, immutable int posY)",
+      "parameters" : [
+       {
+        "name" : "posX",
+        "deco" : "yi"
+       },
+       {
+        "name" : "posY",
+        "deco" : "yi"
+       }
+      ],
+      "endline" : 659,
+      "endchar" : 5
+     },
+     {
+      "name" : "move",
+      "kind" : "function",
+      "comment" : "        Moves the window to the specified location.\n\n        Params:\n            posX = New X-axis position window.\n            posY = New Y-axis position window.\n",
+      "line" : 668,
+      "char" : 17,
+      "deco" : "FNfyiyiZv",
+      "originalType" : "@safe void(immutable int posX, immutable int posY)",
+      "parameters" : [
+       {
+        "name" : "posX",
+        "deco" : "yi"
+       },
+       {
+        "name" : "posY",
+        "deco" : "yi"
+       }
+      ],
+      "endline" : 672,
+      "endchar" : 5
+     },
+     {
+      "name" : "resize",
+      "kind" : "function",
+      "comment" : "        Resizes the window.\n\n        Params:\n            newWidth = Window width.\n            newHeight = Window height.\n",
+      "line" : 681,
+      "char" : 17,
+      "deco" : "FNfykykZv",
+      "originalType" : "@safe void(immutable uint newWidth, immutable uint newHeight)",
+      "parameters" : [
+       {
+        "name" : "newWidth",
+        "deco" : "yk"
+       },
+       {
+        "name" : "newHeight",
+        "deco" : "yk"
+       }
+      ],
+      "endline" : 688,
+      "endchar" : 5
+     },
+     {
+      "name" : "xHide",
+      "kind" : "function",
+      "line" : 690,
+      "char" : 32,
+      "deco" : "FNeZv",
+      "endline" : 693,
+      "endchar" : 5
+     },
+     {
+      "name" : "hide",
+      "kind" : "function",
+      "comment" : "        Hides the window.\n",
+      "line" : 703,
+      "char" : 17,
+      "deco" : "FNfZv",
+      "endline" : 707,
+      "endchar" : 5
+     },
+     {
+      "name" : "xIcon",
+      "kind" : "function",
+      "line" : 709,
+      "char" : 32,
+      "deco" : "FNeC4tida5graph5image5ImageZv",
+      "parameters" : [
+       {
+        "name" : "image",
+        "deco" : "C4tida5graph5image5Image"
+       }
+      ],
+      "endline" : 720,
+      "endchar" : 5
+     },
+     {
+      "name" : "icon",
+      "kind" : "function",
+      "line" : 722,
+      "char" : 17,
+      "deco" : "FNdNfC4tida5graph5image5ImageZv",
+      "parameters" : [
+       {
+        "name" : "image",
+        "deco" : "C4tida5graph5image5Image"
+       }
+      ],
+      "endline" : 725,
+      "endchar" : 5
+     },
+     {
+      "name" : "resizeEvent",
+      "kind" : "function",
+      "comment" : "?\n",
+      "line" : 728,
+      "char" : 17,
+      "deco" : "FNfkkZv",
+      "parameters" : [
+       {
+        "name" : "rWidth",
+        "deco" : "k"
+       },
+       {
+        "name" : "rHeight",
+        "deco" : "k"
+       }
+      ],
+      "endline" : 732,
+      "endchar" : 5
+     },
+     {
+      "name" : "width",
+      "kind" : "function",
+      "comment" : "Window width.\n",
+      "line" : 735,
+      "char" : 28,
+      "deco" : "FNbNdNfZyk",
+      "endline" : 738,
+      "endchar" : 5
+     },
+     {
+      "name" : "height",
+      "kind" : "function",
+      "comment" : "Window height.\n",
+      "line" : 741,
+      "char" : 28,
+      "deco" : "FNbNdNfZyk",
+      "endline" : 744,
+      "endchar" : 5
+     },
+     {
+      "name" : "~this",
+      "kind" : "destructor",
+      "line" : 746,
+      "char" : 5,
+      "deco" : "FNeZv",
+      "endline" : 757,
+      "endchar" : 5
+     },
+     {
+      "name" : "__xdtor",
+      "kind" : "alias"
+     },
+     {
+      "name" : "__invariant",
+      "kind" : "function",
+      "line" : 315,
+      "char" : 8,
+      "deco" : "xFZv"
+     }
+    ]
+   }
+  ]
+ }
+]

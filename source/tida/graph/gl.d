@@ -1,20 +1,12 @@
 /++
+    
 
+    Authors: TodNaz
+    License: MIT
 +/
 module tida.graph.gl;
 
-version(WebAssembly)
-{
-
-    extern(C)
-    {
-        void glViewport(int,int,int,int);
-        void glClearColor(float,float,float,float);
-        void glClear(int);
-    }
-
-}else
-    public import bindbc.opengl;
+public import bindbc.opengl;
 
 enum
 {
