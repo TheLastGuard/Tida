@@ -5,7 +5,7 @@ For now, the library can:
 * Open a window on Windows and Linux platforms (x11).
 * Create a context for a window (OpenGL).
 * Draw some objects like: `lines`, `circle`, `rectangles`, `regular triangles`, `Images`.
-* Create and load images from formats such as `png`,` jpeg`, `tga`,` bmp`. (Also: [imageformats](https://code.dlang.org/packages/imageformats).
+* Create and load images from formats such as `png`,` jpeg`, `tga`,` bmp`. (Also: [imageformats](https://code.dlang.org/packages/imageformats)).
 * Render text using the FreeType library.
 
 Examples of programs can be found [here](https://github.com/TodNaz/Tida/tree/master/examples).
