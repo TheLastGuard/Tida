@@ -15,7 +15,8 @@ public enum PixelFormat
 {
     RGB,
     RGBA,
-    ARGB
+    ARGB,
+    BGRA
 }
 
 /++
@@ -294,6 +295,9 @@ public struct Color(T)
             if(format == PixelFormat.ARGB)
                 return ((a & 0xff) << 24) + ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
             else
+            if(format == PixelFormat.BGRA)
+                return ((b & 0xff) << 24) + ((g & 0xff) << 16) + ((r & 0xff) << 8) + (a & 0xff);
+            else
                 return 0;
         }
     }
@@ -312,6 +316,9 @@ public struct Color(T)
             if(format == PixelFormat.ARGB)
                 return ((a & 0xff) << 24) + ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
             else
+            if(format == PixelFormat.BGRA)
+                return ((b & 0xff) << 24) + ((g & 0xff) << 16) + ((r & 0xff) << 8) + (a & 0xff);
+            else
                 return 0;
         }
     }
@@ -324,7 +331,7 @@ public struct Color(T)
 
         Returns: Sequence of bytes. 
     +/
-    public T[] fromBytes(PixelFormat format) @safe
+    public R[] fromBytes(R)(PixelFormat format) @safe
     {
         if(format == PixelFormat.RGBA)
             return [r,g,b,a];
@@ -334,6 +341,9 @@ public struct Color(T)
         else
         if(format == PixelFormat.ARGB)
             return [a,r,g,b];
+        else
+        if(format == PixelFormat.BGRA)
+            return [b,g,r,a];
 
         return [];
     }
@@ -349,6 +359,9 @@ public struct Color(T)
         else
         if(format == PixelFormat.ARGB)
             return [a,r,g,b];
+        else
+        if(format == PixelFormat.BGRA)
+            return [b,g,r,a];
 
         return [];
     }

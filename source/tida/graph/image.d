@@ -65,12 +65,12 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             format = Pixel format.
     +/
-    public ubyte[] bytes(PixelFormat format = PixelFormat.RGBA) @safe
+    public T[] bytes(T)(PixelFormat format = PixelFormat.RGBA) @safe
     {
-        ubyte[] tryPixels;
+        T[] tryPixels;
 
         foreach(pixel; _pixels)
-            tryPixels ~= pixel.fromBytes(format);
+            tryPixels ~= pixel.fromBytes!T(format);
 
         return tryPixels;
     }
@@ -81,12 +81,12 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             format = Pixel format.
     +/
-    public uint[] colors(PixelFormat format = PixelFormat.RGBA) @safe
+    public T[] colors(T)(PixelFormat format = PixelFormat.RGBA) @safe
     {
-        uint[] tryPixels;
+        T[] tryPixels;
 
         foreach(pixel; _pixels)
-            tryPixels ~= pixel.conv!uint(format);
+            tryPixels ~= pixel.conv!T(format);
 
         return tryPixels;
     }
@@ -227,7 +227,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         ubyte[] tryPixels;
 
         foreach(pixel; _pixels)
-            tryPixels ~= pixel.fromBytes(PixelFormat.RGBA);
+            tryPixels ~= pixel.fromBytes!ubyte(PixelFormat.RGBA);
 
         GL.texImage2D(_width,_height,tryPixels);
 

@@ -1079,21 +1079,42 @@ public class Window
     ///
     version(Posix) public void xIcon(Image image) @trusted
     {
-        Atom wmIcon     = XInternAtom(runtime.display,"_NET_WM_ICON", false);
-        Atom cardinal   = XInternAtom(runtime.display,"CARDINAL",false);
+        Atom wmIcon     = XInternAtom(runtime.display,"_NET_WM_ICON", False);
+        Atom cardinal   = XInternAtom(runtime.display,"CARDINAL", False);
 
-        uint[] pixels = [image.width,image.height] ~ image.colors(PixelFormat.ARGB);
+        ulong[] pixels = [cast(ulong) image.width,cast(ulong) image.height] ~ image.colors!ulong(PixelFormat.ARGB);
 
         XChangeProperty(runtime.display, window, wmIcon, cardinal,
-                32, PropModeReplace, cast(ubyte*) pixels.ptr,cast(int) pixels.length);
-
-        XFlush(runtime.display);
+                32, PropModeReplace, cast(ubyte*) pixels,cast(int) pixels.length);
     }
 
     ///
-    public void icon(Image image) @safe @property @disable
+    version(Windows) public void wIcon(Image image) @trusted
+    {
+        import imageformats, std.file : remove;
+
+        HICON icon;
+
+        ubyte[] pixels = image.bytes!ubyte(PixelFormat.BGRA);
+
+        ICONINFO icInfo;
+
+        auto bitmap = CreateBitmap(image.width,image.height,1,32,cast(PCVOID) pixels);
+
+        icInfo.hbmColor = bitmap;
+        icInfo.hbmMask = CreateBitmap(width,height,1,1,null);
+
+        icon = CreateIconIndirect(&icInfo);
+
+        SendMessage(wWindow, WM_SETICON, ICON_SMALL, cast(LPARAM) icon);
+        SendMessage(wWindow, WM_SETICON, ICON_BIG, cast(LPARAM) icon);
+    }
+
+    ///
+    public void icon(Image image) @safe @property
     {
         version(Posix) xIcon(image);
+        version(Windows) wIcon(image);
     }
 
     ///
