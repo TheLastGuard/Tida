@@ -65,10 +65,24 @@
 +/
 module tida.window;
 
+version(Windows) {
+    private struct WindowSizeInfo
+    {
+        int minimumWidth, minimumHeight;
+        int maximumWidth, maximumHeight;
+    }
+}
+
 /+
     Needed for the WGL function.
 +/
 version(Windows) pragma(lib,"opengl32.lib");
+
+version(Posix)
+{
+    static immutable _NET_WM_STATE_ADD = 0; /// Add state
+    static immutable _NET_WM_STATE_REMOVE = 1; /// Remove state
+}
 
 /++
     A property to create just a window, without creating a context. 
@@ -347,6 +361,10 @@ public class Window
         }
 
         Context context;
+        bool _resizable = false;
+
+        uint _maxWidth = 2048, _maxHeight = 2048;
+        uint _minWidth = 64,   _minHeight = 64;
     }
 
     /++
@@ -442,7 +460,41 @@ public class Window
     {
         extern(Windows) auto _wndProc(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam) nothrow
         {
-            return DefWindowProc(hWnd, message, wParam, lParam);
+            int maxW = 64, maxH = 64, minW = 2048, minH = 2048;
+
+            switch(message) {
+                version(WindowMaxType)
+                {
+                    case WM_USER:
+                        if(wParam == 0x01) {
+                            scope window = cast(WindowSizeInfo*) lParam;
+
+                            maxW = window.maximumWidth;
+                            maxH = window.maximumHeight;
+                            minW = window.minimumWidth;
+                            minH = window.minimumHeight;
+
+                            window = null;
+                        }
+
+                        return DefWindowProc(hWnd, message, wParam, lParam);
+
+                    case WM_GETMINMAXINFO:
+                        scope MINMAXINFO* info = cast(MINMAXINFO*) lParam;
+
+                        info.ptMaxTrackSize.x = maxW;
+                        info.ptMaxTrackSize.y = maxH;
+                        info.ptMinTrackSize.x = minW;
+                        info.ptMinTrackSize.y = minH;
+
+                        info = null;
+
+                        return DefWindowProc(hWnd, message, wParam, lParam);
+                }
+
+                default:
+                    return DefWindowProc(hWnd, message, wParam, lParam);
+            }
         }
 
         WNDCLASSEX wc;
@@ -457,7 +509,7 @@ public class Window
         RegisterClassEx(&wc);
 
         window = CreateWindow(_title.toUTFz!(wchar*),_title.toUTFz!(wchar*),
-                 WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+                 WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_THICKFRAME,
                  posX,posY,width,height,null,null,runtime.hInstance,null);
 
         if(window is null)
@@ -733,6 +785,295 @@ public class Window
     {
         version(Posix) xHide();
         version(Windows) wHide();
+    }
+
+    ///
+    version(Posix) public void xMaxWidth(int value) @trusted @live nothrow
+    {
+        long flags;
+
+        scope XSizeHints* sh = XAllocSizeHints();
+
+        scope(exit) XFree(sh);
+
+        XGetWMNormalHints(runtime.display, xWindow, sh, &flags);
+
+        sh.flags |= PMinSize | PMaxSize;
+        sh.max_width = value;
+        sh.max_height = _maxHeight;
+        sh.min_width = _minWidth;
+        sh.min_height = _minHeight;
+
+        XSetWMNormalHints(runtime.display, xWindow, sh);
+
+        _maxWidth = value;
+    }
+
+    ///
+    version(Posix) public void xMaxHeight(int value) @trusted @live nothrow
+    {
+        long flags;
+
+        scope XSizeHints* sh = XAllocSizeHints();
+
+        scope(exit) XFree(sh);
+
+        XGetWMNormalHints(runtime.display, xWindow, sh, &flags);
+
+        sh.flags |= PMinSize | PMaxSize;
+        sh.max_width = _maxWidth;
+        sh.max_height = value;
+        sh.min_width = _minWidth;
+        sh.min_height = _minHeight;
+
+        XSetWMNormalHints(runtime.display, xWindow, sh);
+
+        _maxHeight = value;
+    }
+
+    ///
+    version(Posix) public void xMinWidth(int value) @trusted @live nothrow
+    in
+    {
+        assert(value > 64,"You can't make the window so narrow!");
+    }body
+    {
+        long flags;
+
+        scope XSizeHints* sh = XAllocSizeHints();
+
+        scope(exit) XFree(sh);
+
+        XGetWMNormalHints(runtime.display, xWindow, sh, &flags);
+
+        sh.flags |= PMinSize | PMaxSize;
+        sh.max_width = _maxWidth;
+        sh.max_height = _maxHeight;
+        sh.min_width = value;
+        sh.min_height = _minHeight;
+
+        _minWidth = value;
+    }
+
+    ///
+    version(Posix) public void xMinHeight(int value) @trusted @live nothrow
+    in
+    {
+        assert(value > 64,"You can't make the window so narrow!");
+    }body
+    {
+        long flags;
+
+        scope XSizeHints* sh = XAllocSizeHints();
+
+        scope(exit) XFree(sh);
+
+        XGetWMNormalHints(runtime.display, xWindow, sh, &flags);
+
+        sh.flags |= PMinSize | PMaxSize;
+        sh.max_width = _maxWidth;
+        sh.max_height = _maxHeight;
+        sh.min_width = _minWidth;
+        sh.min_height = value;
+
+        _minHeight = value;
+    }
+
+    ///
+    version(Windows) public void wMaxWidth(int value) @trusted nothrow
+    {
+        _maxWidth = value;
+
+        MINMAXINFO mmi;
+
+        mmi.ptMaxTrackSize.x = value;
+        mmi.ptMaxTrackSize.y = _maxHeight;
+        mmi.ptMinTrackSize.x = _minWidth;
+        mmi.ptMinTrackSize.y = _minHeight;
+
+        auto info = WindowSizeInfo(minimumWidth,minimumHeight,
+                                   maximumWidth,maximumHeight);
+
+        SendMessage(wWindow, WM_USER, 0x01, cast(LPARAM) &info);
+        SendMessage(wWindow, WM_GETMINMAXINFO, 0, cast(LPARAM) &mmi);
+    }
+
+    ///
+    version(Windows) public void wMaxHeight(int value) @trusted nothrow
+    {
+        MINMAXINFO mmi;
+
+        mmi.ptMaxTrackSize.x = _maxWidth;
+        mmi.ptMaxTrackSize.y = value;
+        mmi.ptMinTrackSize.x = _minWidth;
+        mmi.ptMinTrackSize.y = _minHeight;
+
+        auto info = WindowSizeInfo(minimumWidth,minimumHeight,
+                                   maximumWidth,maximumHeight);
+
+        SendMessage(wWindow, WM_USER, 0x01, cast(LPARAM) &info);
+        SendMessage(wWindow, WM_GETMINMAXINFO, 0, cast(LPARAM) &mmi);
+        
+        _maxHeight = value;
+    }
+
+    ///
+    version(Windows) public void wMinWidth(int value) @trusted nothrow
+    in
+    {
+        assert(value > 64,"You can't make the window so narrow!");
+    }body
+    {
+        MINMAXINFO mmi;
+
+        mmi.ptMaxTrackSize.x = _maxWidth;
+        mmi.ptMaxTrackSize.y = _maxHeight;
+        mmi.ptMinTrackSize.x = value;
+        mmi.ptMinTrackSize.y = _minHeight;
+
+        auto info = WindowSizeInfo(minimumWidth,minimumHeight,
+                                   maximumWidth,maximumHeight);
+
+        SendMessage(wWindow, WM_USER, 0x01, cast(LPARAM) &info);
+        SendMessage(wWindow, WM_GETMINMAXINFO, 0, cast(LPARAM) &mmi);
+        
+        _minWidth = value;
+    }
+
+    ///
+    version(Windows) public void wMinHeight(int value) @trusted nothrow
+    in
+    {
+        assert(value > 64,"You can't make the window so narrow!");
+    }body
+    {
+        MINMAXINFO mmi;
+
+        mmi.ptMaxTrackSize.x = _maxWidth;
+        mmi.ptMaxTrackSize.y = _maxHeight;
+        mmi.ptMinTrackSize.x = _minWidth;
+        mmi.ptMinTrackSize.y = value;
+
+        auto info = WindowSizeInfo(minimumWidth,minimumHeight,
+                                   maximumWidth,maximumHeight);
+
+        SendMessage(wWindow, WM_USER, 0x01, cast(LPARAM) &info);
+        SendMessage(wWindow, WM_GETMINMAXINFO, 0, cast(LPARAM) &mmi);
+        
+        _minHeight = value;
+    }
+
+    ///
+    public void minimumWidth(int value) @safe @property nothrow
+    {
+        version(Posix) xMinWidth(value);
+        version(Windows) wMinWidth(value);
+    }
+
+    ///
+    public int minimumWidth() @safe @property nothrow
+    {
+        return _minWidth;
+    }
+
+    ///
+    public void minimumHeight(int value) @safe @property nothrow
+    {
+        version(Posix) xMinHeight(value);
+        version(Windows) wMinHeight(value);
+    }
+
+    ///
+    public int minimumHeight() @safe @property nothrow
+    {
+        return _minHeight;
+    }
+
+    ///
+    public void maximumWidth(int value) @safe @property nothrow
+    {
+        version(Posix) xMaxWidth(value);
+        version(Windows) wMaxWidth(value);
+    }
+
+    ///
+    public int maximumWidth() @safe @property nothrow
+    {
+        return _maxWidth;
+    }
+
+    ///
+    public void maximumHeight(int value) @safe @property nothrow
+    {
+        version(Posix) xMaxHeight(value);
+        version(Windows) wMaxHeight(value);
+    }
+
+    ///
+    public int maximumHeight() @safe @property nothrow
+    {
+        return _maxHeight;
+    }
+
+    ///
+    version(Posix) public void xResizable(bool value) @trusted @live
+    {
+        long flags;
+
+        scope XSizeHints* sh = XAllocSizeHints();
+
+        scope(exit) XFree(sh);
+
+        XGetWMNormalHints(runtime.display, xWindow, sh, &flags);
+        
+        if(!value)
+        {
+            sh.flags |= PMinSize | PMaxSize;
+            sh.min_width = _width;
+            sh.max_width = _width;
+            sh.min_height = _height;
+            sh.max_height = _height;
+        }else
+        {
+            sh.flags &= ~(PMinSize | PMaxSize);
+        }
+
+        _resizable = value;
+
+        XSetWMNormalHints(runtime.display, xWindow, sh);
+    }
+
+    /++
+        Bug: The state does not change when you put false.
+    +/
+    version(Windows) public void wResizable(bool value) @trusted
+    {
+        auto lStyle = GetWindowLong(wWindow, GWL_STYLE);
+        
+        if(value) {
+            lStyle |= WS_THICKFRAME;
+        }else {
+            lStyle &= ~(WS_THICKFRAME);
+        }
+
+        SetWindowLong(wWindow, GWL_STYLE, lStyle);
+
+        _resizable = value;
+    }
+
+    /++
+        Window resizing permission state.
+    +/
+    public void resizable(bool value) @safe @property
+    {
+        version(Posix) xResizable(value);
+        version(Windows) wResizable(value);
+    }
+
+    /// ditto
+    public bool resizable() @safe @property
+    {
+        return _resizable;
     }
 
     ///
