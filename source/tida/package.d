@@ -17,4 +17,5 @@ public
 	import tida.graph.image;
 	import tida.graph.text;
 	import tida.fps;
+	import tida.shape;
 }

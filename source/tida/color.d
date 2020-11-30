@@ -275,6 +275,44 @@ public struct Color(T)
         alias a = alpha;
     }
 
+    this(T red,T green,T blue,T alpha = T.max) @safe
+    {
+        this.red = red;
+        this.green = green;
+        this.blue = blue;
+        this.alpha = alpha;
+    }
+
+    this(T[] bytes,PixelFormat format = PixelFormat.RGBA) @safe
+    {
+        if(format == PixelFormat.RGB) {
+            red = bytes[0];
+            green = bytes[1];
+            blue = bytes[2];
+            alpha = T.max;
+        }else
+        if(format == PixelFormat.RGBA) {
+            red = bytes[0];
+            green = bytes[1];
+            blue = bytes[2];
+            alpha = bytes[3];
+        }
+        else
+        if(format == PixelFormat.ARGB) {
+            alpha = bytes[0];
+            red = bytes[1];
+            green = bytes[2];
+            blue = bytes[3];
+        }
+        else 
+        if(format == PixelFormat.BGRA) {
+            blue = bytes[0];
+            green = bytes[1];
+            red = bytes[2];
+            alpha = bytes[3];
+        }
+    }
+
     /++
         Converts a color to the specified type and format.
 

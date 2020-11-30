@@ -26,6 +26,8 @@ public class Renderer
     import tida.graph.gl;
     import tida.graph.drawable;
     import tida.graph.text;
+    import tida.graph.image;
+    import tida.shape;
 
     private
     {
@@ -288,6 +290,221 @@ public class Renderer
                 }
             });
         }
+    }
+
+    /++
+
+    +/
+    public void draw(Shape shape,Vecf position,Color!ubyte color) @safe
+    {
+        switch(shape.type) {
+            case ShapeType.point:
+                GL.color = color;
+
+                GL.draw!Points({
+                    GL.vertex(position + shape.begin);
+                });
+            break;
+
+            case ShapeType.line:
+                line([
+                    position + shape.begin,
+                    position + shape.end
+                ],color);
+            break;
+
+            case ShapeType.rectangle:
+                rectangle(
+                    position + shape.begin,
+                    shape.endX - shape.x,
+                    shape.endY - shape.y,
+                    color,
+                    true
+                );
+            break;
+
+            case ShapeType.circle:
+                circle(shape.begin,shape.radious,color,true);
+            break; 
+
+            case ShapeType.triangle:
+                triangle([
+                    shape.vertex!0,
+                    shape.vertex!1,
+                    shape.vertex!2
+                ],color,true);
+            break;
+
+            case ShapeType.multi:
+                foreach(e; shape.shapes) {
+                    draw(e,position + shape.begin,color);
+                }
+            break;
+
+            default:
+                assert(0,"This type is not supported!");
+        }
+    }
+
+    public Image copy(Shape shape) @trusted
+    {
+        import std.conv : to;
+
+        Image image = new Image();
+
+        //void line()
+
+        switch(shape.type) {
+            case ShapeType.point:
+
+                image.create(1,1);
+
+                ubyte[] pixels = image.bytes!ubyte;
+
+                GL.readPixels(shape.x.to!int,shape.y.to!int,1,1,GL_RGBA,GL_UNSIGNED_BYTE,cast(void*) pixels);
+
+                image.pixels = [Color!ubyte(pixels[0],pixels[1],pixels[2],pixels[3])];
+
+            break;
+
+            case ShapeType.line:
+                import std.math;
+
+                image.create(abs(shape.end.x - shape.begin.x).to!int,
+                             abs(shape.end.y - shape.begin.y).to!int);
+
+                ubyte[] pixels = image.bytes!ubyte;
+
+                GL.readPixels(shape.begin.x.to!int,shape.begin.y.to!int,image.width,image.height,
+                    GL_RGBA,GL_UNSIGNED_BYTE,cast(void*) pixels);
+
+                int x1 = shape.begin.x.to!int;
+                const int x2 = shape.end.x.to!int;
+                int y1 = shape.begin.y.to!int;
+                const int y2 = shape.end.y.to!int;
+
+                const int deltaX = abs(x2 - x1);
+                const int deltaY = abs(y2 - y1);
+                const int signX = x1 < x2 ? 1 : -1;
+                const int signY = y1 < y2 ? 1 : -1;
+                //
+                int error = deltaX - deltaY;
+                //
+                image.setPixel(x2.to!size_t, y2.to!size_t, 
+                    Color!ubyte(pixels[((y2.to!size_t * image.width) + x1.to!size_t) * 4 ..
+                                ((y2.to!size_t * image.width) + x1.to!size_t) * 4 + 4]));
+
+                while (x1 != x2 || y1 != y2)
+                {
+                    //drawPoint(Vec(x1, y1), color);
+                    image.setPixel(x1.to!size_t, y1.to!size_t, 
+                    Color!ubyte(pixels[((y1.to!size_t * image.width) + x1.to!size_t) * 4 ..
+                                ((y1.to!size_t * image.width) + x1.to!size_t) * 4 + 4]));
+                    const int error2 = error * 2;
+                    //
+                    if (error2 > -deltaY)
+                    {
+                        error -= deltaY;
+                        x1 += signX;
+                    }
+                    if (error2 < deltaX)
+                    {
+                        error += deltaX;
+                        y1 += signY;
+                    }
+                }
+            break;
+
+            case ShapeType.rectangle:
+                import std.math : abs;
+
+                image.create(abs(shape.end.x - shape.begin.x).to!int,
+                             abs(shape.end.y - shape.begin.y).to!int);
+
+                ubyte[] pixels = image.bytes!ubyte;
+
+                GL.readPixels(shape.begin.x.to!int,shape.begin.y.to!int,image.width,image.height,
+                    GL_RGBA,GL_UNSIGNED_BYTE,cast(void*) pixels);
+
+                image.bytes!ubyte(pixels);
+            break;
+
+            case ShapeType.circle:
+                
+                image.create(shape.radious.to!int * 2,
+                             shape.radious.to!int * 2);
+
+                ubyte[] pixels = image.bytes!ubyte;
+
+                void tryLine(int x1,int x2,int y1,int y2) @trusted
+                {
+                    import std.math : abs;
+
+                    const int deltaX = abs(x2 - x1);
+                    const int deltaY = abs(y2 - y1);
+                    const int signX = x1 < x2 ? 1 : -1;
+                    const int signY = y1 < y2 ? 1 : -1;
+                    //
+                    int error = deltaX - deltaY;
+                    //
+                    image.setPixel(x2.to!size_t, y2.to!size_t, 
+                        Color!ubyte(pixels[((y2.to!size_t * image.width) + x1.to!size_t) * 4 ..
+                                    ((y2.to!size_t * image.width) + x1.to!size_t) * 4 + 4]));
+
+                    while (x1 != x2 || y1 != y2)
+                    {
+                        image.setPixel(x1.to!size_t, y1.to!size_t, 
+                        Color!ubyte(pixels[((y1.to!size_t * image.width) + x1.to!size_t) * 4 ..
+                                    ((y1.to!size_t * image.width) + x1.to!size_t) * 4 + 4]));
+                        const int error2 = error * 2;
+                        //
+                        if (error2 > -deltaY)
+                        {
+                            error -= deltaY;
+                            x1 += signX;
+                        }
+                        if (error2 < deltaX)
+                        {
+                            error += deltaX;
+                            y1 += signY;
+                        }
+                    }
+                }
+
+                int x = 0;
+                int y = shape.radious.to!int;
+
+                int X1 = shape.begin.x.to!int;
+                int Y1 = shape.begin.y.to!int;
+
+                int delta = 1 - 2 * shape.radious.to!int;
+                int error = 0;
+                while (y >= 0)
+                {
+                    tryLine(X1 + x, Y1 + y,X1 + x, Y1 - y);
+                    tryLine(X1 - x, Y1 + y, X1 - x, Y1 - y);
+
+                    error = 2 * (delta + y) - 1;
+                    if ((delta < 0) && (error <= 0))
+                    {
+                        delta += 2 * ++x + 1;
+                        continue;
+                    }
+                    if ((delta > 0) && (error > 0))
+                    {
+                        delta -= 2 * --y + 1;
+                        continue;
+                    }
+                    delta += 2 * (++x - --y);
+                }
+                
+            break;
+
+            default:
+                assert(0,"Not support this type!");
+        }
+
+        return image;
     }
 
     /++

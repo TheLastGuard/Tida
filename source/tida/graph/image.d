@@ -115,6 +115,48 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /++
+        Bytes
+    +/
+    public void bytes(T)(T[] bt,PixelFormat format = PixelFormat.RGBA) @safe
+    in
+    {
+        if(format == PixelFormat.RGB)
+            assert(bt.length + (bt.length / 3) > _width * _height,
+            "The size of the picture is much larger than this one!");
+        else
+            assert(bt.length > _width * _height,
+            "The size of the picture is much larger than this one!");
+    }body
+    {
+        if(format == PixelFormat.RGB) {
+            for(size_t i = 0; i < bt.length; i += 3) 
+            {
+                _pixels[i / 3] = Color!ubyte(bt[i .. i + 3],PixelFormat.RGB);
+            }
+        }else
+        if(format == PixelFormat.RGBA) {
+            for(size_t i = 0; i < bt.length; i += 4) 
+            {
+                _pixels[i / 4] = Color!ubyte(bt[i .. i + 4],PixelFormat.RGBA);
+            }
+        }
+        else
+        if(format == PixelFormat.ARGB) {
+            for(size_t i = 0; i < bt.length; i += 4) 
+            {
+                _pixels[i / 4] = Color!ubyte(bt[i .. i + 4],PixelFormat.ARGB);
+            }
+        }
+        else
+        if(format == PixelFormat.BGRA) {
+            for(size_t i = 0; i < bt.length; i += 4) 
+            {
+                _pixels[i / 4] = Color!ubyte(bt[i .. i + 4],PixelFormat.BGRA);
+            }
+        }
+    }
+
+    /++
         Set the pixel at the specified location.
 
         Params:
