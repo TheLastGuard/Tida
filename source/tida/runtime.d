@@ -35,9 +35,7 @@ public class TidaRuntime
 {
     version(Posix)
     {
-        import x11.X;
-        import x11.Xlib;
-        import x11.Xutil;
+        import tida.x11;
         import dglx.glx;
     }
 
@@ -46,7 +44,7 @@ public class TidaRuntime
         import core.sys.windows.windows;
     }
 
-    import tida.graph.text;
+    import tida.graph.text, tida.sound.al;
 
     private
     {
@@ -62,6 +60,8 @@ public class TidaRuntime
         {
             HINSTANCE _wHInstance;
         }
+
+        Device device;
     }
 
     this(string[] args) @safe
@@ -69,6 +69,8 @@ public class TidaRuntime
         mainArguments = args;
 
         FreeTypeLoad();
+        initSoundLibrary();
+        device = new Device();
     }
 
     /++

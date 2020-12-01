@@ -121,10 +121,10 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     in
     {
         if(format == PixelFormat.RGB)
-            assert(bt.length + (bt.length / 3) > _width * _height,
+            assert(bt.length + (bt.length / 3) <= _width * _height * 3,
             "The size of the picture is much larger than this one!");
         else
-            assert(bt.length > _width * _height,
+            assert(bt.length <= _width * _height * 4,
             "The size of the picture is much larger than this one!");
     }body
     {
@@ -398,6 +398,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     public void freePixels() @trusted
     {
         if(_pixels !is null) {
+            destroy(_pixels);
             _pixels = null;
         }
     }

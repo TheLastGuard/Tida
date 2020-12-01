@@ -1,0 +1,4 @@
+/++
+
++/
+module tida.scene.component;

@@ -225,6 +225,36 @@ public struct Shape
     alias right = endX;
     alias bottom = endY;
 
+    string toString() @safe immutable
+    {
+        import std.conv : to;
+
+        if(type == ShapeType.point) {
+            return "Shape.Point(x: "~begin.x.to!string~",y: "~begin.y.to!string~")";
+        }else
+        if(type == ShapeType.rectangle) {
+            return "Shape.Rectangle(x: "~begin.x.to!string~",y: "~begin.y.to!string~","~
+            "endX: "~end.x.to!string~", endY: "~end.y.to!string~")";
+        }
+
+        return "Shape.Unknown()";
+    }
+
+    string toString() @safe
+    {
+        import std.conv : to;
+
+        if(type == ShapeType.point) {
+            return "Shape.Point(x: "~begin.x.to!string~",y: "~begin.y.to!string~")";
+        }else
+        if(type == ShapeType.rectangle) {
+            return "Shape.Rectangle(x: "~begin.x.to!string~",y: "~begin.y.to!string~","~
+            "endX: "~end.x.to!string~", endY: "~end.y.to!string~")";
+        }
+
+        return "Shape.Unknown()";
+    }
+
     /++
         Collects several figures into one.
 

@@ -11,9 +11,7 @@ public class EventHandler
 {
     version(Posix)
     {
-        import x11.Xlib;
-        import x11.X;
-        import x11.Xutil;
+        import tida.x11;
     }
 
     version(Windows)
@@ -51,6 +49,8 @@ public class EventHandler
 
         version(Posix)
         {
+            import std.stdio;
+
             XSync(runtime.display, false);
 
             XSelectInput(runtime.display, window.xWindow, ExposureMask | ButtonPressMask | KeyPressMask |
@@ -58,12 +58,10 @@ public class EventHandler
                                                           LeaveWindowMask | ResizeRedirectMask);
 
             destroyWindowEvent = XInternAtom(runtime.display, "WM_DELETE_WINDOW", False);
-
-            XSetWMProtocols(runtime.display, window.xWindow, &destroyWindowEvent, 1);
         }
     }
 
-    public void handle(void delegate() @safe func) @safe @property
+    public void handle(void delegate() func) @trusted @property
     {
         while(this.update)
         {

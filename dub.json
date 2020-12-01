@@ -11,7 +11,10 @@
 			"platforms": [
 				"posix"
 			],
-			"targetType": "executable"
+			"targetType": "executable",
+			"libs": [
+				"Xrandr"
+			]
 		},
 		{
 			"name": "windows",
@@ -33,6 +36,7 @@
 	],
 	"copyright": "Copyright © 2020, TodNaz",
 	"dependencies": {
+		"mp3decoder": "~>1.0.0",
 		"bindbc-openal": "~>0.4.1",
 		"bindbc-freetype": "~>0.9.1",
 		"bindbc-opengl": "~>0.13.0",

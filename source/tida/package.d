@@ -18,4 +18,6 @@ public
 	import tida.graph.text;
 	import tida.fps;
 	import tida.shape;
+	import tida.sound.al;
+	import tida.graph.camera;
 }

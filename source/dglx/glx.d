@@ -48,6 +48,7 @@ alias FglXCreateNewContext = extern(C) GLXContext function(Display *dpy, GLXFBCo
 alias FglXMakeCurrent = extern(C) bool function(Display *dpy,GLXDrawable drawable, GLXContext ctx);
 alias FglXDestroyContext = extern(C) void function(Display *dpy, GLXContext ctx);
 alias FglXSwapBuffers = extern(C) void function(Display *dpy, GLXDrawable drawable);
+alias FglXWaitX = extern(C) void function();
 
 __gshared
 {
@@ -60,6 +61,7 @@ __gshared
     FglXMakeCurrent glXMakeCurrent;
     FglXDestroyContext glXDestroyContext;
     FglXSwapBuffers glXSwapBuffers;
+    FglXWaitX glXWaitX;
 }
 
 public void GLXLoadLibrary() @trusted
@@ -98,6 +100,7 @@ public void GLXLoadLibrary() @trusted
                 bindOrError(cast(void**) &glXMakeCurrent, "glXMakeCurrent");
                 bindOrError(cast(void**) &glXDestroyContext, "glXDestroyContext");
                 bindOrError(cast(void**) &glXSwapBuffers, "glXSwapBuffers");
+                bindOrError(cast(void**) &glXWaitX, "glXWaitX");
 
                 isSucces = true;
             }catch(Exception e)

@@ -6,6 +6,8 @@
 +/
 module tida.info;
 
+version(Posix) pragma(lib,"opengl32.lib");
+
 /++
     Class for monitor information
 +/
@@ -15,7 +17,7 @@ public class Display
 
     version(Posix)
     {
-        import x11.Xlib;
+        import tida.x11;
     }
 
     version(Windows)
@@ -36,7 +38,19 @@ public class Display
     {
         version(Posix)
         {
-            return XWidthOfScreen(ScreenOfDisplay(runtime.display,screenID));
+            XRRScreenResources* screens = XRRGetScreenResources(runtime.display,
+                DefaultRootWindow(runtime.display));
+            XRRCrtcInfo* info = null;
+
+            assert(screenID < screens.ncrtc);
+
+            info = XRRGetCrtcInfo(runtime.display,screens,screens.crtcs[screenID]);
+
+            int of = info.width;
+
+            XRRFreeScreenResources(screens);
+
+            return of;
         }
 
         version(Windows)
@@ -58,7 +72,17 @@ public class Display
     {
         version(Posix)
         {
-            return XHeightOfScreen(ScreenOfDisplay(runtime.display,screenID));
+            XRRScreenResources* screens = XRRGetScreenResources(runtime.display,
+                DefaultRootWindow(runtime.display));
+            XRRCrtcInfo* info = null;
+
+            assert(screenID < screens.ncrtc);
+
+            info = XRRGetCrtcInfo(runtime.display,screens,screens.crtcs[screenID]);
+
+            int of = info.height;
+
+            return of;
         }
 
         version(Windows)
@@ -76,13 +100,20 @@ public class Display
     /++
         Returns information about the display.
     +/
-    public static Display information() @safe
+    public static Display information(int screenID = 0) @safe
     {
         auto display = new Display();
 
-        display.width = Display.getWidth();
-        display.height = Display.getHeight();
+        display.width = Display.getWidth(screenID);
+        display.height = Display.getHeight(screenID);
 
         return display;
+    }
+
+    debug override string toString() @safe const
+    {
+        import std.conv : to;
+
+        return "Display(width: "~width.to!string~",height: "~height.to!string~")";
     }
 }

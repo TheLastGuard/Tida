@@ -59,6 +59,10 @@
         * Make it possible to create several windows at the same time.
           Namely, to make `shared` methods for working in different threads, 
           both for the window and for the context, event handler and render.
+          
+        * Make normal full screen and resize. The fact is that when the size 
+          is changed, the render is not updated, even if you do a redraw. 
+          Apparently, the nodes allocate a buffer.
 
     Authors: TodNaz
     License: MIT
@@ -142,7 +146,7 @@ public class Context
 {
     version(Posix)
     {
-        import x11.X, x11.Xlib, x11.Xutil;
+        import tida.x11;
         import dglx.glx;
     }
 
@@ -331,7 +335,7 @@ public class Window
 {
     version(Posix)
     {
-        import x11.X, x11.Xlib, x11.Xutil, dglx.glx;
+        import tida.x11, dglx.glx;
     }
 
     version(Windows)
@@ -347,8 +351,15 @@ public class Window
         int _width;
         int _height;
 
+        int oldWidth;
+        int oldHeight;
+
+        bool oldResizable = false;
+
         string _title;
         Color!ubyte _background = Color!ubyte(255,255,255);
+
+        ubyte typeInitialize;
 
         version(Posix)
         {
@@ -365,6 +376,8 @@ public class Window
 
         uint _maxWidth = 2048, _maxHeight = 2048;
         uint _minWidth = 64,   _minHeight = 64;
+
+        bool _fullscreen = false;
     }
 
     /++
@@ -422,6 +435,7 @@ public class Window
             version(Posix)
             {
                 context = new Context();
+
                 context.attribInitialize(this);
 
                 xWindowInit(posX,posY,context.xGetVisual());
@@ -429,8 +443,10 @@ public class Window
                 context.xContextInitialize();
 
                 contextSet(context);
-                
+
                 xWindowShow();
+
+                xResize(width,height);
             }
 
             version(Windows)
@@ -447,6 +463,8 @@ public class Window
             }
         }else
             static assert(null,"It is impossible not to initialize the window if you have called such a command.");
+
+        typeInitialize = Type;
     }
 
     /++
@@ -526,6 +544,8 @@ public class Window
     +/
     version(Posix) public void xWindowInit(int posX,int posY,XVisualInfo* visual = null) @trusted
     {
+        import tida.info;
+
         XSetWindowAttributes windowAttribs;
         windowAttribs.border_pixel = Color!ubyte(0,0,0).conv!uint;
         windowAttribs.background_pixel = _background.conv!uint;
@@ -533,11 +553,21 @@ public class Window
         windowAttribs.colormap = XCreateColormap(runtime.display, RootWindow(runtime.display, runtime.displayID), 
                                                  visual.visual, AllocNone);
 
+        //window = XCreateWindow(runtime.display, RootWindow(runtime.display, runtime.displayID), posX, posY, 
+        //                       tida.info.Display.getWidth(),
+        //                       tida.info.Display.getHeight(),0,visual.depth,InputOutput,visual.visual,
+        //                       CWBackPixel|CWColormap|CWBorderPixel|CWEventMask, &windowAttribs);
+
         window = XCreateWindow(runtime.display, RootWindow(runtime.display, runtime.displayID), posX, posY, 
-                               width, height,0,visual.depth,InputOutput,visual.visual,
+                               width,
+                               height,0,visual.depth,InputOutput,visual.visual,
                                CWBackPixel|CWColormap|CWBorderPixel|CWEventMask, &windowAttribs);
 
         XStoreName(runtime.display, window, _title.toUTFz!(char*));
+
+        auto ev = XInternAtom(runtime.display, "WM_DELETE_WINDOW", False);
+
+        XSetWMProtocols(runtime.display, xWindow, &ev, 1);
     }
 
     /++
@@ -1124,6 +1154,45 @@ public class Window
         _height = rHeight;
     }
 
+    version(Posix) public void xFullscreen(bool value) @trusted
+    {   
+        import tida.info;
+
+        XEvent event;
+        
+        Atom wmState = XInternAtom(runtime.display,"_NET_WM_STATE",False);
+        Atom wmFullscreen = XInternAtom(runtime.display,"_NET_WM_STATE_FULLSCREEN",False);
+
+        event.xany.type = ClientMessage;
+        event.xclient.message_type = wmState;
+        event.xclient.format = 32;
+        event.xclient.window = xWindow;
+        event.xclient.data.l[1] = wmFullscreen;
+        event.xclient.data.l[3] = 0;
+
+        event.xclient.data.l[0] = fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+
+        XSendEvent(runtime.display,RootWindow(runtime.display,runtime.displayID),0,
+                SubstructureNotifyMask | SubstructureRedirectMask, &event);
+
+        _fullscreen = value;
+    }
+
+    public void fullscreen(bool value) @safe @property
+    {
+        version(Posix) xFullscreen(value);
+    }
+
+    public bool fullscreen() @safe @property
+    {
+        return _fullscreen;
+    }
+
+    public bool fullscreen() @safe @property const
+    {
+        return _fullscreen;
+    }
+
     /// Window title.
     public immutable(string) title() @safe @property nothrow
     {
@@ -1174,16 +1243,20 @@ public class Window
         return "Window(width: "~width.to!string~",height: "~height.to!string~",title: "~title~")";
     }
 
-    ~this() @trusted
+    ///
+    public void destroyWindow() @trusted
     {
-        version(Posix)
-        {
+        version(Posix) {
             XDestroyWindow(runtime.display, window);
         }
 
-        version(Windows)
-        {
-            DestroyWindow(window);
+        version(Windows) {
+            DestroyWindow(wWindow);
         }
+    }
+
+    ~this() @trusted
+    {
+        destroyWindow();
     }
 }

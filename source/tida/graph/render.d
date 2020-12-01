@@ -28,12 +28,14 @@ public class Renderer
     import tida.graph.text;
     import tida.graph.image;
     import tida.shape;
+    import tida.graph.camera;
 
     private
     {
         Window toRender;
         Color!ubyte _background;
         Vecf size;
+        Camera _camera;
     }
 
     /++
@@ -44,18 +46,26 @@ public class Renderer
     +/
     this(Window window) @safe
     {
+        import tida.info;
+
         GL.initialize();
 
         toRender = window;
 
-        size = Vecf(window.width,window.height);
-
-        GL.viewport(0,0,window.width,window.height);
+        if(!toRender.fullscreen) {
+            size = Vecf(toRender.width,toRender.height);
+            GL.viewport(0,0,toRender.width,toRender.height);
+        }
+        else
+        {
+            size = Vecf(Display.getWidth,Display.getHeight);
+            GL.viewport(0,0,size.intX,size.intY);
+        }
 
         GL.matrixMode(GL_PROJECTION);
         GL.loadIdentity();
 
-        GL.ortho(0.0, size.x, size.y, 0.0, 1.0, -1.0);
+        GL.ortho(0.0, size.x, size.y, 0.0, -1.0, 1.0);
 
         GL.matrixMode(GL_MODELVIEW);
         GL.loadIdentity();
@@ -66,19 +76,31 @@ public class Renderer
     ///
     public void reshape() @safe
     {
-        size = Vecf(toRender.width,toRender.height);
+        import tida.info, std.conv : to;
 
-        GL.viewport(0,0,toRender.width,toRender.height);
+        size = _camera.port.end;
+        auto begin = _camera.shape.begin;
 
         GL.matrixMode(GL_PROJECTION);
         GL.loadIdentity();
 
-        GL.ortho(0.0, size.x, size.y, 0.0, 1.0, -1.0);
+        GL.ortho(0.0, size.x, size.y, 0.0, -1.0, 1.0);
 
         GL.matrixMode(GL_MODELVIEW);
         GL.loadIdentity();
 
-        drawning();
+        clear();
+    }
+
+    public Camera camera() @safe @property
+    {
+        return _camera;
+    }
+
+    public void camera(Camera value) @safe @property
+    {
+        _camera = value;
+        reshape();
     }
 
     /++
@@ -134,20 +156,20 @@ public class Renderer
 
         if(isFill) {
             GL.draw!Polygons({
-                GL.vertex(points[0]);
-                GL.vertex(points[1]);
-                GL.vertex(points[2]);
+                GL.vertex(points[0] - _camera.port.begin);
+                GL.vertex(points[1] - _camera.port.begin);
+                GL.vertex(points[2] - _camera.port.begin);
             });
         }else {
             GL.draw!Lines({
-                GL.vertex(points[0]);
-                GL.vertex(points[1]);
+                GL.vertex(points[0] - _camera.port.begin);
+                GL.vertex(points[1] - _camera.port.begin);
 
-                GL.vertex(points[1]);
-                GL.vertex(points[2]);
+                GL.vertex(points[1] - _camera.port.begin);
+                GL.vertex(points[2] - _camera.port.begin);
 
-                GL.vertex(points[2]);
-                GL.vertex(points[0]);
+                GL.vertex(points[2] - _camera.port.begin);
+                GL.vertex(points[0] - _camera.port.begin);
             });
         }
     }
@@ -164,6 +186,8 @@ public class Renderer
     +/
     public void rectangle(Vecf position,float width,float height,Color!ubyte color,bool isFill = true) @safe
     {
+        position -= _camera.port.begin;
+
         GL.color = color;
 
         if(isFill) {
@@ -218,6 +242,8 @@ public class Renderer
     +/
     public void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe
     {
+        position -= _camera.port.begin;
+
         GL.color = color;
 
         if (isFill)
@@ -297,6 +323,8 @@ public class Renderer
     +/
     public void draw(Shape shape,Vecf position,Color!ubyte color) @safe
     {
+        position -= _camera.port.begin;
+
         switch(shape.type) {
             case ShapeType.point:
                 GL.color = color;
@@ -347,163 +375,27 @@ public class Renderer
     }
 
     public Image copy(Shape shape) @trusted
+    in
+    {
+        assert(shape.type == ShapeType.rectangle);
+    }body
     {
         import std.conv : to;
 
         Image image = new Image();
 
-        //void line()
+        image.create(shape.endX.to!int - shape.x.to!int,
+                     shape.endY.to!int - shape.y.to!int);
 
-        switch(shape.type) {
-            case ShapeType.point:
+        ubyte[] pixels = new ubyte[](image.width * image.height * 4);
 
-                image.create(1,1);
+        GL.readPixels(shape.x.to!int,shape.y.to!int,
+                      shape.endX.to!int - shape.x.to!int,
+                      shape.endY.to!int - shape.y.to!int,
+                      GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) pixels);
 
-                ubyte[] pixels = image.bytes!ubyte;
-
-                GL.readPixels(shape.x.to!int,shape.y.to!int,1,1,GL_RGBA,GL_UNSIGNED_BYTE,cast(void*) pixels);
-
-                image.pixels = [Color!ubyte(pixels[0],pixels[1],pixels[2],pixels[3])];
-
-            break;
-
-            case ShapeType.line:
-                import std.math;
-
-                image.create(abs(shape.end.x - shape.begin.x).to!int,
-                             abs(shape.end.y - shape.begin.y).to!int);
-
-                ubyte[] pixels = image.bytes!ubyte;
-
-                GL.readPixels(shape.begin.x.to!int,shape.begin.y.to!int,image.width,image.height,
-                    GL_RGBA,GL_UNSIGNED_BYTE,cast(void*) pixels);
-
-                int x1 = shape.begin.x.to!int;
-                const int x2 = shape.end.x.to!int;
-                int y1 = shape.begin.y.to!int;
-                const int y2 = shape.end.y.to!int;
-
-                const int deltaX = abs(x2 - x1);
-                const int deltaY = abs(y2 - y1);
-                const int signX = x1 < x2 ? 1 : -1;
-                const int signY = y1 < y2 ? 1 : -1;
-                //
-                int error = deltaX - deltaY;
-                //
-                image.setPixel(x2.to!size_t, y2.to!size_t, 
-                    Color!ubyte(pixels[((y2.to!size_t * image.width) + x1.to!size_t) * 4 ..
-                                ((y2.to!size_t * image.width) + x1.to!size_t) * 4 + 4]));
-
-                while (x1 != x2 || y1 != y2)
-                {
-                    //drawPoint(Vec(x1, y1), color);
-                    image.setPixel(x1.to!size_t, y1.to!size_t, 
-                    Color!ubyte(pixels[((y1.to!size_t * image.width) + x1.to!size_t) * 4 ..
-                                ((y1.to!size_t * image.width) + x1.to!size_t) * 4 + 4]));
-                    const int error2 = error * 2;
-                    //
-                    if (error2 > -deltaY)
-                    {
-                        error -= deltaY;
-                        x1 += signX;
-                    }
-                    if (error2 < deltaX)
-                    {
-                        error += deltaX;
-                        y1 += signY;
-                    }
-                }
-            break;
-
-            case ShapeType.rectangle:
-                import std.math : abs;
-
-                image.create(abs(shape.end.x - shape.begin.x).to!int,
-                             abs(shape.end.y - shape.begin.y).to!int);
-
-                ubyte[] pixels = image.bytes!ubyte;
-
-                GL.readPixels(shape.begin.x.to!int,shape.begin.y.to!int,image.width,image.height,
-                    GL_RGBA,GL_UNSIGNED_BYTE,cast(void*) pixels);
-
-                image.bytes!ubyte(pixels);
-            break;
-
-            case ShapeType.circle:
-                
-                image.create(shape.radious.to!int * 2,
-                             shape.radious.to!int * 2);
-
-                ubyte[] pixels = image.bytes!ubyte;
-
-                void tryLine(int x1,int x2,int y1,int y2) @trusted
-                {
-                    import std.math : abs;
-
-                    const int deltaX = abs(x2 - x1);
-                    const int deltaY = abs(y2 - y1);
-                    const int signX = x1 < x2 ? 1 : -1;
-                    const int signY = y1 < y2 ? 1 : -1;
-                    //
-                    int error = deltaX - deltaY;
-                    //
-                    image.setPixel(x2.to!size_t, y2.to!size_t, 
-                        Color!ubyte(pixels[((y2.to!size_t * image.width) + x1.to!size_t) * 4 ..
-                                    ((y2.to!size_t * image.width) + x1.to!size_t) * 4 + 4]));
-
-                    while (x1 != x2 || y1 != y2)
-                    {
-                        image.setPixel(x1.to!size_t, y1.to!size_t, 
-                        Color!ubyte(pixels[((y1.to!size_t * image.width) + x1.to!size_t) * 4 ..
-                                    ((y1.to!size_t * image.width) + x1.to!size_t) * 4 + 4]));
-                        const int error2 = error * 2;
-                        //
-                        if (error2 > -deltaY)
-                        {
-                            error -= deltaY;
-                            x1 += signX;
-                        }
-                        if (error2 < deltaX)
-                        {
-                            error += deltaX;
-                            y1 += signY;
-                        }
-                    }
-                }
-
-                int x = 0;
-                int y = shape.radious.to!int;
-
-                int X1 = shape.begin.x.to!int;
-                int Y1 = shape.begin.y.to!int;
-
-                int delta = 1 - 2 * shape.radious.to!int;
-                int error = 0;
-                while (y >= 0)
-                {
-                    tryLine(X1 + x, Y1 + y,X1 + x, Y1 - y);
-                    tryLine(X1 - x, Y1 + y, X1 - x, Y1 - y);
-
-                    error = 2 * (delta + y) - 1;
-                    if ((delta < 0) && (error <= 0))
-                    {
-                        delta += 2 * ++x + 1;
-                        continue;
-                    }
-                    if ((delta > 0) && (error > 0))
-                    {
-                        delta -= 2 * --y + 1;
-                        continue;
-                    }
-                    delta += 2 * (++x - --y);
-                }
-                
-            break;
-
-            default:
-                assert(0,"Not support this type!");
-        }
-
+        image.bytes!ubyte(pixels,PixelFormat.RGBA);
+        
         return image;
     }
 
@@ -516,6 +408,8 @@ public class Renderer
     +/
     public void draw(Symbol[] symbols,Vecf position) @safe
     {
+        position -= _camera.port.begin;
+
         foreach(s; symbols) 
         {
             if(!s.image.isTexture)
@@ -529,19 +423,19 @@ public class Renderer
     ///
     public void draw(IDrawable drawable,Vecf position) @safe
     {
-        drawable.draw(this,position);
+        drawable.draw(this,_camera.port.begin - position);
     }
 
     ///
     public void drawEx(IDrawableEx drawable,Vecf position,float angle,Vecf center,Vecf size) @safe
     {
-        drawable.drawEx(this,position,angle,center,size);
+        drawable.drawEx(this,_camera.port.begin - position,angle,center,size);
     }
 
     ///
     public void drawColor(IDrawableColor drawable,Vecf position,Color!ubyte color) @safe
     {
-        drawable.drawColor(this,position,color);
+        drawable.drawColor(this,_camera.port.begin - position,color);
     }
 
     /++

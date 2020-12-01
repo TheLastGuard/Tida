@@ -45,6 +45,8 @@ public struct GL
         glViewport(x,y,width,height);
     }
 
+    
+
     static void clearColor(Color!ubyte color) @trusted @property
     {
         glClearColor(color.rf,color.gf,color.bf,color.af);
