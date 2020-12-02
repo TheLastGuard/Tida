@@ -97,10 +97,40 @@
 
 	
 	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >game</span></a><ul>
+			
+
+	<li><a title="Module for describing animation." href="tida--tida.game.animation.html"><span >animation</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.game.collision.html"><span >collision</span></a></li>
+
+
+
+	<li><a title="A module for describing the rendering of image or animation." href="tida--tida.game.sprite.html"><span >sprite</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.game.tile.html"><span >tile</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+	
+	
 		<li class="expand-container open"><a class='expand-toggle' href="#"><span >graph</span></a><ul>
 			
 
-	<li><a title="" href="tida--tida.graph.drawable.html"><span >drawable</span></a></li>
+	<li><a title="" href="tida--tida.graph.camera.html"><span >camera</span></a></li>
+
+
+
+	<li><a title="A module for describing the rendering of elements." href="tida--tida.graph.drawable.html"><span >drawable</span></a></li>
 
 
 
@@ -116,7 +146,7 @@
 
 
 
-	<li><a title="" href="tida--tida.graph.text.html"><span >text</span></a></li>
+	<li><a title="Module for rendering text using the `FreeType` library." href="tida--tida.graph.text.html"><span >text</span></a></li>
 
 
 		</ul></li>
@@ -133,12 +163,62 @@
 	<li><a title="Runtime module. Serves to save some globally significant variables in the library." href="tida--tida.runtime.html"><span >runtime</span></a></li>
 
 
+	
+		<li class="expand-container open"><a title='
+		' class='expand-toggle' href='#'><span >scene</span></a><ul><li><a title='
+		' href="
+			tida--tida.scene.html"><span >package</span></a></li>
+			
+
+	<li><a title="" href="tida--tida.scene.component.html"><span >component</span></a></li>
+
+
+
+	<li><a title="A module for describing an object in the game." href="tida--tida.scene.instance.html"><span >instance</span></a></li>
+
+
+
+	<li><a title="Scene manager module." href="tida--tida.scene.manager.html"><span >manager</span></a></li>
+
+
+
+	<li><a title="A module for describing a scene in the play space." href="tida--tida.scene.scene.html"><span >scene</span></a></li>
+
+</ul></li>
+	
+	
+
+
+
+
+
+	<li><a title="This module describes shapes for drawing" href="tida--tida.shape.html"><span >shape</span></a></li>
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >sound</span></a><ul>
+			
+
+	<li><a title="Module for playing sound and music using the OpenAL library." href="tida--tida.sound.al.html"><span >al</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
 
 	<li><a title="Module for information about positioning elements." href="tida--tida.vector.html"><span >vector</span></a></li>
 
 
 
 	<li><a title="A module for working with windows in a cross-platform environment." href="tida--tida.window.html"><span >window</span></a></li>
+
+
+
+	<li><a title="Module for importing x11 libraries." href="tida--tida.x11.html"><span >x11</span></a></li>
 
 </ul></li>
 	
@@ -153,7 +233,85 @@
                 
                 <div class="quickindex" id="quickindex"></div>
                 
-                
+                <div class="ddoc_summary">Module for rendering <code class="ddoc_psymbol">text</code> using the <code class="d_inlinecode donthyphenate notranslate">FreeType</code> library.
+</div><div class="ddoc_authors"><span class="ddoc_authors_header">Authors:</span>
+ TodNaz
+</div>
+<div class="ddoc_license"><span class="ddoc_license_header">License:</span>
+ MIT</div>
+<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".FTlibrary"></span><div class="quickindex" id="quickindex.FTlibrary"></div>FT_Library <code class="ddoc_psymbol">FTlibrary</code>;
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".FreeTypeLoad"></span><div class="quickindex" id="quickindex.FreeTypeLoad"></div>@trusted void <code class="ddoc_psymbol">FreeTypeLoad</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Loads the <code class="d_inlinecode donthyphenate notranslate">FreeType</code> library.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Font"></span><div class="quickindex" id="quickindex.Font"></div>class <code class="ddoc_psymbol">Font</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary"><code class="ddoc_psymbol">Font</code> object.</div><dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Font.face"></span><div class="quickindex" id="quickindex.Font.face"></div>@property @safe FT_Face <code class="ddoc_psymbol">face</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns a font object loaded from another library.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Font.size"></span><div class="quickindex" id="quickindex.Font.size"></div>@property @safe size_t <code class="ddoc_psymbol">size</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Font <code class="ddoc_psymbol">size</code></div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Font.load"></span><div class="quickindex" id="quickindex.Font.load"></div>@trusted void <code class="ddoc_psymbol">load</code>(string <span class="ddoc_param">path</span>, size_t <span class="ddoc_param">size</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Loads a font.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">string <span class="ddoc_param">path</span></td>
+<td class="ddoc_param_desc">The <span class="ddoc_param">path</span> to the font.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">size_t <span class="ddoc_param">size</span></td>
+<td class="ddoc_param_desc">Font <span class="ddoc_param">size</span>.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Font.free"></span><div class="quickindex" id="quickindex.Font.free"></div>@trusted void <code class="ddoc_psymbol">free</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Free face.</div></dd>
+</div></dl>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Symbol"></span><div class="quickindex" id="quickindex.Symbol"></div>class <code class="ddoc_psymbol">Symbol</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary"><code class="ddoc_psymbol">Symbol</code> object. Needed for rendering.</div><dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Symbol.image"></span><div class="quickindex" id="quickindex.Symbol.image"></div>Image <code class="ddoc_psymbol">image</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Symbol render <code class="ddoc_psymbol">image</code></div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Symbol.position"></span><div class="quickindex" id="quickindex.Symbol.position"></div>Vecf <code class="ddoc_psymbol">position</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Symbol releative <code class="ddoc_psymbol">position</code></div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Symbol.color"></span><div class="quickindex" id="quickindex.Symbol.color"></div>Color!ubyte <code class="ddoc_psymbol">color</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Symbol <code class="ddoc_psymbol">color</code></div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Symbol.this"></span><div class="quickindex" id="quickindex.Symbol.this"></div>@safe this(Image <span class="ddoc_param">img</span>, Vecf <span class="ddoc_param">pos</span>, Color!ubyte <span class="ddoc_param">color</span> = rgb(255, 255, 255));
+<br></div></dt>
+<dd>
+</dd>
+</div></dl>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Text"></span><div class="quickindex" id="quickindex.Text"></div>class <code class="ddoc_psymbol">Text</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Object for rendering text. Use the <code class="d_inlinecode donthyphenate notranslate">renderSymbol</code> function to render symbols.</div><dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Text.this"></span><div class="quickindex" id="quickindex.Text.this"></div>@safe this(Font <span class="ddoc_param">newFont</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Object constructor.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">Font <span class="ddoc_param">newFont</span></td>
+<td class="ddoc_param_desc">The font to use.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Text.renderSymbols"></span><div class="quickindex" id="quickindex.Text.renderSymbols"></div>@trusted Symbol[] <code class="ddoc_psymbol">renderSymbols</code>(string <span class="ddoc_param">symbols</span>, Color!ubyte <span class="ddoc_param">color</span> = rgba(255, 255, 255, 255));
+<br></div></dt>
+<dd><div class="ddoc_summary">A function to render a character and set the position of each of them to form words.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">string <span class="ddoc_param">symbols</span></td>
+<td class="ddoc_param_desc">Text for rendering.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">Color!ubyte <span class="ddoc_param">color</span></td>
+<td class="ddoc_param_desc">Text <span class="ddoc_param">color</span>.</td></tr>
+</table></div>
+
+</dd>
+</div></dl>
+</dd>
+</div></dl>
 
                 
             </div>

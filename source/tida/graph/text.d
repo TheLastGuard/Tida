@@ -138,7 +138,7 @@ public class Text
         A function to render a character and set the position of each of them to form words.
 
         Params:
-            symbol = Text for rendering.
+            symbols = Text for rendering.
             color = Text color.
     +/
     public Symbol[] renderSymbols(string symbols,Color!ubyte color = rgba(255,255,255,255)) @trusted

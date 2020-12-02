@@ -97,10 +97,40 @@
 
 	
 	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >game</span></a><ul>
+			
+
+	<li><a title="Module for describing animation." href="tida--tida.game.animation.html"><span >animation</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.game.collision.html"><span >collision</span></a></li>
+
+
+
+	<li><a title="A module for describing the rendering of image or animation." href="tida--tida.game.sprite.html"><span >sprite</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.game.tile.html"><span >tile</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+	
+	
 		<li class="expand-container open"><a class='expand-toggle' href="#"><span >graph</span></a><ul>
 			
 
-	<li><a title="" href="tida--tida.graph.drawable.html"><span >drawable</span></a></li>
+	<li><a title="" href="tida--tida.graph.camera.html"><span >camera</span></a></li>
+
+
+
+	<li><a title="A module for describing the rendering of elements." href="tida--tida.graph.drawable.html"><span >drawable</span></a></li>
 
 
 
@@ -116,7 +146,7 @@
 
 
 
-	<li><a title="" href="tida--tida.graph.text.html"><span >text</span></a></li>
+	<li><a title="Module for rendering text using the `FreeType` library." href="tida--tida.graph.text.html"><span >text</span></a></li>
 
 
 		</ul></li>
@@ -133,12 +163,62 @@
 	<li><a title="Runtime module. Serves to save some globally significant variables in the library." href="tida--tida.runtime.html"><span >runtime</span></a></li>
 
 
+	
+		<li class="expand-container open"><a title='
+		' class='expand-toggle' href='#'><span >scene</span></a><ul><li><a title='
+		' href="
+			tida--tida.scene.html"><span >package</span></a></li>
+			
+
+	<li><a title="" href="tida--tida.scene.component.html"><span >component</span></a></li>
+
+
+
+	<li><a title="A module for describing an object in the game." href="tida--tida.scene.instance.html"><span >instance</span></a></li>
+
+
+
+	<li><a title="Scene manager module." href="tida--tida.scene.manager.html"><span >manager</span></a></li>
+
+
+
+	<li><a title="A module for describing a scene in the play space." href="tida--tida.scene.scene.html"><span >scene</span></a></li>
+
+</ul></li>
+	
+	
+
+
+
+
+
+	<li><a title="This module describes shapes for drawing" href="tida--tida.shape.html"><span >shape</span></a></li>
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >sound</span></a><ul>
+			
+
+	<li><a title="Module for playing sound and music using the OpenAL library." href="tida--tida.sound.al.html"><span >al</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
 
 	<li><a title="Module for information about positioning elements." href="tida--tida.vector.html"><span >vector</span></a></li>
 
 
 
 	<li><a title="A module for working with windows in a cross-platform environment." href="tida--tida.window.html"><span >window</span></a></li>
+
+
+
+	<li><a title="Module for importing x11 libraries." href="tida--tida.x11.html"><span >x11</span></a></li>
 
 </ul></li>
 	
@@ -218,6 +298,10 @@ context.initialize(<span class="d_psymbol">window</span>);
           Namely, to make <code class="d_inlinecode donthyphenate notranslate">shared</code> methods for working in different threads,
           both for the <code class="ddoc_psymbol">window</code> and for the context, event handler and render.
 </li>
+<li>Make normal full screen and resize. The fact is that when the size
+          is changed, the render is not updated, even if you do a redraw.
+          Apparently, the nodes allocate a buffer.
+</li>
 </ul>
 </div>
 <div class="ddoc_authors"><span class="ddoc_authors_header">Authors:</span>
@@ -225,7 +309,13 @@ context.initialize(<span class="d_psymbol">window</span>);
 </div>
 <div class="ddoc_license"><span class="ddoc_license_header">License:</span>
  MIT</div>
-<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Simple"></span><div class="quickindex" id="quickindex.Simple"></div>static immutable ubyte <code class="ddoc_psymbol">Simple</code>;
+<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id="._NET_WM_STATE_ADD"></span><div class="quickindex" id="quickindex._NET_WM_STATE_ADD"></div>static immutable int <code class="ddoc_psymbol">_NET_WM_STATE_ADD</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Add state</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id="._NET_WM_STATE_REMOVE"></span><div class="quickindex" id="quickindex._NET_WM_STATE_REMOVE"></div>static immutable int <code class="ddoc_psymbol">_NET_WM_STATE_REMOVE</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Remove state</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Simple"></span><div class="quickindex" id="quickindex.Simple"></div>static immutable ubyte <code class="ddoc_psymbol">Simple</code>;
 <br></div></dt>
 <dd><div class="ddoc_summary">    A property to create just a window, without creating a context.
     Initialize it like this:
@@ -387,12 +477,28 @@ context.initialize(<span class="d_psymbol">window</span>);
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xWindow"></span><div class="quickindex" id="quickindex.Window.xWindow"></div>nothrow @property @trusted x11.Xlib.Window <code class="ddoc_psymbol">xWindow</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Window in x11 environment.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xGetX"></span><div class="quickindex" id="quickindex.Window.xGetX"></div>@trusted int <code class="ddoc_psymbol">xGetX</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xGetY"></span><div class="quickindex" id="quickindex.Window.xGetY"></div>@trusted int <code class="ddoc_psymbol">xGetY</code>();
+<br></div></dt>
+<dd>
+</dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.x"></span><div class="quickindex" id="quickindex.Window.x"></div>@property @safe int <code class="ddoc_psymbol">x</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">X-axis position of the window.</div></dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.y"></span><div class="quickindex" id="quickindex.Window.y"></div>@property @safe int <code class="ddoc_psymbol">y</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Y-axis position of the window.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xResize"></span><div class="quickindex" id="quickindex.Window.xResize"></div>@trusted void <code class="ddoc_psymbol">xResize</code>(immutable uint <span class="ddoc_param">newWidth</span>, immutable uint <span class="ddoc_param">newHeight</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xMove"></span><div class="quickindex" id="quickindex.Window.xMove"></div>@trusted void <code class="ddoc_psymbol">xMove</code>(immutable int <span class="ddoc_param">posX</span>, immutable int <span class="ddoc_param">posY</span>);
+<br></div></dt>
+<dd>
+</dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.move"></span><div class="quickindex" id="quickindex.Window.move"></div>@safe void <code class="ddoc_psymbol">move</code>(immutable int <span class="ddoc_param">posX</span>, immutable int <span class="ddoc_param">posY</span>);
 <br></div></dt>
 <dd><div class="ddoc_summary">Moves the window to the specified location.
@@ -415,18 +521,103 @@ context.initialize(<span class="d_psymbol">window</span>);
 </table></div>
 
 </dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xHide"></span><div class="quickindex" id="quickindex.Window.xHide"></div>@trusted void <code class="ddoc_psymbol">xHide</code>();
+<br></div></dt>
+<dd>
+</dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.hide"></span><div class="quickindex" id="quickindex.Window.hide"></div>@safe void <code class="ddoc_psymbol">hide</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Hides the window.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xMaxWidth"></span><div class="quickindex" id="quickindex.Window.xMaxWidth"></div>nothrow @trusted void <code class="ddoc_psymbol">xMaxWidth</code>(int <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xMaxHeight"></span><div class="quickindex" id="quickindex.Window.xMaxHeight"></div>nothrow @trusted void <code class="ddoc_psymbol">xMaxHeight</code>(int <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xMinWidth"></span><div class="quickindex" id="quickindex.Window.xMinWidth"></div>nothrow @trusted void <code class="ddoc_psymbol">xMinWidth</code>(int <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xMinHeight"></span><div class="quickindex" id="quickindex.Window.xMinHeight"></div>nothrow @trusted void <code class="ddoc_psymbol">xMinHeight</code>(int <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.minimumWidth"></span><div class="quickindex" id="quickindex.Window.minimumWidth"></div>nothrow @property @safe void <code class="ddoc_psymbol">minimumWidth</code>(int <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.minimumWidth.2"></span><div class="quickindex" id="quickindex.Window.minimumWidth.2"></div>nothrow @property @safe int <code class="ddoc_psymbol">minimumWidth</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.minimumHeight"></span><div class="quickindex" id="quickindex.Window.minimumHeight"></div>nothrow @property @safe void <code class="ddoc_psymbol">minimumHeight</code>(int <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.minimumHeight.2"></span><div class="quickindex" id="quickindex.Window.minimumHeight.2"></div>nothrow @property @safe int <code class="ddoc_psymbol">minimumHeight</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.maximumWidth"></span><div class="quickindex" id="quickindex.Window.maximumWidth"></div>nothrow @property @safe void <code class="ddoc_psymbol">maximumWidth</code>(int <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.maximumWidth.2"></span><div class="quickindex" id="quickindex.Window.maximumWidth.2"></div>nothrow @property @safe int <code class="ddoc_psymbol">maximumWidth</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.maximumHeight"></span><div class="quickindex" id="quickindex.Window.maximumHeight"></div>nothrow @property @safe void <code class="ddoc_psymbol">maximumHeight</code>(int <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.maximumHeight.2"></span><div class="quickindex" id="quickindex.Window.maximumHeight.2"></div>nothrow @property @safe int <code class="ddoc_psymbol">maximumHeight</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xResizable"></span><div class="quickindex" id="quickindex.Window.xResizable"></div>@trusted void <code class="ddoc_psymbol">xResizable</code>(bool <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.resizable"></span><div class="quickindex" id="quickindex.Window.resizable"></div>@property @safe void <code class="ddoc_psymbol">resizable</code>(bool <span class="ddoc_param">value</span>);
+<br>
+@property @safe bool <code class="ddoc_psymbol">resizable</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Window resizing permission state.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xIcon"></span><div class="quickindex" id="quickindex.Window.xIcon"></div>@trusted void <code class="ddoc_psymbol">xIcon</code>(Image <span class="ddoc_param">image</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.icon"></span><div class="quickindex" id="quickindex.Window.icon"></div>@property @safe void <code class="ddoc_psymbol">icon</code>(Image <span class="ddoc_param">image</span>);
+<br></div></dt>
+<dd>
+</dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.resizeEvent"></span><div class="quickindex" id="quickindex.Window.resizeEvent"></div>@safe void <code class="ddoc_psymbol">resizeEvent</code>(uint <span class="ddoc_param">rWidth</span>, uint <span class="ddoc_param">rHeight</span>);
 <br></div></dt>
-<dd><div class="ddoc_summary">?</div></dd>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.title"></span><div class="quickindex" id="quickindex.Window.title"></div>nothrow @property @safe immutable(string) <code class="ddoc_psymbol">title</code>();
+<br>
+const nothrow @property @safe immutable(string) <code class="ddoc_psymbol">title</code>();
+<br>
+nothrow @property @trusted void <code class="ddoc_psymbol">title</code>(string <span class="ddoc_param">newTitle</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Window <code class="ddoc_psymbol">title</code>.</div></dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.width"></span><div class="quickindex" id="quickindex.Window.width"></div>nothrow @property @safe immutable(uint) <code class="ddoc_psymbol">width</code>();
+<br>
+const nothrow @property @safe immutable(uint) <code class="ddoc_psymbol">width</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Window <code class="ddoc_psymbol">width</code>.</div></dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.height"></span><div class="quickindex" id="quickindex.Window.height"></div>nothrow @property @safe immutable(uint) <code class="ddoc_psymbol">height</code>();
+<br>
+const nothrow @property @safe immutable(uint) <code class="ddoc_psymbol">height</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Window <code class="ddoc_psymbol">height</code>.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.destroyWindow"></span><div class="quickindex" id="quickindex.Window.destroyWindow"></div>@trusted void <code class="ddoc_psymbol">destroyWindow</code>();
+<br></div></dt>
+<dd>
+</dd>
 </div></dl>
 </dd>
 </div></dl>

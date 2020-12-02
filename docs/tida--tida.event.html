@@ -97,10 +97,40 @@
 
 	
 	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >game</span></a><ul>
+			
+
+	<li><a title="Module for describing animation." href="tida--tida.game.animation.html"><span >animation</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.game.collision.html"><span >collision</span></a></li>
+
+
+
+	<li><a title="A module for describing the rendering of image or animation." href="tida--tida.game.sprite.html"><span >sprite</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.game.tile.html"><span >tile</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+	
+	
 		<li class="expand-container open"><a class='expand-toggle' href="#"><span >graph</span></a><ul>
 			
 
-	<li><a title="" href="tida--tida.graph.drawable.html"><span >drawable</span></a></li>
+	<li><a title="" href="tida--tida.graph.camera.html"><span >camera</span></a></li>
+
+
+
+	<li><a title="A module for describing the rendering of elements." href="tida--tida.graph.drawable.html"><span >drawable</span></a></li>
 
 
 
@@ -116,7 +146,7 @@
 
 
 
-	<li><a title="" href="tida--tida.graph.text.html"><span >text</span></a></li>
+	<li><a title="Module for rendering text using the `FreeType` library." href="tida--tida.graph.text.html"><span >text</span></a></li>
 
 
 		</ul></li>
@@ -133,12 +163,62 @@
 	<li><a title="Runtime module. Serves to save some globally significant variables in the library." href="tida--tida.runtime.html"><span >runtime</span></a></li>
 
 
+	
+		<li class="expand-container open"><a title='
+		' class='expand-toggle' href='#'><span >scene</span></a><ul><li><a title='
+		' href="
+			tida--tida.scene.html"><span >package</span></a></li>
+			
+
+	<li><a title="" href="tida--tida.scene.component.html"><span >component</span></a></li>
+
+
+
+	<li><a title="A module for describing an object in the game." href="tida--tida.scene.instance.html"><span >instance</span></a></li>
+
+
+
+	<li><a title="Scene manager module." href="tida--tida.scene.manager.html"><span >manager</span></a></li>
+
+
+
+	<li><a title="A module for describing a scene in the play space." href="tida--tida.scene.scene.html"><span >scene</span></a></li>
+
+</ul></li>
+	
+	
+
+
+
+
+
+	<li><a title="This module describes shapes for drawing" href="tida--tida.shape.html"><span >shape</span></a></li>
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >sound</span></a><ul>
+			
+
+	<li><a title="Module for playing sound and music using the OpenAL library." href="tida--tida.sound.al.html"><span >al</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
 
 	<li><a title="Module for information about positioning elements." href="tida--tida.vector.html"><span >vector</span></a></li>
 
 
 
 	<li><a title="A module for working with windows in a cross-platform environment." href="tida--tida.window.html"><span >window</span></a></li>
+
+
+
+	<li><a title="Module for importing x11 libraries." href="tida--tida.x11.html"><span >x11</span></a></li>
 
 </ul></li>
 	
@@ -159,16 +239,7 @@
 </div>
 <div class="ddoc_license"><span class="ddoc_license_header">License:</span>
  MIT</div>
-<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".initEventHandler"></span><div class="quickindex" id="quickindex.initEventHandler"></div>static @trusted EventHandler <code class="ddoc_psymbol">initEventHandler</code>(Window <span class="ddoc_param">window</span>);
-<br></div></dt>
-<dd><div class="ddoc_summary">Initializes an event handler.
-</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
- <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">Window <span class="ddoc_param">window</span></td>
-<td class="ddoc_param_desc">For which <span class="ddoc_param">window</span> to process events.</td></tr>
-</table></div>
-
-</dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler"></span><div class="quickindex" id="quickindex.EventHandler"></div>class <code class="ddoc_psymbol">EventHandler</code>;
+<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler"></span><div class="quickindex" id="quickindex.EventHandler"></div>class <code class="ddoc_psymbol">EventHandler</code>;
 <br></div></dt>
 <dd><div class="ddoc_summary">Event handler.</div><dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.this"></span><div class="quickindex" id="quickindex.EventHandler.this"></div>@trusted this(tida.<span class="ddoc_param">window</span>.Window <span class="ddoc_param">window</span>);
 <br></div></dt>
@@ -183,6 +254,22 @@
 <br></div></dt>
 <dd><div class="ddoc_summary">Updates the event queue. Returns whether there are events in the queue.
         On each call, the queue is advanced.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.xUpdate"></span><div class="quickindex" id="quickindex.EventHandler.xUpdate"></div>@trusted bool <code class="ddoc_psymbol">xUpdate</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.xIsKeyDown"></span><div class="quickindex" id="quickindex.EventHandler.xIsKeyDown"></div>@trusted bool <code class="ddoc_psymbol">xIsKeyDown</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.xIsKeyUp"></span><div class="quickindex" id="quickindex.EventHandler.xIsKeyUp"></div>@trusted bool <code class="ddoc_psymbol">xIsKeyUp</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.xGetKey"></span><div class="quickindex" id="quickindex.EventHandler.xGetKey"></div>@trusted auto <code class="ddoc_psymbol">xGetKey</code>();
+<br></div></dt>
+<dd>
+</dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.getKeyDown"></span><div class="quickindex" id="quickindex.EventHandler.getKeyDown"></div>@safe auto <code class="ddoc_psymbol">getKeyDown</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Returns the pressed key.</div></dd>
@@ -198,25 +285,57 @@
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.isKeyUp"></span><div class="quickindex" id="quickindex.EventHandler.isKeyUp"></div>@safe bool <code class="ddoc_psymbol">isKeyUp</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Returns a state indicating whether a key is released.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.xIsMouseDown"></span><div class="quickindex" id="quickindex.EventHandler.xIsMouseDown"></div>@trusted bool <code class="ddoc_psymbol">xIsMouseDown</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.xIsMouseUp"></span><div class="quickindex" id="quickindex.EventHandler.xIsMouseUp"></div>@trusted bool <code class="ddoc_psymbol">xIsMouseUp</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.xGetMouseButton"></span><div class="quickindex" id="quickindex.EventHandler.xGetMouseButton"></div>@trusted auto <code class="ddoc_psymbol">xGetMouseButton</code>();
+<br></div></dt>
+<dd>
+</dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.getMouseDown"></span><div class="quickindex" id="quickindex.EventHandler.getMouseDown"></div>@safe auto <code class="ddoc_psymbol">getMouseDown</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Returns the pressed mouse button.</div></dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.getMouseUp"></span><div class="quickindex" id="quickindex.EventHandler.getMouseUp"></div>@safe auto <code class="ddoc_psymbol">getMouseUp</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Returns the released mouse button.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.xMousePosition"></span><div class="quickindex" id="quickindex.EventHandler.xMousePosition"></div>@trusted int[2] <code class="ddoc_psymbol">xMousePosition</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.xIsResize"></span><div class="quickindex" id="quickindex.EventHandler.xIsResize"></div>@trusted bool <code class="ddoc_psymbol">xIsResize</code>();
+<br></div></dt>
+<dd>
+</dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.isResize"></span><div class="quickindex" id="quickindex.EventHandler.isResize"></div>@safe bool <code class="ddoc_psymbol">isResize</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Returns whether the window has been resized.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.xResizeWindowSize"></span><div class="quickindex" id="quickindex.EventHandler.xResizeWindowSize"></div>@trusted int[2] <code class="ddoc_psymbol">xResizeWindowSize</code>();
+<br></div></dt>
+<dd>
+</dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.resizeWindowSize"></span><div class="quickindex" id="quickindex.EventHandler.resizeWindowSize"></div>@safe int[2] <code class="ddoc_psymbol">resizeWindowSize</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Returns whether the window has been resized.</div></dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.mouse"></span><div class="quickindex" id="quickindex.EventHandler.mouse"></div>@property @safe int[2] <code class="ddoc_psymbol">mouse</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Returns <code class="ddoc_psymbol">mouse</code> position.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.xIsQuit"></span><div class="quickindex" id="quickindex.EventHandler.xIsQuit"></div>@trusted bool <code class="ddoc_psymbol">xIsQuit</code>();
+<br></div></dt>
+<dd>
+</dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".EventHandler.isQuit"></span><div class="quickindex" id="quickindex.EventHandler.isQuit"></div>@safe bool <code class="ddoc_psymbol">isQuit</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Do they close the window.</div></dd>
 </div></dl>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".MouseButton"></span><div class="quickindex" id="quickindex.MouseButton"></div>enum <code class="ddoc_psymbol">MouseButton</code>: <span class="ddoc_enum_basetype">int</span>;
+<br></div></dt>
+<dd>
 </dd>
 </div></dl>
 

@@ -97,10 +97,40 @@
 
 	
 	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >game</span></a><ul>
+			
+
+	<li><a title="Module for describing animation." href="tida--tida.game.animation.html"><span >animation</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.game.collision.html"><span >collision</span></a></li>
+
+
+
+	<li><a title="A module for describing the rendering of image or animation." href="tida--tida.game.sprite.html"><span >sprite</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.game.tile.html"><span >tile</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
+	
+	
 		<li class="expand-container open"><a class='expand-toggle' href="#"><span >graph</span></a><ul>
 			
 
-	<li><a title="" href="tida--tida.graph.drawable.html"><span >drawable</span></a></li>
+	<li><a title="" href="tida--tida.graph.camera.html"><span >camera</span></a></li>
+
+
+
+	<li><a title="A module for describing the rendering of elements." href="tida--tida.graph.drawable.html"><span >drawable</span></a></li>
 
 
 
@@ -116,7 +146,7 @@
 
 
 
-	<li><a title="" href="tida--tida.graph.text.html"><span >text</span></a></li>
+	<li><a title="Module for rendering text using the `FreeType` library." href="tida--tida.graph.text.html"><span >text</span></a></li>
 
 
 		</ul></li>
@@ -133,12 +163,62 @@
 	<li><a title="Runtime module. Serves to save some globally significant variables in the library." href="tida--tida.runtime.html"><span >runtime</span></a></li>
 
 
+	
+		<li class="expand-container open"><a title='
+		' class='expand-toggle' href='#'><span >scene</span></a><ul><li><a title='
+		' href="
+			tida--tida.scene.html"><span >package</span></a></li>
+			
+
+	<li><a title="" href="tida--tida.scene.component.html"><span >component</span></a></li>
+
+
+
+	<li><a title="A module for describing an object in the game." href="tida--tida.scene.instance.html"><span >instance</span></a></li>
+
+
+
+	<li><a title="Scene manager module." href="tida--tida.scene.manager.html"><span >manager</span></a></li>
+
+
+
+	<li><a title="A module for describing a scene in the play space." href="tida--tida.scene.scene.html"><span >scene</span></a></li>
+
+</ul></li>
+	
+	
+
+
+
+
+
+	<li><a title="This module describes shapes for drawing" href="tida--tida.shape.html"><span >shape</span></a></li>
+
+
+	
+	
+		<li class="expand-container open"><a class='expand-toggle' href="#"><span >sound</span></a><ul>
+			
+
+	<li><a title="Module for playing sound and music using the OpenAL library." href="tida--tida.sound.al.html"><span >al</span></a></li>
+
+
+		</ul></li>
+	
+
+
+
+
 
 	<li><a title="Module for information about positioning elements." href="tida--tida.vector.html"><span >vector</span></a></li>
 
 
 
 	<li><a title="A module for working with windows in a cross-platform environment." href="tida--tida.window.html"><span >window</span></a></li>
+
+
+
+	<li><a title="Module for importing x11 libraries." href="tida--tida.x11.html"><span >x11</span></a></li>
 
 </ul></li>
 	
@@ -161,6 +241,207 @@
 </div>
 <div class="ddoc_license"><span class="ddoc_license_header">License:</span>
  MIT</div>
+<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".PixelFormat"></span><div class="quickindex" id="quickindex.PixelFormat"></div>enum <code class="ddoc_psymbol">PixelFormat</code>: <span class="ddoc_enum_basetype">int</span>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Pixel format. Needed for conversion.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".grayscale"></span><div class="quickindex" id="quickindex.grayscale"></div>@safe Color!ubyte <code class="ddoc_psymbol">grayscale</code>(ubyte <span class="ddoc_param">gsc</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Converts <code class="ddoc_psymbol">grayscale</code> to the library's standard color scheme.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">ubyte <span class="ddoc_param">gsc</span></td>
+<td class="ddoc_param_desc">Grayscale value.</td></tr>
+</table></div>
+
+<div class="ddoc_section_nonstandard"><span class="ddoc_section_nonstandard_header">Example:</span>
+<pre class="d_code notranslate"><span class="d_keyword">auto</span> color = <span class="d_psymbol">grayscale</span>(128);
+</pre>
+
+</div>
+<div class="ddoc_returns"><span class="ddoc_returns_header">Returns:</span>
+ RGBA</div>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".rgb"></span><div class="quickindex" id="quickindex.rgb"></div>@safe Color!ubyte <code class="ddoc_psymbol">rgb</code>(ubyte <span class="ddoc_param">r</span>, ubyte <span class="ddoc_param">g</span>, ubyte <span class="ddoc_param">b</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Creates an RGB color.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">ubyte <span class="ddoc_param">r</span></td>
+<td class="ddoc_param_desc">Red.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">ubyte <span class="ddoc_param">g</span></td>
+<td class="ddoc_param_desc">Green.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">ubyte <span class="ddoc_param">b</span></td>
+<td class="ddoc_param_desc">Blue.</td></tr>
+</table></div>
+
+<div class="ddoc_returns"><span class="ddoc_returns_header">Returns:</span>
+ RGBA</div>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".rgba"></span><div class="quickindex" id="quickindex.rgba"></div>@safe Color!ubyte <code class="ddoc_psymbol">rgba</code>(ubyte <span class="ddoc_param">r</span>, ubyte <span class="ddoc_param">g</span>, ubyte <span class="ddoc_param">b</span>, ubyte <span class="ddoc_param">a</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Creates an RGBA color.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">ubyte <span class="ddoc_param">r</span></td>
+<td class="ddoc_param_desc">Red.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">ubyte <span class="ddoc_param">g</span></td>
+<td class="ddoc_param_desc">Green.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">ubyte <span class="ddoc_param">b</span></td>
+<td class="ddoc_param_desc">Blue.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">ubyte <span class="ddoc_param">a</span></td>
+<td class="ddoc_param_desc">Alpha.</td></tr>
+</table></div>
+
+<div class="ddoc_returns"><span class="ddoc_returns_header">Returns:</span>
+ RGBA</div>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".toRGB"></span><div class="quickindex" id="quickindex.toRGB"></div>@safe Color!ubyte <code class="ddoc_psymbol">toRGB</code>(HSL <span class="ddoc_param">str</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Convert HSL to RGBA color.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">HSL <span class="ddoc_param">str</span></td>
+<td class="ddoc_param_desc">HSL color.</td></tr>
+</table></div>
+
+<div class="ddoc_returns"><span class="ddoc_returns_header">Returns:</span>
+ RGBA</div>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".toRGB"></span><div class="quickindex" id="quickindex.toRGB"></div>@safe Color!ubyte <code class="ddoc_psymbol">toRGB</code>(HSB <span class="ddoc_param">str</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Convert HSB to RGBA color.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">HSB <span class="ddoc_param">str</span></td>
+<td class="ddoc_param_desc">HSB color.</td></tr>
+</table></div>
+
+<div class="ddoc_returns"><span class="ddoc_returns_header">Returns:</span>
+ RGBA</div>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".HSL"></span><div class="quickindex" id="quickindex.HSL"></div>struct <code class="ddoc_psymbol">HSL</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary"><code class="ddoc_psymbol">HSL</code> color structure</div><dl class="ddoc_members"><div class="ddoc_struct_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".HSL.hue"></span><div class="quickindex" id="quickindex.HSL.hue"></div>float <code class="ddoc_psymbol">hue</code>;
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".HSL.saturation"></span><div class="quickindex" id="quickindex.HSL.saturation"></div>float <code class="ddoc_psymbol">saturation</code>;
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".HSL.lightness"></span><div class="quickindex" id="quickindex.HSL.lightness"></div>float <code class="ddoc_psymbol">lightness</code>;
+<br></div></dt>
+<dd>
+</dd>
+</div></dl>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".HSB"></span><div class="quickindex" id="quickindex.HSB"></div>struct <code class="ddoc_psymbol">HSB</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary"><code class="ddoc_psymbol">HSB</code> color structure</div><dl class="ddoc_members"><div class="ddoc_struct_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".HSB.hue"></span><div class="quickindex" id="quickindex.HSB.hue"></div>float <code class="ddoc_psymbol">hue</code>;
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".HSB.saturation"></span><div class="quickindex" id="quickindex.HSB.saturation"></div>float <code class="ddoc_psymbol">saturation</code>;
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".HSB.brightness"></span><div class="quickindex" id="quickindex.HSB.brightness"></div>float <code class="ddoc_psymbol">brightness</code>;
+<br></div></dt>
+<dd>
+</dd>
+</div></dl>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".CMYK"></span><div class="quickindex" id="quickindex.CMYK"></div>struct <code class="ddoc_psymbol">CMYK</code>;
+<br></div></dt>
+<dd>
+<dl class="ddoc_members"><div class="ddoc_struct_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".CMYK.c"></span><div class="quickindex" id="quickindex.CMYK.c"></div>float <code class="ddoc_psymbol">c</code>;
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".CMYK.m"></span><div class="quickindex" id="quickindex.CMYK.m"></div>float <code class="ddoc_psymbol">m</code>;
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".CMYK.y"></span><div class="quickindex" id="quickindex.CMYK.y"></div>float <code class="ddoc_psymbol">y</code>;
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".CMYK.k"></span><div class="quickindex" id="quickindex.CMYK.k"></div>float <code class="ddoc_psymbol">k</code>;
+<br></div></dt>
+<dd>
+</dd>
+</div></dl>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color"></span><div class="quickindex" id="quickindex.Color"></div>struct <code class="ddoc_psymbol">Color</code>(T);
+<br></div></dt>
+<dd><div class="ddoc_summary"><code class="ddoc_psymbol">Color</code> description structure.</div><dl class="ddoc_members"><div class="ddoc_struct_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.red"></span><div class="quickindex" id="quickindex.Color.red"></div>T <code class="ddoc_psymbol">red</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Red component</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.green"></span><div class="quickindex" id="quickindex.Color.green"></div>T <code class="ddoc_psymbol">green</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Green component</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.blue"></span><div class="quickindex" id="quickindex.Color.blue"></div>T <code class="ddoc_psymbol">blue</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Blue component</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.alpha"></span><div class="quickindex" id="quickindex.Color.alpha"></div>T <code class="ddoc_psymbol">alpha</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Alpha cpmponent</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.conv"></span><div class="quickindex" id="quickindex.Color.conv"></div>@safe T <code class="ddoc_psymbol">conv</code><span class="ddoc_template_param_list" title="Template parameter list">(T)</span>(PixelFormat <span class="ddoc_param">format</span> = PixelFormat.RGBA);
+<br>
+immutable @safe immutable<span class="ddoc_template_param_list" title="Template parameter list">(T)</span> <code class="ddoc_psymbol">conv</code>(T)(PixelFormat <span class="ddoc_param">format</span> = PixelFormat.RGBA);
+<br></div></dt>
+<dd><div class="ddoc_summary">Converts a color to the specified type and <span class="ddoc_param">format</span>.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">T</td>
+<td class="ddoc_param_desc">Type.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">PixelFormat <span class="ddoc_param">format</span></td>
+<td class="ddoc_param_desc">Pixel <span class="ddoc_param">format</span>.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.fromBytes"></span><div class="quickindex" id="quickindex.Color.fromBytes"></div>@safe R[] <code class="ddoc_psymbol">fromBytes</code><span class="ddoc_template_param_list" title="Template parameter list">(R)</span>(PixelFormat <span class="ddoc_param">format</span>);
+<br>
+immutable @safe immutable(T[]) <code class="ddoc_psymbol">fromBytes</code>(PixelFormat <span class="ddoc_param">format</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Converts a color to a sequence of bytes in the specified <span class="ddoc_param">format</span>.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">PixelFormat <span class="ddoc_param">format</span></td>
+<td class="ddoc_param_desc">Pixel <span class="ddoc_param">format</span>.</td></tr>
+</table></div>
+
+<div class="ddoc_returns"><span class="ddoc_returns_header">Returns:</span>
+ Sequence of bytes.</div>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.rf"></span><div class="quickindex" id="quickindex.Color.rf"></div>@safe float <code class="ddoc_psymbol">rf</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.gf"></span><div class="quickindex" id="quickindex.Color.gf"></div>@safe float <code class="ddoc_psymbol">gf</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.bf"></span><div class="quickindex" id="quickindex.Color.bf"></div>@safe float <code class="ddoc_psymbol">bf</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.af"></span><div class="quickindex" id="quickindex.Color.af"></div>@safe float <code class="ddoc_psymbol">af</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.rf.2"></span><div class="quickindex" id="quickindex.Color.rf.2"></div>immutable @safe float <code class="ddoc_psymbol">rf</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.gf.2"></span><div class="quickindex" id="quickindex.Color.gf.2"></div>immutable @safe float <code class="ddoc_psymbol">gf</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.bf.2"></span><div class="quickindex" id="quickindex.Color.bf.2"></div>immutable @safe float <code class="ddoc_psymbol">bf</code>();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Color.af.2"></span><div class="quickindex" id="quickindex.Color.af.2"></div>immutable @safe float <code class="ddoc_psymbol">af</code>();
+<br></div></dt>
+<dd>
+</dd>
+</div></dl>
+</dd>
+</div></dl>
 
                 
             </div>

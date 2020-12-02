@@ -6,7 +6,7 @@
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
         <script type="text/javascript" src="js/sidebar.js"></script>
         <script type="text/javascript" src="js/listanchors.js"></script>
-        <title>tida.graph.drawable</title>
+        <title>tida.game.animation</title>
         
         
     </head>
@@ -229,59 +229,63 @@
 
 </ul>
 </div>
-            <div class="content">                <h1>tida.graph.drawable</h1>
+            <div class="content">                <h1>tida.game.animation</h1>
                 
                 <div class="quickindex" id="quickindex"></div>
                 
-                <div class="ddoc_summary">A module for describing the rendering of elements.
+                <div class="ddoc_summary">Module for describing <code class="ddoc_psymbol">animation</code>.
 </div><div class="ddoc_authors"><span class="ddoc_authors_header">Authors:</span>
  TodNaz
 </div>
 <div class="ddoc_license"><span class="ddoc_license_header">License:</span>
  MIT</div>
-<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".IDrawable"></span><div class="quickindex" id="quickindex.IDrawable"></div>interface <code class="ddoc_psymbol">IDrawable</code>;
+<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation"></span><div class="quickindex" id="quickindex.Animation"></div>class <code class="ddoc_psymbol">Animation</code>;
 <br></div></dt>
-<dd><div class="ddoc_summary">The interface for normal rendering by coordinates.
-	All properties are specified in the constructor at best.
-</div><div class="ddoc_section_nonstandard"><span class="ddoc_section_nonstandard_header">Example:</span>
-<pre class="d_code notranslate"><span class="d_keyword">class</span> Rectangle : <span class="d_psymbol">IDrawable</span>
-{
-	<span class="d_keyword">public</span>
-	{
-		<span class="d_keyword">uint</span> width, height;
-		Color!<span class="d_keyword">ubyte</span> color;
-	}
+<dd><div class="ddoc_summary">Object for describin animation.</div><dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.isRepeat"></span><div class="quickindex" id="quickindex.Animation.isRepeat"></div>bool <code class="ddoc_psymbol">isRepeat</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Whether the animation needs to be repeated.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.frames"></span><div class="quickindex" id="quickindex.Animation.frames"></div>@property @safe Image[] <code class="ddoc_psymbol">frames</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Animation <code class="ddoc_psymbol">frames</code>.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.frames.2"></span><div class="quickindex" id="quickindex.Animation.frames.2"></div>@property @safe void <code class="ddoc_psymbol">frames</code>(Image[] <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Animation <code class="ddoc_psymbol">frames</code></div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.speed"></span><div class="quickindex" id="quickindex.Animation.speed"></div>@property @safe float <code class="ddoc_psymbol">speed</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Animation <code class="ddoc_psymbol">speed</code></div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.speed.2"></span><div class="quickindex" id="quickindex.Animation.speed.2"></div>@property @safe void <code class="ddoc_psymbol">speed</code>(float <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Animation <code class="ddoc_psymbol">speed</code></div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.strip"></span><div class="quickindex" id="quickindex.Animation.strip"></div>@safe void <code class="ddoc_psymbol">strip</code>(Image <span class="ddoc_param">image</span>, int <span class="ddoc_param">x</span>, int <span class="ddoc_param">y</span>, int <span class="ddoc_param">w</span>, int <span class="ddoc_param">h</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Creates frames from one sample picture.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">Image <span class="ddoc_param">image</span></td>
+<td class="ddoc_param_desc">The picture from where the frames will be received.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">x</span></td>
+<td class="ddoc_param_desc">The beginning of the cut by <span class="ddoc_param">x</span>-axis.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">y</span></td>
+<td class="ddoc_param_desc">The beginning of the cut by <span class="ddoc_param">y</span>-axis.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">w</span></td>
+<td class="ddoc_param_desc">Width frames.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">h</span></td>
+<td class="ddoc_param_desc">Height frames.</td></tr>
+</table></div>
 
-	<span class="d_keyword">this</span>(<span class="d_keyword">uint</span> width,<span class="d_keyword">uint</span> height,Color!<span class="d_keyword">ubyte</span> color);
-
-	<span class="d_keyword">override</span> <span class="d_keyword">void</span> draw(Renderer renderer,Vecf position) @safe
-	{
-		renderer.rectangle(position,width,height,color,<span class="d_keyword">true</span>);
-	}
-}
+<div class="ddoc_section_nonstandard"><span class="ddoc_section_nonstandard_header">Example:</span>
+<pre class="d_code notranslate">anim.<span class="d_psymbol">strip</span>(<span class="d_keyword">new</span> Image(<span class="d_string">"atlas.png"</span>),0,0,32,32);
 </pre>
 </div>
-<dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".IDrawable.draw"></span><div class="quickindex" id="quickindex.IDrawable.draw"></div>abstract @trusted void <code class="ddoc_psymbol">draw</code>(Renderer <span class="ddoc_param">renderer</span>, Vecf <span class="ddoc_param">position</span>);
-<br></div></dt>
-<dd>
 </dd>
-</div></dl>
-</dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".IDrawableEx"></span><div class="quickindex" id="quickindex.IDrawableEx"></div>interface <code class="ddoc_psymbol">IDrawableEx</code>;
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.currentFrame"></span><div class="quickindex" id="quickindex.Animation.currentFrame"></div>@safe Image <code class="ddoc_psymbol">currentFrame</code>();
 <br></div></dt>
-<dd><div class="ddoc_summary">Interface for advanced object rendering.
-	It contains both the rotation of the object and such a property as size.</div><dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".IDrawableEx.drawEx"></span><div class="quickindex" id="quickindex.IDrawableEx.drawEx"></div>abstract @trusted void <code class="ddoc_psymbol">drawEx</code>(Renderer <span class="ddoc_param">renderer</span>, Vecf <span class="ddoc_param">position</span>, float <span class="ddoc_param">angle</span>, Vecf <span class="ddoc_param">center</span>, Vecf <span class="ddoc_param">size</span>, ubyte <span class="ddoc_param">alpha</span>);
+<dd><div class="ddoc_summary">Return current frame</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.numFrame"></span><div class="quickindex" id="quickindex.Animation.numFrame"></div>@safe float <code class="ddoc_psymbol">numFrame</code>();
 <br></div></dt>
-<dd>
-</dd>
-</div></dl>
-</dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".IDrawableColor"></span><div class="quickindex" id="quickindex.IDrawableColor"></div>interface <code class="ddoc_psymbol">IDrawableColor</code>;
+<dd><div class="ddoc_summary">Return position current frame</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.step"></span><div class="quickindex" id="quickindex.Animation.step"></div>@safe Image <code class="ddoc_psymbol">step</code>();
 <br></div></dt>
-<dd><div class="ddoc_summary">Interface for rendering an object with a given color.</div><dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".IDrawableColor.drawColor"></span><div class="quickindex" id="quickindex.IDrawableColor.drawColor"></div>abstract @trusted void <code class="ddoc_psymbol">drawColor</code>(Renderer <span class="ddoc_param">renderer</span>, Vecf <span class="ddoc_param">position</span>, Color!ubyte <span class="ddoc_param">color</span>);
-<br></div></dt>
-<dd>
-</dd>
+<dd><div class="ddoc_summary">Step animation</div></dd>
 </div></dl>
 </dd>
 </div></dl>
