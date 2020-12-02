@@ -200,6 +200,26 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         }
     }
 
+    public Image copy(int x,int y,int cWidth,int cHeight) @safe
+    {
+        Image image = new Image();
+
+        image.create(cWidth,cHeight);
+
+        for(size_t ix = x; ix < x + cWidth; ix++)
+        {
+            for(size_t iy = y; iy < y + cHeight; iy++)
+            {
+                image.setPixel(
+                    ix - x, iy - y,
+                    this.getPixel(ix,iy)
+                );
+            }
+        }
+
+        return image;
+    }
+
     /++
         Creates a surface with the specified size. Note that it is 
         not yet a texture, and you don’t need to draw it right away, 
@@ -338,9 +358,9 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         GL.bindTexture(0);
     }
 
-    override void drawEx(Renderer renderer,Vecf position,float angle,Vecf center,Vecf size)
+    override void drawEx(Renderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha)
     {
-        GL.color = rgb(255,255,255);
+        GL.color = rgba(255,255,255,alpha);
 
         GL.bindTexture(_glID);
         GL.enable(GL_TEXTURE_2D);
@@ -356,6 +376,8 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
             GL.texCoord2i(1,1); GL.vertex(position + size);
             GL.texCoord2i(1,0); GL.vertex(position + Vecf(size.x,0));
         });
+
+        GL.color = rgba(255,255,255,255);
 
         GL.disable(GL_TEXTURE_2D);
         GL.bindTexture(0);

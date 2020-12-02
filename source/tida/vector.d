@@ -119,7 +119,7 @@ public struct Vector(T)
     @("opBinary")
     @safe unittest
     {
-        Vector!float a = Vec(32, 32);
+        Vector!float a = Vecf(32, 32);
         a = a + Vecf(16, 16);
         assert(a == Vecf(48, 48));
         a = a * 2;

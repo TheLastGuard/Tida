@@ -35,6 +35,11 @@ public struct GL
                 throw new ContextException(ContextError.noContext,"Context is not create!");
     }
 
+    static void alphaFunc(int mode,float alpha) @trusted
+    {
+        glAlphaFunc(mode,alpha);
+    }
+
     static void readPixels(int x,int y,int width,int height,GLenum format,GLenum type,void* data) @trusted
     {
         glReadPixels(x,y,width,height,format,type,data);

@@ -1,3 +1,9 @@
+/++
+	Module for importing x11 libraries.
+
+	Authors: TodNaz
+	License: MIT
++/
 module tida.x11;
 
 version(Posix):

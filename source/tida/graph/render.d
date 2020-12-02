@@ -427,9 +427,9 @@ public class Renderer
     }
 
     ///
-    public void drawEx(IDrawableEx drawable,Vecf position,float angle,Vecf center,Vecf size) @safe
+    public void drawEx(IDrawableEx drawable,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha) @safe
     {
-        drawable.drawEx(this,_camera.port.begin - position,angle,center,size);
+        drawable.drawEx(this,_camera.port.begin - position,angle,center,size,alpha);
     }
 
     ///

@@ -863,10 +863,8 @@ public class Window
 
     ///
     version(Posix) public void xMinWidth(int value) @trusted @live nothrow
-    in
-    {
-        assert(value > 64,"You can't make the window so narrow!");
-    }body
+    in(value > 64,"You can't make the window so narrow!")
+    body
     {
         long flags;
 
@@ -887,10 +885,8 @@ public class Window
 
     ///
     version(Posix) public void xMinHeight(int value) @trusted @live nothrow
-    in
-    {
-        assert(value > 64,"You can't make the window so narrow!");
-    }body
+    in(value > 64,"You can't make the window so narrow!")
+    body
     {
         long flags;
 
@@ -949,10 +945,8 @@ public class Window
 
     ///
     version(Windows) public void wMinWidth(int value) @trusted nothrow
-    in
-    {
-        assert(value > 64,"You can't make the window so narrow!");
-    }body
+    in(value > 64,"You can't make the window so narrow!")
+    body
     {
         MINMAXINFO mmi;
 
@@ -972,10 +966,8 @@ public class Window
 
     ///
     version(Windows) public void wMinHeight(int value) @trusted nothrow
-    in
-    {
-        assert(value > 64,"You can't make the window so narrow!");
-    }body
+    in(value > 64,"You can't make the window so narrow!")
+    body
     {
         MINMAXINFO mmi;
 

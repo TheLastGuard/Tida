@@ -50,7 +50,7 @@ public interface IDrawableEx
 	import tida.graph.render;
 
 	///
-	public void drawEx(Renderer renderer,Vecf position,float angle,Vecf center,Vecf size) @trusted;
+	public void drawEx(Renderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha) @trusted;
 }
 
 /++

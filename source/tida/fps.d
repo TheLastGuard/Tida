@@ -21,6 +21,8 @@ public class FPSManager
         long _fps = 0;
 
         long __frames = 0;
+        MonoTime _gameJob;
+        bool startTimeRate = false;
     }
 
     /++
@@ -54,6 +56,17 @@ public class FPSManager
     public void start() @trusted
     {
         this.time = MonoTime.currTime;
+
+        if(!startTimeRate) {
+            _gameJob = MonoTime.currTime;
+
+            startTimeRate = true;
+        }
+    }
+
+    public Duration getTimeJobProgram() @trusted
+    {
+        return lastTime - _gameJob;
     }
 
     /++

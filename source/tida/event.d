@@ -55,7 +55,7 @@ public class EventHandler
 
             XSelectInput(runtime.display, window.xWindow, ExposureMask | ButtonPressMask | KeyPressMask |
                                                           KeyReleaseMask | ButtonReleaseMask | EnterWindowMask |
-                                                          LeaveWindowMask | ResizeRedirectMask);
+                                                          LeaveWindowMask | ResizeRedirectMask | PointerMotionMask);
 
             destroyWindowEvent = XInternAtom(runtime.display, "WM_DELETE_WINDOW", False);
         }
@@ -255,8 +255,8 @@ public class EventHandler
 
         auto win = window.xWindow;
 
-        XQueryPointer(runtime.display, win, 
-                      &win, &win, &x, &y, &x, &y, &mask);
+        x = event.xmotion.x;
+        y = event.xmotion.y;
 
         return [x,y];
     }
