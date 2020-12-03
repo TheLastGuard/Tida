@@ -24,6 +24,26 @@
 			"targetType": "executable"
 		},
 		{
+			"dependencies": {
+				"x11": "~>1.0.21"
+			},
+			"name": "posix",
+			"platforms": [
+				"posix"
+			],
+			"targetType": "library",
+			"libs": [
+				"Xrandr"
+			]
+		},
+		{
+			"name": "windows",
+			"platforms": [
+				"windows"
+			],
+			"targetType": "library"
+		},
+		{
 			"buildOptions": [
 				"betterC"
 			],
