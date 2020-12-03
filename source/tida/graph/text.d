@@ -72,6 +72,8 @@ public class Font
         FT_New_Face(FTlibrary,path.toStringz,0,&_face);
 
         FT_Set_Char_Size(_face,cast(int) size*32,0,300,300);
+
+        this._size = size;
     }
 
     /++
@@ -100,14 +102,16 @@ public class Symbol
         Image image; /// Symbol render image
         Vecf position; /// Symbol releative position
         Color!ubyte color; /// Symbol color
+        size_t size;
     }
 
     ///
-    this(Image img,Vecf pos,Color!ubyte color = rgb(255,255,255)) @safe
+    this(Image img,Vecf pos,size_t size,Color!ubyte color = rgb(255,255,255)) @safe
     {
         image = img;
         position = pos;
         this.color = color;
+        this.size = size;
     }
 }
 
@@ -163,7 +167,7 @@ public class Text
                 pixels[i] = bitmap.buffer[i] > 128 ? grayscale(bitmap.buffer[i]) : Color!ubyte(0,0,0,0);
             }
 
-            fSymbols ~= new Symbol(Char,Vecf(glyph.bitmap_left,glyph.bitmap_top),color); 
+            fSymbols ~= new Symbol(Char,Vecf(glyph.bitmap_left,glyph.bitmap_top),_font.size,color); 
         }
 
         return fSymbols;

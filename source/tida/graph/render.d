@@ -100,6 +100,7 @@ public class Renderer
     public void camera(Camera value) @safe @property
     {
         _camera = value;
+        reshape();
     }
 
     /++
@@ -408,6 +409,7 @@ public class Renderer
     public void draw(Symbol[] symbols,Vecf position) @safe
     {
         position -= _camera.port.begin;
+        position.y += (symbols[0].size + (symbols[0].size / 2)); 
 
         foreach(s; symbols) 
         {
@@ -422,19 +424,19 @@ public class Renderer
     ///
     public void draw(IDrawable drawable,Vecf position) @safe
     {
-        drawable.draw(this,_camera.port.begin - position);
+        drawable.draw(this,position - _camera.port.begin);
     }
 
     ///
     public void drawEx(IDrawableEx drawable,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha) @safe
     {
-        drawable.drawEx(this,_camera.port.begin - position,angle,center,size,alpha);
+        drawable.drawEx(this,position - _camera.port.begin,angle,center,size,alpha);
     }
 
     ///
     public void drawColor(IDrawableColor drawable,Vecf position,Color!ubyte color) @safe
     {
-        drawable.drawColor(this,_camera.port.begin - position,color);
+        drawable.drawColor(this,position - _camera.port.begin,color);
     }
 
     /++
