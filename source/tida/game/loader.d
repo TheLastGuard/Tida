@@ -114,6 +114,7 @@ public class Loader
             return this.get!T(path);
 
         T obj = new T();
+        Resource res;
 
         synchronized 
         {
@@ -125,7 +126,6 @@ public class Loader
 
             obj.load(path);
 
-            Resource res;
             res.path = path;
             res.name = name;
             res.init!T(obj);
@@ -133,7 +133,7 @@ public class Loader
             this.resources ~= (res);
         }
 
-        return res;
+        return obj;
     }
 
     /++
