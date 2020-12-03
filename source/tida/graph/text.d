@@ -73,6 +73,8 @@ public class Font
 
         FT_Set_Char_Size(_face,cast(int) size*32,0,300,300);
 
+        FT_Matrix matrix;
+
         this._size = size;
     }
 
@@ -90,6 +92,18 @@ public class Font
     }
 }
 
+public size_t widthText(string text,Font font) @safe
+{
+    int width;
+
+    auto ss = new Text(font).renderSymbols(text);
+    foreach(s; ss) {
+        width += (s.advance.intX >> 6) + s.position.intX;
+    }
+
+    return width;
+}
+
 /++
     Symbol object. Needed for rendering.
 +/
@@ -103,15 +117,17 @@ public class Symbol
         Vecf position; /// Symbol releative position
         Color!ubyte color; /// Symbol color
         size_t size;
+        Vecf advance;
     }
 
     ///
-    this(Image img,Vecf pos,size_t size,Color!ubyte color = rgb(255,255,255)) @safe
+    this(Image img,Vecf pos,Vecf rel,size_t size,Color!ubyte color = rgb(255,255,255)) @safe
     {
         image = img;
         position = pos;
         this.color = color;
         this.size = size;
+        this.advance = rel;
     }
 }
 
@@ -167,7 +183,10 @@ public class Text
                 pixels[i] = bitmap.buffer[i] > 128 ? grayscale(bitmap.buffer[i]) : Color!ubyte(0,0,0,0);
             }
 
-            fSymbols ~= new Symbol(Char,Vecf(glyph.bitmap_left,glyph.bitmap_top),_font.size,color); 
+            fSymbols ~= new Symbol(Char,
+                Vecf(glyph.bitmap_left,glyph.bitmap_top),
+                Vecf(glyph.advance.x,glyph.advance.y),
+            _font.size,color); 
         }
 
         return fSymbols;

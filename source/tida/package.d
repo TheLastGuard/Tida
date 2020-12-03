@@ -5,6 +5,12 @@
 +/
 module tida;
 
+version(betterC) 
+{
+	import tida.betterc.runtime;
+	import tida.betterc.window;
+}
+else:
 public
 {
 	import tida.runtime;

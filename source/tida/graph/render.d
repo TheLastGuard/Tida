@@ -417,7 +417,7 @@ public class Renderer
                 s.image.fromTexture();
 
             drawColor(s.image,position - Vecf(0,s.position.y),s.color);
-            position.x += s.image.width + s.position.x;
+            position.x += (s.advance.intX >> 6) + s.position.x;
         }
     }
 
