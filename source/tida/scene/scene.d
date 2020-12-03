@@ -100,6 +100,14 @@ public class Scene
         return index < bufferThread.length;
     }
 
+    public void initThread(size_t count = 1) @safe 
+    {
+        foreach(_; 0 .. count)
+        {
+            bufferThread ~= [[]];
+        }
+    }
+
     /++
         Adds an instance to the scene for interpreting its actions.
 

@@ -187,10 +187,8 @@ public class Instance
         ---
     +/
     public T of(T)() @safe
-    in
-    {
-        assert(new T.from!Component,"It not component!");
-    }body
+    in(new T.from!Component,"It not component!")
+    body
     {
         T obj;
 
@@ -344,8 +342,6 @@ public class Instance
     {
         Sprite spriteDraw() @safe
         {
-            sprite.position = position;
-
             return sprite;
         }
 

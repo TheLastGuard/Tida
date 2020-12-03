@@ -1,5 +1,8 @@
 /++
+	A module for implementing behavior in OOP style.
 
+	Authors: TodNaz
+	License: MIT
 +/
 module tida.scene;
 

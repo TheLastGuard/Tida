@@ -9,9 +9,60 @@ module tida.scene.manager;
 import tida.scene.instance;
 import tida.scene.scene;
 
+static enum APIError : ubyte
+{
+    succes = 0,
+    unknownThread = 1,
+    noCreateThread = 2
+}
+
 public T from(T)(Object obj) @trusted
 {
     return cast(T) obj;
+}
+
+import core.thread;
+
+public class InstanceThread : Thread 
+{
+    import tida.fps;
+    import tida.scene.instance;
+
+    private
+    {
+        bool isJob = true;
+        bool isPause = false;
+        FPSManager fps;
+        Instance[] list;
+        size_t thread;
+    }
+
+    this(size_t thread) @safe
+    {
+        fps = new FPSManager();
+
+        this.thread = thread;
+
+        super(&run);
+    }
+
+    private void run() @trusted
+    {
+        while(isJob) {
+            if(isPause) continue;
+
+            fps.start();
+
+            sceneManager.callStep(thread);
+
+            fps.rate();
+        }
+    }
+
+    public void exit() @safe
+    {
+        isJob = false;
+    }
 }
 
 __gshared SceneManager _sceneManager;
@@ -175,6 +226,43 @@ public class SceneManager
         add(new T);
     }
 
+    public
+    {
+        bool apiThreadCreate = false;
+        bool apiThreadPause = false;
+        bool apiThreadResume = false;
+        size_t apiThreadValue = 0;
+        size_t apiError = 0;
+
+        bool apiExit = false;
+    }
+
+    ///
+    public void close() @safe
+    {
+        apiExit = true;
+    }
+
+    ///
+    public void initThread(size_t count = 1) @safe
+    {
+        apiThreadCreate = true;
+        apiThreadValue = count; 
+    }
+
+    ///
+    public void pauseThread(size_t value) @safe
+    {
+        apiThreadPause = true;
+        apiThreadValue = value;
+    }
+
+    public void resumeThread(size_t value) @safe
+    {
+        apiThreadResume = true;
+        apiThreadValue = value;
+    }
+
     /++
         Goes to the first scene added.
     +/
@@ -310,13 +398,13 @@ public class SceneManager
     }
 
     ///
-    public void callStep() @safe
+    public void callStep(size_t thread = 0) @safe
     {
         if(current !is null)
         {
             current.step();
 
-            foreach(instance; current.getList())
+            foreach(instance; current.getThreadList(thread))
                 instance.step();
         }
     }
@@ -336,11 +424,16 @@ public class SceneManager
     ///
     public void callDraw(Renderer render) @safe
     {
+        import tida.vector;
+
         if(current !is null)
         {
             current.draw(render);
 
-            foreach(instance; current.getList())
+            foreach(instance; current.getErentInstances())
+                render.draw(instance.spriteDraw(),instance.position);
+
+            foreach(instance; current.getErentInstances())
                 instance.draw(render);
 
             debug
@@ -351,5 +444,15 @@ public class SceneManager
                     instance.drawDebug(render);
             }
         }
+    }
+
+    public void free() @safe
+    {
+        _scenes = null;
+    }
+
+    ~this() @safe
+    {
+        free();
     }
 }
