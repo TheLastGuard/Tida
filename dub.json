@@ -27,7 +27,7 @@
 			"dependencies": {
 				"x11": "~>1.0.21"
 			},
-			"name": "posix",
+			"name": "posix-lib",
 			"platforms": [
 				"posix"
 			],
@@ -37,7 +37,7 @@
 			]
 		},
 		{
-			"name": "windows",
+			"name": "windows-lib",
 			"platforms": [
 				"windows"
 			],
