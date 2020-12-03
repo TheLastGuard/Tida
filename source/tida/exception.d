@@ -43,3 +43,18 @@ public class WindowException : ExceptionError!WindowError
 		super(error,message);
 	}
 }
+
+public enum FontError : int
+{
+	cannotOpen = 0x001,
+	unknownFormat = 0x002,
+	invalidFormat = 0x003
+}
+
+public class FontException : ExceptionError!int
+{
+	this(int error,string message) @safe
+	{
+		super(error,message);
+	}
+}

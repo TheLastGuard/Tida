@@ -65,13 +65,17 @@ public class Font
     {
         import std.file : exists;
         import std.string : toStringz;
+        import tida.exception;
 
         if(!exists(path))
             throw new Exception("Not find `"~path~"`!");
 
-        FT_New_Face(FTlibrary,path.toStringz,0,&_face);
+        if(auto ret = FT_New_Face(FTlibrary,path.toStringz,0,&_face)) {
+            throw new FontException(ret,"Error load font!");
+        }
 
         FT_Set_Char_Size(_face,cast(int) size*32,0,300,300);
+        FT_Select_Charmap(_face, FT_ENCODING_UNICODE);
 
         FT_Matrix matrix;
 
@@ -163,32 +167,51 @@ public class Text
     +/
     public Symbol[] renderSymbols(string symbols,Color!ubyte color = rgba(255,255,255,255)) @trusted
     {
-        Symbol[] fSymbols;
+        Symbol[] chars;
 
-        foreach(s; symbols)
+        for(size_t j = 0; j < symbols.length; ++j)
         {
-            FT_Load_Char(_font.face, s, FT_LOAD_RENDER);
+            char s = symbols[j];
 
-            auto glyph = _font.face.glyph;
-            auto bitmap = _font.face.glyph.bitmap;
+            char ns;
+            if(j != symbols.length-1) 
+                ns = symbols[j+1];
 
-            auto Char = new Image();
+            Image image;
 
-            Char.create(bitmap.width,bitmap.rows);
+            FT_GlyphSlot glyph;
 
-            auto pixels = Char.pixels;
-
-            foreach(i; 0 .. bitmap.width * bitmap.rows)
+            if(s != ' ')
             {
-                pixels[i] = bitmap.buffer[i] > 128 ? grayscale(bitmap.buffer[i]) : Color!ubyte(0,0,0,0);
+                image = new Image();
+
+                uint glyphIndex = FT_Get_Char_Index(_font.face, s);
+
+                FT_Load_Glyph(_font.face, glyphIndex, FT_LOAD_DEFAULT);
+                FT_Render_Glyph(_font.face.glyph, FT_RENDER_MODE_NORMAL);
+
+                glyph = _font.face.glyph;
+                auto bitmap = glyph.bitmap;
+
+                image.create(bitmap.width,bitmap.rows);
+
+                auto pixels = image.pixels;
+
+                foreach(i; 0 .. bitmap.width * bitmap.rows)
+                {
+                    pixels[i] = bitmap.buffer[i] > 128 ? grayscale(bitmap.buffer[i]) : Color!ubyte();
+                }
             }
 
-            fSymbols ~= new Symbol(Char,
-                Vecf(glyph.bitmap_left,glyph.bitmap_top),
-                Vecf(glyph.advance.x,glyph.advance.y),
-            _font.size,color); 
+            chars ~= new Symbol(image,
+                s == ' ' ? Vecf(0,0) : Vecf(glyph.bitmap_left,
+                     glyph.bitmap_top),
+                Vecf(
+                        s == ' ' ? _font.size / 2 : image.width, 0
+                    ),
+                _font.size, color);
         }
 
-        return fSymbols;
+        return chars;
     }
 }

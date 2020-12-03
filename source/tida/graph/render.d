@@ -413,11 +413,15 @@ public class Renderer
 
         foreach(s; symbols) 
         {
-            if(!s.image.isTexture)
-                s.image.fromTexture();
+            if(s.image !is null)
+            {
+                if(!s.image.isTexture)
+                    s.image.fromTexture();
 
-            drawColor(s.image,position - Vecf(0,s.position.y),s.color);
-            position.x += (s.advance.intX >> 6) + s.position.x;
+                drawColor(s.image,position - Vecf(0,s.position.y),s.color);
+            }
+            
+            position.x += (s.advance.intX) + s.position.x;
         }
     }
 
