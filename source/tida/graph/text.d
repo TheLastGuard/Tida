@@ -38,6 +38,11 @@ public class Font
         size_t _size;
     }
 
+    public
+    {
+        string path, name;
+    }
+
     /++
         Returns a font object loaded from another library.
     +/
@@ -69,6 +74,8 @@ public class Font
 
         if(!exists(path))
             throw new Exception("Not find `"~path~"`!");
+
+        this.path = path;
 
         if(auto ret = FT_New_Face(FTlibrary,path.toStringz,0,&_face)) {
             throw new FontException(ret,"Error load font!");

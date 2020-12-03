@@ -15,6 +15,7 @@ public class Game
     import tida.graph.render;
     import tida.scene.manager;
     import tida.fps;
+    import tida.game.loader;
 
     private
     {
@@ -34,6 +35,7 @@ public class Game
 
         event = new EventHandler(window);
         render = new Renderer(window);
+        _loader = new Loader();
 
         threads ~= null;
     }

@@ -26,4 +26,5 @@ public
 	import tida.shape;
 	import tida.sound.al;
 	import tida.graph.camera;
+	import tida.game;
 }
