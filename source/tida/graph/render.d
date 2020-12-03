@@ -100,7 +100,6 @@ public class Renderer
     public void camera(Camera value) @safe @property
     {
         _camera = value;
-        reshape();
     }
 
     /++
