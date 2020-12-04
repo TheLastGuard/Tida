@@ -50,7 +50,7 @@ public class Sprite : IDrawable
 
     override void draw(Renderer renderer, Vecf otherPosition) @safe
     {
-        Image ofimage = isAnimation ? animation.step() : image;
+        Image ofimage = isAnimation ? (animation is null ? animation.step() : null) : image;
 
         renderer.drawEx(ofimage,
         this.position + otherPosition,angle,center,Vecf(
