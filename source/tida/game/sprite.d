@@ -52,6 +52,9 @@ public class Sprite : IDrawable
     {
         Image ofimage = isAnimation ? (animation is null ? animation.step() : null) : image;
 
+        if(ofimage is null)
+            return;
+
         renderer.drawEx(ofimage,
         this.position + otherPosition,angle,center,Vecf(
                                     width == 0 ? ofimage.width : width, 
