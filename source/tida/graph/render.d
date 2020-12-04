@@ -84,7 +84,10 @@ public class Renderer
         GL.matrixMode(GL_PROJECTION);
         GL.loadIdentity();
 
-        GL.ortho(0.0, size.x, size.y, 0.0, -1.0, 1.0);
+        if(size.x == 0 && size.y == 0)
+            GL.ortho(0.0, toRender.width, toRender.height, 0.0, -1.0, 1.0);
+        else
+            GL.ortho(0.0, size.x, size.y, 0.0, -1.0, 1.0);
 
         GL.matrixMode(GL_MODELVIEW);
         GL.loadIdentity();
