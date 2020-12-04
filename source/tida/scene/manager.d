@@ -27,6 +27,7 @@ public class InstanceThread : Thread
 {
     import tida.fps;
     import tida.scene.instance;
+    import tida.graph.render;
 
     private
     {
@@ -35,13 +36,15 @@ public class InstanceThread : Thread
         FPSManager fps;
         Instance[] list;
         size_t thread;
+        Renderer rend;
     }
 
-    this(size_t thread) @safe
+    this(size_t thread,Renderer rend) @safe
     {
         fps = new FPSManager();
 
         this.thread = thread;
+        this.rend = rend;
 
         super(&run);
     }
@@ -53,7 +56,7 @@ public class InstanceThread : Thread
 
             fps.start();
 
-            sceneManager.callStep(thread);
+            sceneManager.callStep(thread,rend);
 
             fps.rate();
         }
@@ -398,10 +401,11 @@ public class SceneManager
     }
 
     ///
-    public void callStep(size_t thread = 0) @safe
+    public void callStep(size_t thread,Renderer rend) @safe
     {
         if(current !is null)
         {
+            rend.camera = current.camera;
             current.step();
 
             foreach(instance; current.getThreadList(thread))

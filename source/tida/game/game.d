@@ -1,18 +1,24 @@
 module tida.game.game;
 
 import tida.window;
+import tida.graph.render;
 
 __gshared Window _window;
+__gshared Renderer render;
 
 public Window window() @trusted
 {
     return _window;
 }
 
+public Renderer renderer() @trusted
+{
+    return render;
+}
+
 public class Game
 {
     import tida.event;
-    import tida.graph.render;
     import tida.scene.manager;
     import tida.fps;
     import tida.game.loader;
@@ -20,7 +26,6 @@ public class Game
     private
     {
         EventHandler event;
-        Renderer render;
         bool isGame = true;
         InstanceThread[] threads;
     }
@@ -75,7 +80,7 @@ public class Game
 
             if(sceneManager.apiThreadCreate) {
                 foreach(_; 0 .. sceneManager.apiThreadValue) {
-                    auto thread = new InstanceThread(threads.length);
+                    auto thread = new InstanceThread(threads.length,renderer);
                     threads ~= thread;
 
                     thread.start();
@@ -88,10 +93,10 @@ public class Game
                 exit();
             }
 
-            sceneManager.callStep();
+            sceneManager.callStep(0,renderer);
 
-            render.drawning = {
-                sceneManager.callDraw(render);
+            renderer.drawning = {
+                sceneManager.callDraw(renderer);
             };
             
             fps.rate();
