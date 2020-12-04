@@ -1,16 +1,34 @@
 /++
+    A module for checking the intersection of some simple shapes.
 
+    Authors: TodNaz
+    License: MIT
 +/
 module tida.game.collision;
 
 import tida.shape, tida.vector;
 
 /++
+    A function to check the intersection of two shapes. It does not give an intersection point, 
+    it gives a state that informs if there is an intersection.
 
+    Params:
+        first = First shape.
+        second = Second shape.
+
+    Returns:
+        Gives a state indicating if there is an intersection.
+
+    Example:
+    ---
+    assert(isCollide(Shape.Rectangle(Vecf(32,32),Vecf(48,48)),
+                     Shape.Line(Vecf(48,32),Vecf(32,48)));
+    ---
 
     TODO:
         * Circle
         * Triangle
+        * Multi
 +/
 public bool isCollide(Shape first,Shape second) @safe
 in(first.type != ShapeType.unknown  && second.type != ShapeType.unknown)

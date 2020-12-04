@@ -129,14 +129,6 @@ public struct GLAttributes
     }
 }
 
-version(WebAssembly)
-{
-    public import tida.betterc.window;
-}
-
-version(WebAssembly) {}
-else:
-
 /++
     An object for describing the context for rendering objects in the opengl library. Able to create a context 
     in both Linux and Windows using the glx (for x11) and wgl (for Windows) libraries.
@@ -561,17 +553,12 @@ public class Window
         windowAttribs.colormap = XCreateColormap(runtime.display, RootWindow(runtime.display, runtime.displayID), 
                                                  visual.visual, AllocNone);
 
-        //window = XCreateWindow(runtime.display, RootWindow(runtime.display, runtime.displayID), posX, posY, 
-        //                       tida.info.Display.getWidth(),
-        //                       tida.info.Display.getHeight(),0,visual.depth,InputOutput,visual.visual,
-        //                       CWBackPixel|CWColormap|CWBorderPixel|CWEventMask, &windowAttribs);
-
         window = XCreateWindow(runtime.display, RootWindow(runtime.display, runtime.displayID), posX, posY, 
                                width,
                                height,0,visual.depth,InputOutput,visual.visual,
                                CWBackPixel|CWColormap|CWBorderPixel|CWEventMask, &windowAttribs);
 
-        XStoreName(runtime.display, window, _title.toUTFz!(char*));
+        xEventName(_title);
 
         auto ev = XInternAtom(runtime.display, "WM_DELETE_WINDOW", False);
 
@@ -1118,6 +1105,12 @@ public class Window
                 32, PropModeReplace, cast(ubyte*) pixels,cast(int) pixels.length);
     }
 
+    version(Posix) public void xEventName(string caption) @trusted nothrow
+    {
+        XStoreName(runtime.display, window, caption.toUTFz!(char*));
+        XSetIconName(runtime.display, window, caption.toUTFz!(char*));
+    }
+
     ///
     version(Windows) public void wIcon(Image image) @trusted
     {
@@ -1208,7 +1201,7 @@ public class Window
     /// ditto
     public void title(string newTitle) @trusted @property nothrow
     {
-        version(Posix) XStoreName(runtime.display, xWindow, newTitle.toUTFz!(char*));
+        version(Posix) xEventName(newTitle);
         version(Windows) SetWindowTextA(wWindow,newTitle.toUTFz!(char*));
     }
 

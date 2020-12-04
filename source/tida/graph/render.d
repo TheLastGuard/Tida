@@ -95,6 +95,7 @@ public class Renderer
         clear();
     }
 
+    /// 
     public Camera camera() @safe @property
     {
         return _camera;
