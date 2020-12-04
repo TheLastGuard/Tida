@@ -428,19 +428,22 @@ public class Renderer
     ///
     public void draw(IDrawable drawable,Vecf position) @safe
     {
-        drawable.draw(this,position - _camera.port.begin);
+        if(drawable !is null)
+            drawable.draw(this,position - _camera.port.begin);
     }
 
     ///
     public void drawEx(IDrawableEx drawable,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha) @safe
     {
-        drawable.drawEx(this,position - _camera.port.begin,angle,center,size,alpha);
+        if(drawable !is null)
+            drawable.drawEx(this,position - _camera.port.begin,angle,center,size,alpha);
     }
 
     ///
     public void drawColor(IDrawableColor drawable,Vecf position,Color!ubyte color) @safe
     {
-        drawable.drawColor(this,position - _camera.port.begin,color);
+        if(drawable !is null)
+            drawable.drawColor(this,position - _camera.port.begin,color);
     }
 
     /++

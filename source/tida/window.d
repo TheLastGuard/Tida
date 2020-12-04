@@ -1,17 +1,14 @@
 /++
-    A module for working with windows in a cross-platform environment. 
-    A window is created in both Windows and Linux environments. OS X 
-    and other operating systems are currently not supported due to 
-    lack of testing on these platforms.
+    A module for working with windows in a cross-platform environment. A window is created in both Windows and Linux 
+    environments. OS X and other operating systems are currently not supported due to lack of testing on these 
+    platforms.
 
-    The window is created primarily not in the constructor, in the constructor 
-    the window parameters are initialized for its creation. All this is created 
-    by the `initialize` method, with an indication of the template parameter, 
+    The window is created primarily not in the constructor, in the constructor the window parameters are initialized 
+    for its creation. All this is created by the `initialize` method, with an indication of the template parameter, 
     which window to create.
 
-    A window can be created either with a ready-made context or without it 
-    (i.e., created manually)(Please note that the context is strictly created 
-    only for the opengl library).
+    A window can be created either with a ready-made context or without it (i.e., created manually)(Please note that 
+    the context is strictly created only for the opengl library).
 
     Creating a simple window is done with a simple `initialize` function:
     ---
@@ -51,18 +48,19 @@
     window.contextSet(context);
     ---
 
-    Then you can draw something on the window, control it and so on.
-
-    Also, please note that creating multiple windows is currently not supported.
+    At the moment, windows cannot work in parallel, as well as event tracking and object rendering, so 
+    you shouldn't even try to create windows in different threads, this will lead to data segmentation.
+    
+    It is also recommended to create a window in the recommended way, but if you want to create your 
+    own render, then immediately put a context in the window so that there are no errors when creating 
+    a render or manual rendering.
 
     TODO: 
-        * Make it possible to create several windows at the same time.
-          Namely, to make `shared` methods for working in different threads, 
-          both for the window and for the context, event handler and render.
+        * Make it possible to create several windows at the same time. Namely, to make `shared` methods for 
+          working in different threads, both for the window and for the context, event handler and render.
           
-        * Make normal full screen and resize. The fact is that when the size 
-          is changed, the render is not updated, even if you do a redraw. 
-          Apparently, the nodes allocate a buffer.
+        * Make normal full screen and resize. The fact is that when the size is changed, the render is not 
+          updated, even if you do a redraw. Apparently, the nodes allocate a buffer.
 
     Authors: TodNaz
     License: MIT
@@ -140,7 +138,13 @@ version(WebAssembly) {}
 else:
 
 /++
-    Class for describing and creating context for the window.
+    An object for describing the context for rendering objects in the opengl library. Able to create a context 
+    in both Linux and Windows using the glx (for x11) and wgl (for Windows) libraries.
+
+    The contest is also easily set to a window using the window's `contextSet` method:
+    ---
+    window.contextSet(myContext);
+    ---
 +/
 public class Context
 {
@@ -175,12 +179,16 @@ public class Context
 
     public
     {
-        GLAttributes attrib; /// Attributes for creating context.
+        /++
+            Context creation attributes. It is not necessary to specify them, the attributes 
+            are already pre-specified.
+        +/
+        GLAttributes attrib;
     }
 
     /// 
     version(Windows) public HDC DC() @safe nothrow
-    {
+    { 
         return deviceHandle;
     }
 
