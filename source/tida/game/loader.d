@@ -105,7 +105,7 @@ public class Loader
 
         Example:
         ---
-        Image img = foxloader.load!Image("a.png");
+        Image img = loader.load!Image("a.png");
         ---
     +/
     public T load(T)(immutable string path,string name = "null") @safe

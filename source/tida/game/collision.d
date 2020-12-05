@@ -53,6 +53,9 @@ body
                       first.begin == second.end)
                       return true;
 
+                    /+
+                        Virtually by drawing a line, but at each step we check if there is the same collision.
+                    +/
                     int x1 = second.begin.x.to!int;
                     int y1 = second.begin.y.to!int;
                     const x2 = second.end.x.to!int;
@@ -104,6 +107,9 @@ body
                       second.begin == first.end)
                       return true;
 
+                    /+
+                        Virtually by drawing a line, but at each step we check if there is the same collision.
+                    +/
                     int x1 = first.begin.x.to!int;
                     int y1 = first.begin.y.to!int;
                     const x2 = first.end.x.to!int;
@@ -158,6 +164,9 @@ body
                       second.end == first.end)
                       return true;
 
+                    /+
+                        Virtually by drawing a line, but at each step we check if there is the same collision.
+                    +/
                     int x1 = first.begin.x.to!int;
                     int y1 = first.begin.y.to!int;
                     const x2 = first.end.x.to!int;
@@ -215,6 +224,9 @@ body
                        second.end == first.end)
                       return true;
 
+                    /+
+                        Virtually by drawing a line, but at each step we check if there is the same collision.
+                    +/
                     int x1 = second.begin.x.to!int;
                     int y1 = second.begin.y.to!int;
                     const x2 = second.end.x.to!int;
