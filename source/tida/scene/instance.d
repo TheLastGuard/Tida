@@ -171,7 +171,21 @@ public class Instance
         assert(cmp.getName != "","Give the component a name.");
     }body
     {
+        cmp.init(this);
         components ~= cmp;
+    }
+
+    /++
+        Create a component to an instance.
+
+        Params:
+            Name = Component.
+    +/
+    public void add(Name)() @safe
+    in(new Name().from!Component,"Its not component!")
+    body
+    {
+        add(new Name());
     }
 
     /++
@@ -187,7 +201,7 @@ public class Instance
         ---
     +/
     public T of(T)() @safe
-    in(new T.from!Component,"It not component!")
+    in(new T().from!Component,"It not component!")
     body
     {
         T obj;
@@ -353,6 +367,11 @@ public class Instance
         bool isDestroy() @safe
         {
             return _destroy;
+        }
+
+        Component[] getComponents() @safe
+        {
+            return components;
         }
     }
 

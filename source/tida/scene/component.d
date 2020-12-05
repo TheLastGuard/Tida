@@ -3,16 +3,21 @@
 +/
 module tida.scene.component;
 
-public interface Component
+public class Component
 {
 	import tida.scene.instance;
 	import tida.graph.render;
 	import tida.event;
 
-	public void init(Instance) @safe;
-	public void event(EventHandler) @safe;
-	public void step() @safe;
-	public void draw(Renderer) @safe;
+	public
+	{
+		string name;
+	}
 
-	public string getName() @safe;
+	public void init(Instance instance) @safe {};
+	public void event(EventHandler event) @safe {}
+	public void step() @safe {}
+	public void draw(Renderer render) @safe {}
+
+	public string getName() @safe {return name;}
 }

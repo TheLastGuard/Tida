@@ -408,8 +408,14 @@ public class SceneManager
             rend.camera = current.camera;
             current.step();
 
-            foreach(instance; current.getThreadList(thread))
+            foreach(instance; current.getThreadList(thread)) {
                 instance.step();
+
+                foreach(component; instance.getComponents())
+                {
+                    component.step();
+                }
+            }
         }
     }
 
@@ -420,8 +426,15 @@ public class SceneManager
         {
             current.event(event);
 
-            foreach(instance; current.getList())
+            foreach(instance; current.getList()) 
+            {
                 instance.event(event);
+
+                foreach(component; instance.getComponents())
+                {
+                    component.event(event);
+                }
+            }
         }
     }
 
@@ -445,7 +458,14 @@ public class SceneManager
                 current.drawDebug(render);
 
                 foreach(instance; current.getList())
+                {
                     instance.drawDebug(render);
+
+                    foreach(component; instance.getComponents())
+                    {
+                        component.draw(render);
+                    }
+                }
             }
         }
     }
