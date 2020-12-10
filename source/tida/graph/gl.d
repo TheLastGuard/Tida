@@ -31,8 +31,8 @@ public struct GL
     {
         auto retValue = loadOpenGL();
 
-            if(retValue == GLSupport.noContext)
-                throw new ContextException(ContextError.noContext,"Context is not create!");
+        if(retValue == GLSupport.noContext)
+           throw new ContextException(ContextError.noContext,"Context is not create!");
     }
 
     static void alphaFunc(int mode,float alpha) @trusted
@@ -50,16 +50,19 @@ public struct GL
         glViewport(x,y,width,height);
     }
 
+    static void frustum(float a,float b,float c,float d,float e,float f) @trusted
+    {
+        glFrustum(a,b,c,d,e,f);
+    }
     
-
     static void clearColor(Color!ubyte color) @trusted @property
     {
         glClearColor(color.rf,color.gf,color.bf,color.af);
     }
 
-    static void clear() @trusted
+    static void clear(int mode = GL_COLOR_BUFFER_BIT) @trusted
     {
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+        glClear(mode);
     }
 
     static void translate(float x,float y,float z) @trusted

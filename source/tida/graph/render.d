@@ -74,25 +74,38 @@ public class Renderer
     }
 
     ///
-    public void reshape() @safe
+    public void reshape() @trusted
     {
         import tida.info, std.conv : to;
 
         size = _camera.port.end;
         auto begin = _camera.shape.begin;
 
+        if(!toRender.fullscreen) {
+            GL.viewport(0,0,toRender.width,toRender.height);
+        } else {
+            GL.viewport(0,0,Display.getWidth(),Display.getHeight());
+        }
+
+        clear();
+
         GL.matrixMode(GL_PROJECTION);
         GL.loadIdentity();
 
-        if(size.x == 0 && size.y == 0)
-            GL.ortho(0.0, toRender.width, toRender.height, 0.0, -1.0, 1.0);
-        else
+        if(size.x == 0 && size.y == 0) {
+            if(!toRender.fullscreen) {
+                GL.ortho(0.0, toRender.width, toRender.height, 0.0, -1.0, 1.0);
+            }
+            else {
+                GL.ortho(0.0, Display.getWidth(),Display.getHeight(), 0.0, -1.0, 1.0);
+            }
+        }
+        else {
             GL.ortho(0.0, size.x, size.y, 0.0, -1.0, 1.0);
+        }
 
         GL.matrixMode(GL_MODELVIEW);
         GL.loadIdentity();
-
-        clear();
     }
 
     /// 

@@ -49,14 +49,6 @@ public class EventHandler
 
         version(Posix)
         {
-            import std.stdio;
-
-            XSync(runtime.display, false);
-
-            XSelectInput(runtime.display, window.xWindow, ExposureMask | ButtonPressMask | KeyPressMask |
-                                                          KeyReleaseMask | ButtonReleaseMask | EnterWindowMask |
-                                                          LeaveWindowMask | ResizeRedirectMask | PointerMotionMask);
-
             destroyWindowEvent = XInternAtom(runtime.display, "WM_DELETE_WINDOW", False);
         }
     }
@@ -276,7 +268,9 @@ public class EventHandler
     ///
     version(Posix) public bool xIsResize() @trusted
     {
-        return event.type == ResizeRequest;
+        XWindowAttributes attr;
+        XGetWindowAttributes(runtime.display, window.xWindow, &attr);
+        return (window.width != attr.width || window.height != attr.height);
     }
 
     ///
@@ -297,7 +291,9 @@ public class EventHandler
     ///
     version(Posix) public int[2] xResizeWindowSize() @trusted
     {
-        return [event.xresizerequest.width,event.xresizerequest.height];
+        XWindowAttributes attr;
+        XGetWindowAttributes(runtime.display, window.xWindow, &attr);
+        return [attr.width,attr.height];
     }
 
     ///

@@ -24,6 +24,7 @@ static immutable GLX_DEPTH_SIZE = 12;
 static immutable GLX_STENCIL_SIZE = 13;
 static immutable GLX_DOUBLEBUFFER = 5;
 static immutable GLX_BUFFER_SIZE = 2;
+static immutable GLX_RGBA = 4;
 
 static immutable GLX_WINDOW_BIT = 0x00000001;
 static immutable GLX_RGBA_BIT = 0x00000001;
@@ -49,6 +50,9 @@ alias FglXMakeCurrent = extern(C) bool function(Display *dpy,GLXDrawable drawabl
 alias FglXDestroyContext = extern(C) void function(Display *dpy, GLXContext ctx);
 alias FglXSwapBuffers = extern(C) void function(Display *dpy, GLXDrawable drawable);
 alias FglXWaitX = extern(C) void function();
+alias FglXChooseVisual = extern(C) XVisualInfo* function(Display *dpy,int ds,int* attribs);;
+alias FglXCreateContext = extern(C) GLXContext function(Display *dpy,XVisualInfo* vis,GLXContext shareList,bool direct);
+alias FglXIsDirect = extern(C) bool function(Display *dpy,GLXContext context);
 
 __gshared
 {
@@ -62,17 +66,23 @@ __gshared
     FglXDestroyContext glXDestroyContext;
     FglXSwapBuffers glXSwapBuffers;
     FglXWaitX glXWaitX;
+    FglXChooseVisual glXChooseVisual;
+    FglXCreateContext glXCreateContext;
+    FglXIsDirect glXIsDirect;
 }
 
 public void GLXLoadLibrary() @trusted
 {
     import std.file : exists;
     import std.string : toStringz;
+    import std.algorithm : reverse;
 
     string[] paths =    [
                             "/usr/lib/libGLX.so.0.0.0",
                             "/lib/libGLX.so.0.0.0"
                         ];
+
+    paths.reverse;
 
     bool isSucces = false;
 
@@ -101,6 +111,9 @@ public void GLXLoadLibrary() @trusted
                 bindOrError(cast(void**) &glXDestroyContext, "glXDestroyContext");
                 bindOrError(cast(void**) &glXSwapBuffers, "glXSwapBuffers");
                 bindOrError(cast(void**) &glXWaitX, "glXWaitX");
+                bindOrError(cast(void**) &glXChooseVisual, "glXChooseVisual");
+                bindOrError(cast(void**) &glXCreateContext, "glXCreateContext");
+                bindOrError(cast(void**) &glXIsDirect, "glXIsDirect");
 
                 isSucces = true;
             }catch(Exception e)

@@ -117,16 +117,36 @@ static immutable ubyte Empty = 3;
 +/
 public struct GLAttributes
 {
+    import tida.x11;
+
     public
     {
         int redSize = 8; /// Red size
         int greenSize = 8; /// Green size
         int blueSize = 8; /// Blue size
         int alphaSize = 8; /// Alpha channel size
-        int depthSize = 8; /// Depth size
+        int depthSize = 24; /// Depth size
         int stencilSize = 8; /// Stencil size
         int colorDepth = 32; /// Color depth
+        bool doubleBuffer = true;
     }
+}
+
+version(Posix) public string[] extensionList() @trusted
+{
+    import std.conv : to;
+    import std.array : split;
+    import dglx.glx;
+    import tida.runtime;
+
+    return glXQueryExtensionsString(runtime.display,runtime.displayID)
+        .to!string
+        .split(' ')[0 .. $ - 1];
+}
+
+public bool isExtensionSupported(string name) @trusted
+{
+    return 0;
 }
 
 /++
@@ -178,6 +198,20 @@ public class Context
         GLAttributes attrib;
     }
 
+    this() @safe {}
+
+    version(Posix) this(GLXContext ctx,XVisualInfo* info) @safe
+    {
+        this.ctx = ctx;
+        this.visual = info;
+    }
+
+    version(Windows) this(HGLRC ctx,HDC deviceHandle) @safe
+    {
+        this.ctx = ctx;
+        this.deviceHandle = deviceHandle;
+    }
+
     /// 
     version(Windows) public HDC DC() @safe nothrow
     { 
@@ -205,9 +239,12 @@ public class Context
     {
         PIXELFORMATDESCRIPTOR pfd;
 
+        auto flags = (attrib.doubleBuffer ? 
+            PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL : PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL);
+
         pfd.nSize = PIXELFORMATDESCRIPTOR.sizeof;
         pfd.nVersion = 1;
-        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+        pfd.dwFlags = flags;
         pfd.iPixelType = PFD_TYPE_RGBA;
         pfd.cRedBits = cast(ubyte) attrib.redSize;
         pfd.cGreenBits = cast(ubyte) attrib.greenSize;
@@ -223,9 +260,9 @@ public class Context
     }
 
     ///
-    version(Windows) public void wContextInitialize(Window window) @trusted 
+    version(Windows) public auto wContextInitialize(Window window) @trusted 
     {
-        ctx = wglCreateContext(deviceHandle);
+        return this.ctx = wglCreateContext(deviceHandle);
     }
 
     /++
@@ -233,8 +270,10 @@ public class Context
 
         All parameters are taken from the attrib variable. The default will always be double buffering.
     +/
-    version(Posix) public void xAttribInitialize() @trusted @live
+    version(Posix) public auto xAttribInitialize() @trusted @live
     {
+        import std.conv : to;
+
         int[] glxAttribs = 
             [
                 GLX_X_RENDERABLE    , True,
@@ -247,54 +286,40 @@ public class Context
                 GLX_ALPHA_SIZE      , attrib.alphaSize,
                 GLX_DEPTH_SIZE      , attrib.depthSize,
                 GLX_STENCIL_SIZE    , attrib.stencilSize,
-                GLX_DOUBLEBUFFER    , True,
+                GLX_DOUBLEBUFFER    , attrib.doubleBuffer.to!int,
                 None
             ];
 
         int fbcount;
-        scope GLXFBConfig* fbc = glXChooseFBConfig(runtime.display, runtime.displayID, cast(int*) glxAttribs, &fbcount);
+        auto fbc = glXChooseFBConfig(runtime.display,runtime.displayID,glxAttribs.ptr,&fbcount);
 
-        scope(exit) XFree(fbc);
+        int bestFbc = -1, bestNum = -1;
+        foreach(int i; 0 .. fbcount)
+        {
+            int sampBuff, samples;
+            glXGetFBConfigAttrib(runtime.display, fbc[i], GLX_SAMPLE_BUFFERS, &sampBuff);
+            glXGetFBConfigAttrib(runtime.display, fbc[i], GLX_SAMPLES, &samples);
 
-        if(fbc is null)
-            throw new ContextException(ContextError.fbsNull,"fbc config is null!");
-
-        int bestFbc = -1, worstFbc = -1, bestNumSamp = -1, worstNumSamp = 999;
-
-        for(int i = 0; i < fbcount; ++i) {
-            XVisualInfo *vi = glXGetVisualFromFBConfig(runtime.display,fbc[i]);
-            if(vi !is null) 
-            {
-                int sampBuf, samples;
-
-                glXGetFBConfigAttrib(runtime.display,fbc[i],GLX_SAMPLE_BUFFERS,&sampBuf);
-                glXGetFBConfigAttrib(runtime.display,fbc[i],GLX_SAMPLES,&samples);
-
-                if(bestFbc < 0 || (sampBuf && samples > bestNumSamp)) {
-                    bestFbc = i;
-                    bestNumSamp = samples;
-                }
-
-                if(worstFbc < 0 || !sampBuf || samples < worstNumSamp)
-                    worstFbc = i;
-
-                worstNumSamp = samples;
+            if(bestFbc < 0 || (sampBuff && samples > bestNum)) {
+                bestFbc = i;
+                bestNum = samples;
             }
-
-            XFree(vi);
         }
 
-        bestFbcs = fbc[bestFbc];
+        bestFbcs = fbc[bestNum];
 
-        visual = glXGetVisualFromFBConfig(runtime.display, bestFbcs);
+        auto visual = glXGetVisualFromFBConfig(runtime.display, bestFbcs);
+        XFree(fbc);
+
+        return visual;
     }
 
     /++
         Creates a context in the x11 environment.
     +/
-    version(Posix) public void xContextInitialize() @trusted
+    version(Posix) public auto xContextInitialize() @trusted
     {
-        ctx = glXCreateNewContext(runtime.display, bestFbcs, GLX_RGBA_TYPE, null, true);
+        return this.ctx = glXCreateNewContext(runtime.display, bestFbcs, GLX_RGBA_TYPE, null, True);
     }
 
     ///
@@ -306,16 +331,16 @@ public class Context
     /++
         Initializes the parameters of the context.
     +/
-    public void attribInitialize(Window window) @safe
+    public auto attribInitialize(Window window) @safe
     {
-        version(Posix) xAttribInitialize();
+        version(Posix) return xAttribInitialize();
         version(Windows) wAttribInitialize(window);
     }
 
     /++
         Initializes the context.
     +/
-    public void initialize(Window window) @safe
+    public auto initialize(Window window) @safe
     {
         version(Posix) xContextInitialize();
         version(Windows) wContextInitialize(window);
@@ -323,7 +348,12 @@ public class Context
 
     ~this() @trusted
     {
-        version(Posix) glXDestroyContext(runtime.display, ctx);
+        version(Posix) {
+            glXDestroyContext(runtime.display, ctx);
+            XFree(xGetVisual());
+            XFree(bestFbcs);
+        }
+
         version(Windows) wglDeleteContext(ctx);
     }
 }
@@ -369,6 +399,9 @@ public class Window
         version(Windows)
         {
             HWND window;
+            LONG style;
+            LONG oldStyle;
+            WINDOWPLACEMENT wpc;
         }
 
         Context context;
@@ -417,7 +450,7 @@ public class Window
             posX = The x-axis position.
             posY = The y-axis position.
     +/
-    public void initialize(ubyte Type)(int posX = 100,int posY = 100) @safe
+    public void initialize(ubyte Type)(int posX = 100,int posY = 100) @trusted
     in
     {
         assert(posX > 0,"The position of the window cannot be negative!");
@@ -427,7 +460,7 @@ public class Window
     {
         static if(Type == Simple)
         {
-            version(Posix) xWindowSimpleInitialize(posX,posY);
+            version(Posix) xWindowInit(posX,posY);
             version(Window) wWindowInit(posX,posY);
         }else
         static if(Type == ContextIn)
@@ -436,17 +469,13 @@ public class Window
             {
                 context = new Context();
 
-                context.attribInitialize(this);
-
-                xWindowInit(posX,posY,context.xGetVisual());
-
-                context.xContextInitialize();
-
-                contextSet(context);
-
+                xWindowInit(posX,posY,context.xAttribInitialize);
                 xWindowShow();
 
-                xResize(width,height);
+                xContextSet(context.xContextInitialize);
+
+                XSync(runtime.display, false);
+                XFlush(runtime.display);
             }
 
             version(Windows)
@@ -465,6 +494,12 @@ public class Window
             static assert(null,"It is impossible not to initialize the window if you have called such a command.");
 
         typeInitialize = Type;
+    }
+
+    ///
+    public bool isContext() @safe
+    {
+        return context is null;
     }
 
     /++
@@ -542,42 +577,52 @@ public class Window
             posY = The y-axis position.
             visual = Information from context for create window.
     +/
-    version(Posix) public void xWindowInit(int posX,int posY,XVisualInfo* visual = null) @trusted
+    version(Posix) public void xWindowInit(int posX,int posY,XVisualInfo* visual = null,int depth = -1) @trusted
     {
         import tida.info;
+
+        scope Visual* tryVisual = null; 
+        int tryDepth = -1;
+        x11.Xlib.Window rootWindow;
+
+        if(visual is null)
+        {
+            tryVisual = XDefaultVisual(runtime.display,runtime.displayID);
+
+            if(depth == -1) 
+            {
+                tryDepth = XDefaultDepth(runtime.display,runtime.displayID);
+            }
+
+            rootWindow = runtime.rootWindow;
+        }else
+        {
+            tryVisual = visual.visual;
+            tryDepth = visual.depth;
+            rootWindow = runtime.rootWindowBy(visual.screen);
+        }
 
         XSetWindowAttributes windowAttribs;
         windowAttribs.border_pixel = Color!ubyte(0,0,0).conv!uint;
         windowAttribs.background_pixel = _background.conv!uint;
         windowAttribs.override_redirect = True;
-        windowAttribs.colormap = XCreateColormap(runtime.display, RootWindow(runtime.display, runtime.displayID), 
-                                                 visual.visual, AllocNone);
+        windowAttribs.colormap = XCreateColormap(runtime.display, rootWindow, 
+                                                 tryVisual, AllocNone);
 
-        window = XCreateWindow(runtime.display, RootWindow(runtime.display, runtime.displayID), posX, posY, 
+        windowAttribs.event_mask = ExposureMask | ButtonPressMask | KeyPressMask |
+                                   KeyReleaseMask | ButtonReleaseMask | EnterWindowMask |
+                                   LeaveWindowMask | PointerMotionMask;
+
+        window = XCreateWindow(runtime.display, runtime.rootWindow, posX, posY, 
                                width,
-                               height,0,visual.depth,InputOutput,visual.visual,
-                               CWBackPixel|CWColormap|CWBorderPixel|CWEventMask, &windowAttribs);
+                               height,0,tryDepth,InputOutput,tryVisual,
+                               CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
 
         xEventName(_title);
 
-        auto ev = XInternAtom(runtime.display, "WM_DELETE_WINDOW", False);
-
+        auto ev = getAtom!"WM_DELETE_WINDOW";
+ 
         XSetWMProtocols(runtime.display, xWindow, &ev, 1);
-    }
-
-    /++
-        Created simple window in environment x11.
-
-        Params:
-            posX = The x-axis position.
-            posY = The y-axis position.
-    +/
-    version(Posix) public void xWindowSimpleInitialize(int posX,int posY) @trusted
-    {
-        window = XCreateSimpleWindow(runtime.display, RootWindow(runtime.display,runtime.displayID),
-                                     posX,posY,width,height,1,Color!ubyte(0,0,0).conv!uint,_background.conv!uint);
-
-        XStoreName(runtime.display, window, _title.toUTFz!(char*));
     }
 
     /++
@@ -586,12 +631,19 @@ public class Window
     version(Posix) public void xWindowShow() @trusted
     {
         XMapWindow(runtime.display, window);
+        XClearWindow(runtime.display, window);
     }
 
     /// ditto
     version(Windows) public void wWindowShow() @trusted
     {
         ShowWindow(window, 1);
+    }
+
+    public void show() @safe
+    {
+        version(Posix) xWindowShow();
+        version(Windows) wWindowShow();
     }
 
     /++
@@ -627,6 +679,9 @@ public class Window
     version(Posix) public void xContextSet(GLXContext ctx) @trusted
     {
         glXMakeCurrent(runtime.display, xWindow, ctx);
+
+        if(!glXIsDirect(runtime.display, ctx))
+            return;
     }
 
     /++
@@ -1096,13 +1151,18 @@ public class Window
     ///
     version(Posix) public void xIcon(Image image) @trusted
     {
-        Atom wmIcon     = XInternAtom(runtime.display,"_NET_WM_ICON", False);
-        Atom cardinal   = XInternAtom(runtime.display,"CARDINAL", False);
-
         ulong[] pixels = [cast(ulong) image.width,cast(ulong) image.height] ~ image.colors!ulong(PixelFormat.ARGB);
 
-        XChangeProperty(runtime.display, window, wmIcon, cardinal,
-                32, PropModeReplace, cast(ubyte*) pixels,cast(int) pixels.length);
+        auto event = WMEvent();
+        event.first = XInternAtom(runtime.display,"_NET_WM_ICON", False);
+        event.second = XInternAtom(runtime.display,"CARDINAL", False);
+        event.data = cast(ubyte*) pixels;
+        event.length = pixels.length;
+        event.mode = PropModeReplace;
+        event.format = 32;
+        event.window = xWindow;
+
+        sendEvent(event);
     }
 
     version(Posix) public void xEventName(string caption) @trusted nothrow
@@ -1141,12 +1201,57 @@ public class Window
     }
 
     ///
-    public void resizeEvent(uint rWidth,uint rHeight) @safe @disable 
+    public void resizeEvent(uint rWidth,uint rHeight) @safe 
     {
         _width = rWidth;
         _height = rHeight;
     }
 
+    ///
+    public void resizeEvent(T)(T[2] size) @safe
+    {
+        resizeEvent(size[0],size[1]);
+    }
+
+    ///
+    version(Windows) public void wFullscreen(bool value) @trusted
+    {
+        import tida.info;
+
+        if(value) 
+        {
+            GetWindowPlacement(wWindow, &wpc);
+            if(style == 0)
+                style = GetWindowLong(wWindow, GWL_STYLE);
+            if(oldStyle == 0)
+                oldStyle = GetWindowLong(wWindow,GWL_EXSTYLE);
+
+            auto NewHWNDStyle = style;
+            NewHWNDStyle &= ~WS_BORDER;
+            NewHWNDStyle &= ~WS_DLGFRAME;
+            NewHWNDStyle &= ~WS_THICKFRAME;
+
+            auto NewHWNDStyleEx = oldStyle;
+            NewHWNDStyleEx &= ~WS_EX_WINDOWEDGE;
+
+            SetWindowLong(wWindow, GWL_STYLE, NewHWNDStyle | WS_POPUP );
+            SetWindowLong(wWindow, GWL_EXSTYLE, NewHWNDStyleEx | WS_EX_TOPMOST);
+            ShowWindow(wWindow, SHOW_FULLSCREEN);
+        } else 
+        {
+            SetWindowLong(wWindow, GWL_STYLE, style);
+            SetWindowLong(wWindow, GWL_EXSTYLE, oldStyle);
+            ShowWindow(wWindow, SW_SHOWNORMAL);
+            SetWindowPlacement(wWindow, &wpc);
+
+            style = 0;
+            oldStyle = 0;
+        }
+
+        _fullscreen = value;
+    }
+
+    ///
     version(Posix) public void xFullscreen(bool value) @trusted
     {   
         import tida.info;
@@ -1171,16 +1276,22 @@ public class Window
         _fullscreen = value;
     }
 
+    /++
+        Set to fullscreen mode
+    +/
     public void fullscreen(bool value) @safe @property
     {
         version(Posix) xFullscreen(value);
+        version(Windows) wFullscreen(value);
     }
 
+    /// ditto
     public bool fullscreen() @safe @property
     {
         return _fullscreen;
     }
 
+    /// ditto
     public bool fullscreen() @safe @property const
     {
         return _fullscreen;

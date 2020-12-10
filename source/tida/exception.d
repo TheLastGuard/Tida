@@ -6,7 +6,9 @@ module tida.exception;
 public enum ContextError
 {
 	fbsNull,
-	noContext
+	noContext,
+	visualNull,
+	noDirect
 }
 
 public class ExceptionError(T) : Exception

@@ -29,7 +29,7 @@ public TidaRuntime runtime() @trusted nothrow
 }
 
 /++
-    Ranttime. Required to create windows.
+    Runtime. Required to create windows.
 +/
 public class TidaRuntime
 {
@@ -116,6 +116,16 @@ public class TidaRuntime
         _xDisplayID = DefaultScreen(_xDisplay);
     }
 
+    version(Posix) public Window rootWindow() @trusted @property nothrow
+    {
+        return RootWindow(runtime.display, runtime.displayID);
+    }
+
+    version(Posix) public Window rootWindowBy(int screen) @trusted nothrow
+    {
+        return RootWindow(runtime.display, screen);
+    }
+
     /// Returns an instance obtained in a Windows environment.
     version(Windows) public HINSTANCE hInstance() @trusted @property nothrow
     {
@@ -127,4 +137,43 @@ public class TidaRuntime
     {
         _wHInstance = GetModuleHandle(null);
     }
+
+    public void terminate(int errorCode = 0) @trusted
+    {
+        import core.stdc.stdlib : exit;
+
+        exit(errorCode);
+    }
+}
+
+version(Posix):
+import tida.x11;
+
+public Atom getAtom(string name)() @trusted
+{
+    return XInternAtom(runtime.display, name, 0);
+}
+
+public struct WMEvent
+{
+    import tida.x11;
+
+    public
+    {
+        Atom first;
+        Atom second;
+        int format;
+        int mode;
+        ubyte* data;
+        size_t length;
+        Window window;
+    }
+}
+
+public void sendEvent(WMEvent event) @trusted
+{
+    import tida.x11;
+
+    XChangeProperty(runtime.display, event.window, event.first, event.second,
+                event.format, event.mode, event.data,cast(int) event.length);
 }

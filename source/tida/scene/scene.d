@@ -247,6 +247,31 @@ public class Scene
             destroy(instance);
     }
 
+    public Instance getInstanceByName(string name) @safe
+    {
+        foreach(instance; getList)
+        {
+            if(instance.name == name)
+                return instance;
+        }
+
+        return null;
+    }
+
+    public Instance getInstanceByNameTag(string name,string tag) @safe
+    {
+        foreach(instance; getList)
+        {
+            if(instance.name == name) {
+                foreach(tage; instance.tags)
+                    if(tag == tage)
+                        return instance;
+            }
+        }
+
+        return null;
+    } 
+
     unittest
     {
         Scene scene = new Scene;
