@@ -80,6 +80,7 @@ public void initSceneManager() @trusted
     _sceneManager = new SceneManager();
 }
 
+/// Scene manager
 public class SceneManager
 {
     import tida.scene.scene;
@@ -406,6 +407,7 @@ public class SceneManager
         if(current !is null)
         {
             rend.camera = current.camera;
+            current.worldCollision();
             current.step();
 
             foreach(instance; current.getThreadList(thread)) {

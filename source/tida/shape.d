@@ -43,6 +43,45 @@ public struct Shape
         Vecf _end;
     }
 
+    ///
+    public T to(T)() @safe @property
+    {
+        static if(is(T : Vecf)) {
+            return begin;
+        }else
+        static if(is(T : Vecf[])) {
+            if(type == ShapeType.point || type == ShapeType.circle) {
+                return [begin];
+            }else
+            if(type == ShapeType.line || type == ShapeType.rectangle) {
+                return [begin,end];
+            }else
+            if(type == ShapeType.triangle) {
+                return [this.vertex!0,this.vertex!1,this.vertex!2];
+            }else
+            if(type == ShapeType.multi) {
+                Vecf[] temp;
+                foreach(shape; shapes) {
+                    temp ~= this.to!T;
+                }
+            }
+
+            return [];
+        }else
+        static if(is(T : Vecf[][])) {
+            if(type != ShapeType.unknown) {
+                if(type != ShapeType.multi) {
+                    return [to!Vecf[]];
+                }else {
+                    Vecf[][] temp;
+                    foreach(shape; shapes) {
+                        temp ~= this.to!Vecf[];
+                    }
+                }
+            }
+        }
+    }
+
     /// The beginning of the figure.
     public Vecf begin() @safe @property nothrow
     {
@@ -51,13 +90,22 @@ public struct Shape
 
     /// The end of the figure.
     public Vecf end() @safe @property nothrow
-    in
-    {
-        assert(type != ShapeType.point &&
-               type != ShapeType.circle,"This shape does not support end coordinates!");
-    }body
+    in(type != ShapeType.point && type != ShapeType.circle,"This shape does not support end coordinates!")
+    body
     {
         return _end;
+    }
+
+    /++
+        Move shape
+    +/
+    public void move(Vecf pos) @safe nothrow
+    {
+        _begin = _begin + pos;
+
+        if(type == ShapeType.line || type == ShapeType.rectangle) {
+            _end = _end + pos;
+        }
     }
 
     /// The beginning of the figure.
@@ -68,11 +116,8 @@ public struct Shape
 
     /// The end of the figure.
     public Vecf end() @safe @property nothrow immutable
-    in
-    {
-        assert(type != ShapeType.point &&
-               type != ShapeType.circle,"This shape does not support end coordinates!");
-    }body
+    in(type != ShapeType.point && type != ShapeType.circle,"This shape does not support end coordinates!")
+    body
     {
         return _end;
     }
@@ -85,11 +130,8 @@ public struct Shape
 
     /// The end of the figure.
     public void end(Vecf vec) @safe @property nothrow
-    in
-    {
-        assert(type != ShapeType.point &&
-               type != ShapeType.circle,"This shape does not support end coordinates!");
-    }body
+    in(type != ShapeType.point && type != ShapeType.circle,"This shape does not support end coordinates!")
+    body
     {
         _end = vec;
     }
@@ -156,30 +198,24 @@ public struct Shape
 
     /// The radious the figure.
     public float radious() @safe @property nothrow
-    in
-    {
-        assert(type == ShapeType.circle,"This is not a circle!");
-    }body
+    in(type == ShapeType.circle,"This is not a circle!")
+    body
     {
         return _radious;
     }
 
     /// The radious the figure.
     public float radious() @safe @property nothrow immutable
-    in
-    {
-        assert(type == ShapeType.circle,"This is not a circle!");
-    }body
+    in(type == ShapeType.circle,"This is not a circle!")
+    body
     {
         return _radious;
     }
 
     /// ditto
     public void radious(float value) @safe @property nothrow
-    in
-    {
-        assert(type == ShapeType.circle,"This is not a circle!");
-    }body
+    in(type == ShapeType.circle,"This is not a circle!")
+    body
     {
         _radious = value;
     }
@@ -200,6 +236,18 @@ public struct Shape
         else
         static if(num == 2)
             return _trType;
+    }
+
+    ///
+    public Vecf[] vertexs() @safe @property nothrow
+    {
+        return [begin,end,_trType];
+    }
+
+    ///
+    public Vecf[] vertexs() @safe @property nothrow immutable
+    {
+        return [begin,end,_trType];
     }
 
     /// ditto
@@ -230,26 +278,48 @@ public struct Shape
         import std.conv : to;
 
         if(type == ShapeType.point) {
-            return "Shape.Point(x: "~begin.x.to!string~",y: "~begin.y.to!string~")";
+            return "Shape.Point("~begin.to!string~")";
+        }else
+        if(type == ShapeType.line) {
+            return "Shape.Line(begin: "~begin.to!string~", end: "~end.to!string~")";
         }else
         if(type == ShapeType.rectangle) {
-            return "Shape.Rectangle(x: "~begin.x.to!string~",y: "~begin.y.to!string~","~
-            "endX: "~end.x.to!string~", endY: "~end.y.to!string~")";
+            return "Shape.Line(begin: "~begin.to!string~", end: "~end.to!string~")";
+        }else
+        if(type == ShapeType.circle) {
+            return "Shape.Circle(position: "~begin.to!string~", radious: "~radious.to!string~")";
+        }else 
+        if(type == ShapeType.triangle) {
+            return "Shape.Triangle(0: "~vertexs[0].to!string~", 1:"~vertexs[1].to!string~", 2:"~vertexs[2].to!string~")";
+        }else
+        if(type == ShapeType.multi) {
+            return "Shape.Multi(position: "~begin.to!string~", shapesCount: "~shapes.length.to!string~")";
         }
 
         return "Shape.Unknown()";
     }
 
-    string toString() @safe
+    string toString() @safe 
     {
         import std.conv : to;
 
         if(type == ShapeType.point) {
-            return "Shape.Point(x: "~begin.x.to!string~",y: "~begin.y.to!string~")";
+            return "Shape.Point("~begin.to!string~")";
+        }else
+        if(type == ShapeType.line) {
+            return "Shape.Line(begin: "~begin.to!string~", end: "~end.to!string~")";
         }else
         if(type == ShapeType.rectangle) {
-            return "Shape.Rectangle(x: "~begin.x.to!string~",y: "~begin.y.to!string~","~
-            "endX: "~end.x.to!string~", endY: "~end.y.to!string~")";
+            return "Shape.Line(begin: "~begin.to!string~", end: "~end.to!string~")";
+        }else
+        if(type == ShapeType.circle) {
+            return "Shape.Circle(position: "~begin.to!string~", radious: "~radious.to!string~")";
+        }else 
+        if(type == ShapeType.triangle) {
+            return "Shape.Triangle(0: "~vertex!0.to!string~", 1:"~vertex!1.to!string~", 2:"~vertex!2.to!string~")";
+        }else
+        if(type == ShapeType.multi) {
+            return "Shape.Multi(position: "~begin.to!string~", shapesCount: "~shapes.length.to!string~")";
         }
 
         return "Shape.Unknown()";
@@ -335,6 +405,16 @@ public struct Shape
         shape.end = end;
 
         return shape;
+    }
+
+    static Shape RectangleLine(Vecf begin,Vecf end) @safe
+    {
+        return Shape.Multi([
+            Shape.Line(begin,begin + Vecf(end.x,0)),
+            Shape.Line(begin + Vecf(end.x,0),end),
+            Shape.Line(begin,begin + Vecf(0,end.y)),
+            Shape.Line(begin + Vecf(0,end.y),end)
+        ],Vecf(0,0));
     }
 
     /++

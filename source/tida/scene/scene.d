@@ -61,7 +61,7 @@ public class Scene
     }
 
     ///
-    this() @safe
+    this() @safe nothrow
     {
         if(name == "") {
             name = typeid(this).name;
@@ -73,7 +73,7 @@ public class Scene
     /++
         Returns a list of instances.
     +/
-    public Instance[] getList() @safe
+    public Instance[] getList() @safe nothrow
     {
         return instances;
     }
@@ -84,7 +84,7 @@ public class Scene
         Params:
             index = Thread id.
     +/
-    public Instance[] getThreadList(size_t index) @safe
+    public Instance[] getThreadList(size_t index) @safe nothrow
     {
         return bufferThread[index];
     }
@@ -95,12 +95,12 @@ public class Scene
         Params:
             index = Thread id.
     +/
-    public bool isThreadExists(size_t index) @safe
+    public bool isThreadExists(size_t index) @safe nothrow
     {
         return index < bufferThread.length;
     }
 
-    public void initThread(size_t count = 1) @safe 
+    public void initThread(size_t count = 1) @safe nothrow
     {
         foreach(_; 0 .. count)
         {
@@ -116,10 +116,8 @@ public class Scene
             threadID = In which thread to add execution.
     +/
     public void add(Instance instance,size_t threadID = 0) @safe
-    in
-    {
-        assert(instance,"Instance is not create!");
-    }body
+    in(instance,"Instance is not create!")
+    body
     {  
         if(threadID > bufferThread.length) threadID = 0;
 
@@ -145,10 +143,8 @@ public class Scene
             There must be no arguments in the constructor.
     +/
     public void add(Name)(size_t threadID = 0) @safe
-    in
-    {
-        assert(new Name().from!Instance,"It's not instance!");
-    }body
+    in(new Name().from!Instance,"It's not instance!")
+    body
     {
         Instance instance = new Name();
         add(instance,threadID);
@@ -185,7 +181,7 @@ public class Scene
     /++
         Returns a sorted list of instances.
     +/
-    public Instance[] getErentInstances() @safe
+    public Instance[] getErentInstances() @safe nothrow
     {
         return erentInstances;
     }
@@ -196,7 +192,7 @@ public class Scene
         Params:
             instance = Instance. 
     +/
-    public bool hasInstance(Instance instance) @safe
+    public bool hasInstance(Instance instance) @safe nothrow
     {
         foreach(ins; instances) {
             if(instance is ins)
@@ -204,6 +200,31 @@ public class Scene
         }
 
         return false;
+    }
+
+    ///
+    public void worldCollision() @safe 
+    {
+        import tida.game.collision;
+
+        foreach(first; getList()) {
+            foreach(second; getList()) {
+                if(first !is second && first.solid && second.solid) {
+                    if(
+                        isCollide(  first.mask,
+                                    second.mask,
+                                    first.position,
+                                    second.position)
+                    ) {
+                        first.collision(second);
+                        second.collision(first);
+                    } else {
+                        first.collision(null);
+                        second.collision(null);
+                    }
+                }
+            }
+        }
     }
 
     /++
@@ -219,7 +240,7 @@ public class Scene
             `InMemory` - Removes permanently, from the scene and from memory 
                          (by the garbage collector).
     +/
-    public void instanceDestroy(ubyte type)(Instance instance) @trusted
+    public void instanceDestroy(ubyte type)(Instance instance) @trusted 
     in(hasInstance(instance))
     body
     {
@@ -247,7 +268,8 @@ public class Scene
             destroy(instance);
     }
 
-    public Instance getInstanceByName(string name) @safe
+    ///
+    public Instance getInstanceByName(string name) @safe nothrow
     {
         foreach(instance; getList)
         {
@@ -258,7 +280,8 @@ public class Scene
         return null;
     }
 
-    public Instance getInstanceByNameTag(string name,string tag) @safe
+    ///
+    public Instance getInstanceByNameTag(string name,string tag) @safe nothrow
     {
         foreach(instance; getList)
         {
@@ -287,14 +310,14 @@ public class Scene
     }
 
     /// Clear sorted list of instances.
-    public void sortClear() @safe
+    public void sortClear() @safe 
     {
         this.erentInstances = null;
         this.erentTiles = null;
     }
 
     /// Sort list of instances.
-    public void sort() @trusted
+    public void sort() @trusted 
     {
         void sortErent(T)(ref T[] data,bool delegate(T a,T b) @safe nothrow func) @trusted nothrow
         {

@@ -28,9 +28,8 @@ import tida.shape, tida.vector;
     TODO:
         * Circle
         * Triangle
-        * Multi
 +/
-public bool isCollide(Shape first,Shape second) @safe
+public bool isCollide(Shape first,Shape second,Vecf firstPos = Vecf(0,0),Vecf secondPos = Vecf(0,0)) @safe
 in(first.type != ShapeType.unknown  && second.type != ShapeType.unknown)
 in(first.type != ShapeType.triangle && second.type != ShapeType.triangle)
 in(first.type != ShapeType.circle   && second.type != ShapeType.circle)
@@ -38,6 +37,15 @@ body
 {
     import std.conv : to;
     import std.math : abs;
+
+    first.begin = first.begin + firstPos;
+    second.begin = second.begin + secondPos;
+
+    if(first.type == ShapeType.line || first.type == ShapeType.rectangle)
+        first.end = first.end + firstPos;
+
+    if(second.type == ShapeType.line || second.type == ShapeType.rectangle)
+        second.end = second.end + secondPos;
 
     switch(first.type)
     {
@@ -50,7 +58,7 @@ body
 
                 case ShapeType.line: 
                     if(first.begin == second.begin ||
-                      first.begin == second.end)
+                       first.begin == second.end)
                       return true;
 
                     /+
@@ -93,6 +101,14 @@ body
                            first.begin.y > second.begin.y &&
                            first.begin.x < second.end.x &&
                            first.begin.y < second.end.y;
+
+                case ShapeType.multi:
+                    foreach(shape; second.shapes) {
+                        if(isCollide(first, shape,Vecf(0,0), second.begin))
+                            return true;
+                    }
+
+                    return false;
 
                 default:
                     return false;
@@ -149,8 +165,11 @@ body
                     const d = second.end;
 
                     const denominator = ((b.X - a.X) * (d.Y - c.Y)) - ((b.Y - a.Y) * (d.X - c.X));
+
                     const numerator1  = ((a.Y - c.Y) * (d.X - c.X)) - ((a.X - c.X) * (d.Y - c.Y));
                     const numerator2  = ((a.Y - c.Y) * (b.X - a.X)) - ((a.X - c.X) * (b.Y - a.Y));
+
+                    if(denominator == 0) return numerator1 == 0 && numerator2 == 0;
 
                     const r = numerator1 / denominator;
                     const s = numerator2 / denominator;
@@ -183,12 +202,12 @@ body
                         if(x1 > second.begin.x &&
                            x1 < second.end.x   &&
                            y1 > second.begin.y &&
-                           y2 < second.end.y) 
+                           y1 < second.end.y) 
                         {
                            return true;
                         }
 
-                        const int error2 = error * 2;
+                        const error2 = error * 2;
 
                         if(error2 > -deltaY) {
                             error -= deltaY;
@@ -199,6 +218,14 @@ body
                             error += deltaX;
                             y1 += signY;
                         }
+                    }
+
+                    return false;
+
+                case ShapeType.multi:
+                    foreach(shape; second.shapes) {
+                        if(isCollide(first,shape,Vecf(0,0),second.begin))
+                            return true;
                     }
 
                     return false;
@@ -248,7 +275,7 @@ body
                            return true;
                         }
 
-                        const int error2 = error * 2;
+                        const error2 = error * 2;
 
                         if(error2 > -deltaY) {
                             error -= deltaY;
@@ -277,9 +304,25 @@ body
                         a.y <= c.y + (d.y - c.y)
                     );
 
+                case ShapeType.multi:
+                    foreach(shape; second.shapes) {
+                        if(isCollide(first, shape,Vecf(0,0),second.begin))
+                            return true;
+                    }
+
+                    return false;
+
                 default:
                     return false;
             }
+
+        case ShapeType.multi:
+            foreach(shape; first.shapes) {
+                if(isCollide(shape, second,first.begin,Vecf(0,0)))
+                    return true;
+            }
+
+            return false;
 
         default:
             return false;
@@ -293,6 +336,13 @@ unittest
             Shape.Rectangle(Vecf(32,32),Vecf(64,64)),
             Shape.Line(Vecf(48,48),Vecf(96,96))
         )   
+    );
+
+    assert(
+        isCollide(
+            Shape.Rectangle(Vecf(32,32),Vecf(64,64)),
+            Shape.Rectangle(Vecf(48,48),Vecf(72,72))
+        )
     );
 
     assert(
