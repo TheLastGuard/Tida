@@ -75,10 +75,11 @@ public struct Vector(T)
         return a.x == b.x && a.y == b.y;
     }
 
-    public bool opEquals(Vector!T rhs) @safe nothrow 
+    public bool opEquals(Vector!T rhs) @safe nothrow const
     {
         if (this is rhs)
             return true;
+
         return this.x == rhs.x && this.y == rhs.y;
     }
 
@@ -176,6 +177,7 @@ public struct Vector(T)
         static if(is(T : int))
         {
             import std.conv : to;
+            
             return sqrt(to!float(sqr(this.x) + sqr(this.y))).to!T;
         }
         else
@@ -184,7 +186,8 @@ public struct Vector(T)
     
     public string toString() @trusted
     {
-        import std.conv;
+        import std.conv : to;
+
         return "[" ~ x.to!string ~ "," ~ y.to!string ~ "]";
     }
 }

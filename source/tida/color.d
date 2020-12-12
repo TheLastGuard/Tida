@@ -13,6 +13,7 @@ module tida.color;
 +/
 public enum PixelFormat
 {
+    AUTO,
     RGB,
     RGBA,
     ARGB,
@@ -211,6 +212,76 @@ public Color!ubyte toRGB(HSB str) @safe
     return rgb(cast(byte) (r * 255), cast(byte) (g * 255), cast(byte) (b * 255));
 }
 
+/++
+    Recognizes a hex format string, converting it to RGBA representation as a `Color!ubyte` structure.
+
+    Params:
+        hex = The same performance. The following formats can be used:
+              * `0xRRGGBBAA` / `0xRRGGBB`
+              * `#RRGGBBAA` / `#RRGGBB`
+
+    Returns: `Color!ubyte`
++/
+public Color!ubyte HEX(string hex,PixelFormat format = PixelFormat.AUTO) @safe
+{
+    import std.conv : to;
+    import std.bigint;
+
+    size_t cv = 0;
+    if(hex[0] == '#') cv++;
+    else if(hex[0 .. 2] == "0x") cv += 2;
+
+    if(format == PixelFormat.AUTO) {
+        const alpha = hex[cv .. $].length > 6;
+
+        return rgba(
+            BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte,
+            alpha ? BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte : 255
+        );
+    }else
+    if(format == PixelFormat.RGB) {
+        return rgb(
+            BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte
+        );
+    }else
+    if(format == PixelFormat.RGBA) {
+        assert(hex[cv .. $].length > 6,"This is not alpha-channel hex color!");
+
+        return rgba(
+            BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte
+        );
+    }else
+    if(format == PixelFormat.ARGB) {
+        assert(hex[cv .. $].length > 6,"This is not alpha-channel hex color!");
+
+        return rgba(
+            BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte
+        );
+    }else
+    if(format == PixelFormat.BGRA) {
+        assert(hex[cv .. $].length > 6,"This is not alpha-channel hex color!");
+
+        return rgba(
+            BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte,
+            BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte
+        );
+    }
+
+    assert(null,"Unknown pixel format");
+}
+
 /// HSL color structure
 public struct HSL
 {
@@ -275,6 +346,7 @@ public struct Color(T)
         alias a = alpha;
     }
 
+    ///
     this(T red,T green,T blue,T alpha = T.max) @safe
     {
         this.red = red;
@@ -283,6 +355,7 @@ public struct Color(T)
         this.alpha = alpha;
     }
 
+    ///
     this(T[] bytes,PixelFormat format = PixelFormat.RGBA) @safe
     {
         if(format == PixelFormat.RGB) {
@@ -311,6 +384,12 @@ public struct Color(T)
             red = bytes[2];
             alpha = bytes[3];
         }
+    }
+
+    ///
+    this(string hex,PixelFormat format = PixelFormat.AUTO) @safe
+    {
+        this = HEX(hex,format);
     }
 
     /++
@@ -450,5 +529,32 @@ public struct Color(T)
     public float af() @safe immutable
     {
         return cast(float) a / cast(float) T.max;
+    }
+
+    public
+    {
+        static Color!ubyte White = rgb(255,255,255);
+        static Color!ubyte Black = rgb(0,0,0);
+        static Color!ubyte Red = rgb(255,0,0);
+        static Color!ubyte Green = rgb(0,255,0);
+        static Color!ubyte Blue = rgb(0,0,255);
+        static Color!ubyte Yellow = rgb(255,255,0);
+        static Color!ubyte Aqua = rgb(0,255,255);
+        static Color!ubyte Magenta = rgb(255,0,255);
+        static Color!ubyte Silver = rgb(192,192,192);
+        static Color!ubyte Gray = rgb(128,128,128);
+        static Color!ubyte Maroon = rgb(128,0,0);
+        static Color!ubyte Olive = rgb(128,128,0);
+        static Color!ubyte Purple = rgb(128,0,128);
+        static Color!ubyte Tomato = rgb(255,99,71);
+        static Color!ubyte Orange = rgb(255,165,0);
+        static Color!ubyte Gold = rgb(255,215,0);
+        static Color!ubyte YellowGreen = rgb(154,205,50);
+        static Color!ubyte PaleGreen = rgb(152,251,152);
+        static Color!ubyte SteelBlue = rgb(70,130,180);
+        static Color!ubyte SlateBlue = rgb(106,90,205);
+        static Color!ubyte Tida = rgb(64,64,255);
+        static Color!ubyte DarkViolet = rgb(148,0,211);
+        static Color!ubyte Chocolate = rgb(210,105,30);
     }
 }

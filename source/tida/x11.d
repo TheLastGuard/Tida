@@ -1,6 +1,9 @@
 /++
 	Module for importing x11 libraries.
 
+    This module is needed, for example, if the way of loading such a 
+    library is changed, then the code in another project can be left unchanged.
+
 	Authors: TodNaz
 	License: MIT
 +/

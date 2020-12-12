@@ -64,6 +64,7 @@ public class TidaRuntime
         Device device;
     }
 
+    ///
     this(string[] args) @safe
     {
         mainArguments = args;

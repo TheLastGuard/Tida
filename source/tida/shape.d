@@ -2,6 +2,31 @@
     This module describes shapes for drawing, 
     checking and other things related to the work of shapes.
 
+    Forms are of the following types:
+    * `Unknown` - Forms are of the following types:
+    * `Point` - Dot. The simplest of the simplest forms. Only origin parameters are valid.
+    * `line` - More complex form. Has the origin and the end of the coordinates of its two points. 
+               By default, this is a line. 
+    * 'rectangle' - Rectangle shape. By default, such a rectangle is considered to be solid.
+    * `circle` - Circle shape. By default, it is considered to be solid.
+    * `triangle` - Triangle shape. It is believed to be solid.
+    * `multi` - A shape that combines several shapes, which will eventually give a single shape.
+        Here you can, for example, create a non-solid polygon:
+        ---
+        /*
+            Such a rectangle can also be created using the function
+            `Shape.RectangleLine(begin,end)`.
+        */
+        auto rectangle_nonSolid = Shape.Multi([
+            Shape.Line(Vecf(0,0),Vecf(32,0)),
+            Shape.Line(Vecf(32,0),Vecf(32,32)),
+            Shape.Line(Vecf(0,0),Vecf(0,32)),
+            Shape.Line(Vecf(0,32),Vecf(32,32))
+        ], Vecf(0,0));
+        ---
+
+    All such types are specified in enum `ShapeType`.
+
     Authors: TodNaz
     License: MIT
 +/
@@ -33,6 +58,7 @@ public struct Shape
         ShapeType type; /// Shape type
         Shape[] shapes; /++ A set of figures. Needed for the type when you need 
                             to make one shape from several. +/
+        bool isSolid = false; /// Is the polygon solid?
     }   
 
     private
@@ -43,8 +69,18 @@ public struct Shape
         Vecf _end;
     }
 
-    ///
-    public T to(T)() @safe @property
+    /++
+        Converting a form to another form of its presentation.
+
+        Params:
+            T = What to convention?
+
+        Example:
+        ---
+        Vecf[][] points = myPolygon.to!Vecf[][];
+        ---
+    +/
+    public T to(T)() @safe @property 
     {
         static if(is(T : Vecf)) {
             return begin;
@@ -299,6 +335,7 @@ public struct Shape
         return "Shape.Unknown()";
     }
 
+    ///
     string toString() @safe 
     {
         import std.conv : to;
@@ -407,6 +444,16 @@ public struct Shape
         return shape;
     }
 
+    /++
+        Create a non-solid rectangle. 
+
+        Params:
+            begin = Rectangle begin.
+            end = Rectangle end. 
+
+        Returns:
+            Non-solid rectangle
+    +/
     static Shape RectangleLine(Vecf begin,Vecf end) @safe
     {
         return Shape.Multi([

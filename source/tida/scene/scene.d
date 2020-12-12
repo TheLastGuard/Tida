@@ -100,6 +100,7 @@ public class Scene
         return index < bufferThread.length;
     }
 
+    ///
     public void initThread(size_t count = 1) @safe nothrow
     {
         foreach(_; 0 .. count)
@@ -294,6 +295,40 @@ public class Scene
 
         return null;
     } 
+
+    import tida.shape, tida.vector;
+
+    public Instance getInstanceByMask(Shape shape,Vecf position) @safe
+    {
+        import tida.game.collision;
+
+        foreach(instance; getList)
+        {
+            if(isCollide(shape,instance.mask,position,instance.position)) {
+                return instance;
+            }
+        }
+
+        return null;
+    }
+
+    ///
+    public Instance[] getInstacesByMask(Shape shape,Vecf position) @safe
+    {
+        import tida.game.collision;
+
+        Instance[] result;
+
+        foreach(instance; getList)
+        {
+            if(isCollide(shape,instance.mask,position,instance.position)) {
+                result ~= instance;
+                continue;
+            }
+        }
+
+        return result;
+    }
 
     unittest
     {

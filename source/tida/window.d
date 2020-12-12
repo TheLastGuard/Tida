@@ -198,14 +198,17 @@ public class Context
         GLAttributes attrib;
     }
 
+    ///
     this() @safe {}
 
+    ///
     version(Posix) this(GLXContext ctx,XVisualInfo* info) @safe
     {
         this.ctx = ctx;
         this.visual = info;
     }
 
+    ///
     version(Windows) this(HGLRC ctx,HDC deviceHandle) @safe
     {
         this.ctx = ctx;
@@ -411,6 +414,7 @@ public class Window
         uint _minWidth = 64,   _minHeight = 64;
 
         bool _fullscreen = false;
+        Window _parent;
     }
 
     /++
@@ -429,6 +433,15 @@ public class Window
         _width = newWidth;
         _height = newHeight;
         _title = newTitle;
+    }
+
+    /++
+
+    +/
+    this(Window parent,int newWidth,int newHeight,string newTitle) @safe
+    {
+        this(newWidth,newHeight,newTitle);
+        _parent = parent;
     }
 
     invariant
@@ -502,6 +515,21 @@ public class Window
         return context is null;
     }
 
+    ///
+    version(Posix) public void initFrom(x11.Xlib.Window window) @trusted
+    in(window != 0,"Window is bad.")
+    body
+    {
+        this.window = window;
+        XWindowAttributes attrib;
+        XGetWindowAttributes(runtime.display, window, &attrib);
+
+        _width = attrib.width;
+        _height = attrib.height;
+        
+        
+    }
+
     /++
         Initializes the window for the context.
 
@@ -563,7 +591,7 @@ public class Window
 
         window = CreateWindow(_title.toUTFz!(wchar*),_title.toUTFz!(wchar*),
                  WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_THICKFRAME,
-                 posX,posY,width,height,null,null,runtime.hInstance,null);
+                 posX,posY,width,height,_parent is null ? null : _parent.wWindow,null,runtime.hInstance,null);
 
         if(window is null)
             throw new WindowException(WindowError.noCreate,"Window is not create!");
@@ -613,7 +641,7 @@ public class Window
                                    KeyReleaseMask | ButtonReleaseMask | EnterWindowMask |
                                    LeaveWindowMask | PointerMotionMask;
 
-        window = XCreateWindow(runtime.display, runtime.rootWindow, posX, posY, 
+        window = XCreateWindow(runtime.display, _parent is null ? rootWindow : _parent.xWindow, posX, posY, 
                                width,
                                height,0,tryDepth,InputOutput,tryVisual,
                                CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
