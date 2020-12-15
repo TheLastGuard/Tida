@@ -132,6 +132,12 @@ public struct GLAttributes
     }
 }
 
+/++
+	Returns a list of extensions. Because Openg of the second version is used here, it is unlikely that 
+	it will be useful, but there is also a third version in the plan.
+	
+	Returns: `string[]`
++/
 version(Posix) public string[] extensionList() @trusted
 {
     import std.conv : to;
@@ -144,6 +150,12 @@ version(Posix) public string[] extensionList() @trusted
         .split(' ')[0 .. $ - 1];
 }
 
+/++
+	Indicates if the following extension is supported.
+	
+	Params:
+		name = Extension name.
++/
 public bool isExtensionSupported(string name) @trusted
 {
     return 0;
@@ -201,14 +213,26 @@ public class Context
     ///
     this() @safe {}
 
-    ///
-    version(Posix) this(GLXContext ctx,XVisualInfo* info) @safe
+    /++
+        Initializes a ready-made context.
+        
+        Params:
+            ctx = GLXContext.
+            info = Rendering information: Optional.
+    +/
+    version(Posix) this(GLXContext ctx,XVisualInfo* info = null) @safe
     {
         this.ctx = ctx;
         this.visual = info;
     }
 
-    ///
+    /++
+    	Initializes a ready-made context.
+        
+        Params:
+            ctx = GLXContext.
+            info = Rendering information: Optional.
+    +/		
     version(Windows) this(HGLRC ctx,HDC deviceHandle) @safe
     {
         this.ctx = ctx;
@@ -464,17 +488,16 @@ public class Window
             posY = The y-axis position.
     +/
     public void initialize(ubyte Type)(int posX = 100,int posY = 100) @trusted
-    in
-    {
-        assert(posX > 0,"The position of the window cannot be negative!");
-        assert(posY > 0,"The position of the window cannot be negative!");
-    }
+    in(posX > 0,"The position of the window cannot be negative!")
+    in(posY > 0,"The position of the window cannot be negative!")
     do
     {
         static if(Type == Simple)
         {
             version(Posix) xWindowInit(posX,posY);
             version(Window) wWindowInit(posX,posY);
+            
+            show();
         }else
         static if(Type == ContextIn)
         {
@@ -526,8 +549,14 @@ public class Window
 
         _width = attrib.width;
         _height = attrib.height;
-        
-        
+    }
+    
+    version(Windows) public void initFrom(HNDW window) @trusted
+    in(window !is null,"Window is bad.")
+    body
+    {
+    	this.window = window;
+    	
     }
 
     /++
@@ -597,6 +626,11 @@ public class Window
             throw new WindowException(WindowError.noCreate,"Window is not create!");
     }  
 
+	version(Posix) public void add(ref Atom atom) @trusted
+	{
+		XSetWMProtocols(runtime.display, xWindow, &atom, 1);
+	}
+
     /++
         Initializes the window for the context.
 
@@ -647,10 +681,9 @@ public class Window
                                CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, &windowAttribs);
 
         xEventName(_title);
-
-        auto ev = getAtom!"WM_DELETE_WINDOW";
  
-        XSetWMProtocols(runtime.display, xWindow, &ev, 1);
+ 		auto wmAtom = getAtom!"WM_DELETE_WINDOW";
+        add(wmAtom);
     }
 
     /++
@@ -841,11 +874,8 @@ public class Window
             posY = New Y-axis position window.
     +/
     public void move(immutable int posX,immutable int posY) @safe 
-    in
-    {
-        assert(posX > 0,"The position of the window cannot be negative!");
-        assert(posY > 0,"The position of the window cannot be negative!");
-    }
+    in(posX > 0,"The position of the window cannot be negative!")
+	in(posY > 0,"The position of the window cannot be negative!")
     do
     {
         version(Posix) xMove(posX,posY);
@@ -860,11 +890,8 @@ public class Window
             newHeight = Window height.
     +/
     public void resize(immutable uint newWidth,immutable uint newHeight) @safe
-    in
-    {
-        assert(newWidth > 0,"A window cannot be without content!");
-        assert(newHeight > 0,"A window cannot be without content!");
-    }
+    in(newWidth > 0,"A window cannot be without content!")
+    in(newHeight > 0,"A window cannot be without content!")
     do
     {
         version(Posix) xResize(newWidth,newHeight);

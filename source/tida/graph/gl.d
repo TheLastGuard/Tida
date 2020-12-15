@@ -8,7 +8,7 @@ module tida.graph.gl;
 
 public import bindbc.opengl;
 
-enum
+enum 
 {
     Lines = GL_LINES,
     Triangle = GL_TRIANGLES,

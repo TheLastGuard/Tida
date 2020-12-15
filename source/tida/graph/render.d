@@ -336,9 +336,15 @@ public class Renderer
     }
 
     /++
-
+		Rendering shape.
+		
+		Params:
+			shape = Shape struct. 
+			position = Shape position.
+			color = Shape color.
+			isFill = Shape state filled.
     +/
-    public void draw(Shape shape,Vecf position,Color!ubyte color) @safe
+    public void draw(Shape shape,Vecf position,Color!ubyte color,bool isFill = true) @safe
     {
         position -= _camera.port.begin;
 
@@ -364,7 +370,7 @@ public class Renderer
                     shape.endX - shape.x,
                     shape.endY - shape.y,
                     color,
-                    true
+                    isFill
                 );
             break;
 
@@ -377,12 +383,12 @@ public class Renderer
                     shape.vertex!0,
                     shape.vertex!1,
                     shape.vertex!2
-                ],color,true);
+                ],color,isFill);
             break;
 
             case ShapeType.multi:
                 foreach(e; shape.shapes) {
-                    draw(e,position + shape.begin,color);
+                    draw(e,position + shape.begin,color,isFill);
                 }
             break;
 
@@ -391,11 +397,22 @@ public class Renderer
         }
     }
 
+    /++	
+		Copies part of the picture to the window.
+		
+		Params:
+			shape = Capture area.
+			
+		Returns:
+			The copied area as a picture.
+    +/
     public Image copy(Shape shape) @trusted
-    in
+    in(shape.type == ShapeType.rectangle)
+    out(r)
     {
-        assert(shape.type == ShapeType.rectangle);
-    }body
+    	assert(r.pixels.length != 0)
+    }
+    body
     {
         import std.conv : to;
 
@@ -411,7 +428,7 @@ public class Renderer
                       shape.endY.to!int - shape.y.to!int,
                       GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) pixels);
 
-        image.bytes!ubyte(pixels,PixelFormat.RGBA);
+        image.bytes!ubyte(pixels.dup,PixelFormat.RGBA);
         
         return image;
     }
@@ -442,7 +459,13 @@ public class Renderer
         }
     }
 
-    ///
+    /++
+    	Renders an object for rendering.
+    	
+    	Params:
+    		drawable = Object to render.
+    		position = Position.
+    +/
     public void draw(IDrawable drawable,Vecf position) @safe
     {
         if(drawable !is null)

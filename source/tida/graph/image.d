@@ -17,6 +17,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     import tida.graph.gl;
     import tida.graph.render;
     import imageformats;
+    import std.algorithm;
 
     private
     {
@@ -43,7 +44,12 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     +/
     this(uint newWidth,uint newHeight) @safe
     {
-        this.create(width,height);
+        _pixels = new Color!ubyte[](newWidth * newHeight);
+
+       	_pixels.fill(rgb(0,0,0));
+
+        _width = newWidth;
+        _height = newHeight;
     }
 
     /++
@@ -114,45 +120,49 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         _pixels = otherPixels;
     }
 
+	/++
+		Fills the entire picture with color.
+		
+		Params:
+			color = Color fill.
+	+/
+	public void fill(Color!ubyte color) @safe
+	{
+		_pixels.fill(color);
+	}
+
     /++
-        Bytes
+        Converting pixels from an array to a color structure.
+        
+        Params:
+        	bt = Pixel byte array.
+        	format = Pixel format.
+        	
+        Example:
+        ---
+        import std.algorithm : fill;
+        
+        auto bt = new ubyte()[32 * 32 * 4]; // Create virtual image 32x32
+        bt.fill(255); // Fill image white color
+        
+        image.bytes!ubyte(bt,PixelFormat.RGBA);
+        ---
     +/
     public void bytes(T)(T[] bt,PixelFormat format = PixelFormat.RGBA) @safe
     in
     {
         if(format == PixelFormat.RGB)
-            assert(bt.length + (bt.length / 3) <= _width * _height * 3,
+            assert(bt.length <= _width * _height * 3,
             "The size of the picture is much larger than this one!");
         else
             assert(bt.length <= _width * _height * 4,
             "The size of the picture is much larger than this one!");
-    }body
+    }
+    do
     {
-        if(format == PixelFormat.RGB) {
-            for(size_t i = 0; i < bt.length; i += 3) 
-            {
-                _pixels[i / 3] = Color!ubyte(bt[i .. i + 3],PixelFormat.RGB);
-            }
-        }else
-        if(format == PixelFormat.RGBA) {
-            for(size_t i = 0; i < bt.length; i += 4) 
-            {
-                _pixels[i / 4] = Color!ubyte(bt[i .. i + 4],PixelFormat.RGBA);
-            }
-        }
-        else
-        if(format == PixelFormat.ARGB) {
-            for(size_t i = 0; i < bt.length; i += 4) 
-            {
-                _pixels[i / 4] = Color!ubyte(bt[i .. i + 4],PixelFormat.ARGB);
-            }
-        }
-        else
-        if(format == PixelFormat.BGRA) {
-            for(size_t i = 0; i < bt.length; i += 4) 
-            {
-                _pixels[i / 4] = Color!ubyte(bt[i .. i + 4],PixelFormat.BGRA);
-            }
+        size_t k = format == PixelFormat.RGB ? 3 : 4;
+        for(size_t i = 0; i < bt.length; i += k) {
+        	_pixels[i / k] = Color!ubyte(bt[i .. i+k],format);
         }
     }
 
@@ -164,7 +174,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
             y = The y-axis position pixel.
             color = Pixel.
     +/
-    public void setPixel(size_t x,size_t y,Color!ubyte color) @trusted
+    public void setPixel(size_t x,size_t y,Color!ubyte color) @safe
     {
         if(x >= width || y >= height)
             return;
@@ -181,7 +191,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
             x = The x-axis position pixel.
             y = The y-axis position pixel.
     +/
-    public Color!ubyte getPixel(size_t x,size_t y) @trusted
+    public Color!ubyte getPixel(size_t x,size_t y) @safe
     {
         return _pixels[(width * y) + x];
     }
@@ -189,7 +199,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     /++
         Attaches an image to itself at the specified position.
     +/
-    public void blit(Image otherImage,Vecf pos) @trusted
+    public void blit(Image otherImage,Vecf pos) @safe
     {
         for(size_t x = pos.intX; x < pos.intX + otherImage.width; x++)
         {
@@ -200,6 +210,15 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         }
     }
 
+	/++
+		Redraws the part to a new picture.
+		
+		Params:
+			x = The x-axis position.
+			y = The y-axis position.
+			cWidth = Width new picture.
+			cHeight = Hight new picture.
+	+/
     public Image copy(int x,int y,int cWidth,int cHeight) @safe
     {
         Image image = new Image();
@@ -233,9 +252,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     {
         _pixels = new Color!ubyte[](newWidth * newHeight);
 
-        foreach(ref e; _pixels) {
-            e = rgba(0,0,0,0);
-        }
+       	_pixels.fill(rgb(0,0,0));
 
         _width = newWidth;
         _height = newHeight;

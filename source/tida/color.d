@@ -359,30 +359,30 @@ public struct Color(T)
     this(T[] bytes,PixelFormat format = PixelFormat.RGBA) @safe
     {
         if(format == PixelFormat.RGB) {
-            red = bytes[0];
-            green = bytes[1];
-            blue = bytes[2];
-            alpha = T.max;
+            this.red = bytes[0];
+            this.green = bytes[1];
+            this.blue = bytes[2];
+            this.alpha = T.max;
         }else
         if(format == PixelFormat.RGBA) {
-            red = bytes[0];
-            green = bytes[1];
-            blue = bytes[2];
-            alpha = bytes[3];
+            this.red = bytes[0];
+            this.green = bytes[1];
+            this.blue = bytes[2];
+            this.alpha = bytes[3];
         }
         else
         if(format == PixelFormat.ARGB) {
-            alpha = bytes[0];
-            red = bytes[1];
-            green = bytes[2];
-            blue = bytes[3];
+            this.alpha = bytes[0];
+            this.red = bytes[1];
+            this.green = bytes[2];
+            this.blue = bytes[3];
         }
         else 
         if(format == PixelFormat.BGRA) {
-            blue = bytes[0];
-            green = bytes[1];
-            red = bytes[2];
-            alpha = bytes[3];
+            this.blue = bytes[0];
+            this.green = bytes[1];
+            this.red = bytes[2];
+            this.alpha = bytes[3];
         }
     }
 
@@ -466,7 +466,7 @@ public struct Color(T)
     }
 
     /// ditto
-    public immutable(T[]) fromBytes(PixelFormat format) @safe immutable
+    public immutable(R[]) fromBytes(R)(PixelFormat format) @safe immutable
     {
         if(format == PixelFormat.RGBA)
             return [r,g,b,a];
@@ -530,31 +530,32 @@ public struct Color(T)
     {
         return cast(float) a / cast(float) T.max;
     }
+}
 
-    public
-    {
-        static Color!ubyte White = rgb(255,255,255);
-        static Color!ubyte Black = rgb(0,0,0);
-        static Color!ubyte Red = rgb(255,0,0);
-        static Color!ubyte Green = rgb(0,255,0);
-        static Color!ubyte Blue = rgb(0,0,255);
-        static Color!ubyte Yellow = rgb(255,255,0);
-        static Color!ubyte Aqua = rgb(0,255,255);
-        static Color!ubyte Magenta = rgb(255,0,255);
-        static Color!ubyte Silver = rgb(192,192,192);
-        static Color!ubyte Gray = rgb(128,128,128);
-        static Color!ubyte Maroon = rgb(128,0,0);
-        static Color!ubyte Olive = rgb(128,128,0);
-        static Color!ubyte Purple = rgb(128,0,128);
-        static Color!ubyte Tomato = rgb(255,99,71);
-        static Color!ubyte Orange = rgb(255,165,0);
-        static Color!ubyte Gold = rgb(255,215,0);
-        static Color!ubyte YellowGreen = rgb(154,205,50);
-        static Color!ubyte PaleGreen = rgb(152,251,152);
-        static Color!ubyte SteelBlue = rgb(70,130,180);
-        static Color!ubyte SlateBlue = rgb(106,90,205);
-        static Color!ubyte Tida = rgb(64,64,255);
-        static Color!ubyte DarkViolet = rgb(148,0,211);
-        static Color!ubyte Chocolate = rgb(210,105,30);
-    }
+/// Colors
+enum Colour : Color!ubyte
+{
+    White = rgb(255,255,255),
+    Black = rgb(0,0,0),
+    Red = rgb(255,0,0),
+    Green = rgb(0,255,0),
+    Blue = rgb(0,0,255),
+    Yellow = rgb(255,255,0),
+    Aqua = rgb(0,255,255),
+    Magenta = rgb(255,0,255),
+    Silver = rgb(192,192,192),
+    Gray = rgb(128,128,128),
+    Maroon = rgb(128,0,0),
+    Olive = rgb(128,128,0),
+    Purple = rgb(128,0,128),
+    Tomato = rgb(255,99,71),
+    Orange = rgb(255,165,0),
+    Gold = rgb(255,215,0),
+    YellowGreen = rgb(154,205,50),
+    PaleGreen = rgb(152,251,152),
+    SteelBlue = rgb(70,130,180),
+    SlateBlue = rgb(106,90,205),
+    Tida = rgb(64,64,255),
+    DarkViolet = rgb(148,0,211),
+    Chocolate = rgb(210,105,30)
 }
