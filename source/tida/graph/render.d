@@ -408,10 +408,6 @@ public class Renderer
     +/
     public Image copy(Shape shape) @trusted
     in(shape.type == ShapeType.rectangle)
-    out(r)
-    {
-    	assert(r.pixels.length != 0)
-    }
     body
     {
         import std.conv : to;
