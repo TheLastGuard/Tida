@@ -86,31 +86,9 @@ version(Posix)
     static immutable _NET_WM_STATE_REMOVE = 1; /// Remove state
 }
 
-/++
-    A property to create just a window, without creating a context. 
-    Initialize it like this:
-    ---
-    window.initialize!Simple;
-    ---
-+/
-static immutable ubyte Simple = 0;
-
-/++
-    Property for creating a window with a context for graphics. 
-    It is initialized like this:
-    ---
-    window.initialize!ContextIn;
-    ---
-+/
-static immutable ubyte ContextIn = 1;
-
-/++
-    Property for creating a window on another thread. It is not used now.
-+/
-static immutable ubyte ParrarelContext = 2;
-
-/// The shell is empty. Only needed in WebAssembly mode.
-static immutable ubyte Empty = 3;
+static immutable ubyte Empty = 0;
+static immutable ubyte Simple = 1;
+static immutable ubyte ContextIn = 2;
 
 /++
     Attributes for creating context.
@@ -460,12 +438,18 @@ public class Window
     }
 
     /++
-
+		Initializes the window, assuming the window has an owner.
+		
+		Params:
+			parent = Owner. 
+			newWidth = The width of the window when created.
+			newHeight = The height of the window when created.
+			newTitle = The title of the window when created.
     +/
     this(Window parent,int newWidth,int newHeight,string newTitle) @safe
     {
         this(newWidth,newHeight,newTitle);
-        _parent = parent;
+        this._parent = parent;
     }
 
     invariant
@@ -486,6 +470,34 @@ public class Window
             Type = What type of window to initialize.
             posX = The x-axis position.
             posY = The y-axis position.
+            
+        Also, see if another window has been created. at the moment, multi-window mode is not yet 
+        supported in the program, which will lead to errors in the window manager server.
+        
+        Also, if you need to reinitialize the window, delete the previous window.
+            
+        Example:
+        ---
+        auto window = new Window(640,480,"Title.");
+        window.initialize!Simple(100,100);
+        ---
+        
+        initializing a window when you need your own context:
+        ---
+        auto context = new Context();
+        context.attrib = GLAttributes(...);
+        context.attribInitialize(window);
+        
+        window.initialize!Simple(100,100);
+        
+        context.initialize(window);
+        window.contextSet(context);
+        ---
+        
+        Or you can simply trust the window itself to create the context:
+        ---
+        window.initialize!ContextIn;
+        ---
     +/
     public void initialize(ubyte Type)(int posX = 100,int posY = 100) @trusted
     in(posX > 0,"The position of the window cannot be negative!")
@@ -532,13 +544,22 @@ public class Window
         typeInitialize = Type;
     }
 
-    ///
+    /++
+    	Finds out if there is a context. Note that the context must be created by the window, 
+    	or passed to it. If he does not know, but there is such a function, such a function will 
+    	not work, call the runtime command to find the context.
+    +/
     public bool isContext() @safe
     {
         return context is null;
     }
 
-    ///
+    /++
+    	Initialization of a window using an already created window.
+    	
+    	Params:
+    		window = X11 Window structure.
+    +/
     version(Posix) public void initFrom(x11.Xlib.Window window) @trusted
     in(window != 0,"Window is bad.")
     body
@@ -551,12 +572,22 @@ public class Window
         _height = attrib.height;
     }
     
+    /++
+    	Initialization of a window using an already created window.
+    	
+    	Params:
+    		window = Windows Window structure.
+    +/
     version(Windows) public void initFrom(HNDW window) @trusted
     in(window !is null,"Window is bad.")
     body
     {
     	this.window = window;
+    	RECT rect;
+    	GetWindowRect(window,&rect);
     	
+    	_width = rect.right;
+    	_height = rect.bottom;
     }
 
     /++

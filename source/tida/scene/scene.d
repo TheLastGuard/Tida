@@ -295,6 +295,33 @@ public class Scene
 
         return null;
     } 
+    
+    ///
+    public T getInstanceByClass(T)() @safe nothrow
+    {
+    	foreach(instance; getList)
+    	{
+    		if(instance.from!T !is null)
+    			return instance.from!T;
+    	}
+    	
+    	return null;
+    }
+
+	unittest
+	{
+		class A : Instance {}
+		class B : Instance {}
+		
+		Scene scene = new Scene();
+		
+		auto a = new A();
+		auto b = new B();
+		scene.add([a,b]);
+		
+		assert(scene.getInstanceByClass!A == a);
+		assert(scene.getInstanceByClass!B == b);
+	}
 
     import tida.shape, tida.vector;
 

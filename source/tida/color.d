@@ -416,6 +416,13 @@ public struct Color(T)
                 return ((b & 0xff) << 24) + ((g & 0xff) << 16) + ((r & 0xff) << 8) + (a & 0xff);
             else
                 return 0;
+        }else
+        static if(is(T : string))
+        {
+        	import std.conv : to;
+        	import std.digest : toHexString;
+        	
+        	return this.fromBytes!ubyte(format).toHexString;
         }
     }
 
@@ -437,7 +444,28 @@ public struct Color(T)
                 return ((b & 0xff) << 24) + ((g & 0xff) << 16) + ((r & 0xff) << 8) + (a & 0xff);
             else
                 return 0;
+        }else
+        static if(is(T : string))
+        {
+        	import std.conv : to;
+        	import std.digest : toHexString;
+        	
+        	return this.fromBytes!ubyte(format).toHexString;
         }
+    }
+    
+    ///
+    public string formatString() @safe
+    {
+    	import std.conv : to;
+    
+    	return "\x1b[38;2;"~red.to!string~";"~green.to!string~";"~blue.to!string~"m" ~ this.conv!string ~ "\u001b[0m";
+    }
+    
+    ///
+    public string toString() @safe
+    {
+    	return this.conv!string;
     }
 
     /++
@@ -530,6 +558,11 @@ public struct Color(T)
     {
         return cast(float) a / cast(float) T.max;
     }
+}
+
+unittest
+{
+	assert(HEX("#FF0000") == rgb(255,0,0));
 }
 
 /// Colors
