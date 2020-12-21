@@ -411,6 +411,11 @@ public class SceneManager
             current.step();
 
             foreach(instance; current.getThreadList(thread)) {
+            	if(instance.isDestroy) {
+            		current.instanceDestroy!InMemory(instance);
+            		continue;
+            	}
+            
                 instance.step();
 
                 foreach(component; instance.getComponents())

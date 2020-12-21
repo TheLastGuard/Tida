@@ -132,11 +132,11 @@ public class Font
 /++
     Returns the size of the rendered text for the given font.   
 +/
-public size_t widthText(string text,Font font) @safe
+public size_t widthText(T)(T text,Font font) @safe
 {
     int width;
 
-    auto ss = new Text(font).renderSymbols(text);
+    auto ss = new Text(font).renderSymbols!T(text);
     foreach(s; ss) {
         width += (s.advance.intX) + s.position.intX;
     }
