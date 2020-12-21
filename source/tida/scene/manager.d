@@ -413,6 +413,7 @@ public class SceneManager
             foreach(instance; current.getThreadList(thread)) {
             	if(instance.isDestroy) {
             		current.instanceDestroy!InMemory(instance);
+            		current.sort();
             		continue;
             	}
             
@@ -454,11 +455,15 @@ public class SceneManager
         {
             current.draw(render);
 
-            foreach(instance; current.getErentInstances())
+            foreach(instance; current.getErentInstances()) {
+            	if(instance is null) continue;
                 render.draw(instance.spriteDraw(),instance.position);
+            }
 
-            foreach(instance; current.getErentInstances())
+            foreach(instance; current.getErentInstances()) {
+            	if(instance is null) continue;
                 instance.draw(render);
+			}
 
             debug
             {
@@ -466,6 +471,8 @@ public class SceneManager
 
                 foreach(instance; current.getList())
                 {
+                	if(instance is null) continue;
+                
                     instance.drawDebug(render);
 
                     foreach(component; instance.getComponents())
