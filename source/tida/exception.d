@@ -60,3 +60,23 @@ public class FontException : ExceptionError!int
 		super(error,message);
 	}
 }
+
+enum ShaderError
+{
+	unknown,
+	vertexCompile,
+	fragmentCompile
+}
+
+public class ShaderException : ExceptionError!ShaderError
+{
+	this(ShaderError error,string message) @trusted
+	{
+		string tstr;
+		
+		if(error == ShaderError.vertexCompile) tstr = "[Vertex]: ";
+		if(error == ShaderError.fragmentCompile) tstr = "[Fragment]: ";
+		
+		super(error,tstr ~ message);
+	}
+}

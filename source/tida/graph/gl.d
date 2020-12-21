@@ -158,3 +158,108 @@ public struct GL
         position.y = ((size.y - position.y) / size.y);
     }
 }
+
+class GL3
+{
+	import bindbc.opengl;
+
+	static uint createProgram() @trusted
+	{
+		return glCreateProgram();
+	}
+	
+	static void attachShader(uint program, uint shader) @trusted
+	{
+		glAttachShader(program,shader);
+	}
+	
+	static void linkProgram(uint program) @trusted
+	{
+		glLinkProgram(program);
+	}
+	
+	static uint createShader(uint typeShader) @trusted
+	{
+		return glCreateShader(typeShader);
+	}
+	
+	static void shaderSource(uint shader,int count,ref string source) @trusted
+	{
+		import std.utf;
+	
+		const int len = cast(const(int)) source.length;
+	
+		glShaderSource(shader, count, [source.ptr].ptr, &len);
+	}
+	
+	static void compileShader(uint shader) @trusted
+	{
+		glCompileShader(shader);
+	}
+	
+	static void getShaderInfoLog(uint shader, uint length, int* sizeMax, ref string log) @trusted
+	{
+		import std.conv : to;
+	
+		char[]clog = new char[length];
+	
+		glGetShaderInfoLog(shader,length,sizeMax,clog.ptr);
+		
+		log = clog.to!string;
+	}
+	
+	static void getShaderiv(uint shader, uint mode, ref int result) @trusted
+	{
+		glGetShaderiv(shader,mode,&result);
+	}
+	
+	static void useProgram(uint program) @trusted
+	{
+		glUseProgram(program);
+	}
+	
+	static void deleteShader(uint shader) @trusted
+	{
+		glDeleteShader(shader);
+	}
+	
+	static void genBuffers(ref uint vbo) @trusted
+	{
+		glGenBuffers(1, &vbo);
+	}
+	
+	static void bindBuffer(uint mode, uint vbo) @trusted
+	{
+		glBindBuffer(mode, vbo);
+	}
+	
+	static void bufferData(uint mode,float[] data, uint mode2) @trusted
+	{
+		glBufferData(mode,data.sizeof * data.length, cast(void*) data.ptr, mode2);
+	}
+	
+	static void genVertexArrays(ref uint vao) @trusted
+	{
+		glGenVertexArrays(1, &vao);
+	}
+	
+	static void bindVertexArray(uint vao) @trusted
+	{
+		glBindVertexArray(vao);
+	}
+	
+	static void vertexAttribPointer(uint a,uint b,uint mode,bool norm,uint size,void* data) @trusted
+	{
+		glVertexAttribPointer(0, 3, mode ,norm ? GL_TRUE : GL_FALSE, size, data);
+	}
+	
+	static void enableVertexAttribArray(uint mode) @trusted
+	{
+		glEnableVertexAttribArray(mode);
+	}
+	
+	static void drawArrays(uint mode, uint a, uint b) @trusted
+	{
+		glDrawArrays(mode, a, b);
+	}
+}

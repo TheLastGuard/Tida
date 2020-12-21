@@ -117,3 +117,40 @@ public class Display
         return "Display(width: "~width.to!string~",height: "~height.to!string~")";
     }
 }
+
+struct GPU
+{
+	import bindbc.opengl;
+	import std.conv : to;
+
+	static int totalMemory() @trusted
+	{
+		int tm;
+		glGetIntegerv(0x9048, &tm);
+		
+		return tm;
+	}
+	
+	static int usedMemory() @trusted
+	{
+		int cm;
+		glGetIntegerv(0x9049, &cm);
+		
+		return cm;
+	}
+	
+	static string vendor() @trusted
+	{
+		return glGetString(GL_VENDOR).to!string;
+	}
+	
+	static string renderer() @trusted
+	{
+		return glGetString(GL_RENDERER).to!string;
+	}
+	
+	static string versions() @trusted
+	{
+		return glGetString(GL_VERSION).to!string;
+	}
+}

@@ -8,6 +8,16 @@ module tida.graph.text;
 
 import bindbc.freetype;
 
+enum EncodingMode
+{
+	None = FT_ENCODING_NONE,
+	Unicode = FT_ENCODING_UNICODE,
+	MSSymbol = FT_ENCODING_MS_SYMBOL,
+	PRC = FT_ENCODING_PRC,
+	Big5 = FT_ENCODING_BIG5,
+	Wansung = FT_ENCODING_WANSUNG
+}
+
 /// 
 __gshared FT_Library FTlibrary;
 
@@ -66,7 +76,7 @@ public class Font
             path = The path to the font.
             size = Font size.
     +/
-    public void load(string path,size_t size) @trusted
+    public void load(string path,size_t size,EncodingMode encode = EncodingMode.Unicode) @trusted
     {
         import std.file : exists;
         import std.string : toStringz;
@@ -81,8 +91,24 @@ public class Font
             throw new FontException(ret,"Error load font!");
         }
 
-        FT_Set_Char_Size(_face,cast(int) size*32,0,300,300);
-        FT_Select_Charmap(_face, FT_ENCODING_UNICODE);
+		FT_CharMap found;
+
+		foreach(i; 0 .. _face.num_charmaps)
+		{
+    		FT_CharMap charmap = _face.charmaps[i];
+    		if ((charmap.platform_id == 3 && charmap.encoding_id == 1) /* Windows Unicode */
+    		 || (charmap.platform_id == 3 && charmap.encoding_id == 0) /* Windows Symbol */
+    		 || (charmap.platform_id == 2 && charmap.encoding_id == 1) /* ISO Unicode */
+    		 || (charmap.platform_id == 0)) { /* Apple Unicode */
+    			found = charmap;
+    			break;
+    		}
+  		}
+  		
+  		FT_Set_Charmap(_face, found);
+
+        FT_Set_Char_Size(_face, 0, cast(int) size*32, 300, 300);
+        FT_Set_Pixel_Sizes(_face, 0, cast(int) size*2);
 
         FT_Matrix matrix;
 
@@ -145,6 +171,18 @@ public class Symbol
     }
 }
 
+template TypeChar(TypeString)
+{
+	static if(is(TypeString : string))
+		alias Type = char;
+	else
+	static if(is(TypeString : wstring))
+		alias Type = wchar;
+	else
+	static if(is(TypeString : dstring))
+		alias Type = dchar;
+}
+
 /++
     Object for rendering text. Use the `renderSymbol` function to render symbols.
 +/
@@ -175,15 +213,15 @@ public class Text
             symbols = Text for rendering.
             color = Text color.
     +/
-    public Symbol[] renderSymbols(string symbols,Color!ubyte color = rgba(255,255,255,255)) @trusted
+    public Symbol[] renderSymbols(T)(T symbols,Color!ubyte color = rgba(255,255,255,255)) @trusted
     {
         Symbol[] chars;
 
         for(size_t j = 0; j < symbols.length; ++j)
         {
-            char s = symbols[j];
+            TypeChar!T.Type s = symbols[j];
 
-            char ns;
+            TypeChar!T.Type ns;
             if(j != symbols.length-1) 
                 ns = symbols[j+1];
 
@@ -195,7 +233,8 @@ public class Text
             {
                 image = new Image();
 
-                uint glyphIndex = FT_Get_Char_Index(_font.face, s);
+				FT_Load_Char(_font.face, s, FT_LOAD_RENDER);
+                const glyphIndex = FT_Get_Char_Index(_font.face, s);
 
                 FT_Load_Glyph(_font.face, glyphIndex, FT_LOAD_DEFAULT);
                 FT_Render_Glyph(_font.face.glyph, FT_RENDER_MODE_NORMAL);

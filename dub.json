@@ -67,6 +67,7 @@
 	"name": "tida",
 	"versions": [
 		"FT_210",
-		"GL_AllowDeprecated"
+		"GL_AllowDeprecated",
+		"GL_46"
 	]
 }
