@@ -22,6 +22,7 @@ public class Game
     import tida.scene.manager;
     import tida.fps;
     import tida.game.loader;
+    import tida.game.listener;
 
     private
     {
@@ -41,6 +42,7 @@ public class Game
         event = new EventHandler(window);
         render = new Renderer(window);
         _loader = new Loader();
+        _listener = new Listener();
 
         threads ~= null;
     }
@@ -76,7 +78,10 @@ public class Game
                 }
 
                 sceneManager.callEvent(event);
+                listener.eventHandle(event);
             }
+
+			listener.timerHandle();
 
             if(sceneManager.apiThreadCreate) {
                 foreach(_; 0 .. sceneManager.apiThreadValue) {
