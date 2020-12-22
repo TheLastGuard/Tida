@@ -45,10 +45,8 @@ public class Animation
 
 	/// Animation speed
 	public void speed(float value) @safe @property
-	in
-	{
-		assert(value != float.nan);
-	}body
+	in(value != float.nan)
+	body
 	{
 		_speed = value;
 	}
@@ -78,7 +76,7 @@ public class Animation
 	/// Return current frame
 	public Image currentFrame() @safe
 	{
-		return _frames[_current >= _frames.length ? $ - 1 : cast(size_t) _current];
+		return _frames[cast(size_t) _current > $ - 1 ? $ - 1 : cast(size_t) _current];
 	}
 
 	/// Return position current frame
@@ -98,6 +96,6 @@ public class Animation
 			_current += speed;
 		}
 
-		return _frames[_current >= _frames.length ? $ - 1 : cast(size_t) _current];
+		return currentFrame();
 	}
 }

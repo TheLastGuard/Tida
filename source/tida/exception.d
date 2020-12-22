@@ -80,3 +80,18 @@ public class ShaderException : ExceptionError!ShaderError
 		super(error,tstr ~ message);
 	}
 }
+
+public class LoadException : Exception
+{
+    public
+    {
+        string file;
+    }
+
+    this(string file) @safe
+    {
+        this.file = file;
+        
+        super("Not find `"~file~"`!");
+    }
+}

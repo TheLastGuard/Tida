@@ -8,14 +8,17 @@ module tida.graph.text;
 
 import bindbc.freetype;
 
+/++
+	The type of string decoding in FreeType.
++/
 enum EncodingMode
 {
-	None = FT_ENCODING_NONE,
-	Unicode = FT_ENCODING_UNICODE,
-	MSSymbol = FT_ENCODING_MS_SYMBOL,
-	PRC = FT_ENCODING_PRC,
-	Big5 = FT_ENCODING_BIG5,
-	Wansung = FT_ENCODING_WANSUNG
+	None = FT_ENCODING_NONE, /// None
+	Unicode = FT_ENCODING_UNICODE, /// Unicode
+	MSSymbol = FT_ENCODING_MS_SYMBOL, /// MS Symbol
+	PRC = FT_ENCODING_PRC, /// RPC
+	Big5 = FT_ENCODING_BIG5, /// Big 5
+	Wansung = FT_ENCODING_WANSUNG /// Wansung
 }
 
 /// 
@@ -23,6 +26,8 @@ __gshared FT_Library FTlibrary;
 
 /++
     Loads the `FreeType` library.
+    
+    Throws: `Exception` If the library has not been loaded.
 +/
 public void FreeTypeLoad() @trusted
 {
@@ -75,6 +80,10 @@ public class Font
         Params:
             path = The path to the font.
             size = Font size.
+            encode = Encode type string. 
+            
+        Throws: `LoadException` If the font was not found in the file system. 
+        		`FontException` if the font is damaged.
     +/
     public void load(string path,size_t size,EncodingMode encode = EncodingMode.Unicode) @trusted
     {
@@ -83,7 +92,7 @@ public class Font
         import tida.exception;
 
         if(!exists(path))
-            throw new Exception("Not find `"~path~"`!");
+            throw new LoadException(path);
 
         this.path = path;
 
@@ -131,12 +140,18 @@ public class Font
 
 /++
     Returns the size of the rendered text for the given font.   
+    
+    Params:
+    	T = String type.
+    	text = Text.
+    	font = Font.
 +/
 public size_t widthText(T)(T text,Font font) @safe
 {
     int width;
 
     auto ss = new Text(font).renderSymbols!T(text);
+    
     foreach(s; ss) {
         width += (s.advance.intX) + s.position.intX;
     }
@@ -171,6 +186,14 @@ public class Symbol
     }
 }
 
+/++
+	Determines the type of character by line.
+	
+	Example:
+	---
+	alias Character = TypeChar!wstring.Type; // It's wchar
+	---
++/
 template TypeChar(TypeString)
 {
 	static if(is(TypeString : string))
