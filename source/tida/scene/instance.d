@@ -9,6 +9,24 @@ module tida.scene.instance;
 static immutable ubyte InMemory = 0; ///
 static immutable ubyte InScene = 0; ///
 
+private void remove(T)(ref T[] obj,size_t index) @trusted nothrow
+{
+    auto dump = obj.dup;
+    foreach (i; index .. dump.length)
+    {
+        import core.exception : RangeError;
+        try
+        {
+            dump[i] = dump[i + 1];
+        }
+        catch (RangeError e)
+        {
+            continue;
+        }
+    }
+    obj = dump[0 .. $-1];
+}
+
 /// Instance information
 public struct InstanceInfo
 {
@@ -252,6 +270,21 @@ public class Instance
         }
 
         return obj;
+    }
+
+    public void dissconnect(Name)() @trusted
+    {
+        Component cmp;
+
+        foreach(i; 0 .. components) {
+            if(components[i].from!Name !is null) {
+                cmp = components[i];
+                components.remove(i);
+                break;
+            }
+        }
+
+        if(cmp !is null) destroy(cmp);
     }
 
     /++
