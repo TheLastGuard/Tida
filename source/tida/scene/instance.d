@@ -276,7 +276,7 @@ public class Instance
     {
         Component cmp;
 
-        foreach(i; 0 .. components) {
+        foreach(i; 0 .. components.length) {
             if(components[i].from!Name !is null) {
                 cmp = components[i];
                 components.remove(i);
