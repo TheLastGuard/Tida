@@ -274,6 +274,8 @@ public class Instance
 
     public void dissconnect(Name)() @trusted
     {
+        import core.memory;
+
         Component cmp;
 
         foreach(i; 0 .. components.length) {
@@ -283,8 +285,6 @@ public class Instance
                 break;
             }
         }
-
-        if(cmp !is null) destroy(cmp);
     }
 
     /++
