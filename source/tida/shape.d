@@ -274,7 +274,7 @@ public struct Shape
             return _trType;
     }
 
-    ///
+    /// The top of the triangle.
     public Vecf[] vertexs() @safe @property nothrow
     {
         return [begin,end,_trType];
@@ -326,7 +326,8 @@ public struct Shape
             return "Shape.Circle(position: "~begin.to!string~", radious: "~radious.to!string~")";
         }else 
         if(type == ShapeType.triangle) {
-            return "Shape.Triangle(0: "~vertexs[0].to!string~", 1:"~vertexs[1].to!string~", 2:"~vertexs[2].to!string~")";
+            return "Shape.Triangle(0: "~vertexs[0].to!string~", 1:"~vertexs[1].to!string~
+                ", 2:"~vertexs[2].to!string~")";
         }else
         if(type == ShapeType.multi) {
             return "Shape.Multi(position: "~begin.to!string~", shapesCount: "~shapes.length.to!string~")";

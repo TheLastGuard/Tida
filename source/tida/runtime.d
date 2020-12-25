@@ -20,9 +20,9 @@ version(WebAssembly)
 }
 else:
 
-__gshared TidaRuntime __runtime = null;
+__gshared TidaRuntime __runtime = null; /// Runtime instance
 
-/// 
+/// ditto
 public TidaRuntime runtime() @trusted nothrow
 {
     return __runtime;

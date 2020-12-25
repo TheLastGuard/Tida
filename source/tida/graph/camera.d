@@ -14,19 +14,15 @@ struct Camera
     }
 
     this(Shape dvShape)
-    in
-    {
-        assert(dvShape.type == ShapeType.rectangle);
-    }body
+    in(dvShape.type == ShapeType.rectangle)
+    body
     {
         this._shape = dvShape;
     }
 
     public void shape(Shape dvShape) @safe @property
-    in
-    {
-        assert(dvShape.type == ShapeType.rectangle);
-    }body
+    in(dvShape.type == ShapeType.rectangle)
+    body
     {
         this._shape = dvShape;
     }
@@ -37,10 +33,8 @@ struct Camera
     }
 
     public void port(Shape dvPort) @safe @property
-    in
-    {
-        assert(dvPort.type == ShapeType.rectangle);
-    }body
+    in(dvPort.type == ShapeType.rectangle)
+    body
     {
         _port = dvPort;
     }

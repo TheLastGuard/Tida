@@ -10,7 +10,6 @@
 module tida.x11;
 
 version(Posix):
-
 public
 {
     import x11.Xlib;

@@ -110,7 +110,7 @@ public class Display
         return display;
     }
 
-    debug override string toString() @safe const
+    override string toString() @safe const
     {
         import std.conv : to;
 
@@ -123,7 +123,7 @@ struct GPU
 	import bindbc.opengl;
 	import std.conv : to;
 
-	static int totalMemory() @trusted
+	static int totalMemory() @trusted @disable
 	{
 		int tm;
 		glGetIntegerv(0x9048, &tm);
@@ -131,7 +131,7 @@ struct GPU
 		return tm;
 	}
 	
-	static int usedMemory() @trusted
+	static int usedMemory() @trusted @disable
 	{
 		int cm;
 		glGetIntegerv(0x9049, &cm);

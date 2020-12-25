@@ -6,6 +6,85 @@
 +/
 module tida.event;
 
+version(Posix)
+{
+    enum _IOC_NONE = 1U;
+    enum _IOC_READ = 2U;
+    enum _IOC_WRITE = 4U;
+
+    enum _IOC_NRBITS = 8;
+    enum _IOC_TYPEBITS = 8;
+    enum _IOC_SIZEBITS = 13;
+    enum _IOC_DIRBITS	= 3;
+
+    enum _IOC_NRMASK = (1 << _IOC_NRBITS) - 1;
+    enum _IOC_TYPEMASK = (1 << _IOC_TYPEBITS) - 1;
+    enum _IOC_SIZEMASK = (1 << _IOC_SIZEBITS) - 1;
+    enum _IOC_DIRMASK	= (1 << _IOC_DIRBITS) - 1;
+
+    enum _IOC_NRSHIFT	= 0;
+    enum _IOC_TYPESHIFT = _IOC_NRSHIFT + _IOC_NRBITS;
+    enum _IOC_SIZESHIFT = _IOC_TYPESHIFT + _IOC_TYPEBITS;
+    enum _IOC_DIRSHIFT = _IOC_SIZESHIFT + _IOC_SIZEBITS;
+
+    template _IOC(uint dir,uint type,uint nr,uint size)
+    {
+        enum _IOC = 
+                (dir << _IOC_DIRSHIFT) |
+                (type << _IOC_TYPESHIFT) |
+                (nr << _IOC_NRSHIFT) |
+                (size << _IOC_SIZESHIFT);
+    }
+    
+    template _IOR(uint type,uint nr,uint size)
+    {
+        enum _IOR = _IOC!(_IOC_READ,type,nr,size);
+    }
+    
+    /// 2147576338
+    enum JSIOCGBUTTONS = _IOR!('j',0x12,1);
+}
+
+public struct Joystick
+{
+    import core.sys.posix.sys.ioctl;
+
+    public
+    {
+        version(Posix) 
+        {
+            string device;
+            js_event event;
+            int fd;
+        }
+        
+        int id;
+    }
+    
+    public int countButtons() @trusted
+    {
+        ubyte count;
+        ioctl(fd,JSIOCGBUTTONS,&count);
+        
+        return count;
+    }
+    
+    ~this()
+    {
+        import core.sys.posix.unistd;
+        
+        close(fd);
+    }
+}
+
+private struct js_event
+{
+    uint time;
+    short value;
+    ubyte type;
+    ubyte number;
+}
+
 /// Event handler.
 public class EventHandler
 {
@@ -35,10 +114,14 @@ public class EventHandler
         {
             MSG msg;
         }
+        
+        Joystick[] joysticks;
+        bool joystickEventHandle = false;
     }
 
     /++
         Initializes an event handler.
+        
         Params:
             window = For which window to process events.
     +/
@@ -82,10 +165,22 @@ public class EventHandler
     ///
     version(Posix) public bool xUpdate() @trusted
     {
+        import 	core.sys.posix.sys.ioctl,
+                core.sys.posix.unistd, 
+                core.sys.posix.fcntl;
+    
         auto pen = XPending(runtime.display);
         
-        if(pen != 0)
+        if(pen != 0) {
             XNextEvent(runtime.display, &event);
+            
+            if(joystickEventHandle) {
+                foreach(i; 0 .. joysticks.length)
+                {
+                    read(joysticks[i].fd,&joysticks[i].event,js_event.sizeof);
+                }
+            }
+        }
 
         return pen != 0;
     }  
@@ -321,6 +416,44 @@ public class EventHandler
     {
         version(Posix) return xMousePosition();
         version(Windows) return wMousePosition();
+    }
+    
+    version(Posix) public void xInitJoysticks() @trusted
+    {
+        import std.file;
+        import std.string;
+        import std.conv : to;
+        import core.sys.posix.unistd, core.sys.posix.fcntl;
+
+        foreach(dir; dirEntries("/dev/input/",SpanMode.depth))
+        {
+            if(dir.name[0 .. 13] == "/dev/input/js") {
+                Joystick js;
+                js.device = dir.name;
+                js.id = dir.name[13 .. 14].to!int;
+                js.fd = open(js.device.toStringz,O_RDONLY);
+                
+                if(js.fd == -1) assert(null,"Joystick `"~js.device~"` is not init!");
+                joysticks ~= js;
+            }
+        }
+        
+        joystickEventHandle = true;
+    }
+    
+    version(Posix) public auto xCountJoysticks() @trusted
+    {
+        return joysticks.length;
+    }
+
+    public void initJoysticks() @safe
+    {
+        version(Posix) xInitJoysticks();
+    }
+    
+    public Joystick[] getJoysticks() @safe
+    {
+        return joysticks;
     }
 
     ///

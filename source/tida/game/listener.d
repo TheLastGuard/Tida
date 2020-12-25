@@ -10,6 +10,8 @@ public import std.datetime;
 
 __gshared Listener _listener;
 
+alias TimerID = size_t;
+
 /// Global access to such an instance.
 public Listener listener() @trusted
 {
@@ -85,6 +87,34 @@ public class Listener
 		Timer[] timers;
 	}
 
+	public bool timerIsActual(TimerID tm) @safe 
+	{
+		return (tm < timers.length);
+	}
+
+	public Duration timerRemaind(TimerID tm) @safe
+	in(timerIsActual(tm))
+	body
+	{
+		auto tmr = timers[tm];
+
+		return MonoTime.currTime - tmr.startTimer;
+	}
+
+	public Duration timerDuration(TimerID tm) @safe
+	in(timerIsActual(tm))
+	body
+	{
+		return timers[tm].duration;
+	}
+
+	public void timerStop(TimerID tm) @safe
+	in(timerIsActual(tm))
+	body
+	{
+		timers.remove(tm);
+	}
+
 	/++
 		Start a timer.
 		
@@ -99,10 +129,14 @@ public class Listener
 			writeln("3 seconds!");
 		},dur!"msecs"(3000),true);
 		---
+
+		Returns: ID
 	+/
-	public void timer(void delegate() func,Duration duration,bool isRepeat = false) @trusted
+	public TimerID timer(void delegate() func,Duration duration,bool isRepeat = false) @trusted
 	{
 		timers ~= Timer(MonoTime.currTime,duration,isRepeat,func);
+
+		return timers.length - 1;
 	}
 	
 	/++

@@ -86,9 +86,9 @@ version(Posix)
     static immutable _NET_WM_STATE_REMOVE = 1; /// Remove state
 }
 
-static immutable ubyte Empty = 0;
-static immutable ubyte Simple = 1;
-static immutable ubyte ContextIn = 2;
+static immutable ubyte Empty = 0; /// Creation of an empty window. Needed for mistakes.
+static immutable ubyte Simple = 1; /// Creating a simple window, without creating a context in it.
+static immutable ubyte ContextIn = 2; /// Create a simple window with a context for graphics.
 
 /++
     Attributes for creating context.
@@ -106,7 +106,7 @@ public struct GLAttributes
         int depthSize = 24; /// Depth size
         int stencilSize = 8; /// Stencil size
         int colorDepth = 32; /// Color depth
-        bool doubleBuffer = true;
+        bool doubleBuffer = true; /// Double buffering
     }
 }
 
@@ -134,7 +134,7 @@ version(Posix) public string[] extensionList() @trusted
 	Params:
 		name = Extension name.
 +/
-public bool isExtensionSupported(string name) @trusted
+public bool isExtensionSupported(string name) @trusted @disable
 {
     return 0;
 }
@@ -244,7 +244,7 @@ public class Context
     {
         PIXELFORMATDESCRIPTOR pfd;
 
-        auto flags = (attrib.doubleBuffer ? 
+        const flags = (attrib.doubleBuffer ? 
             PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL : PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL);
 
         pfd.nSize = PIXELFORMATDESCRIPTOR.sizeof;
@@ -345,7 +345,7 @@ public class Context
     /++
         Initializes the context.
     +/
-    public auto initialize(Window window) @safe
+    public void initialize(Window window) @safe
     {
         version(Posix) xContextInitialize();
         version(Windows) wContextInitialize(window);
@@ -657,6 +657,7 @@ public class Window
             throw new WindowException(WindowError.noCreate,"Window is not create!");
     }  
 
+    ///
 	version(Posix) public void add(ref Atom atom) @trusted
 	{
 		XSetWMProtocols(runtime.display, xWindow, &atom, 1);
@@ -732,6 +733,9 @@ public class Window
         ShowWindow(window, 1);
     }
 
+    /++
+        Shows a window.
+    +/
     public void show() @safe
     {
         version(Posix) xWindowShow();
@@ -1240,8 +1244,8 @@ public class Window
         ulong[] pixels = [cast(ulong) image.width,cast(ulong) image.height] ~ image.colors!ulong(PixelFormat.ARGB);
 
         auto event = WMEvent();
-        event.first = XInternAtom(runtime.display,"_NET_WM_ICON", False);
-        event.second = XInternAtom(runtime.display,"CARDINAL", False);
+        event.first = getAtom!"_NET_WM_ICON";
+        event.second = getAtom!"CARDINAL";
         event.data = cast(ubyte*) pixels;
         event.length = pixels.length;
         event.mode = PropModeReplace;
@@ -1251,6 +1255,7 @@ public class Window
         sendEvent(event);
     }
 
+    ///
     version(Posix) public void xEventName(string caption) @trusted nothrow
     {
         XStoreName(runtime.display, window, caption.toUTFz!(char*));
@@ -1344,8 +1349,8 @@ public class Window
 
         XEvent event;
         
-        Atom wmState = XInternAtom(runtime.display,"_NET_WM_STATE",False);
-        Atom wmFullscreen = XInternAtom(runtime.display,"_NET_WM_STATE_FULLSCREEN",False);
+        const wmState = getAtom!"_NET_WM_STATE";
+        const wmFullscreen = getAtom!"_NET_WM_STATE_FULLSCREEN";
 
         event.xany.type = ClientMessage;
         event.xclient.message_type = wmState;
@@ -1381,6 +1386,11 @@ public class Window
     public bool fullscreen() @safe @property const
     {
         return _fullscreen;
+    }
+
+    version(Posix) void xBorder(bool value) @trusted
+    {
+        
     }
 
     /// Window title.
