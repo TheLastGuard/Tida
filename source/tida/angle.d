@@ -196,6 +196,15 @@ public float pointDirection(Vecf a,Vecf b) @safe nothrow
 	float result = atan2(b.y - a.y, b.x - a.x);
 	return result;
 }
+
+public Vecf rotate(Vecf vec,float angle,Vecf center) @safe
+{
+	import std.math;
+
+	angle = angle.from!(Degrees,Radians);
+
+	return Vecf(vec.x * cos(angle),vec.y * sin(angle)) + center;
+}
 	
 unittest
 {

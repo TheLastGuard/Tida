@@ -23,10 +23,6 @@
     <ul>
 
 	
-
-	<li><a title="" href="tida--app.html"><span >app</span></a></li>
-
-
 	
 	
 		<li class="expand-container open"><a class='expand-toggle' href="#"><span >dglx</span></a><ul>
@@ -42,41 +38,13 @@
 
 
 	
-	
-		<li class="expand-container open"><a class='expand-toggle' href="#"><span >emscript</span></a><ul>
-			
-
-	<li><a title="" href="tida--emscript.emscripten.html"><span >emscripten</span></a></li>
-
-
-		</ul></li>
-	
-
-
-
-
-	
-		<li class="expand-container open"><a title='
-		' class='expand-toggle' href='#'><span >tida</span></a><ul><li><a title='
+		<li class="expand-container open"><a title='TODO: Document
+		' class='expand-toggle' href='#'><span >tida</span></a><ul><li><a title='TODO: Document
 		' href="
 			tida--tida.html"><span >package</span></a></li>
 			
-	
-	
-		<li class="expand-container open"><a class='expand-toggle' href="#"><span >betterc</span></a><ul>
-			
 
-	<li><a title="" href="tida--tida.betterc.runtime.html"><span >runtime</span></a></li>
-
-
-
-	<li><a title="" href="tida--tida.betterc.window.html"><span >window</span></a></li>
-
-
-		</ul></li>
-	
-
-
+	<li><a title="Module for working with corners. While you can work with different types of angles." href="tida--tida.angle.html"><span >angle</span></a></li>
 
 
 
@@ -96,15 +64,29 @@
 
 
 	
-	
-		<li class="expand-container open"><a class='expand-toggle' href="#"><span >game</span></a><ul>
+		<li class="expand-container open"><a title='
+		' class='expand-toggle' href='#'><span >game</span></a><ul><li><a title='
+		' href="
+			tida--tida.game.html"><span >package</span></a></li>
 			
 
 	<li><a title="Module for describing animation." href="tida--tida.game.animation.html"><span >animation</span></a></li>
 
 
 
-	<li><a title="" href="tida--tida.game.collision.html"><span >collision</span></a></li>
+	<li><a title="A module for checking the intersection of some simple shapes." href="tida--tida.game.collision.html"><span >collision</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.game.game.html"><span >game</span></a></li>
+
+
+
+	<li><a title="Module for timer and global event handler." href="tida--tida.game.listener.html"><span >listener</span></a></li>
+
+
+
+	<li><a title="Resource loader module" href="tida--tida.game.loader.html"><span >loader</span></a></li>
 
 
 
@@ -114,8 +96,8 @@
 
 	<li><a title="" href="tida--tida.game.tile.html"><span >tile</span></a></li>
 
-
-		</ul></li>
+</ul></li>
+	
 	
 
 
@@ -164,8 +146,8 @@
 
 
 	
-		<li class="expand-container open"><a title='
-		' class='expand-toggle' href='#'><span >scene</span></a><ul><li><a title='
+		<li class="expand-container open"><a title='A module for implementing behavior in OOP style.
+		' class='expand-toggle' href='#'><span >scene</span></a><ul><li><a title='A module for implementing behavior in OOP style.
 		' href="
 			tida--tida.scene.html"><span >package</span></a></li>
 			
@@ -214,7 +196,7 @@
 
 
 
-	<li><a title="A module for working with windows in a cross-platform environment." href="tida--tida.window.html"><span >window</span></a></li>
+	<li><a title="A module for working with windows in a cross-platform environment. A window is created in both Windows and Linux" href="tida--tida.window.html"><span >window</span></a></li>
 
 
 
@@ -233,14 +215,36 @@
                 
                 <div class="quickindex" id="quickindex"></div>
                 
-                
-<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".isCollide"></span><div class="quickindex" id="quickindex.isCollide"></div>@safe bool <code class="ddoc_psymbol">isCollide</code>(Shape <span class="ddoc_param">first</span>, Shape <span class="ddoc_param">second</span>);
+                <div class="ddoc_summary">A module for checking the intersection of some simple shapes.
+</div><div class="ddoc_authors"><span class="ddoc_authors_header">Authors:</span>
+ TodNaz
+</div>
+<div class="ddoc_license"><span class="ddoc_license_header">License:</span>
+ MIT</div>
+<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".isCollide"></span><div class="quickindex" id="quickindex.isCollide"></div>@safe bool <code class="ddoc_psymbol">isCollide</code>(Shape <span class="ddoc_param">first</span>, Shape <span class="ddoc_param">second</span>, Vecf <span class="ddoc_param">firstPos</span> = Vecf(0, 0), Vecf <span class="ddoc_param">secondPos</span> = Vecf(0, 0));
 <br></div></dt>
-<dd><div class="ddoc_section_nonstandard"><span class="ddoc_section_nonstandard_header">TODO:</span>
+<dd><div class="ddoc_summary">A function to check the intersection of two shapes. It does not give an intersection point,
+    it gives a state that informs if there is an intersection.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">Shape <span class="ddoc_param">first</span></td>
+<td class="ddoc_param_desc">First shape.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">Shape <span class="ddoc_param">second</span></td>
+<td class="ddoc_param_desc">Second shape.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">Vecf <span class="ddoc_param">firstPos</span></td>
+<td class="ddoc_param_desc">Position <span class="ddoc_param">first</span> shape.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">Vecf <span class="ddoc_param">secondPos</span></td>
+<td class="ddoc_param_desc">Position <span class="ddoc_param">second</span> shape.</td></tr>
+</table></div>
 
-<ul><li>Circle</li>
-<li>Triangle</li>
-</ul></div>
+<div class="ddoc_returns"><span class="ddoc_returns_header">Returns:</span>
+ Gives a state indicating if there is an intersection.
+
+</div>
+<div class="ddoc_section_nonstandard"><span class="ddoc_section_nonstandard_header">Example:</span>
+<pre class="d_code notranslate"><span class="d_psymbol">isCollide</span>(Shape.Rectangle(Vecf(32,32),Vecf(48,48)),
+                 Shape.Line(Vecf(48,32),Vecf(32,48)));
+</pre>
+</div>
 </dd>
 </div></dl>
 

@@ -6,7 +6,7 @@
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
         <script type="text/javascript" src="js/sidebar.js"></script>
         <script type="text/javascript" src="js/listanchors.js"></script>
-        <title>tida.game.animation</title>
+        <title>tida.game.listener</title>
         
         
     </head>
@@ -211,63 +211,52 @@
 
 </ul>
 </div>
-            <div class="content">                <h1>tida.game.animation</h1>
+            <div class="content">                <h1>tida.game.listener</h1>
                 
                 <div class="quickindex" id="quickindex"></div>
                 
-                <div class="ddoc_summary">Module for describing <code class="ddoc_psymbol">animation</code>.
+                <div class="ddoc_summary">Module for timer and global event handler.
 </div><div class="ddoc_authors"><span class="ddoc_authors_header">Authors:</span>
  TodNaz
 </div>
 <div class="ddoc_license"><span class="ddoc_license_header">License:</span>
  MIT</div>
-<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation"></span><div class="quickindex" id="quickindex.Animation"></div>class <code class="ddoc_psymbol">Animation</code>;
+<dl class="ddoc_members"><div class="ddoc_module_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".listener"></span><div class="quickindex" id="quickindex.listener"></div>@trusted Listener <code class="ddoc_psymbol">listener</code>();
 <br></div></dt>
-<dd><div class="ddoc_summary">Object for describin animation.</div><dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.isRepeat"></span><div class="quickindex" id="quickindex.Animation.isRepeat"></div>bool <code class="ddoc_psymbol">isRepeat</code>;
+<dd><div class="ddoc_summary">Global access to such an instance.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Listener"></span><div class="quickindex" id="quickindex.Listener"></div>class <code class="ddoc_psymbol">Listener</code>;
 <br></div></dt>
-<dd><div class="ddoc_summary">Whether the animation needs to be repeated.</div></dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.frames"></span><div class="quickindex" id="quickindex.Animation.frames"></div>@property @safe Image[] <code class="ddoc_psymbol">frames</code>();
+<dd><div class="ddoc_summary">Global timer and event handler.</div><dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Listener.timer"></span><div class="quickindex" id="quickindex.Listener.timer"></div>@trusted TimerID <code class="ddoc_psymbol">timer</code>(void delegate() <span class="ddoc_param">func</span>, Duration <span class="ddoc_param">duration</span>, bool <span class="ddoc_param">isRepeat</span> = false);
 <br></div></dt>
-<dd><div class="ddoc_summary">Animation <code class="ddoc_psymbol">frames</code>.</div></dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.frames.2"></span><div class="quickindex" id="quickindex.Animation.frames.2"></div>@property @safe void <code class="ddoc_psymbol">frames</code>(Image[] <span class="ddoc_param">value</span>);
-<br></div></dt>
-<dd><div class="ddoc_summary">Animation <code class="ddoc_psymbol">frames</code></div></dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.speed"></span><div class="quickindex" id="quickindex.Animation.speed"></div>@property @safe float <code class="ddoc_psymbol">speed</code>();
-<br></div></dt>
-<dd><div class="ddoc_summary">Animation <code class="ddoc_psymbol">speed</code></div></dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.speed.2"></span><div class="quickindex" id="quickindex.Animation.speed.2"></div>@property @safe void <code class="ddoc_psymbol">speed</code>(float <span class="ddoc_param">value</span>);
-<br></div></dt>
-<dd><div class="ddoc_summary">Animation <code class="ddoc_psymbol">speed</code></div></dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.strip"></span><div class="quickindex" id="quickindex.Animation.strip"></div>@safe void <code class="ddoc_psymbol">strip</code>(Image <span class="ddoc_param">image</span>, int <span class="ddoc_param">x</span>, int <span class="ddoc_param">y</span>, int <span class="ddoc_param">w</span>, int <span class="ddoc_param">h</span>);
-<br></div></dt>
-<dd><div class="ddoc_summary">Creates frames from one sample picture.
+<dd><div class="ddoc_summary">Start a <code class="ddoc_psymbol">timer</code>.
 </div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
- <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">Image <span class="ddoc_param">image</span></td>
-<td class="ddoc_param_desc">The picture from where the frames will be received.</td></tr>
-<tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">x</span></td>
-<td class="ddoc_param_desc">The beginning of the cut by <span class="ddoc_param">x</span>-axis.</td></tr>
-<tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">y</span></td>
-<td class="ddoc_param_desc">The beginning of the cut by <span class="ddoc_param">y</span>-axis.</td></tr>
-<tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">w</span></td>
-<td class="ddoc_param_desc">Width frames.</td></tr>
-<tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">h</span></td>
-<td class="ddoc_param_desc">Height frames.</td></tr>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">void delegate() <span class="ddoc_param">func</span></td>
+<td class="ddoc_param_desc">The function to call when the <code class="ddoc_psymbol">timer</code> expires.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">Duration <span class="ddoc_param">duration</span></td>
+<td class="ddoc_param_desc">Timer <span class="ddoc_param">duration</span>.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">bool <span class="ddoc_param">isRepeat</span></td>
+<td class="ddoc_param_desc">Whether to repeat the <code class="ddoc_psymbol">timer</code>.</td></tr>
 </table></div>
 
 <div class="ddoc_section_nonstandard"><span class="ddoc_section_nonstandard_header">Example:</span>
-<pre class="d_code notranslate">anim.<span class="d_psymbol">strip</span>(<span class="d_keyword">new</span> Image(<span class="d_string">"atlas.png"</span>),0,0,32,32);
+<pre class="d_code notranslate">listener.<span class="d_psymbol">timer</span>({
+	writeln(<span class="d_string">"3 seconds!"</span>);
+},dur!<span class="d_string">"msecs"</span>(3000),<span class="d_keyword">true</span>);
 </pre>
+
 </div>
+<div class="ddoc_returns"><span class="ddoc_returns_header">Returns:</span>
+ ID</div>
 </dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.currentFrame"></span><div class="quickindex" id="quickindex.Animation.currentFrame"></div>@safe Image <code class="ddoc_psymbol">currentFrame</code>();
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Listener.globalEvent"></span><div class="quickindex" id="quickindex.Listener.globalEvent"></div>@trusted void <code class="ddoc_psymbol">globalEvent</code>(void delegate(EventHandler) <span class="ddoc_param">func</span>);
 <br></div></dt>
-<dd><div class="ddoc_summary">Return current frame</div></dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.numFrame"></span><div class="quickindex" id="quickindex.Animation.numFrame"></div>@safe float <code class="ddoc_psymbol">numFrame</code>();
-<br></div></dt>
-<dd><div class="ddoc_summary">Return position current frame</div></dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Animation.step"></span><div class="quickindex" id="quickindex.Animation.step"></div>@safe Image <code class="ddoc_psymbol">step</code>();
-<br></div></dt>
-<dd><div class="ddoc_summary">Step animation</div></dd>
+<dd><div class="ddoc_summary">Supply a function to handle events, no matter what the scene.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">void delegate(EventHandler) <span class="ddoc_param">func</span></td>
+<td class="ddoc_param_desc">Function for handler.</td></tr>
+</table></div>
+
+</dd>
 </div></dl>
 </dd>
 </div></dl>

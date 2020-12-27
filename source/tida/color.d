@@ -219,6 +219,7 @@ public Color!ubyte toRGB(HSB str) @safe
         hex = The same performance. The following formats can be used:
               * `0xRRGGBBAA` / `0xRRGGBB`
               * `#RRGGBBAA` / `#RRGGBB`
+        format = Pixel format.
 
     Returns: `Color!ubyte`
 +/
@@ -423,6 +424,49 @@ public struct Color(T)
         	import std.digest : toHexString;
         	
         	return this.fromBytes!ubyte(format).toHexString;
+        }else
+        static if(is(T : HSL))
+        {
+            import std.algorithm : max, min;
+            import std.math : abs;
+
+            HSL hsl;
+
+            float rd = rf();
+            float gd = gf();
+            float bd = bf();
+
+            float fmax = max(rd, gd, bd);
+            float fmin = min(rd, gd, bd);
+
+            hsl.l = abs(50 * (fmin - fmax));
+
+            if(fmin == fmax) {
+                hsl.s = 0;
+                hsl.h = 0;
+            }else
+            if(hsl.l < 50) {
+                hsl.s = 100 * (fmax - fmin) / (fmax + fmin);
+            }else
+            {
+                hsl.s = 100 * (fmax - fmin) / (2.0 - fmax - fmin);
+            }
+
+            if(fmax == rd) {
+                hsl.h = 60 * (gd - bd) / (fmax - fmin);
+            }
+            if(fmax == gd) {
+                hsl.h = 60 * (gd - rd) / (fmax - fmin) + 120;
+            }
+            if(fmax == bd) {
+                hsl.h = 60 * (rd - gd) / (fmax - fmin) + 240;
+            }
+
+            if(hsl.h < 0) {
+                hsl.h = hsl.h + 360;
+            }
+
+            return hsl;
         }
     }
 
@@ -451,6 +495,49 @@ public struct Color(T)
         	import std.digest : toHexString;
         	
         	return this.fromBytes!ubyte(format).toHexString;
+        }else
+        static if(is(T : HSL))
+        {
+            import std.algorithm : max, min;
+            import std.math : abs;
+
+            HSL hsl;
+
+            float rd = rf();
+            float gd = gf();
+            float bd = bf();
+
+            float fmax = max(rd, gd, bd);
+            float fmin = min(rd, gd, bd);
+
+            hsl.l = abs(50 * (fmin - fmax));
+
+            if(fmin == fmax) {
+                hsl.s = 0;
+                hsl.h = 0;
+            }else
+            if(hsl.l < 50) {
+                hsl.s = 100 * (fmax - fmin) / (fmax + fmin);
+            }else
+            {
+                hsl.s = 100 * (fmax - fmin) / (2.0 - fmax - fmin);
+            }
+
+            if(fmax == rd) {
+                hsl.h = 60 * (gd - bd) / (fmax - fmin);
+            }
+            if(fmax == gd) {
+                hsl.h = 60 * (gd - rd) / (fmax - fmin) + 120;
+            }
+            if(max == bd) {
+                hsl.h = 60 * (rd - rg) / (fmax - fmin) + 240;
+            }
+
+            if(h < 0) {
+                hsl.h = hsl.h + 360;
+            }
+
+            return hsl;
         }
     }
     
@@ -509,6 +596,28 @@ public struct Color(T)
             return [b,g,r,a];
 
         return [];
+    }
+
+    public void invert() @safe
+    {
+        r = r ^ 0xff;
+        g = g ^ 0xff;
+        b = b ^ 0xff;
+    }
+
+    public void clearRed() @safe
+    {
+        r = 0;
+    }
+
+    public void clearGreen() @safe
+    {
+        g = 0;
+    }
+
+    public void clearBlue() @safe
+    {
+        b = 0;
     }
 
     ///

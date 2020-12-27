@@ -670,6 +670,7 @@ public class Window
             posX = The x-axis position.
             posY = The y-axis position.
             visual = Information from context for create window.
+            depth = Depth.
     +/
     version(Posix) public void xWindowInit(int posX,int posY,XVisualInfo* visual = null,int depth = -1) @trusted
     {

@@ -23,10 +23,6 @@
     <ul>
 
 	
-
-	<li><a title="" href="tida--app.html"><span >app</span></a></li>
-
-
 	
 	
 		<li class="expand-container open"><a class='expand-toggle' href="#"><span >dglx</span></a><ul>
@@ -42,41 +38,13 @@
 
 
 	
-	
-		<li class="expand-container open"><a class='expand-toggle' href="#"><span >emscript</span></a><ul>
-			
-
-	<li><a title="" href="tida--emscript.emscripten.html"><span >emscripten</span></a></li>
-
-
-		</ul></li>
-	
-
-
-
-
-	
-		<li class="expand-container open"><a title='
-		' class='expand-toggle' href='#'><span >tida</span></a><ul><li><a title='
+		<li class="expand-container open"><a title='TODO: Document
+		' class='expand-toggle' href='#'><span >tida</span></a><ul><li><a title='TODO: Document
 		' href="
 			tida--tida.html"><span >package</span></a></li>
 			
-	
-	
-		<li class="expand-container open"><a class='expand-toggle' href="#"><span >betterc</span></a><ul>
-			
 
-	<li><a title="" href="tida--tida.betterc.runtime.html"><span >runtime</span></a></li>
-
-
-
-	<li><a title="" href="tida--tida.betterc.window.html"><span >window</span></a></li>
-
-
-		</ul></li>
-	
-
-
+	<li><a title="Module for working with corners. While you can work with different types of angles." href="tida--tida.angle.html"><span >angle</span></a></li>
 
 
 
@@ -96,15 +64,29 @@
 
 
 	
-	
-		<li class="expand-container open"><a class='expand-toggle' href="#"><span >game</span></a><ul>
+		<li class="expand-container open"><a title='
+		' class='expand-toggle' href='#'><span >game</span></a><ul><li><a title='
+		' href="
+			tida--tida.game.html"><span >package</span></a></li>
 			
 
 	<li><a title="Module for describing animation." href="tida--tida.game.animation.html"><span >animation</span></a></li>
 
 
 
-	<li><a title="" href="tida--tida.game.collision.html"><span >collision</span></a></li>
+	<li><a title="A module for checking the intersection of some simple shapes." href="tida--tida.game.collision.html"><span >collision</span></a></li>
+
+
+
+	<li><a title="" href="tida--tida.game.game.html"><span >game</span></a></li>
+
+
+
+	<li><a title="Module for timer and global event handler." href="tida--tida.game.listener.html"><span >listener</span></a></li>
+
+
+
+	<li><a title="Resource loader module" href="tida--tida.game.loader.html"><span >loader</span></a></li>
 
 
 
@@ -114,8 +96,8 @@
 
 	<li><a title="" href="tida--tida.game.tile.html"><span >tile</span></a></li>
 
-
-		</ul></li>
+</ul></li>
+	
 	
 
 
@@ -164,8 +146,8 @@
 
 
 	
-		<li class="expand-container open"><a title='
-		' class='expand-toggle' href='#'><span >scene</span></a><ul><li><a title='
+		<li class="expand-container open"><a title='A module for implementing behavior in OOP style.
+		' class='expand-toggle' href='#'><span >scene</span></a><ul><li><a title='A module for implementing behavior in OOP style.
 		' href="
 			tida--tida.scene.html"><span >package</span></a></li>
 			
@@ -214,7 +196,7 @@
 
 
 
-	<li><a title="A module for working with windows in a cross-platform environment." href="tida--tida.window.html"><span >window</span></a></li>
+	<li><a title="A module for working with windows in a cross-platform environment. A window is created in both Windows and Linux" href="tida--tida.window.html"><span >window</span></a></li>
 
 
 
@@ -233,19 +215,16 @@
                 
                 <div class="quickindex" id="quickindex"></div>
                 
-                <div class="ddoc_summary">A module for working with windows in a cross-platform environment.
-    A <code class="ddoc_psymbol">window</code> is created in both Windows and Linux environments. OS X
-    and other operating systems are currently not supported due to
-    lack of testing on these platforms.
-</div><div class="ddoc_description">    The <code class="ddoc_psymbol">window</code> is created primarily not in the constructor, in the constructor
-    the <code class="ddoc_psymbol">window</code> parameters are initialized for its creation. All this is created
-    by the <code class="d_inlinecode donthyphenate notranslate">initialize</code> method, with an indication of the template parameter,
+                <div class="ddoc_summary">A module for working with windows in a cross-platform environment. A <code class="ddoc_psymbol">window</code> is created in both Windows and Linux
+    environments. OS X and other operating systems are currently not supported due to lack of testing on these
+    platforms.
+</div><div class="ddoc_description">    The <code class="ddoc_psymbol">window</code> is created primarily not in the constructor, in the constructor the <code class="ddoc_psymbol">window</code> parameters are initialized
+    for its creation. All this is created by the <code class="d_inlinecode donthyphenate notranslate">initialize</code> method, with an indication of the template parameter,
     which <code class="ddoc_psymbol">window</code> to create.
 <div class="ddoc_blankline"></div>
 
-    A <code class="ddoc_psymbol">window</code> can be created either with a ready-made context or without it
-    (i.e., created manually)(Please note that the context is strictly created
-    only for the opengl library).
+    A <code class="ddoc_psymbol">window</code> can be created either with a ready-made context or without it (i.e., created manually)(Please note that
+    the context is strictly created only for the opengl library).
 <div class="ddoc_blankline"></div>
 
     Creating a simple <code class="ddoc_psymbol">window</code> is done with a simple <code class="d_inlinecode donthyphenate notranslate">initialize</code> function:
@@ -286,21 +265,22 @@ context.initialize(<span class="d_psymbol">window</span>);
 </pre>
 <div class="ddoc_blankline"></div>
 
-    Then you can draw something on the <code class="ddoc_psymbol">window</code>, control it and so on.
+    At the moment, windows cannot work in parallel, as well as event tracking and object rendering, so
+    you shouldn't even try to create windows in different threads, this will lead to data segmentation.
 <div class="ddoc_blankline"></div>
 
-    Also, please note that creating multiple windows is currently not supported.
+    It is also recommended to create a <code class="ddoc_psymbol">window</code> in the recommended way, but if you want to create your
+    own render, then immediately put a context in the <code class="ddoc_psymbol">window</code> so that there are no errors when creating
+    a render or manual rendering.
 
 </div>
 <div class="ddoc_section_nonstandard"><span class="ddoc_section_nonstandard_header">TODO:</span>
 
-<ul><li>Make it possible to create several windows at the same time.
-          Namely, to make <code class="d_inlinecode donthyphenate notranslate">shared</code> methods for working in different threads,
-          both for the <code class="ddoc_psymbol">window</code> and for the context, event handler and render.
+<ul><li>Make it possible to create several windows at the same time. Namely, to make <code class="d_inlinecode donthyphenate notranslate">shared</code> methods for
+          working in different threads, both for the <code class="ddoc_psymbol">window</code> and for the context, event handler and render.
 </li>
-<li>Make normal full screen and resize. The fact is that when the size
-          is changed, the render is not updated, even if you do a redraw.
-          Apparently, the nodes allocate a buffer.
+<li>Make normal full screen and resize. The fact is that when the size is changed, the render is not
+          updated, even if you do a redraw. Apparently, the nodes allocate a buffer.
 </li>
 </ul>
 </div>
@@ -315,26 +295,15 @@ context.initialize(<span class="d_psymbol">window</span>);
 <dt class="ddoc_decl"><div ><span class="def-anchor" id="._NET_WM_STATE_REMOVE"></span><div class="quickindex" id="quickindex._NET_WM_STATE_REMOVE"></div>static immutable int <code class="ddoc_psymbol">_NET_WM_STATE_REMOVE</code>;
 <br></div></dt>
 <dd><div class="ddoc_summary">Remove state</div></dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Simple"></span><div class="quickindex" id="quickindex.Simple"></div>static immutable ubyte <code class="ddoc_psymbol">Simple</code>;
-<br></div></dt>
-<dd><div class="ddoc_summary">    A property to create just a window, without creating a context.
-    Initialize it like this:
-<pre class="d_code notranslate">window.initialize!<span class="d_psymbol">Simple</span>;
-</pre>
-</div></dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".ContextIn"></span><div class="quickindex" id="quickindex.ContextIn"></div>static immutable ubyte <code class="ddoc_psymbol">ContextIn</code>;
-<br></div></dt>
-<dd><div class="ddoc_summary">    Property for creating a window with a context for graphics.
-    It is initialized like this:
-<pre class="d_code notranslate">window.initialize!<span class="d_psymbol">ContextIn</span>;
-</pre>
-</div></dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".ParrarelContext"></span><div class="quickindex" id="quickindex.ParrarelContext"></div>static immutable ubyte <code class="ddoc_psymbol">ParrarelContext</code>;
-<br></div></dt>
-<dd><div class="ddoc_summary">Property for creating a window on another thread. It is not used now.</div></dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Empty"></span><div class="quickindex" id="quickindex.Empty"></div>static immutable ubyte <code class="ddoc_psymbol">Empty</code>;
 <br></div></dt>
-<dd><div class="ddoc_summary">The shell is empty. Only needed in WebAssembly mode.</div></dd>
+<dd><div class="ddoc_summary">Creation of an empty window. Needed for mistakes.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Simple"></span><div class="quickindex" id="quickindex.Simple"></div>static immutable ubyte <code class="ddoc_psymbol">Simple</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Creating a simple window, without creating a context in it.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".ContextIn"></span><div class="quickindex" id="quickindex.ContextIn"></div>static immutable ubyte <code class="ddoc_psymbol">ContextIn</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Create a simple window with a context for graphics.</div></dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".GLAttributes"></span><div class="quickindex" id="quickindex.GLAttributes"></div>struct <code class="ddoc_psymbol">GLAttributes</code>;
 <br></div></dt>
 <dd><div class="ddoc_summary">Attributes for creating context.</div><dl class="ddoc_members"><div class="ddoc_struct_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".GLAttributes.redSize"></span><div class="quickindex" id="quickindex.GLAttributes.redSize"></div>int <code class="ddoc_psymbol">redSize</code>;
@@ -358,29 +327,70 @@ context.initialize(<span class="d_psymbol">window</span>);
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".GLAttributes.colorDepth"></span><div class="quickindex" id="quickindex.GLAttributes.colorDepth"></div>int <code class="ddoc_psymbol">colorDepth</code>;
 <br></div></dt>
 <dd><div class="ddoc_summary">Color depth</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".GLAttributes.doubleBuffer"></span><div class="quickindex" id="quickindex.GLAttributes.doubleBuffer"></div>bool <code class="ddoc_psymbol">doubleBuffer</code>;
+<br></div></dt>
+<dd><div class="ddoc_summary">Double buffering</div></dd>
 </div></dl>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".extensionList"></span><div class="quickindex" id="quickindex.extensionList"></div>@trusted string[] <code class="ddoc_psymbol">extensionList</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Returns a list of extensions. Because Openg of the second version is used here, it is unlikely that
+	it will be useful, but there is also a third version in the plan.
+</div><div class="ddoc_returns"><span class="ddoc_returns_header">Returns:</span>
+ <code class="d_inlinecode donthyphenate notranslate">string[]</code></div>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".isExtensionSupported"></span><div class="quickindex" id="quickindex.isExtensionSupported"></div>@trusted bool <code class="ddoc_psymbol">isExtensionSupported</code>(string <span class="ddoc_param">name</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Indicates if the following extension is supported.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">string <span class="ddoc_param">name</span></td>
+<td class="ddoc_param_desc">Extension <span class="ddoc_param">name</span>.</td></tr>
+</table></div>
+
 </dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context"></span><div class="quickindex" id="quickindex.Context"></div>class <code class="ddoc_psymbol">Context</code>;
 <br></div></dt>
-<dd><div class="ddoc_summary">Class for describing and creating context for the window.</div><dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.attrib"></span><div class="quickindex" id="quickindex.Context.attrib"></div>GLAttributes <code class="ddoc_psymbol">attrib</code>;
+<dd><div class="ddoc_summary">An object for describing the context for rendering objects in the opengl library. Able to create a context
+    in both Linux and Windows using the glx (for x11) and wgl (for Windows) libraries.
+</div><div class="ddoc_description">    The contest is also easily set to a window using the window's <code class="d_inlinecode donthyphenate notranslate">contextSet</code> method:
+<pre class="d_code notranslate">window.contextSet(myContext);
+</pre>
+</div>
+<dl class="ddoc_members"><div class="ddoc_class_members"><dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.attrib"></span><div class="quickindex" id="quickindex.Context.attrib"></div>GLAttributes <code class="ddoc_psymbol">attrib</code>;
 <br></div></dt>
-<dd><div class="ddoc_summary">Attributes for creating context.</div></dd>
+<dd><div class="ddoc_summary">Context creation attributes. It is not necessary to specify them, the attributes
+            are already pre-specified.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.this"></span><div class="quickindex" id="quickindex.Context.this"></div>@safe this();
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.this.2"></span><div class="quickindex" id="quickindex.Context.this.2"></div>@safe this(GLXContext <span class="ddoc_param">ctx</span>, XVisualInfo* <span class="ddoc_param">info</span> = null);
+<br></div></dt>
+<dd><div class="ddoc_summary">Initializes a ready-made context.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">GLXContext <span class="ddoc_param">ctx</span></td>
+<td class="ddoc_param_desc">GLXContext.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">XVisualInfo* <span class="ddoc_param">info</span></td>
+<td class="ddoc_param_desc">Rendering information: Optional.</td></tr>
+</table></div>
+
+</dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.xContext"></span><div class="quickindex" id="quickindex.Context.xContext"></div>nothrow @property @safe GLXContext <code class="ddoc_psymbol">xContext</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Context from x11 environment (<code class="d_inlinecode donthyphenate notranslate">GLXContext</code>).</div></dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.xAttribInitialize"></span><div class="quickindex" id="quickindex.Context.xAttribInitialize"></div>@trusted void <code class="ddoc_psymbol">xAttribInitialize</code>();
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.xAttribInitialize"></span><div class="quickindex" id="quickindex.Context.xAttribInitialize"></div>@trusted auto <code class="ddoc_psymbol">xAttribInitialize</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Initializes the context parameters in the x11 environment.
 </div><div class="ddoc_description">All parameters are taken from the attrib variable. The default will always be double buffering.</div>
 </dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.xContextInitialize"></span><div class="quickindex" id="quickindex.Context.xContextInitialize"></div>@trusted void <code class="ddoc_psymbol">xContextInitialize</code>();
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.xContextInitialize"></span><div class="quickindex" id="quickindex.Context.xContextInitialize"></div>@trusted auto <code class="ddoc_psymbol">xContextInitialize</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Creates a context in the x11 environment.</div></dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.xGetVisual"></span><div class="quickindex" id="quickindex.Context.xGetVisual"></div>nothrow @safe XVisualInfo* <code class="ddoc_psymbol">xGetVisual</code>();
 <br></div></dt>
 <dd>
 </dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.attribInitialize"></span><div class="quickindex" id="quickindex.Context.attribInitialize"></div>@safe void <code class="ddoc_psymbol">attribInitialize</code>(Window <span class="ddoc_param">window</span>);
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.attribInitialize"></span><div class="quickindex" id="quickindex.Context.attribInitialize"></div>@safe auto <code class="ddoc_psymbol">attribInitialize</code>(Window <span class="ddoc_param">window</span>);
 <br></div></dt>
 <dd><div class="ddoc_summary">Initializes the parameters of the context.</div></dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Context.initialize"></span><div class="quickindex" id="quickindex.Context.initialize"></div>@safe void <code class="ddoc_psymbol">initialize</code>(Window <span class="ddoc_param">window</span>);
@@ -409,7 +419,22 @@ context.initialize(<span class="d_psymbol">window</span>);
 </table></div>
 
 </dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.initialize"></span><div class="quickindex" id="quickindex.Window.initialize"></div>@safe void <code class="ddoc_psymbol">initialize</code><span class="ddoc_template_param_list" title="Template parameter list">(ubyte Type)</span>(int <span class="ddoc_param">posX</span> = 100, int <span class="ddoc_param">posY</span> = 100);
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.this.2"></span><div class="quickindex" id="quickindex.Window.this.2"></div>@safe this(Window <span class="ddoc_param">parent</span>, int <span class="ddoc_param">newWidth</span>, int <span class="ddoc_param">newHeight</span>, string <span class="ddoc_param">newTitle</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Initializes the window, assuming the window has an owner.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">Window <span class="ddoc_param">parent</span></td>
+<td class="ddoc_param_desc">Owner.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">newWidth</span></td>
+<td class="ddoc_param_desc">The width of the window when created.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">newHeight</span></td>
+<td class="ddoc_param_desc">The height of the window when created.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">string <span class="ddoc_param">newTitle</span></td>
+<td class="ddoc_param_desc">The title of the window when created.</td></tr>
+</table></div>
+
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.initialize"></span><div class="quickindex" id="quickindex.Window.initialize"></div>@trusted void <code class="ddoc_psymbol">initialize</code><span class="ddoc_template_param_list" title="Template parameter list">(ubyte Type)</span>(int <span class="ddoc_param">posX</span> = 100, int <span class="ddoc_param">posY</span> = 100);
 <br></div></dt>
 <dd><div class="ddoc_summary">Initializes the window according to the parameters.
 </div><div class="ddoc_description">A window can be created with the following parameters:
@@ -425,11 +450,58 @@ context.initialize(<span class="d_psymbol">window</span>);
 <tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">posX</span></td>
 <td class="ddoc_param_desc">The x-axis position.</td></tr>
 <tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">posY</span></td>
-<td class="ddoc_param_desc">The y-axis position.</td></tr>
+<td class="ddoc_param_desc">The y-axis position.
+<div class="ddoc_blankline"></div>
+
+        Also, see if another window has been created. at the moment, multi-window mode is not yet
+        supported in the program, which will lead to errors in the window manager server.
+<div class="ddoc_blankline"></div>
+
+        Also, if you need to reinitialize the window, delete the previous window.</td></tr>
+</table></div>
+
+<div class="ddoc_section_nonstandard"><span class="ddoc_section_nonstandard_header">Example:</span>
+<pre class="d_code notranslate"><span class="d_keyword">auto</span> window = <span class="d_keyword">new</span> Window(640,480,<span class="d_string">"Title."</span>);
+window.<span class="d_psymbol">initialize</span>!Simple(100,100);
+</pre>
+<div class="ddoc_blankline"></div>
+
+        initializing a window when you need your own context:
+<pre class="d_code notranslate"><span class="d_keyword">auto</span> context = <span class="d_keyword">new</span> Context();
+context.attrib = GLAttributes(...);
+context.attribInitialize(window);
+
+window.<span class="d_psymbol">initialize</span>!Simple(100,100);
+
+context.<span class="d_psymbol">initialize</span>(window);
+window.contextSet(context);
+</pre>
+<div class="ddoc_blankline"></div>
+
+        Or you can simply trust the window itself to create the context:
+<pre class="d_code notranslate">window.<span class="d_psymbol">initialize</span>!ContextIn;
+</pre>
+</div>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.isContext"></span><div class="quickindex" id="quickindex.Window.isContext"></div>@safe bool <code class="ddoc_psymbol">isContext</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Finds out if there is a context. Note that the context must be created by the window,
+    	or passed to it. If he does not know, but there is such a function, such a function will
+    	not work, call the runtime command to find the context.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.initFrom"></span><div class="quickindex" id="quickindex.Window.initFrom"></div>@trusted void <code class="ddoc_psymbol">initFrom</code>(x11.Xlib.Window <span class="ddoc_param">window</span>);
+<br></div></dt>
+<dd><div class="ddoc_summary">Initialization of a <span class="ddoc_param">window</span> using an already created <span class="ddoc_param">window</span>.
+</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
+ <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">x11.Xlib.Window <span class="ddoc_param">window</span></td>
+<td class="ddoc_param_desc">X11 Window structure.</td></tr>
 </table></div>
 
 </dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xWindowInit"></span><div class="quickindex" id="quickindex.Window.xWindowInit"></div>@trusted void <code class="ddoc_psymbol">xWindowInit</code>(int <span class="ddoc_param">posX</span>, int <span class="ddoc_param">posY</span>, XVisualInfo* <span class="ddoc_param">visual</span> = null);
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.add"></span><div class="quickindex" id="quickindex.Window.add"></div>@trusted void <code class="ddoc_psymbol">add</code>(ref Atom <span class="ddoc_param">atom</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xWindowInit"></span><div class="quickindex" id="quickindex.Window.xWindowInit"></div>@trusted void <code class="ddoc_psymbol">xWindowInit</code>(int <span class="ddoc_param">posX</span>, int <span class="ddoc_param">posY</span>, XVisualInfo* <span class="ddoc_param">visual</span> = null, int <span class="ddoc_param">depth</span> = -1);
 <br></div></dt>
 <dd><div class="ddoc_summary">Initializes the window for the context.
 </div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
@@ -439,23 +511,17 @@ context.initialize(<span class="d_psymbol">window</span>);
 <td class="ddoc_param_desc">The y-axis position.</td></tr>
 <tr class="ddoc_param_row"><td class="ddoc_param_id">XVisualInfo* <span class="ddoc_param">visual</span></td>
 <td class="ddoc_param_desc">Information from context for create window.</td></tr>
-</table></div>
-
-</dd>
-<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xWindowSimpleInitialize"></span><div class="quickindex" id="quickindex.Window.xWindowSimpleInitialize"></div>@trusted void <code class="ddoc_psymbol">xWindowSimpleInitialize</code>(int <span class="ddoc_param">posX</span>, int <span class="ddoc_param">posY</span>);
-<br></div></dt>
-<dd><div class="ddoc_summary">Created simple window in environment x11.
-</div><div class="ddoc_params"><span class="ddoc_params_header">Parameters:</span>
- <table class="ddoc_params_table"><tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">posX</span></td>
-<td class="ddoc_param_desc">The x-axis position.</td></tr>
-<tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">posY</span></td>
-<td class="ddoc_param_desc">The y-axis position.</td></tr>
+<tr class="ddoc_param_row"><td class="ddoc_param_id">int <span class="ddoc_param">depth</span></td>
+<td class="ddoc_param_desc">Depth.</td></tr>
 </table></div>
 
 </dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xWindowShow"></span><div class="quickindex" id="quickindex.Window.xWindowShow"></div>@trusted void <code class="ddoc_psymbol">xWindowShow</code>();
 <br></div></dt>
 <dd><div class="ddoc_summary">Show window in workspace.</div></dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.show"></span><div class="quickindex" id="quickindex.Window.show"></div>@safe void <code class="ddoc_psymbol">show</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Shows a window.</div></dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.contextSet"></span><div class="quickindex" id="quickindex.Window.contextSet"></div>@trusted void <code class="ddoc_psymbol">contextSet</code>(Context <span class="ddoc_param">context</span>);
 <br></div></dt>
 <dd><div class="ddoc_summary">Sets an initialized_ <span class="ddoc_param">context</span>.
@@ -589,6 +655,10 @@ context.initialize(<span class="d_psymbol">window</span>);
 <br></div></dt>
 <dd>
 </dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xEventName"></span><div class="quickindex" id="quickindex.Window.xEventName"></div>nothrow @trusted void <code class="ddoc_psymbol">xEventName</code>(string <span class="ddoc_param">caption</span>);
+<br></div></dt>
+<dd>
+</dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.icon"></span><div class="quickindex" id="quickindex.Window.icon"></div>@property @safe void <code class="ddoc_psymbol">icon</code>(Image <span class="ddoc_param">image</span>);
 <br></div></dt>
 <dd>
@@ -597,6 +667,21 @@ context.initialize(<span class="d_psymbol">window</span>);
 <br></div></dt>
 <dd>
 </dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.resizeEvent.2"></span><div class="quickindex" id="quickindex.Window.resizeEvent.2"></div>@safe void <code class="ddoc_psymbol">resizeEvent</code><span class="ddoc_template_param_list" title="Template parameter list">(T)</span>(T[2] <span class="ddoc_param">size</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.xFullscreen"></span><div class="quickindex" id="quickindex.Window.xFullscreen"></div>@trusted void <code class="ddoc_psymbol">xFullscreen</code>(bool <span class="ddoc_param">value</span>);
+<br></div></dt>
+<dd>
+</dd>
+<dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.fullscreen"></span><div class="quickindex" id="quickindex.Window.fullscreen"></div>@property @safe void <code class="ddoc_psymbol">fullscreen</code>(bool <span class="ddoc_param">value</span>);
+<br>
+@property @safe bool <code class="ddoc_psymbol">fullscreen</code>();
+<br>
+const @property @safe bool <code class="ddoc_psymbol">fullscreen</code>();
+<br></div></dt>
+<dd><div class="ddoc_summary">Set to <code class="ddoc_psymbol">fullscreen</code> mode</div></dd>
 <dt class="ddoc_decl"><div ><span class="def-anchor" id=".Window.title"></span><div class="quickindex" id="quickindex.Window.title"></div>nothrow @property @safe immutable(string) <code class="ddoc_psymbol">title</code>();
 <br>
 const nothrow @property @safe immutable(string) <code class="ddoc_psymbol">title</code>();

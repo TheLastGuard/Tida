@@ -9,6 +9,10 @@ module tida.graph.image;
 
 import tida.graph.drawable;
 
+static immutable Red = 0; /// Red component
+static immutable Green = 1; /// Green component
+static immutable Blue = 2; /// Blue component
+
 /// Image.
 public class Image : IDrawable, IDrawableEx, IDrawableColor
 {
@@ -316,6 +320,94 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /++
+        Resizes the image.
+
+        Params:
+            newWidth = Image new width.
+            newHeight = Image new height.
+    +/
+    public void resize(uint newWidth,uint newHeight) @safe
+    {
+        uint oldWidth = _width;
+        uint oldHeight = _height;
+
+        _width = newWidth;
+        _height = newHeight;
+
+        double scaleWidth = cast(double) newWidth / cast(double) oldWidth;
+        double scaleHeight = cast(double) newHeight / cast(double) oldWidth;
+
+        Color!ubyte[] npixels = new Color!ubyte[](newWidth * newHeight);
+
+        foreach(cy; 0 .. newHeight)
+        {
+            foreach(cx; 0 .. newWidth)
+            {
+                uint pixel = (cy * (newWidth)) + (cx);
+                uint nearestMatch = (cast(uint) (cy / scaleHeight)) * (oldWidth) + (cast(uint) ((cx / scaleWidth)));
+
+                npixels[pixel] = _pixels[nearestMatch];
+            }
+        }
+
+        _pixels = npixels;
+    }
+
+    /++
+        Invents the picture by color.
+    +/
+    public void invert() @safe
+    {
+        import std.algorithm : each;
+
+        _pixels.each!((ref e) => e.invert());
+    }
+
+    /++
+        Clears the specified color component from the picture.
+    +/
+    public void clearComponent(ubyte Component)() @safe
+    {
+        import std.algorithm : each;
+
+        static if(Component == Red) _pixels.each!((ref e) => e.clearRed());
+        static if(Component == Green) _pixels.each!((ref e) => e.clearGreen());
+        static if(Component == Blue) _pixels.each!((ref e) => e.clearBlue());
+    }
+
+    public void addComponent(ubyte Component)(ubyte value) @safe
+    {
+        import std.algorithm : each;
+
+        static if(Component == Red) {
+            _pixels.each!((ref e) {
+                if(cast(int) e.r + cast(int) value < 255)
+                    e.r += value;
+                else
+                    e.r = 255;
+            });
+        }
+
+        static if(Component == Green) { 
+            _pixels.each!((ref e) { 
+                if(cast(int) e.g + cast(int) value < 255)
+                    e.g += value;
+                else
+                    e.g = 255;
+            });
+        }
+
+        static if(Component == Blue) {
+            _pixels.each!((ref e) { 
+                if(cast(int) e.b + cast(int) value < 255)
+                    e.b += value;
+                else
+                    e.b = 255;
+            });
+        }
+    }
+
+    /++
         The width of the picture.
     +/
     public immutable(uint) width() @safe @property
@@ -355,6 +447,12 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         image.pixels = pixels.dup;
 
         return image;
+    }
+
+    public void swap() @safe
+    {
+        if(isTexture) freeTexture();
+        fromTexture();
     }
 
     override void draw(Renderer render,Vecf position) @trusted

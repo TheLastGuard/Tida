@@ -15,19 +15,17 @@ import tida.shape, tida.vector;
     Params:
         first = First shape.
         second = Second shape.
+        firstPos = Position first shape.
+        secondPos = Position second shape.
 
     Returns:
         Gives a state indicating if there is an intersection.
 
     Example:
     ---
-    assert(isCollide(Shape.Rectangle(Vecf(32,32),Vecf(48,48)),
+    isCollide(Shape.Rectangle(Vecf(32,32),Vecf(48,48)),
                      Shape.Line(Vecf(48,32),Vecf(32,48)));
     ---
-
-    TODO:
-        * Circle
-        * Triangle
 +/
 public bool isCollide(Shape first,Shape second,Vecf firstPos = Vecf(0,0),Vecf secondPos = Vecf(0,0)) @safe
 in(first.type != ShapeType.unknown  && second.type != ShapeType.unknown)
