@@ -241,15 +241,15 @@ public class Renderer
     public void line(Vecf[2] points,Color!ubyte color) @safe
     {
         auto ps = points.dup;
-        
+
         ps[0] -= _camera.port.begin;
         ps[1] -= _camera.port.begin;
 
         GL.color = color;
 
         GL.draw!Lines({
-            GL.vertex(points[0]);
-            GL.vertex(points[1]);
+            GL.vertex(ps[0]);
+            GL.vertex(ps[1]);
         });
     }
 
