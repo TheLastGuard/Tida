@@ -164,6 +164,7 @@ public class Listener
 		{
 			if(timers[i].tick()) {
 				timers.remove(i);
+				return;
 			}
 		}
 	}
