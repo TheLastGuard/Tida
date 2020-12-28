@@ -71,6 +71,11 @@ __gshared
     FglXIsDirect glXIsDirect;
 }
 
+/++
+    Load GLX library, which should open context in x11 environment.
+
+    Throws: `Exception` if library is not load.
++/
 public void GLXLoadLibrary() @trusted
 {
     import std.file : exists;

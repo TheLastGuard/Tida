@@ -67,6 +67,11 @@ struct Resource
 	{
 		return name;
 	}
+
+    public void free() @trusted
+    {
+        destroy(object);
+    }
 }
 
 /++
@@ -358,5 +363,13 @@ public class Loader
     public void add(Resource res) @safe
     {
         this.resources ~= (res);
+    }
+
+    ~this() @safe
+    {
+        foreach(res; resources)
+        {
+            res.free();
+        }
     }
 }

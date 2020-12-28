@@ -1389,6 +1389,7 @@ public class Window
         return _fullscreen;
     }
 
+    ///
     version(Posix) void xBorder(bool value) @trusted
     {
         
