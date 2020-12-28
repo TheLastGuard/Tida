@@ -240,6 +240,11 @@ public class Renderer
     +/
     public void line(Vecf[2] points,Color!ubyte color) @safe
     {
+        auto ps = points.dup;
+        
+        ps[0] -= _camera.port.begin;
+        ps[1] -= _camera.port.begin;
+
         GL.color = color;
 
         GL.draw!Lines({
