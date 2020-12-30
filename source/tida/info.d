@@ -6,8 +6,6 @@
 +/
 module tida.info;
 
-version(Posix) pragma(lib,"opengl32.lib");
-
 /++
     Class for monitor information
 +/

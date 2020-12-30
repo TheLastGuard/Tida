@@ -6,17 +6,19 @@
 +/
 module tida.sound.al;
 
+import tida.exception;
+
 /++
     Library initialization.
 +/
-public void initSoundLibrary() @trusted
+public void InitSoundLibrary() @trusted
 {
     import bindbc.openal;
 
     auto ret = loadOpenAL();
 
     if(ret == ALSupport.noLibrary)
-        throw new Exception("Not load OpenAL!");
+        throw new OpenALException(OpenALError.noLibrary,"Not load library!");
 }
 
 /++
@@ -32,25 +34,19 @@ public class Device
         ALCcontext* context;
     }
 
-    /// Automatic context discovery.
-    this() @trusted
-    {
-        this.open();
-    }
-
     /// ditto
     public void open() @trusted
     {
         device = alcOpenDevice(null);
 
         if(!device) {
-            throw new Exception("Not open device!");
+            throw new OpenALException(OpenALError.noDevice,"Device is not open!");
         }
 
         context = alcCreateContext(device,null);
 
         if(!alcMakeContextCurrent(context)) {
-            throw new Exception("Not make context audio!");
+            throw new OpenALException(OpenALError.noMakeContext,"Error make context current!");
         }
 
         ALfloat[] listenerOri = [ 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f ];
@@ -62,7 +58,7 @@ public class Device
         auto error = alGetError();
 
         if(error != AL_NO_ERROR) {
-            throw new Exception("Error make context!");
+            throw new OpenALException(OpenALError.errorMakeContext,"Error make context!");
         }
     }
 
@@ -128,7 +124,7 @@ public class Sound
             break;
 
             default:
-                throw new Exception("Unknown formt audio.");
+                throw new Exception("Unknown format audio.");
         }
 
         sourceBindBuffer();
@@ -190,10 +186,8 @@ public class Sound
     }
 
     public void volume(uint volume) @trusted
-    in
-    {
-        assert(volume < 100 && volume > 0);
-    }body
+    in(volume < 100 && volume > 0)
+    body
     {
         alSourcef(_source,AL_GAIN,cast(float) volume / 100);
     }

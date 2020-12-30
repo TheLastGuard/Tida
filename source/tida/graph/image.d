@@ -101,7 +101,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         return tryPixels;
     }
 
-    public override string toString() @safe const
+    override string toString() @safe const
     {
         import std.conv : to;
 
@@ -119,7 +119,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     /++
         A sequence of pixels.
     +/
-    public void pixels(Color!ubyte[] otherPixels) @trusted @property
+    public void pixels(Color!ubyte[] otherPixels) @safe @property
     {
         _pixels = otherPixels;
     }
@@ -281,12 +281,9 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         _width = temp.w;
         _height = temp.h;
 
-        for(size_t i = 0; i < temp.pixels.length; i+=4) {
-            _pixels ~= rgba(temp.pixels[i],
-                            temp.pixels[i+1],
-                            temp.pixels[i+2],
-                            temp.pixels[i+3]);
-        }
+        create(_width,_height);
+
+        this.bytes!ubyte(temp.pixels,PixelFormat.RGBA);
     }
 
     /// Whether the picture is a texture.
@@ -365,6 +362,9 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
 
     /++
         Clears the specified color component from the picture.
+
+        Params:
+            Component = Component color.
     +/
     public void clearComponent(ubyte Component)() @safe
     {
@@ -375,6 +375,13 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         static if(Component == Blue) _pixels.each!((ref e) => e.clearBlue());
     }
 
+    /++
+        Adds a component to all colors in the picture.
+
+        Params:
+            Component = Component color.
+            value = How much to increase.
+    +/
     public void addComponent(ubyte Component)(ubyte value) @safe
     {
         import std.algorithm : each;
@@ -449,6 +456,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         return image;
     }
 
+    /// Updates the texture if the picture has changed.
     public void swap() @safe
     {
         if(isTexture) freeTexture();

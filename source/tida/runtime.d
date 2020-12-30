@@ -14,12 +14,6 @@
 +/
 module tida.runtime;
 
-version(WebAssembly)
-{
-    public import tida.betterc.runtime;
-}
-else:
-
 __gshared TidaRuntime __runtime = null; /// Runtime instance
 
 /// ditto
@@ -70,8 +64,9 @@ public class TidaRuntime
         mainArguments = args;
 
         FreeTypeLoad();
-        initSoundLibrary();
+        InitSoundLibrary();
         device = new Device();
+        device.open();
     }
 
     /++

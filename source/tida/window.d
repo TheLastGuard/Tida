@@ -417,6 +417,8 @@ public class Window
 
         bool _fullscreen = false;
         Window _parent;
+
+        bool _bordered = true;
     }
 
     /++
@@ -578,7 +580,7 @@ public class Window
     	Params:
     		window = Windows Window structure.
     +/
-    version(Windows) public void initFrom(HNDW window) @trusted
+    version(Windows) public void initFrom(HWND window) @trusted
     in(window !is null,"Window is bad.")
     body
     {
@@ -1392,7 +1394,54 @@ public class Window
     ///
     version(Posix) void xBorder(bool value) @trusted
     {
-        
+        import std.conv : to;
+
+        struct MWMHints {
+            ulong flags;
+            ulong functions;
+            ulong decorations;
+            long inputMode;
+            ulong status;
+        }
+
+        auto hint = MWMHints(1 << 1, 0, value.to!ulong, 0, 0);
+
+        auto wmHINTS = getAtom!"_MOTIF_WM_HINTS";
+
+        XChangeProperty(runtime.display, xWindow, wmHINTS, wmHINTS, 32,
+            PropModeReplace, cast(ubyte*) &hint, MWMHints.sizeof / long.sizeof);
+    }
+
+    version(Windows) void wBorder(bool value) @trusted
+    {
+        auto style = GetWindowLong(wWindow, GWL_STYLE);
+
+        if(!value)
+        {
+            style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+        }else
+        {
+            style |= (WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+        }
+
+        SetWindowLong(wWindow, GWL_STYLE, style);
+
+        SetWindowPos(wWindow, null, 0,0,0,0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+    }
+
+    /// Do you need frames in the window.
+    public void bordered(bool value) @safe
+    {
+        version(Posix) xBorder(value);
+        version(Windows) wBorder(value);
+
+        _bordered = value;
+    }
+
+    /// ditto
+    public bool bordered() @safe
+    {
+        return _bordered;
     }
 
     /// Window title.

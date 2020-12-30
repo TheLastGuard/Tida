@@ -1,21 +1,31 @@
 /++
+	A module for describing exceptions with the operation of some components.
 
+	Authors: TodNaz
+	License: MIT
 +/
 module tida.exception;
 
+/// Errors when working with the context.
 public enum ContextError
 {
-	fbsNull,
-	noContext,
-	visualNull,
-	noDirect
+	fbsNull, ///
+	noContext, ///
+	visualNull, ///
+	noDirect ///
 }
 
+/++
+	Template for exceptions listing errors.
+
+	Params:
+		T = Type error.
++/
 public class ExceptionError(T) : Exception
 {
 	public
 	{
-		T error;
+		T error; /// Error
 	}
 
 	this(T error,string message)
@@ -25,6 +35,7 @@ public class ExceptionError(T) : Exception
 	}
 }
 
+/// Template for exceptions listing errors.
 public class ContextException : ExceptionError!ContextError
 {
 	this(ContextError error,string message) @safe
@@ -33,11 +44,14 @@ public class ContextException : ExceptionError!ContextError
 	}
 }
 
+
+/// Template for exceptions listing errors.
 public enum WindowError
 {
-	noCreate
+	noCreate ///
 }
 
+/// Exception when working with a window.
 public class WindowException : ExceptionError!WindowError
 {
 	this(WindowError error,string message) @safe
@@ -46,6 +60,7 @@ public class WindowException : ExceptionError!WindowError
 	}
 }
 
+/// Enumeration of errors when working with fonts.
 public enum FontError : int
 {
 	cannotOpen = 0x001,
@@ -53,6 +68,7 @@ public enum FontError : int
 	invalidFormat = 0x003
 }
 
+/// Exceptioon whem working with a font.
 public class FontException : ExceptionError!int
 {
 	this(int error,string message) @safe
@@ -61,6 +77,7 @@ public class FontException : ExceptionError!int
 	}
 }
 
+///
 enum ShaderError
 {
 	unknown,
@@ -68,6 +85,7 @@ enum ShaderError
 	fragmentCompile
 }
 
+///
 public class ShaderException : ExceptionError!ShaderError
 {
 	this(ShaderError error,string message) @trusted
@@ -81,6 +99,7 @@ public class ShaderException : ExceptionError!ShaderError
 	}
 }
 
+/// Exception when the file is not found.
 public class LoadException : Exception
 {
     public
@@ -88,10 +107,34 @@ public class LoadException : Exception
         string file;
     }
 
+    /++
+		Exception when the file is not found.
+
+		Params:
+			file = Path to the file.
+    +/
     this(string file) @safe
     {
         this.file = file;
         
         super("Not find `"~file~"`!");
     }
+}
+
+/// Enumerations when working with OpenAL.
+enum OpenALError
+{
+	noLibrary, ///
+	noDevice, ///
+	noMakeContext, ///
+	errorMakeContext ///
+}
+
+/// Exceptioon whem working with a OpenAL.
+public class OpenALException : ExceptionError!OpenALError
+{
+	this(OpenALError error,string message)
+	{
+		super(error,message);
+	}
 }

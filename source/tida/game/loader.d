@@ -18,7 +18,6 @@ module tida.game.loader;
 
 import std.path : baseName, stripExtension;
 import std.file : exists,mkdir;
-import std.net.curl;
 
 /++
     Resource Loader Instance
@@ -227,34 +226,6 @@ public class Loader
 
         resources.remove(pos!T(obj));
         synchronized destroy(obj);
-    }
-
-    /++
-        Load a resource from the internet using `libcurl`. 
-        Saves to the `.temp` folder. After, downloads it.
-
-        Params:
-            url = Url resource
-            altname = filename save
-            name = local name
-
-        Returns:
-            `T` if all goes well and the resource is loaded. 
-            `null` if the resource is not found.
-    +/
-    public T download(T)(immutable string url,immutable string altname,string name = "null") @trusted
-    {
-        synchronized {
-            if(!exists(".temp"))
-                mkdir(".temp");
-
-            if(exists("./.temp/"~altname))
-                return this.load!T("./.temp/"~altname,name);
-
-            std.net.curl.download(url,"./.temp/"~altname);
-        }
-
-        return this.load!T("./.temp/"~altname,name);
     }
 
     /++

@@ -61,7 +61,8 @@ public struct Joystick
         int id;
     }
     
-    public int countButtons() @trusted
+
+    version(Posix) public int xCountButtons() @trusted
     {
         ubyte count;
         ioctl(fd,JSIOCGBUTTONS,&count);
@@ -71,9 +72,12 @@ public struct Joystick
     
     ~this()
     {
-        import core.sys.posix.unistd;
+        version(Posix)
+        {
+            import core.sys.posix.unistd;
         
-        close(fd);
+            close(fd);
+        }
     }
 }
 

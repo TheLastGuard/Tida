@@ -28,21 +28,26 @@ private struct Event
 	}
 }
 
-private struct Timer
+/++
+	Timer.
++/
+public struct Timer
 {
 	import std.datetime;
 	
 	public 
 	{
-		MonoTime startTimer;
-		Duration duration;
-		bool isRepeat = false;
-		void delegate() onEnd = null;
+		MonoTime startTimer; /// The time the timer started the action.
+		Duration duration; /// Timer interval.
+		bool isRepeat = false; /// Whether the timer needs to be repeated.
+		void delegate() onEnd = null; /// Function at timer end.
+
+		alias interval = duration;
 	}
 	
-	public bool tick() @trusted
+	package bool tick() @trusted
 	{
-		if(MonoTime.currTime - startTimer > duration) {
+		if(!isActual) {
 			if(onEnd !is null) onEnd();
 			
 			if(isRepeat) {
@@ -52,6 +57,18 @@ private struct Timer
 				return true;
 		}else
 			return false;
+	}
+
+	/// Indicates whether the timer is in effect.
+	public bool isActual() @safe
+	{
+		return MonoTime.currTime - startTimer < duration;
+	}
+
+	/// Shows the remaining time.
+	public Duration remainder() @safe
+	{
+		return MonoTime.currTime - startTimer;
 	}
 }
 
@@ -87,32 +104,21 @@ public class Listener
 		Timer[] timers;
 	}
 
-	public bool timerIsActual(TimerID tm) @safe 
-	{
-		return (tm < timers.length);
-	}
+	/++
+		Stop the timer if there is such an instance.
 
-	public Duration timerRemaind(TimerID tm) @safe
-	in(timerIsActual(tm))
-	body
+		Params:
+			tm = Timer.
+	+/
+	public void timerStop(ref Timer tm) @trusted
 	{
-		auto tmr = timers[tm];
-
-		return MonoTime.currTime - tmr.startTimer;
-	}
-
-	public Duration timerDuration(TimerID tm) @safe
-	in(timerIsActual(tm))
-	body
-	{
-		return timers[tm].duration;
-	}
-
-	public void timerStop(TimerID tm) @safe
-	in(timerIsActual(tm))
-	body
-	{
-		timers.remove(tm);
+		foreach(i; 0 .. timers.length)
+		{
+			if(timers[i] == tm) {
+				timers.remove(i);
+				return;
+			}
+		}
 	}
 
 	/++
@@ -130,13 +136,13 @@ public class Listener
 		},dur!"msecs"(3000),true);
 		---
 
-		Returns: ID
+		Returns: A pointer to a timer.
 	+/
-	public TimerID timer(void delegate() func,Duration duration,bool isRepeat = false) @trusted
+	public Timer* timer(void delegate() func,Duration duration,bool isRepeat = false) @trusted
 	{
 		timers ~= Timer(MonoTime.currTime,duration,isRepeat,func);
 
-		return timers.length - 1;
+		return &timers[$];
 	}
 	
 	/++
