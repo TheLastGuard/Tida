@@ -138,3 +138,19 @@ public class OpenALException : ExceptionError!OpenALError
 		super(error,message);
 	}
 }
+
+///
+enum SoftwareError
+{
+	noGC,
+	flushError
+}
+
+///
+public class  SoftwareException : ExceptionError!SoftwareError
+{
+	this(SoftwareError error,string message)
+	{
+		super(error,message);
+	}
+}

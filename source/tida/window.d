@@ -399,6 +399,8 @@ public class Window
         version(Posix)
         {
             x11.Xlib.Window window;
+            Visual* _visual;
+            int _depth;
         }
 
         version(Windows)
@@ -699,6 +701,9 @@ public class Window
             rootWindow = runtime.rootWindowBy(visual.screen);
         }
 
+        _visual = tryVisual;
+        _depth = tryDepth;
+
         XSetWindowAttributes windowAttribs;
         windowAttribs.border_pixel = Color!ubyte(0,0,0).conv!uint;
         windowAttribs.background_pixel = _background.conv!uint;
@@ -719,6 +724,16 @@ public class Window
  
  		auto wmAtom = getAtom!"WM_DELETE_WINDOW";
         add(wmAtom);
+    }
+
+    version(Posix) public Visual* xGetVisual() @trusted
+    {
+        return _visual;
+    }
+
+    version(Posix) public auto xGetDepth() @trusted
+    {
+        return _depth;
     }
 
     /++

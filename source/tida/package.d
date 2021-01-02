@@ -1,17 +1,11 @@
 /++
-	TODO: Document
+	Tida main package.
 
 	Authors: TodNaz
 	License: MIT
 +/
 module tida;
 
-version(betterC) 
-{
-	import tida.betterc.runtime;
-	import tida.betterc.window;
-}
-else:
 public
 {
 	import tida.runtime;
@@ -28,4 +22,5 @@ public
 	import tida.sound.al;
 	import tida.graph.camera;
 	import tida.game;
+	import tida.angle;
 }

@@ -8,6 +8,9 @@
 +/
 module tida.color;
 
+static immutable NoAlpha = 0;
+static immutable Alpha = 1;
+
 /++
     Pixel format. Needed for conversion.
 +/
@@ -387,6 +390,34 @@ public struct Color(T)
         }
     }
 
+    this(uint color,PixelFormat format = PixelFormat.RGBA) @safe
+    {
+        if(format == PixelFormat.RGBA) {
+            this.red = cast(T) ((color & 0xFF000000) >> 24);
+            this.green = cast(T) ((color & 0x00FF0000) >> 16);
+            this.blue = cast(T) ((color & 0x0000FF00) >> 8);
+            this.alpha = cast(T) (color & 0x000000FF);
+        }else
+        if(format == PixelFormat.RGB) {
+            this.red = cast(T) ((color & 0xFF0000) >> 16);
+            this.green = cast(T) ((color & 0x00FF00) >> 8);
+            this.blue = cast(T) ((color & 0x0000FF));
+            this.alpha = T.max;
+        }else
+        if(format == PixelFormat.ARGB) {
+            this.red = cast(T) ((color & 0x00FF0000) >> 16);
+            this.green = cast(T) ((color & 0x0000FF00) >> 8);
+            this.blue = cast(T) (color & 0x000000FF);
+            this.alpha = cast(T) ((color & 0xFF000000) >> 24);
+        }else
+        if(format == PixelFormat.BGRA) {
+            this.blue = cast(T) ((color & 0xFF000000) >> 24);
+            this.green = cast(T) ((color & 0x00FF0000) >> 16);
+            this.red = cast(T) ((color & 0x0000FF00) >> 8);
+            this.alpha = cast(T) (color & 0x000000FF);
+        }
+    }
+
     ///
     this(string hex,PixelFormat format = PixelFormat.AUTO) @safe
     {
@@ -541,6 +572,13 @@ public struct Color(T)
         }
     }
     
+    public string stringComponents() @safe
+    {
+        import std.conv : to;
+
+        return "rgba("~r.to!string~","~g.to!string~","~b.to!string~","~a.to!string~")";
+    }
+
     ///
     public string formatString() @safe
     {
@@ -598,26 +636,56 @@ public struct Color(T)
         return [];
     }
 
-    public void invert() @safe
+    public auto colorize(ubyte blending)(Color!T color) @safe
+    {
+        import std.math : abs;
+
+        static if(blending == NoAlpha)
+        {
+            r = cast(T) (color.rf * this.rf * T.max);
+            g = cast(T) (color.gf * this.gf * T.max);
+            b = cast(T) (color.bf * this.bf * T.max);
+        }else
+        static if(blending == Alpha)
+        {
+            r = cast(T) (((r * a) + (color.r * (T.max - a))) / T.max);
+            g = cast(T) (((g * a) + (color.g * (T.max - a))) / T.max);
+            b = cast(T) (((b * a) + (color.b * (T.max - a))) / T.max);
+
+            a = T.max;
+        }
+
+        return this;
+    }
+
+    public auto invert() @safe
     {
         r = r ^ 0xff;
         g = g ^ 0xff;
         b = b ^ 0xff;
+
+        return this;
     }
 
-    public void clearRed() @safe
+    public auto clearRed() @safe
     {
         r = 0;
+
+        return this;
     }
 
-    public void clearGreen() @safe
+    public auto clearGreen() @safe
     {
         g = 0;
+
+        return this;
     }
 
-    public void clearBlue() @safe
+    public auto clearBlue() @safe
     {
         b = 0;
+
+        return this;
     }
 
     ///

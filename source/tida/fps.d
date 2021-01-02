@@ -82,8 +82,9 @@ public class FPSManager
         if(this._deltatime < 1000 / maxFps)
         {
             import std.datetime;
-            this._fps = (1000 / (this._deltatime + 1));
             Thread.sleep(dur!"msecs"((1000 / maxFps) - this._deltatime));
         }
+
+        this._fps = (1000 / (this._deltatime + 1));
     }
 }

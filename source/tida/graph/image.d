@@ -297,21 +297,19 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     +/
     public Image fromTexture() @safe
     {
-        GL.genTextures(1,_glID);
+        if(GL.isInitialize) 
+        {
+            GL.genTextures(1,_glID);
 
-        GL.bindTexture(_glID);
+            GL.bindTexture(_glID);
 
-        GL.texParameteri(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        GL.texParameteri(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            GL.texParameteri(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            GL.texParameteri(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        ubyte[] tryPixels;
+            GL.texImage2D(_width,_height,bytes!ubyte(PixelFormat.RGBA));
 
-        foreach(pixel; _pixels)
-            tryPixels ~= pixel.fromBytes!ubyte(PixelFormat.RGBA);
-
-        GL.texImage2D(_width,_height,tryPixels);
-
-        GL.bindTexture(0);
+            GL.bindTexture(0);
+        }
 
         return this;
     }
@@ -465,65 +463,139 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
 
     override void draw(Renderer render,Vecf position) @trusted
     {
-        GL.color = rgb(255,255,255);
+        if(!render.isSoftware)
+        {
+            GL.color = rgb(255,255,255);
 
-        GL.bindTexture(_glID);
-        GL.enable(GL_TEXTURE_2D);
+            GL.bindTexture(_glID);
+            GL.enable(GL_TEXTURE_2D);
 
-        GL.draw!Rectangle({
-            GL.texCoord2i(0,0); GL.vertex(position);
-            GL.texCoord2i(0,1); GL.vertex(position + Vecf(0,height));
-            GL.texCoord2i(1,1); GL.vertex(position + Vecf(width,height));
-            GL.texCoord2i(1,0); GL.vertex(position + Vecf(width,0));
-        });
+            GL.draw!Rectangle({
+                GL.texCoord2i(0,0); GL.vertex(position);
+                GL.texCoord2i(0,1); GL.vertex(position + Vecf(0,height));
+                GL.texCoord2i(1,1); GL.vertex(position + Vecf(width,height));
+                GL.texCoord2i(1,0); GL.vertex(position + Vecf(width,0));
+            });
 
-        GL.disable(GL_TEXTURE_2D);
-        GL.bindTexture(0);
+            GL.disable(GL_TEXTURE_2D);
+            GL.bindTexture(0);
+        }else
+        {
+            auto soft = render.getSoftClass();
+            if(soft is null) throw new Exception("Software class is not initilization!");
+
+            for(size_t x = position.intX; x < position.intX + _width; x++)
+            {
+                for(size_t y = position.intY; y < position.intY + _height; y++)
+                {
+                    soft.point(Vecf(x,y),getPixel(x - position.intX,y - position.intY));
+                }
+            }
+        }
     }
 
     override void drawEx(Renderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha)
     {
-        GL.color = rgba(255,255,255,alpha);
+        if(!renderer.isSoftware)
+        {
+            GL.color = rgba(255,255,255,alpha);
 
-        GL.bindTexture(_glID);
-        GL.enable(GL_TEXTURE_2D);
+            GL.bindTexture(_glID);
+            GL.enable(GL_TEXTURE_2D);
 
-        GL.loadIdentity();
-        GL.translate(position.x + center.x,position.y + center.y,0);
-        GL.rotate(angle,0f,0f,1f);
-        GL.translate(-(position.x + center.x),-(position.y + center.y),0);
+            GL.loadIdentity();
+            GL.translate(position.x + center.x,position.y + center.y,0);
+            GL.rotate(angle,0f,0f,1f);
+            GL.translate(-(position.x + center.x),-(position.y + center.y),0);
 
-        GL.draw!Rectangle({
-            GL.texCoord2i(0,0); GL.vertex(position);
-            GL.texCoord2i(0,1); GL.vertex(position + Vecf(0,size.y));
-            GL.texCoord2i(1,1); GL.vertex(position + size);
-            GL.texCoord2i(1,0); GL.vertex(position + Vecf(size.x,0));
-        });
+            GL.draw!Rectangle({
+                GL.texCoord2i(0,0); GL.vertex(position);
+                GL.texCoord2i(0,1); GL.vertex(position + Vecf(0,size.y));
+                GL.texCoord2i(1,1); GL.vertex(position + size);
+                GL.texCoord2i(1,0); GL.vertex(position + Vecf(size.x,0));
+            });
 
-        GL.color = rgba(255,255,255,255);
+            GL.color = rgba(255,255,255,255);
 
-        GL.disable(GL_TEXTURE_2D);
-        GL.bindTexture(0);
+            GL.disable(GL_TEXTURE_2D);
+            GL.bindTexture(0);
 
-        GL.loadIdentity();
+            GL.loadIdentity();
+        }else
+        {
+            import std.conv : to;
+
+            auto soft = renderer.getSoftClass();
+            if(soft is null) throw new Exception("Software class is not initilization!");
+
+            if(size.x.to!int != _width || size.y.to!int != _height) {
+                Image d = this.dup();
+                d.resize(size.x.to!int,size.y.to!int);
+                renderer.drawEx(d, position, angle, center, size, alpha);
+                return;
+            }
+
+            if(angle == 0)
+            {
+                for(size_t x = position.intX; x < position.intX + _width; x++)
+                {
+                    for(size_t y = position.intY; y < position.intY + _height; y++)
+                    {
+                        soft.point(Vecf(x,y),getPixel(x - position.intX,y - position.intY));
+                    }
+                }
+            }else
+            {
+                import tida.angle;
+
+                for(size_t x = position.intX; x < position.intX + _width; x++)
+                {
+                    for(size_t y = position.intY; y < position.intY + _height; y++)
+                    {
+                        auto pos = Vecf(x,y).rotate(angle.from!(Degrees,Radians), position + center);
+
+                        soft.point(pos,getPixel(x - position.intX,y - position.intY));
+                    }
+                }
+            }
+        }
     }
 
     override void drawColor(Renderer renderer,Vecf position,Color!ubyte color)
     {
-        GL.color = color;
+        if(!renderer.isSoftware)
+        {
+            GL.color = color;
 
-        GL.bindTexture(_glID);
-        GL.enable(GL_TEXTURE_2D);
+            GL.bindTexture(_glID);
+            GL.enable(GL_TEXTURE_2D);
 
-        GL.draw!Rectangle({
-            GL.texCoord2i(0,0); GL.vertex(position);
-            GL.texCoord2i(0,1); GL.vertex(position + Vecf(0,height));
-            GL.texCoord2i(1,1); GL.vertex(position + Vecf(width,height));
-            GL.texCoord2i(1,0); GL.vertex(position + Vecf(width,0));
-        });
+            GL.draw!Rectangle({
+                GL.texCoord2i(0,0); GL.vertex(position);
+                GL.texCoord2i(0,1); GL.vertex(position + Vecf(0,height));
+                GL.texCoord2i(1,1); GL.vertex(position + Vecf(width,height));
+                GL.texCoord2i(1,0); GL.vertex(position + Vecf(width,0));
+            });
 
-        GL.disable(GL_TEXTURE_2D);
-        GL.bindTexture(0);
+            GL.disable(GL_TEXTURE_2D);
+            GL.bindTexture(0);
+        }else
+        {
+            auto soft = renderer.getSoftClass();
+            if(soft is null) throw new Exception("Software class is not initilization!");
+
+            for(size_t x = position.intX; x < position.intX + _width; x++)
+            {
+                for(size_t y = position.intY; y < position.intY + _height; y++)
+                {
+                    auto pixel = getPixel(x - position.intX,y - position.intY);
+
+                    pixel.colorize!NoAlpha(color);
+
+                    soft.point(Vecf(x,y),pixel);
+                }
+            }
+        }
     }
 
     /++
@@ -531,9 +603,12 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     +/
     public void freeTexture() @trusted
     {
-        if(_glID != 0) {
-            glDeleteTextures(1,&_glID);
-            _glID = 0;
+        if(GL.isInitialize)
+        {
+            if(_glID != 0) {
+                glDeleteTextures(1,&_glID);
+                _glID = 0;
+            }
         }
     }
 

@@ -8,13 +8,12 @@ module tida.graph.render;
 
 import tida.window;
 
-/++
-    What type of rendering.
-+/
-enum BlendMode {
-    noBlend, // Without alpha channel
-    Blend /// With an alpha channel.
-};
+enum RenderType
+{
+    OpenGL,
+    DirectX,
+    Soft
+}
 
 /++
     Object to draw in a specific window.
@@ -29,6 +28,8 @@ public class Renderer
     import tida.graph.image;
     import tida.shape;
     import tida.graph.camera;
+    import tida.graph.software;
+    import tida.graph.blend;
 
     private
     {
@@ -36,6 +37,9 @@ public class Renderer
         Color!ubyte _background;
         Vecf size;
         Camera _camera;
+
+        Software software;
+        RenderType _type;
     }
 
     /++
@@ -44,33 +48,73 @@ public class Renderer
         Params:
             window = Window render. 
     +/
-    this(Window window) @safe
+    this(Window window,bool isSoft = false) @safe
     {
         import tida.info;
+        import tida.exception;
 
-        GL.initialize();
+        try
+        {
+            if(!isSoft)
+            {
+                GL.initialize();
+                _type = RenderType.OpenGL;
+            }else {
+                _type = RenderType.Soft;
+            }
+
+        }catch(ContextException exception)
+        {
+            _type = RenderType.Soft;
+        }
 
         toRender = window;
 
-        if(!toRender.fullscreen) {
-            size = Vecf(toRender.width,toRender.height);
-            GL.viewport(0,0,toRender.width,toRender.height);
-        }
-        else
+        if(_type == RenderType.OpenGL)
         {
-            size = Vecf(Display.getWidth,Display.getHeight);
-            GL.viewport(0,0,size.intX,size.intY);
+            if(!toRender.fullscreen) {
+                size = Vecf(toRender.width,toRender.height);
+                GL.viewport(0,0,toRender.width,toRender.height);
+            }
+            else
+            {
+                size = Vecf(Display.getWidth,Display.getHeight);
+                GL.viewport(0,0,size.intX,size.intY);
+            }
+
+            GL.matrixMode(GL_PROJECTION);
+            GL.loadIdentity();
+
+            GL.ortho(0.0, size.x, size.y, 0.0, -1.0, 1.0);
+
+            GL.matrixMode(GL_MODELVIEW);
+            GL.loadIdentity();
+
+            blend = BlendMode.Blend;
+        }else
+        if(_type == RenderType.Soft)
+        {
+            software = new Software(window);
+
+            if(!toRender.fullscreen) {
+                size = Vecf(toRender.width,toRender.height);
+                software.viewport(toRender.width,toRender.height);
+            }else
+            {
+                size = Vecf(Display.getWidth,Display.getHeight);
+                software.viewport(size.intX,size.intY);
+            }
         }
+    }
 
-        GL.matrixMode(GL_PROJECTION);
-        GL.loadIdentity();
+    public RenderType type() @safe @property
+    {
+        return _type;
+    }
 
-        GL.ortho(0.0, size.x, size.y, 0.0, -1.0, 1.0);
-
-        GL.matrixMode(GL_MODELVIEW);
-        GL.loadIdentity();
-
-        blend = BlendMode.Blend;
+    public Software getSoftClass() @safe @property
+    {
+        return software;
     }
 
     ///
@@ -81,31 +125,45 @@ public class Renderer
         size = _camera.port.end;
         auto begin = _camera.shape.begin;
 
-        if(!toRender.fullscreen) {
-            GL.viewport(0,0,toRender.width,toRender.height);
-        } else {
-            GL.viewport(0,0,Display.getWidth(),Display.getHeight());
-        }
-
-        clear();
-
-        GL.matrixMode(GL_PROJECTION);
-        GL.loadIdentity();
-
-        if(size.x == 0 && size.y == 0) {
+        if(_type == RenderType.OpenGL)
+        {
             if(!toRender.fullscreen) {
-                GL.ortho(0.0, toRender.width, toRender.height, 0.0, -1.0, 1.0);
+                GL.viewport(0,0,toRender.width,toRender.height);
+            } else {
+                GL.viewport(0,0,Display.getWidth(),Display.getHeight());
+            }
+
+            clear();
+
+            GL.matrixMode(GL_PROJECTION);
+            GL.loadIdentity();
+
+            if(size.x == 0 && size.y == 0) {
+                if(!toRender.fullscreen) {
+                    GL.ortho(0.0, toRender.width, toRender.height, 0.0, -1.0, 1.0);
+                }
+                else {
+                    GL.ortho(0.0, Display.getWidth(),Display.getHeight(), 0.0, -1.0, 1.0);
+                }
             }
             else {
-                GL.ortho(0.0, Display.getWidth(),Display.getHeight(), 0.0, -1.0, 1.0);
+                GL.ortho(0.0, size.x, size.y, 0.0, -1.0, 1.0);
+            }
+
+            GL.matrixMode(GL_MODELVIEW);
+            GL.loadIdentity();
+        }else
+        if(_type == RenderType.OpenGL)
+        {
+            if(!toRender.fullscreen) {
+                size = Vecf(toRender.width,toRender.height);
+                software.viewport(toRender.width,toRender.height);
+            }else
+            {
+                size = Vecf(Display.getWidth,Display.getHeight);
+                software.viewport(size.intX,size.intY);
             }
         }
-        else {
-            GL.ortho(0.0, size.x, size.y, 0.0, -1.0, 1.0);
-        }
-
-        GL.matrixMode(GL_MODELVIEW);
-        GL.loadIdentity();
     }
 
     /// 
@@ -114,6 +172,7 @@ public class Renderer
         return _camera;
     }
 
+    ///
     public void camera(Camera value) @safe @property
     {
         _camera = value;
@@ -128,11 +187,18 @@ public class Renderer
     +/
     public void blend(BlendMode blend) @trusted
     {
-        if(blend == BlendMode.Blend) {
-            GL.enable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        }else if(blend == BlendMode.noBlend) {
-            GL.disable(GL_BLEND);
+        if(_type == RenderType.OpenGL)
+        {
+            if(blend == BlendMode.Blend) {
+                GL.enable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            }else if(blend == BlendMode.noBlend) {
+                GL.disable(GL_BLEND);
+            }
+        }else
+        if(_type == RenderType.Soft)
+        {
+            software.blendMode(blend);
         }
     }
 
@@ -142,7 +208,16 @@ public class Renderer
     public void background(Color!ubyte color) @safe @property
     {
         _background = color;
-        GL.clearColor = color;
+
+        if(_type == RenderType.OpenGL)
+        {
+            GL.clearColor = color;
+        }
+        else
+        if(_type == RenderType.Soft)
+        {
+            software.background = color;
+        }
     }
 
     /// ditto
@@ -156,7 +231,31 @@ public class Renderer
     +/
     public void clear() @safe
     {
-        GL.clear();
+        if(_type == RenderType.OpenGL)
+        {
+            GL.clear();
+        }
+        else
+        if(_type == RenderType.Soft)
+        {
+            software.clear();
+        }
+    }
+
+    public void point(Vecf position,Color!ubyte color) @safe
+    {
+        if(_type == RenderType.OpenGL)
+        {
+            GL.color = color;
+
+            GL.draw!Points({
+                GL.vertex(position - _camera.port.begin);
+            });
+        }else
+        if(_type == RenderType.Soft)
+        {
+            software.point(position - _camera.port.begin,color);
+        }
     }
 
     /++
@@ -169,25 +268,32 @@ public class Renderer
     +/
     public void triangle(Vecf[3] points,Color!ubyte color,bool isFill = true) @safe
     {
-        GL.color = color;
+        if(_type == RenderType.OpenGL)
+        {
+            GL.color = color;
 
-        if(isFill) {
-            GL.draw!Polygons({
-                GL.vertex(points[0] - _camera.port.begin);
-                GL.vertex(points[1] - _camera.port.begin);
-                GL.vertex(points[2] - _camera.port.begin);
-            });
-        }else {
-            GL.draw!Lines({
-                GL.vertex(points[0] - _camera.port.begin);
-                GL.vertex(points[1] - _camera.port.begin);
+            if(isFill) {
+                GL.draw!Polygons({
+                    GL.vertex(points[0] - _camera.port.begin);
+                    GL.vertex(points[1] - _camera.port.begin);
+                    GL.vertex(points[2] - _camera.port.begin);
+                });
+            }else {
+                GL.draw!Lines({
+                    GL.vertex(points[0] - _camera.port.begin);
+                    GL.vertex(points[1] - _camera.port.begin);
 
-                GL.vertex(points[1] - _camera.port.begin);
-                GL.vertex(points[2] - _camera.port.begin);
+                    GL.vertex(points[1] - _camera.port.begin);
+                    GL.vertex(points[2] - _camera.port.begin);
 
-                GL.vertex(points[2] - _camera.port.begin);
-                GL.vertex(points[0] - _camera.port.begin);
-            });
+                    GL.vertex(points[2] - _camera.port.begin);
+                    GL.vertex(points[0] - _camera.port.begin);
+                });
+            }
+        }else
+        if(_type == RenderType.Soft)
+        {
+            throw new Exception("Triangle not drawning in software mode.");
         }
     }
 
@@ -205,29 +311,35 @@ public class Renderer
     {
         position -= _camera.port.begin;
 
-        GL.color = color;
+        if(_type == RenderType.OpenGL)
+        {
+            GL.color = color;
 
-        if(isFill) {
-            GL.draw!Rectangle({
-                GL.vertex(position);
-                GL.vertex(position + Vecf(width,0));
-                GL.vertex(position + Vecf(width,height));
-                GL.vertex(position + Vecf(0,height));
-            });
-        }else {
-            GL.draw!Lines({
-                GL.vertex(position);
-                GL.vertex(position + Vecf(width,0));
+            if(isFill) {
+                GL.draw!Rectangle({
+                    GL.vertex(position);
+                    GL.vertex(position + Vecf(width,0));
+                    GL.vertex(position + Vecf(width,height));
+                    GL.vertex(position + Vecf(0,height));
+                });
+            }else {
+                GL.draw!Lines({
+                    GL.vertex(position);
+                    GL.vertex(position + Vecf(width,0));
 
-                GL.vertex(position + Vecf(width,0));
-                GL.vertex(position + Vecf(width,height));
+                    GL.vertex(position + Vecf(width,0));
+                    GL.vertex(position + Vecf(width,height));
 
-                GL.vertex(position + Vecf(width,height));
-                GL.vertex(position + Vecf(0,height));
+                    GL.vertex(position + Vecf(width,height));
+                    GL.vertex(position + Vecf(0,height));
 
-                GL.vertex(position + Vecf(0,height));
-                GL.vertex(position);
-            });
+                    GL.vertex(position + Vecf(0,height));
+                    GL.vertex(position);
+                });
+            }
+        }else
+        {
+            software.rectangle(position,width,height,color,isFill);
         }
     }
 
@@ -245,12 +357,19 @@ public class Renderer
         ps[0] -= _camera.port.begin;
         ps[1] -= _camera.port.begin;
 
-        GL.color = color;
+        if(_type == RenderType.OpenGL)
+        {
+            GL.color = color;
 
-        GL.draw!Lines({
-            GL.vertex(ps[0]);
-            GL.vertex(ps[1]);
-        });
+            GL.draw!Lines({
+                GL.vertex(ps[0]);
+                GL.vertex(ps[1]);
+            });
+        }else
+        if(_type == RenderType.Soft)
+        {
+            software.line(points,color);
+        }
     }
 
     /++
@@ -266,77 +385,84 @@ public class Renderer
     {
         position -= _camera.port.begin;
 
-        GL.color = color;
-
-        if (isFill)
+        if(_type == RenderType.OpenGL)
         {
-            int x = 0;
-            int y = cast(int) radious;
+            GL.color = color;
 
-            int X1 = position.intX();
-            int Y1 = position.intY();
+            if (isFill)
+            {
+                int x = 0;
+                int y = cast(int) radious;
 
-            int delta = 1 - 2 * cast(int) radious;
-            int error = 0;
+                int X1 = position.intX();
+                int Y1 = position.intY();
 
-            GL.draw!Lines({
-                while (y >= 0)
-                {
-                    GL.vertex(Vecf(X1 + x, Y1 + y));
-                    GL.vertex(Vecf(X1 + x, Y1 - y));
+                int delta = 1 - 2 * cast(int) radious;
+                int error = 0;
 
-                    GL.vertex(Vecf(X1 - x, Y1 + y));
-                    GL.vertex(Vecf(X1 - x, Y1 - y));
-
-                    error = 2 * (delta + y) - 1;
-                    if ((delta < 0) && (error <= 0))
+                GL.draw!Lines({
+                    while (y >= 0)
                     {
-                        delta += 2 * ++x + 1;
-                        continue;
+                        GL.vertex(Vecf(X1 + x, Y1 + y));
+                        GL.vertex(Vecf(X1 + x, Y1 - y));
+
+                        GL.vertex(Vecf(X1 - x, Y1 + y));
+                        GL.vertex(Vecf(X1 - x, Y1 - y));
+
+                        error = 2 * (delta + y) - 1;
+                        if ((delta < 0) && (error <= 0))
+                        {
+                            delta += 2 * ++x + 1;
+                            continue;
+                        }
+                        if ((delta > 0) && (error > 0))
+                        {
+                            delta -= 2 * --y + 1;
+                            continue;
+                        }
+                        delta += 2 * (++x - --y);
                     }
-                    if ((delta > 0) && (error > 0))
+                });
+            }
+            else
+            {
+                int x = 0;
+                int y = cast(int) radious;
+
+                int X1 = position.intX();
+                int Y1 = position.intY();
+
+                int delta = 1 - 2 * cast(int) radious;
+                int error = 0;
+
+                GL.draw!Points({
+                    while (y >= 0)
                     {
-                        delta -= 2 * --y + 1;
-                        continue;
+                        GL.vertex(Vecf(X1 + x, Y1 + y));
+                        GL.vertex(Vecf(X1 + x, Y1 - y));
+                        GL.vertex(Vecf(X1 - x, Y1 + y));
+                        GL.vertex(Vecf(X1 - x, Y1 - y));
+
+
+                        error = 2 * (delta + y) - 1;
+                        if ((delta < 0) && (error <= 0))
+                        {
+                            delta += 2 * ++x + 1;
+                            continue;
+                        }
+                        if ((delta > 0) && (error > 0))
+                        {
+                            delta -= 2 * --y + 1;
+                            continue;
+                        }
+                        delta += 2 * (++x - --y);
                     }
-                    delta += 2 * (++x - --y);
-                }
-            });
-        }
-        else
+                });
+            }
+        }else
+        if(_type == RenderType.Soft)
         {
-            int x = 0;
-            int y = cast(int) radious;
-
-            int X1 = position.intX();
-            int Y1 = position.intY();
-
-            int delta = 1 - 2 * cast(int) radious;
-            int error = 0;
-
-            GL.draw!Points({
-                while (y >= 0)
-                {
-                    GL.vertex(Vecf(X1 + x, Y1 + y));
-                    GL.vertex(Vecf(X1 + x, Y1 - y));
-                    GL.vertex(Vecf(X1 - x, Y1 + y));
-                    GL.vertex(Vecf(X1 - x, Y1 - y));
-
-
-                    error = 2 * (delta + y) - 1;
-                    if ((delta < 0) && (error <= 0))
-                    {
-                        delta += 2 * ++x + 1;
-                        continue;
-                    }
-                    if ((delta > 0) && (error > 0))
-                    {
-                        delta -= 2 * --y + 1;
-                        continue;
-                    }
-                    delta += 2 * (++x - --y);
-                }
-            });
+            software.circle(position,radious,color,isFill);
         }
     }
 
@@ -424,10 +550,17 @@ public class Renderer
 
         ubyte[] pixels = new ubyte[](image.width * image.height * 4);
 
-        GL.readPixels(shape.x.to!int,shape.y.to!int,
-                      shape.endX.to!int - shape.x.to!int,
-                      shape.endY.to!int - shape.y.to!int,
-                      GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) pixels);
+        if(_type == RenderType.OpenGL)
+        {
+            GL.readPixels(shape.x.to!int,shape.y.to!int,
+                          shape.endX.to!int - shape.x.to!int,
+                          shape.endY.to!int - shape.y.to!int,
+                          GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) pixels);
+        }else
+        if(_type == RenderType.Soft)
+        {
+            software.copy(pixels,shape.begin,shape.end);
+        }
 
         image.bytes!ubyte(pixels.dup,PixelFormat.RGBA);
         
@@ -458,6 +591,11 @@ public class Renderer
             
             position.x += (s.advance.intX) + s.position.x;
         }
+    }
+
+    public bool isSoftware() @safe
+    {
+        return _type == RenderType.Soft;
     }
 
     /++
@@ -492,7 +630,14 @@ public class Renderer
     +/
     public void drawning() @safe
     {
-        toRender.swapBuffers();
+        if(_type != RenderType.Soft)
+        {
+            toRender.swapBuffers();
+        }
+        else
+        {
+            software.flush();
+        }
     }
 
     ///

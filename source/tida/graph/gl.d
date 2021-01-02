@@ -8,6 +8,8 @@ module tida.graph.gl;
 
 public import bindbc.opengl;
 
+__gshared bool _glIsInitialize = false;
+
 enum 
 {
     Lines = GL_LINES,
@@ -27,12 +29,19 @@ public struct GL
         import tida.exception;
     }
 
+    static bool isInitialize() @trusted
+    {
+        return _glIsInitialize;
+    }
+
     static void initialize() @trusted
     {
         auto retValue = loadOpenGL();
 
         if(retValue == GLSupport.noContext)
            throw new ContextException(ContextError.noContext,"Context is not create!");
+
+       _glIsInitialize = true;
     }
 
     static void alphaFunc(int mode,float alpha) @trusted

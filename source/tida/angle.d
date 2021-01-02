@@ -201,9 +201,14 @@ public Vecf rotate(Vecf vec,float angle,Vecf center) @safe
 {
 	import std.math;
 
-	angle = angle.from!(Degrees,Radians);
+	float ca = cos(angle);
+	float sa = sin(angle);
 
-	return Vecf(vec.x * cos(angle),vec.y * sin(angle)) + center;
+	vec -= center;
+	vec.x = vec.x * ca - vec.y * sa;
+	vec.y = vec.x * sa + vec.y * ca;
+
+	return vec + center;
 }
 	
 unittest
