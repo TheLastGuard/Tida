@@ -105,18 +105,21 @@ interface IRenderer
     +/
     final void draw(IDrawable drawable,Vecf position) @safe
     {
+        position -= camera.port.begin;
         drawable.draw(this, position);
     }
 
     /// ditto
     final void drawEx(IDrawableEx drawable,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha) @safe
     {
+        position -= camera.port.begin;
         drawable.drawEx(this, position, angle, center, size, alpha);
     }
 
     /// ditto
     final void drawColor(IDrawableColor drawable,Vecf position,Color!ubyte color) @safe
     {
+        position -= camera.port.begin;
         drawable.drawColor(this, position, color);
     }
 
