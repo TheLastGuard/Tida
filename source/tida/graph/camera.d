@@ -1,9 +1,15 @@
 /++
+    A module for working with a camera.
 
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.graph.camera;
 
-struct Camera
+/++
+    Camera object.
++/
+class Camera
 {
     import tida.shape, tida.vector;
 
@@ -13,6 +19,8 @@ struct Camera
         Shape _port = Shape.Rectangle(Vecf(0,0),Vecf(0,0));
     }
 
+    this() @safe {}
+
     this(Shape dvShape)
     in(dvShape.type == ShapeType.rectangle)
     body
@@ -20,26 +28,30 @@ struct Camera
         this._shape = dvShape;
     }
 
-    public void shape(Shape dvShape) @safe @property
+    /// Port on the window.
+    void shape(Shape dvShape) @safe @property
     in(dvShape.type == ShapeType.rectangle)
     body
     {
         this._shape = dvShape;
     }
 
-    public Shape shape() @safe @property
+    /// Port on the window.
+    Shape shape() @safe @property
     {
         return _shape;
     }
 
-    public void port(Shape dvPort) @safe @property
+    /// Port in the plane.
+    void port(Shape dvPort) @safe @property
     in(dvPort.type == ShapeType.rectangle)
     body
     {
         _port = dvPort;
     }
 
-    public Shape port() @safe @property
+    /// Port in the plane.
+    Shape port() @safe @property
     {
         return _port;
     }

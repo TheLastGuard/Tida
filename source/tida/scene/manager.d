@@ -16,14 +16,14 @@ static enum APIError : ubyte
     noCreateThread = 2
 }
 
-public T from(T)(Object obj) @trusted
+T from(T)(Object obj) @trusted
 {
     return cast(T) obj;
 }
 
 import core.thread;
 
-public class InstanceThread : Thread 
+class InstanceThread : Thread 
 {
     import tida.fps;
     import tida.scene.instance;
@@ -36,10 +36,10 @@ public class InstanceThread : Thread
         FPSManager fps;
         Instance[] list;
         size_t thread;
-        Renderer rend;
+        IRenderer rend;
     }
 
-    this(size_t thread,Renderer rend) @safe
+    this(size_t thread,IRenderer rend) @safe
     {
         fps = new FPSManager();
 
@@ -62,26 +62,23 @@ public class InstanceThread : Thread
         }
     }
 
-    public void exit() @safe
+    void exit() @safe
     {
         isJob = false;
     }
 }
 
-__gshared SceneManager _sceneManager;
+import tida.templates;
 
-public SceneManager sceneManager() @trusted
-{
-    return _sceneManager;
-}
+mixin Global!(SceneManager,"sceneManager");
 
-public void initSceneManager() @trusted
+void initSceneManager() @trusted
 {
     _sceneManager = new SceneManager();
 }
 
 /// Scene manager
-public class SceneManager
+class SceneManager
 {
     import tida.scene.scene;
     import tida.graph.render;
@@ -98,7 +95,7 @@ public class SceneManager
     }
 
     /// List scenes
-    public Scene[string] scenes() @safe @property
+    Scene[string] scenes() @safe @property
     {
         return _scenes;
     }
@@ -114,7 +111,7 @@ public class SceneManager
         sceneManager.gameRestart();
         ---
     +/
-    public Scene ofbegin() @safe @property
+    Scene ofbegin() @safe @property
     {
         return _ofbegin;
     }
@@ -122,7 +119,7 @@ public class SceneManager
     /++
         The last added scene.
     +/
-    public Scene ofend() @safe @property
+    Scene ofend() @safe @property
     {
         return _ofend;
     }
@@ -130,7 +127,7 @@ public class SceneManager
     /++
         The previous scene that was active.
     +/
-    public Scene previous() @safe @property
+    Scene previous() @safe @property
     {
         return _previous;
     }
@@ -148,7 +145,7 @@ public class SceneManager
         sceneManager.current.getScene!HeirScene.callback();
         ---
     +/
-    public Scene current() @safe @property nothrow
+    Scene current() @safe @property nothrow
     {
         return _current;
     }
@@ -159,7 +156,7 @@ public class SceneManager
         link to the current scene, which will be initialized 
         (i.e., control is transferred).
     +/
-    public Scene initable() @safe @property
+    Scene initable() @safe @property
     {
         return _initable;
     }
@@ -170,7 +167,7 @@ public class SceneManager
         Params:
             name = Trigger name.
     +/
-    public void trigger(string name) @safe
+    void trigger(string name) @safe
     {
         current.trigger(name);
 
@@ -185,7 +182,7 @@ public class SceneManager
         Params:
             scene = Scene.
     +/
-    public bool hasScene(Scene scene) @safe
+    bool hasScene(Scene scene) @safe
     {
         if(scene is null)
             return false;
@@ -204,7 +201,7 @@ public class SceneManager
         Params:
             scene = Scene.
     +/
-    public void add(Scene scene) @safe
+    void add(Scene scene) @safe
     {
         if(_ofbegin is null)
             _ofbegin = scene;
@@ -223,7 +220,7 @@ public class SceneManager
         sceneManager.add!MyScene;
         ---
     +/
-    public void add(T)() @safe
+    void add(T)() @safe
     in(new T().from!Scene)
     body
     {
@@ -242,26 +239,26 @@ public class SceneManager
     }
 
     ///
-    public void close() @safe
+    void close() @safe
     {
         apiExit = true;
     }
 
     ///
-    public void initThread(size_t count = 1) @safe
+    void initThread(size_t count = 1) @safe
     {
         apiThreadCreate = true;
         apiThreadValue = count; 
     }
 
     ///
-    public void pauseThread(size_t value) @safe
+   void pauseThread(size_t value) @safe
     {
         apiThreadPause = true;
         apiThreadValue = value;
     }
 
-    public void resumeThread(size_t value) @safe
+    void resumeThread(size_t value) @safe
     {
         apiThreadResume = true;
         apiThreadValue = value;
@@ -270,7 +267,7 @@ public class SceneManager
     /++
         Goes to the first scene added.
     +/
-    public void inbegin() @safe
+    void inbegin() @safe
     {
         gotoin(_ofbegin);
     }
@@ -281,7 +278,7 @@ public class SceneManager
         Params:
             name = Scene name.
     +/
-    public void gotoin(string name) @safe
+    void gotoin(string name) @safe
     {
         foreach(inscene; scenes) {
             if(inscene.name == name) {
@@ -291,13 +288,20 @@ public class SceneManager
         }
     }
 
+    import tida.game.game, tida.graph.camera;
+
+    Camera camera() @trusted
+    {
+        return _renderer.camera;
+    }
+
     /++
         Goes to the scene by his heir name.
 
         Params:
             scene = Scene heir. 
     +/
-    public void gotoin(Scene scene) @safe
+    void gotoin(Scene scene) @safe
     in(hasScene(scene))
     body
     {
@@ -368,7 +372,7 @@ public class SceneManager
     }
 
     ///
-    public void callGameStart() @safe
+    void callGameStart() @safe
     {
         foreach(scene; scenes) {
             scene.gameStart();
@@ -379,7 +383,7 @@ public class SceneManager
     }
 
     ///
-    public void callGameExit() @safe
+    void callGameExit() @safe
     {
         foreach(scene; scenes) {
             scene.gameExit();
@@ -390,7 +394,7 @@ public class SceneManager
     }
 
     ///
-    public void callOnError() @safe
+    void callOnError() @safe
     {
         if(current !is null)
         {
@@ -402,11 +406,10 @@ public class SceneManager
     }
 
     ///
-    public void callStep(size_t thread,Renderer rend) @safe
+    void callStep(size_t thread,IRenderer rend) @safe
     {
         if(current !is null)
         {
-            rend.camera = current.camera;
             current.worldCollision();
             current.step();
 
@@ -428,7 +431,7 @@ public class SceneManager
     }
 
     ///
-    public void callEvent(EventHandler event) @safe
+    void callEvent(EventHandler event) @safe
     {
         if(current !is null)
         {
@@ -447,7 +450,7 @@ public class SceneManager
     }
 
     ///
-    public void callDraw(Renderer render) @safe
+    void callDraw(IRenderer render) @safe
     {
         import tida.vector;
 
@@ -484,7 +487,7 @@ public class SceneManager
         }
     }
 
-    public void free() @safe
+    void free() @safe
     {
         _scenes = null;
     }

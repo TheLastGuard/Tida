@@ -17,15 +17,6 @@ This rule also applies to static variables:
 static immutable ubyte StaticVariable = ubyte.max;
 ```
 
-Also, variables and functions that will be strictly used only in one platform, at the beginning of the name are marked with either `x` if it is in a posix environment, or `w` if it is in a Windows environment:
-```D
-ulong xVariable; /// Variable in posix environment.
-uint  wVariable; /// Variable in windows environment.
-
-ulong xGetVariable() @safe; /// Function in posix environment.
-uint  wGetVariable() @safe; /// Function in windows environment.
-```
-
 Also, you need to place them in the appropriate compilation conditions so that when compiling on the windows platform, the compiler does not resent the x11 functions:
 ```D
 version(Posix)

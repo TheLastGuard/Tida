@@ -2,8 +2,8 @@
     A module for describing an image. This module provides control 
     of the image both with a surface and with a texture.
 
-    Authors: TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.graph.image;
 
@@ -14,24 +14,22 @@ static immutable Green = 1; /// Green component
 static immutable Blue = 2; /// Blue component
 
 /// Image.
-public class Image : IDrawable, IDrawableEx, IDrawableColor
+class Image : IDrawable, IDrawableEx, IDrawableColor
 {
-    import tida.color;
-    import tida.vector;
-    import tida.graph.gl;
-    import tida.graph.render;
+    import tida.color, tida.vector, tida.graph.gl, tida.graph.render, tida.graph.each;;
     import imageformats;
     import std.algorithm;
+    import std.conv : to;
 
     private
     {
         Color!ubyte[] _pixels;
         uint _width;
         uint _height;
-        uint _glID;
+        uint glTextureID;
     }
 
-    /// Empty initilization.
+    /// Empty initialization.
     this() @safe
     {
         _pixels = null;
@@ -50,39 +48,22 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     {
         _pixels = new Color!ubyte[](newWidth * newHeight);
 
-       	_pixels.fill(rgb(0,0,0));
+        _pixels.fill(rgb(0,0,0));
 
         _width = newWidth;
         _height = newHeight;
     }
 
-    /++
-        Loads a surface from a file. Supported formats are described here:
-        `https://code.dlang.org/packages/imageformats`
-
-        Params:
-            path = Relative or full path to the image file.
-    +/
-    this(string path) @safe
+    /// A sequence of pixels.
+    Color!ubyte[] pixels() @safe @property
     {
-        this.load(path);
+        return _pixels;
     }
 
-    /++
-        Gives a sequence of bytes that encodes a color in 
-        the specified color format.
-
-        Params:
-            format = Pixel format.
-    +/
-    public T[] bytes(T)(PixelFormat format = PixelFormat.RGBA) @safe
+    /// ditto
+    void pixels(Color!ubyte[] otherPixels) @safe @property
     {
-        T[] tryPixels;
-
-        foreach(pixel; _pixels)
-            tryPixels ~= pixel.fromBytes!T(format);
-
-        return tryPixels;
+        _pixels = otherPixels;
     }
 
     /++
@@ -91,57 +72,34 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             format = Pixel format.
     +/
-    public T[] colors(T)(PixelFormat format = PixelFormat.RGBA) @safe
+    ubyte[] bytes(int format)() @safe
     {
-        T[] tryPixels;
+        ubyte[] tryBytes;
 
         foreach(pixel; _pixels)
-            tryPixels ~= pixel.conv!T(format);
+            tryBytes ~= pixel.fromBytes!(ubyte,format);
 
-        return tryPixels;
-    }
-
-    override string toString() @safe const
-    {
-        import std.conv : to;
-
-        return "Image(width: "~width.to!string~",height: "~height.to!string~")";
+        return tryBytes;
     }
 
     /++
-        A sequence of pixels.
+        Fills the entire picture with color.
+        
+        Params:
+            color = Color fill.
     +/
-    public Color!ubyte[] pixels() @safe @property
+    void fill(Color!ubyte color) @safe
     {
-        return _pixels;
+        _pixels.fill(color);
     }
-
-    /++
-        A sequence of pixels.
-    +/
-    public void pixels(Color!ubyte[] otherPixels) @safe @property
-    {
-        _pixels = otherPixels;
-    }
-
-	/++
-		Fills the entire picture with color.
-		
-		Params:
-			color = Color fill.
-	+/
-	public void fill(Color!ubyte color) @safe
-	{
-		_pixels.fill(color);
-	}
 
     /++
         Converting pixels from an array to a color structure.
         
         Params:
-        	bt = Pixel byte array.
-        	format = Pixel format.
-        	
+            bt = Pixel byte array.
+            format = Pixel format.
+            
         Example:
         ---
         import std.algorithm : fill;
@@ -149,10 +107,10 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         auto bt = new ubyte()[32 * 32 * 4]; // Create virtual image 32x32
         bt.fill(255); // Fill image white color
         
-        image.bytes!ubyte(bt,PixelFormat.RGBA);
+        image.bytes!(PixelFormat.RGBA)(bt);
         ---
     +/
-    public void bytes(T)(T[] bt,PixelFormat format = PixelFormat.RGBA) @safe
+    void bytes(int format = PixelFormat.RGBA)(ubyte[] bt) @safe
     in
     {
         if(format == PixelFormat.RGB)
@@ -164,10 +122,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     }
     do
     {
-        size_t k = format == PixelFormat.RGB ? 3 : 4;
-        for(size_t i = 0; i < bt.length; i += k) {
-        	_pixels[i / k] = Color!ubyte(bt[i .. i+k],format);
-        }
+        pixels = bt.fromColors!(format);
     }
 
     /++
@@ -178,7 +133,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
             y = The y-axis position pixel.
             color = Pixel.
     +/
-    public void setPixel(size_t x,size_t y,Color!ubyte color) @safe
+    void setPixel(uint x,uint y,Color!ubyte color) @safe
     {
         if(x >= width || y >= height)
             return;
@@ -195,49 +150,48 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
             x = The x-axis position pixel.
             y = The y-axis position pixel.
     +/
-    public Color!ubyte getPixel(size_t x,size_t y) @safe
+    Color!ubyte getPixel(uint x,uint y) @safe
     {
         return _pixels[(width * y) + x];
     }
 
     /++
         Attaches an image to itself at the specified position.
+
+        Params:
+            otherImage = Other image.
+            pos = Other image position.
     +/
-    public void blit(Image otherImage,Vecf pos) @safe
+    void blit(Image otherImage,Vecf pos) @safe
     {
-        for(size_t x = pos.intX; x < pos.intX + otherImage.width; x++)
+        foreach(x,y; Coord(pos.intX + otherImage.width,pos.intY + otherImage.height,pos.intX,pos.intY))
         {
-            for(size_t y = pos.intY; y < pos.intY + otherImage.height; y++)
-            {
-                setPixel(x,y,otherImage.getPixel(x - pos.intX,y - pos.intY));
-            }
+            setPixel(x,y,otherImage.getPixel(x - pos.intX,y - pos.intY));
         }
     }
 
-	/++
-		Redraws the part to a new picture.
-		
-		Params:
-			x = The x-axis position.
-			y = The y-axis position.
-			cWidth = Width new picture.
-			cHeight = Hight new picture.
-	+/
-    public Image copy(int x,int y,int cWidth,int cHeight) @safe
+
+    /++
+        Redraws the part to a new picture.
+        
+        Params:
+            x = The x-axis position.
+            y = The y-axis position.
+            cWidth = Width new picture.
+            cHeight = Hight new picture.
+    +/
+    Image copy(int x,int y,int cWidth,int cHeight) @safe
     {
         Image image = new Image();
 
         image.create(cWidth,cHeight);
 
-        for(size_t ix = x; ix < x + cWidth; ix++)
+        foreach(ix,iy; Coord(x + cWidth,y + cHeight,x,y))
         {
-            for(size_t iy = y; iy < y + cHeight; iy++)
-            {
-                image.setPixel(
-                    ix - x, iy - y,
-                    this.getPixel(ix,iy)
-                );
-            }
+            image.setPixel(
+                ix - x, iy - y,
+                this.getPixel(ix,iy)
+            );
         }
 
         return image;
@@ -252,11 +206,11 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
             newWidth = Image width.
             newHeight = Image height.
     +/
-    public void create(uint newWidth,uint newHeight) @safe
+    void create(uint newWidth,uint newHeight) @safe
     {
         _pixels = new Color!ubyte[](newWidth * newHeight);
 
-       	_pixels.fill(rgb(0,0,0));
+        _pixels.fill(rgb(0,0,0));
 
         _width = newWidth;
         _height = newHeight;
@@ -269,7 +223,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             path = Relative or full path to the image file.
     +/
-    public void load(string path) @trusted
+    void load(string path) @trusted
     {
         import std.file : exists;
 
@@ -283,30 +237,30 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
 
         create(_width,_height);
 
-        this.bytes!ubyte(temp.pixels,PixelFormat.RGBA);
+        this.bytes!(PixelFormat.RGBA)(temp.pixels);
     }
 
     /// Whether the picture is a texture.
-    public bool isTexture() @safe
+    bool isTexture() @safe
     {
-        return _glID != 0;
+        return glTextureID != 0;
     }
 
     /++
         Convert to a texture for rendering to the window.
     +/
-    public Image fromTexture() @safe
+    auto fromTexture() @safe
     {
-        if(GL.isInitialize) 
+        if(GL.isInitialize)
         {
-            GL.genTextures(1,_glID);
+            GL.genTextures(1,glTextureID);
 
-            GL.bindTexture(_glID);
+            GL.bindTexture(glTextureID);
 
             GL.texParameteri(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             GL.texParameteri(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-            GL.texImage2D(_width,_height,bytes!ubyte(PixelFormat.RGBA));
+            GL.texImage2D(_width,_height,bytes!(PixelFormat.RGBA));
 
             GL.bindTexture(0);
         }
@@ -321,7 +275,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
             newWidth = Image new width.
             newHeight = Image new height.
     +/
-    public void resize(uint newWidth,uint newHeight) @safe
+    void resize(uint newWidth,uint newHeight) @safe
     {
         uint oldWidth = _width;
         uint oldHeight = _height;
@@ -330,7 +284,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         _height = newHeight;
 
         double scaleWidth = cast(double) newWidth / cast(double) oldWidth;
-        double scaleHeight = cast(double) newHeight / cast(double) oldWidth;
+        double scaleHeight = cast(double) newHeight / cast(double) oldHeight;
 
         Color!ubyte[] npixels = new Color!ubyte[](newWidth * newHeight);
 
@@ -349,9 +303,23 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /++
+        Enlarges the image by a factor.
+
+        Params:
+            k = factor.
+    +/
+    void scale(float k) @safe
+    {
+        uint newWidth = cast(uint) ((cast(float) _width) * k);
+        uint newHeight = cast(uint) ((cast(float) _height) * k);
+
+        resize(newWidth,newHeight);
+    }
+
+    /++
         Invents the picture by color.
     +/
-    public void invert() @safe
+    void invert() @safe
     {
         import std.algorithm : each;
 
@@ -364,7 +332,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             Component = Component color.
     +/
-    public void clearComponent(ubyte Component)() @safe
+    void clearComponent(ubyte Component)() @safe
     {
         import std.algorithm : each;
 
@@ -380,7 +348,7 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
             Component = Component color.
             value = How much to increase.
     +/
-    public void addComponent(ubyte Component)(ubyte value) @safe
+    void addComponent(ubyte Component)(ubyte value) @safe
     {
         import std.algorithm : each;
 
@@ -412,38 +380,20 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         }
     }
 
-    /++
-        The width of the picture.
-    +/
-    public immutable(uint) width() @safe @property
+    /// The widht of the picture.
+    uint width() @safe @property
     {
         return _width;
     }
 
-    /// ditto
-    public immutable(uint) width() @safe @property const
-    {
-        return _width;
-    }
-
-    /++
-        The height of the picture.
-    +/
-    public immutable(uint) height() @safe @property
+    /// The height of the picture.
+    uint height() @safe @property
     {
         return _height;
     }
 
-    /// ditto
-    public immutable(uint) height() @safe @property const
-    {
-        return _height;
-    }
-
-    /++
-        Creates a copy of the picture. Doesn't create a copy of the texture.
-    +/
-    public Image dup() @safe @property
+    /// Creates a copy of the picture. Doesn't create a copy of the texture.
+    Image dup() @safe @property
     {
         Image image = new Image();
 
@@ -455,19 +405,19 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /// Updates the texture if the picture has changed.
-    public void swap() @safe
+    void swap() @safe
     {
         if(isTexture) freeTexture();
         fromTexture();
     }
 
-    override void draw(Renderer render,Vecf position) @trusted
+    override void draw(IRenderer renderer,Vecf position) @safe
     {
-        if(!render.isSoftware)
+        if(renderer.type == RenderType.OpenGL)
         {
             GL.color = rgb(255,255,255);
 
-            GL.bindTexture(_glID);
+            GL.bindTexture(glTextureID);
             GL.enable(GL_TEXTURE_2D);
 
             GL.draw!Rectangle({
@@ -481,26 +431,18 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
             GL.bindTexture(0);
         }else
         {
-            auto soft = render.getSoftClass();
-            if(soft is null) throw new Exception("Software class is not initilization!");
-
-            for(size_t x = position.intX; x < position.intX + _width; x++)
-            {
-                for(size_t y = position.intY; y < position.intY + _height; y++)
-                {
-                    soft.point(Vecf(x,y),getPixel(x - position.intX,y - position.intY));
-                }
-            }
+            foreach(x,y; Coord(_width,_height))
+                renderer.point(Vecf(x + position.intX,y + position.intY), getPixel(x,y));
         }
     }
 
-    override void drawEx(Renderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha)
+    override void drawEx(IRenderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha)
     {
-        if(!renderer.isSoftware)
+        if(renderer.type == RenderType.OpenGL)
         {
             GL.color = rgba(255,255,255,alpha);
 
-            GL.bindTexture(_glID);
+            GL.bindTexture(glTextureID);
             GL.enable(GL_TEXTURE_2D);
 
             GL.loadIdentity();
@@ -523,51 +465,44 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
             GL.loadIdentity();
         }else
         {
-            import std.conv : to;
-
-            auto soft = renderer.getSoftClass();
-            if(soft is null) throw new Exception("Software class is not initilization!");
-
             if(size.x.to!int != _width || size.y.to!int != _height) {
-                Image d = this.dup();
-                d.resize(size.x.to!int,size.y.to!int);
-                renderer.drawEx(d, position, angle, center, size, alpha);
+                Image cp = this.dup();
+
+                cp.resize(size.x.to!int,size.y.to!int);
+
+                renderer.drawEx(cp, position, angle, center, size, alpha);
+
                 return;
             }
 
-            if(angle == 0)
+             if(angle == 0)
             {
-                for(size_t x = position.intX; x < position.intX + _width; x++)
+                foreach(x,y; Coord(_width,_height))
                 {
-                    for(size_t y = position.intY; y < position.intY + _height; y++)
-                    {
-                        soft.point(Vecf(x,y),getPixel(x - position.intX,y - position.intY));
-                    }
+                    renderer.point(Vecf(x,y) + position,getPixel(x,y));
                 }
             }else
             {
                 import tida.angle;
 
-                for(size_t x = position.intX; x < position.intX + _width; x++)
+                foreach(x,y; Coord(_width,_height))
                 {
-                    for(size_t y = position.intY; y < position.intY + _height; y++)
-                    {
-                        auto pos = Vecf(x,y).rotate(angle.from!(Degrees,Radians), position + center);
+                    auto pos = Vecf(position.intX + x,position.intY + y)
+                        .rotate(angle.from!(Degrees,Radians), position + center);
 
-                        soft.point(pos,getPixel(x - position.intX,y - position.intY));
-                    }
+                    renderer.point(pos,getPixel(x,y));
                 }
             }
         }
     }
 
-    override void drawColor(Renderer renderer,Vecf position,Color!ubyte color)
+    override void drawColor(IRenderer renderer,Vecf position,Color!ubyte color)
     {
-        if(!renderer.isSoftware)
+        if(renderer.type == RenderType.OpenGL)
         {
             GL.color = color;
 
-            GL.bindTexture(_glID);
+            GL.bindTexture(glTextureID);
             GL.enable(GL_TEXTURE_2D);
 
             GL.draw!Rectangle({
@@ -581,41 +516,31 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
             GL.bindTexture(0);
         }else
         {
-            auto soft = renderer.getSoftClass();
-            if(soft is null) throw new Exception("Software class is not initilization!");
-
-            for(size_t x = position.intX; x < position.intX + _width; x++)
+            foreach(x,y; Coord(_width,_height))
             {
-                for(size_t y = position.intY; y < position.intY + _height; y++)
-                {
-                    auto pixel = getPixel(x - position.intX,y - position.intY);
+                auto pixel = getPixel(x,y);
 
-                    pixel.colorize!NoAlpha(color);
+                pixel.colorize!NoAlpha(color);
 
-                    soft.point(Vecf(x,y),pixel);
-                }
+                renderer.point(Vecf(position.intX + x,position.intY + y),pixel);
             }
         }
     }
 
-    /++
-        Destroys the texture, not the image.
-    +/
-    public void freeTexture() @trusted
+    /// Destroys the texture, not the image.
+    void freeTexture() @trusted
     {
         if(GL.isInitialize)
         {
-            if(_glID != 0) {
-                glDeleteTextures(1,&_glID);
-                _glID = 0;
+            if(glTextureID != 0) {
+                glDeleteTextures(1,&glTextureID);
+                glTextureID = 0;
             }
         }
     }
 
-    /++
-        Frees up space for pixels. Does not destroy texture.
-    +/
-    public void freePixels() @trusted
+    /// Frees up space for pixels. Does not destroy texture.
+    void freePixels() @trusted
     {
         if(_pixels !is null) {
             destroy(_pixels);
@@ -623,10 +548,8 @@ public class Image : IDrawable, IDrawableEx, IDrawableColor
         }
     }
 
-    /++
-        Frees memory completely from texture and pixels.
-    +/
-    public void free() @trusted
+    /// Frees memory completely from texture and pixels.
+    void free() @safe
     {
         freeTexture();
         freePixels();

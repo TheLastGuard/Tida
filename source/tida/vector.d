@@ -1,8 +1,8 @@
 /++
     Module for information about positioning elements.
 
-    Authors: TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.vector;
 

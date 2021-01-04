@@ -1,154 +1,96 @@
 /++
     Module for system information.
 
-    Authors: TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.info;
 
 /++
-    Class for monitor information
+    Information about the monitor.
+
+    Example:
+    ---
+    auto size = new Monitor().size();
+    ---
 +/
-public class Display
+interface IMonitor
 {
-    import tida.runtime;
+    /// Monitor width
+    uint width(uint screenID = 0) @safe @property;
 
-    version(Posix)
+    /// Monitor height
+    uint height(uint screenID = 0) @safe @property;
+
+    /// Monitor size
+    final uint[2] size(uint screenID = 0) @safe @property
     {
-        import tida.x11;
-    }
-
-    version(Windows)
-    {
-        import core.sys.windows.windows;
-    }
-
-    public
-    {
-        uint width; /// Display width
-        uint height; /// Display height
-    }
-
-    /++
-        Returns the width of the monitor.
-    +/
-    static uint getWidth(uint screenID = 0) @trusted 
-    {
-        version(Posix)
-        {
-            XRRScreenResources* screens = XRRGetScreenResources(runtime.display,
-                DefaultRootWindow(runtime.display));
-            XRRCrtcInfo* info = null;
-
-            assert(screenID < screens.ncrtc);
-
-            info = XRRGetCrtcInfo(runtime.display,screens,screens.crtcs[screenID]);
-
-            int of = info.width;
-
-            XRRFreeScreenResources(screens);
-
-            return of;
-        }
-
-        version(Windows)
-        {
-            RECT desktop;
-               
-            HWND hDesktop = GetDesktopWindow();
-
-            GetWindowRect(hDesktop, &desktop);
-
-            return desktop.right;
-        }
-    }
-
-    /++
-        Returns the height of the monitor.
-    +/
-    static uint getHeight(uint screenID = 0) @trusted
-    {
-        version(Posix)
-        {
-            XRRScreenResources* screens = XRRGetScreenResources(runtime.display,
-                DefaultRootWindow(runtime.display));
-            XRRCrtcInfo* info = null;
-
-            assert(screenID < screens.ncrtc);
-
-            info = XRRGetCrtcInfo(runtime.display,screens,screens.crtcs[screenID]);
-
-            int of = info.height;
-
-            return of;
-        }
-
-        version(Windows)
-        {
-            RECT desktop;
-               
-            HWND hDesktop = GetDesktopWindow();
-
-            GetWindowRect(hDesktop, &desktop);
-
-            return desktop.bottom;
-        }
-    }
-
-    /++
-        Returns information about the display.
-    +/
-    public static Display information(int screenID = 0) @safe
-    {
-        auto display = new Display();
-
-        display.width = Display.getWidth(screenID);
-        display.height = Display.getHeight(screenID);
-
-        return display;
-    }
-
-    override string toString() @safe const
-    {
-        import std.conv : to;
-
-        return "Display(width: "~width.to!string~",height: "~height.to!string~")";
+        return [width, height];
     }
 }
 
-struct GPU
+version(Posix)
+class Monitor : IMonitor
 {
-	import bindbc.opengl;
-	import std.conv : to;
+    import tida.x11, tida.runtime;
 
-	static int totalMemory() @trusted @disable
-	{
-		int tm;
-		glGetIntegerv(0x9048, &tm);
-		
-		return tm;
-	}
-	
-	static int usedMemory() @trusted @disable
-	{
-		int cm;
-		glGetIntegerv(0x9049, &cm);
-		
-		return cm;
-	}
-	
-	static string vendor() @trusted
-	{
-		return glGetString(GL_VENDOR).to!string;
-	}
-	
-	static string renderer() @trusted
-	{
-		return glGetString(GL_RENDERER).to!string;
-	}
-	
-	static string versions() @trusted
-	{
-		return glGetString(GL_VERSION).to!string;
-	}
+    override uint width(uint screenID = 0) @trusted @property
+    {
+        XRRScreenResources* screens = XRRGetScreenResources(runtime.display,
+            DefaultRootWindow(runtime.display));
+        XRRCrtcInfo* info = null;
+
+        assert(screenID < screens.ncrtc);
+
+        info = XRRGetCrtcInfo(runtime.display,screens,screens.crtcs[screenID]);
+
+        int of = info.width;
+
+        XRRFreeScreenResources(screens);
+
+        return of;
+    }
+
+    override uint height(uint screenID = 0) @trusted @property
+    {
+        XRRScreenResources* screens = XRRGetScreenResources(runtime.display,
+            DefaultRootWindow(runtime.display));
+        XRRCrtcInfo* info = null;
+
+        assert(screenID < screens.ncrtc);
+
+        info = XRRGetCrtcInfo(runtime.display,screens,screens.crtcs[screenID]);
+
+        int of = info.height;
+
+        return of;
+    }
+}
+
+version(Windows)
+class Monitor : IMonitor
+{
+    import tida.winapi, tida.runtime;
+
+    override uint width(uint screenID = 0) @trusted @property
+    {
+        RECT desktop;
+               
+        HWND hDesktop = GetDesktopWindow();
+
+        GetWindowRect(hDesktop, &desktop);
+
+        return desktop.right;
+    }
+
+    override uint height(uint screenID = 0) @trusted @property
+    {
+        RECT desktop;
+               
+        HWND hDesktop = GetDesktopWindow();
+
+        GetWindowRect(hDesktop, &desktop);
+
+        return desktop.bottom;
+    }
 }

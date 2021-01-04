@@ -1,22 +1,20 @@
+/++
+    A module for creating a game instance for interpreting a system of scenes and instances.
+
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
++/
 module tida.game.game;
 
 import tida.window;
 import tida.graph.render;
+import tida.templates;
 
-__gshared Window _window;
-__gshared Renderer render;
+mixin Global!(IWindow,"window");
+mixin Global!(IRenderer,"renderer");
 
-public Window window() @trusted
-{
-    return _window;
-}
-
-public Renderer renderer() @trusted
-{
-    return render;
-}
-
-public class Game
+/// Game instance
+class Game
 {
     import tida.event;
     import tida.scene.manager;
@@ -35,12 +33,12 @@ public class Game
     {
         initSceneManager();
         _window = new Window(width,height,caption);
-        _window.initialize!ContextIn;
+        (cast(Window) _window).initialize!ContextIn;
 
         _window.resizable = false;
 
-        event = new EventHandler(window);
-        render = new Renderer(window);
+        event = new EventHandler(cast(Window) window);
+        _renderer = CreateRenderer(window);
         _loader = new Loader();
         _listener = new Listener();
 
@@ -56,7 +54,8 @@ public class Game
         sceneManager.callGameExit();
     }
 
-    public void run() @trusted
+    /// Run while game
+    void run() @trusted
     {
         sceneManager.callGameStart();
 
@@ -100,9 +99,9 @@ public class Game
 
             sceneManager.callStep(0,renderer);
 
-            renderer.drawning = {
+            renderer.clear();
                 sceneManager.callDraw(renderer);
-            };
+            renderer.drawning();
             
             fps.rate();
         }

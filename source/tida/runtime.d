@@ -1,175 +1,185 @@
 /++
-    Runtime module. Serves to save some globally significant variables in the library.
+    This module is designed to connect with graphic pipelines, load libraries necessary for the engine, and the like. 
+    The most important thing is to initialize it at the beginning.
 
-    To create a runtime, you just need to call one function for this:
-    ---
-    TidaRuntime.initialize(args);
-    ---
-
-    So it will automatically remember the program arguments and create all the 
-    conditions for creating a window.
-
-    Authors: TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.runtime;
 
-__gshared TidaRuntime __runtime = null; /// Runtime instance
+import tida.templates;
 
-/// ditto
-public TidaRuntime runtime() @trusted nothrow
-{
-    return __runtime;
-}
+version(Posix) mixin Global!(bool,"glxIsLoad");
+mixin Global!(TidaRuntime,"runtime");
 
 /++
-    Runtime. Required to create windows.
+    The main functions of the runtime that should be.
 +/
-public class TidaRuntime
+interface ITidaRuntime
 {
-    version(Posix)
-    {
-        import tida.x11;
-        import dglx.glx;
-    }
-
-    version(Windows)
-    {
-        import core.sys.windows.windows;
-    }
-
-    import tida.graph.text, tida.sound.al;
-
-    private
-    {
-        string[] mainArguments;
-
-        version(Posix)
-        {
-            Display* _xDisplay;
-            int _xDisplayID;
-        }
-
-        version(Windows)
-        {
-            HINSTANCE _wHInstance;
-        }
-
-        Device device;
-    }
-
-    ///
-    this(string[] args) @safe
-    {
-        mainArguments = args;
-
-        FreeTypeLoad();
-        InitSoundLibrary();
-        device = new Device();
-        device.open();
-    }
+    /++
+        Loads dynamic libraries that will be needed into memory.
+    +/
+    void loadLibraries() @trusted;
 
     /++
-        Creates and initializes a runtime for the program.
+        Terminates the program immediately.
+
+        Params:
+            errorCode = Terminates the program immediately.
     +/
-    static void initialize(string[] args = []) @trusted
-    {
-        __runtime = new TidaRuntime(args);
-
-        version(Posix) {
-            GLXLoadLibrary();
-            
-            __runtime.xDisplayOpen();
-        }
-
-        version(Windows) {
-            __runtime.wInstanceOpen();
-        }
-    }
-
-    /// Returns the arguments that were passed at runtime.
-    public string[] args() @safe @property nothrow
-    {
-        return mainArguments;
-    }
-
-    /// Returns a display open in x11 environment.
-    version(Posix) public Display* display() @trusted @property nothrow
-    {
-        return _xDisplay;
-    }
-
-    /// Returns a display identificator.
-    version(Posix) public int displayID() @safe @property nothrow
-    {
-        return _xDisplayID;
-    }
-
-    /// Opens the display in x11 environment.
-    version(Posix) public void xDisplayOpen() @trusted @property nothrow
-    {
-        _xDisplay = XOpenDisplay(null);
-        _xDisplayID = DefaultScreen(_xDisplay);
-    }
-
-    version(Posix) public Window rootWindow() @trusted @property nothrow
-    {
-        return RootWindow(runtime.display, runtime.displayID);
-    }
-
-    version(Posix) public Window rootWindowBy(int screen) @trusted nothrow
-    {
-        return RootWindow(runtime.display, screen);
-    }
-
-    /// Returns an instance obtained in a Windows environment.
-    version(Windows) public HINSTANCE hInstance() @trusted @property nothrow
-    {
-        return _wHInstance;
-    }
-
-    /// Gets an instance for working with WinAPI.
-    version(Windows) public void wInstanceOpen() @trusted @property nothrow
-    {
-        _wHInstance = GetModuleHandle(null);
-    }
-
-    public void terminate(int errorCode = 0) @trusted
+    final void terminate(ubyte errorCode) @trusted
     {
         import core.stdc.stdlib : exit;
 
         exit(errorCode);
     }
+
+    /// Program arguments.
+    string[] args() @safe;
 }
 
-version(Posix):
-import tida.x11;
-
-public Atom getAtom(string name)() @trusted
-{
-    return XInternAtom(runtime.display, name, 0);
-}
-
-public struct WMEvent
+/++
+    Runtime on Linux. Used to connect to the x11 server and initialize the runtime, load libraries and its components.
++/
+version(Posix)
+class TidaRuntime : ITidaRuntime
 {
     import tida.x11;
+    import dglx.glx;
 
-    public
+    private
     {
-        Atom first;
-        Atom second;
-        int format;
-        int mode;
-        ubyte* data;
-        size_t length;
-        Window window;
+        Display* xDisplay;
+        int xDisplayID;
+
+        string[] mainArguments;
+    }
+
+    /++
+        Initializes a runtime by connecting to the windowing server and opening libraries.
+
+        Params:
+            args = Program arguments.
+    +/
+    static void initialize(string[] args) @trusted
+    {
+        _runtime = new TidaRuntime(args);
+        
+        runtime.loadLibraries();
+        runtime.xDisplayOpen();
+    }
+
+    override void loadLibraries() @trusted
+    {
+        import tida.graph.text;
+
+        try
+        {
+            GLXLoadLibrary();
+
+            _glxIsLoad = true;
+        }catch(Exception e)
+        {
+            _glxIsLoad = false;
+        }finally
+        {
+            FreeTypeLoad();
+        }
+    }
+
+    this(string[] mainArguments) @safe
+    {
+        this.mainArguments = mainArguments;
+    }
+
+    override string[] args() @safe
+    {
+        return mainArguments;
+    }
+
+    private void xDisplayOpen() @trusted
+    {
+        xDisplay = XOpenDisplay(null);
+
+        assert(xDisplay,"Failed to connect to x11 server!");
+
+        xDisplayID = DefaultScreen(xDisplay);
+    }
+
+    /++
+        Gives the main window to the window system.
+    +/
+    Window rootWindow() @trusted @property nothrow
+    {
+        return RootWindow(xDisplay, xDisplayID);
+    }
+
+    /++
+        Gives an instance of the connection to the x11 server.
+    +/
+    Display* display() @trusted @property nothrow
+    {
+        return xDisplay;
+    }
+
+    /++
+        Gives an identifier to the display.
+    +/
+    int displayID() @trusted @property nothrow
+    {
+        return xDisplayID;
     }
 }
 
-public void sendEvent(WMEvent event) @trusted
+version(Windows)
+class TidaRuntime : ITidaRuntime
 {
-    import tida.x11;
+    import tida.winapi;
 
-    XChangeProperty(runtime.display, event.window, event.first, event.second,
-                event.format, event.mode, event.data,cast(int) event.length);
+    pragma(lib,"opengl32.lib");
+
+    private
+    {
+        string[] mainArguments;
+
+        HINSTANCE hInstance;
+    }
+
+    static void initialize(string[] args) @trusted
+    {
+        _runtime = new TidaRuntime(args);
+
+        runtime.instanceOpen();
+        runtime.loadLibraries();
+    }
+
+    override void loadLibraries() @trusted
+    {
+        import tida.graph.text;
+
+        FreeTypeLoad();
+    }
+
+    this(string[] mainArguments) @safe
+    {
+        this.mainArguments = mainArguments;
+    }
+
+    override string[] args() @safe
+    {
+        return mainArguments;
+    }
+
+    private void instanceOpen() @trusted
+    {
+        hInstance = GetModuleHandle(null);
+
+        assert(hInstance, "hInstance is not open!");
+    }
+
+    HINSTANCE instance() @safe nothrow
+    {
+        return hInstance;
+    }
 }

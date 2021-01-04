@@ -1,8 +1,8 @@
 /++
     A module for describing a scene in the play space.
 	
-    Authors: TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.scene.scene;
 
@@ -27,7 +27,7 @@ private void remove(T)(ref T[] obj,size_t index) @trusted nothrow
 /++
     Scene.
 +/ 
-public class Scene
+class Scene
 {
     import tida.scene.manager;
 	import tida.scene.instance;
@@ -73,7 +73,7 @@ public class Scene
     /++
         Returns a list of instances.
     +/
-    public Instance[] getList() @safe nothrow
+    Instance[] getList() @safe nothrow
     {
         return instances;
     }
@@ -84,7 +84,7 @@ public class Scene
         Params:
             index = Thread id.
     +/
-    public Instance[] getThreadList(size_t index) @safe nothrow
+    Instance[] getThreadList(size_t index) @safe nothrow
     {
         return bufferThread[index];
     }
@@ -95,13 +95,13 @@ public class Scene
         Params:
             index = Thread id.
     +/
-    public bool isThreadExists(size_t index) @safe nothrow
+    bool isThreadExists(size_t index) @safe nothrow
     {
         return index < bufferThread.length;
     }
 
     ///
-    public void initThread(size_t count = 1) @safe nothrow
+    void initThread(size_t count = 1) @safe nothrow
     {
         foreach(_; 0 .. count)
         {
@@ -116,7 +116,7 @@ public class Scene
             instance = Instance.
             threadID = In which thread to add execution.
     +/
-    public void add(Instance instance,size_t threadID = 0) @safe
+    void add(Instance instance,size_t threadID = 0) @safe
     in(instance,"Instance is not create!")
     body
     {  
@@ -143,7 +143,7 @@ public class Scene
         Note:
             There must be no arguments in the constructor.
     +/
-    public void add(Name)(size_t threadID = 0) @safe
+    void add(Name)(size_t threadID = 0) @safe
     in(new Name().from!Instance,"It's not instance!")
     body
     {
@@ -158,7 +158,7 @@ public class Scene
             instances = Instances.
             threadID = In which thread to add execution. 
     +/
-    public void add(Instance[] instances,size_t threadID = 0) @safe
+    void add(Instance[] instances,size_t threadID = 0) @safe
     {
         foreach(instance; instances) {
             add(instance,threadID);
@@ -172,7 +172,7 @@ public class Scene
             Names = Names instances.
             threadID = In which thread to add execution. 
     +/
-    public void add(Names...)(size_t threadID = 0) @safe
+    void add(Names...)(size_t threadID = 0) @safe
     {
         static foreach(Name; Names) {
             add!Name(threadID);
@@ -182,7 +182,7 @@ public class Scene
     /++
         Returns a sorted list of instances.
     +/
-    public Instance[] getErentInstances() @safe nothrow
+    Instance[] getErentInstances() @safe nothrow
     {
         return erentInstances;
     }
@@ -193,7 +193,7 @@ public class Scene
         Params:
             instance = Instance. 
     +/
-    public bool hasInstance(Instance instance) @safe nothrow
+    bool hasInstance(Instance instance) @safe nothrow
     {
         foreach(ins; instances) {
             if(instance is ins)
@@ -204,7 +204,7 @@ public class Scene
     }
 
     ///
-    public void worldCollision() @safe 
+    void worldCollision() @safe 
     {
         import tida.game.collision;
 
@@ -241,7 +241,7 @@ public class Scene
             `InMemory` - Removes permanently, from the scene and from memory 
                          (by the garbage collector).
     +/
-    public void instanceDestroy(ubyte type)(Instance instance) @trusted 
+    void instanceDestroy(ubyte type)(Instance instance) @trusted 
     in(hasInstance(instance))
     body
     {
@@ -270,7 +270,7 @@ public class Scene
     }
 
     ///
-    public Instance getInstanceByName(string name) @safe nothrow
+    Instance getInstanceByName(string name) @safe nothrow
     {
         foreach(instance; getList)
         {
@@ -282,7 +282,7 @@ public class Scene
     }
 
     ///
-    public Instance getInstanceByNameTag(string name,string tag) @safe nothrow
+    Instance getInstanceByNameTag(string name,string tag) @safe nothrow
     {
         foreach(instance; getList)
         {
@@ -297,7 +297,7 @@ public class Scene
     } 
     
     ///
-    public T getInstanceByClass(T)() @safe nothrow
+    T getInstanceByClass(T)() @safe nothrow
     {
     	foreach(instance; getList)
     	{
@@ -325,7 +325,7 @@ public class Scene
 
     import tida.shape, tida.vector;
 
-    public Instance getInstanceByMask(Shape shape,Vecf position) @safe
+    Instance getInstanceByMask(Shape shape,Vecf position) @safe
     {
         import tida.game.collision;
 
@@ -340,7 +340,7 @@ public class Scene
     }
 
     ///
-    public Instance[] getInstacesByMask(Shape shape,Vecf position) @safe
+    Instance[] getInstacesByMask(Shape shape,Vecf position) @safe
     {
         import tida.game.collision;
 
@@ -372,14 +372,14 @@ public class Scene
     }
 
     /// Clear sorted list of instances.
-    public void sortClear() @safe 
+    void sortClear() @safe 
     {
         this.erentInstances = null;
         this.erentTiles = null;
     }
 
     /// Sort list of instances.
-    public void sort() @trusted 
+    void sort() @trusted 
     {
         void sortErent(T)(ref T[] data,bool delegate(T a,T b) @safe nothrow func) @trusted nothrow
         {
@@ -426,16 +426,16 @@ public class Scene
 
         * Needed if you need to initialize something,
           when the scene becomes active.
-    ++/
-    public void init() @safe {}
+    +/
+    void init() @safe {}
 
     /++
         Reinitialization.
 
         * If the scene was previously initialized,
           then this method is called.
-    ++/
-    public void restart() @safe {}
+    +/
+    void restart() @safe {}
 
     /++
         Scene step
@@ -443,8 +443,8 @@ public class Scene
         * Only active when the scene
           becomes active
         * It does not require implementation.
-    ++/
-    public void step() @safe {}
+    +/
+    void step() @safe {}
 
     /++
         Event handling
@@ -452,8 +452,8 @@ public class Scene
         * Valid only when the scene
           becomes active.
         * It does not require implementation.
-    ++/
-    public void event(EventHandler event) @safe {}
+    +/
+    void event(EventHandler event) @safe {}
 
     /++
         Called when a trigger is activated.
@@ -461,7 +461,7 @@ public class Scene
         Params:
             oftrigger = Trigger name.
     +/
-    public void trigger(string oftrigger) @safe {}
+    void trigger(string oftrigger) @safe {}
 
     /++
         Drawing on the surface.
@@ -469,34 +469,34 @@ public class Scene
         * Valid only when the scene
           becomes active
         * It does not require implementation.
-    ++/
-    public void draw(Renderer graph) @safe {}
+    +/
+    void draw(IRenderer graph) @safe {}
 
     /++
         Event leave scene
-    ++/
-    public void leave() @safe {}
+    +/
+    void leave() @safe {}
 
     /++
         Event entry
     +/
-    public void entry() @safe {}
+    void entry() @safe {}
 
     /++
         It runs regardless of which scene is active.
     +/
-    public void gameExit() @safe {}
+    void gameExit() @safe {}
 
     /++
         If game restart - call self
         It runs regardless of which scene is active.
     +/
-    public void gameRestart() @safe {}
+    void gameRestart() @safe {}
 
     /++
         It runs regardless of which scene is active.
     +/
-    public void gameStart() @safe {}
+    void gameStart() @safe {}
 
     /++
         Object destruction event. Called then
@@ -504,12 +504,12 @@ public class Scene
         but you can do something with her before that.
         (how bawdy, yomayo).
     ++/
-    public void eventDestroy(Instance instance) @safe {}
+    void eventDestroy(Instance instance) @safe {}
 
     /++
         Will be called when an exception occurs.
     +/
-    public void onError() @safe {}
+    void onError() @safe {}
 
     /++
         This event is intended for rendering in debug mode.
@@ -517,6 +517,6 @@ public class Scene
         Params:
             graph = Instance to render.
     +/
-    debug public void drawDebug(Renderer graph) @safe {}
+    debug void drawDebug(IRenderer graph) @safe {}
 
 }

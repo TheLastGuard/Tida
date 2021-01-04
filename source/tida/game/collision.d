@@ -1,8 +1,8 @@
 /++
     A module for checking the intersection of some simple shapes.
 
-    Authors: TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.game.collision;
 
@@ -27,7 +27,7 @@ import tida.shape, tida.vector;
                      Shape.Line(Vecf(48,32),Vecf(32,48)));
     ---
 +/
-public bool isCollide(Shape first,Shape second,Vecf firstPos = Vecf(0,0),Vecf secondPos = Vecf(0,0)) @safe
+bool isCollide(Shape first,Shape second,Vecf firstPos = Vecf(0,0),Vecf secondPos = Vecf(0,0)) @safe
 in(first.type != ShapeType.unknown  && second.type != ShapeType.unknown)
 in(first.type != ShapeType.triangle && second.type != ShapeType.triangle)
 in(first.type != ShapeType.circle   && second.type != ShapeType.circle)

@@ -1,5 +1,8 @@
 /++
     A module for describing the rendering of image or animation.
+
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.game.sprite;
 
@@ -8,7 +11,7 @@ import tida.graph.drawable;
 /++
     A object for describing the rendering of image or animation.
 +/
-public class Sprite : IDrawable
+class Sprite : IDrawable
 {
     import tida.graph.image;
     import tida.game.animation;
@@ -48,7 +51,7 @@ public class Sprite : IDrawable
         Sprite[] skelet;
     }
 
-    override void draw(Renderer renderer, Vecf otherPosition) @safe
+    override void draw(IRenderer renderer, Vecf otherPosition) @safe
     {
         Image ofimage = isAnimation ? (!(animation is null) ? animation.step() : null) : image;
 

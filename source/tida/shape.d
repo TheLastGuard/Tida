@@ -27,8 +27,8 @@
 
     All such types are specified in enum `ShapeType`.
 
-    Authors: TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.shape;
 

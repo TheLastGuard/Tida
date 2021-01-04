@@ -1,52 +1,34 @@
 /++
     Module for rendering text using the `FreeType` library.
 
-    Authors: TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.graph.text;
 
 import bindbc.freetype;
+import tida.templates;
+import std.exception;
 
-/++
-	The type of string decoding in FreeType.
-+/
-enum EncodingMode
-{
-	None = FT_ENCODING_NONE, /// None
-	Unicode = FT_ENCODING_UNICODE, /// Unicode
-	MSSymbol = FT_ENCODING_MS_SYMBOL, /// MS Symbol
-	PRC = FT_ENCODING_PRC, /// RPC
-	Big5 = FT_ENCODING_BIG5, /// Big 5
-	Wansung = FT_ENCODING_WANSUNG /// Wansung
-}
-
-/// 
-__gshared FT_Library FTlibrary;
+mixin Global!(FT_Library,"FTLibrary");
 
 /++
     Loads the `FreeType` library.
     
     Throws: `Exception` If the library has not been loaded.
 +/
-public void FreeTypeLoad() @trusted
+void FreeTypeLoad() @trusted
 {
-    immutable retBind = loadFreeType();
-
-    if(retBind == FTSupport.noLibrary)
-        throw new Exception("Not find FreeType library!");
-
-    immutable ret = FT_Init_FreeType(&FTlibrary);
-
-    if(ret)
-        throw new Exception("Not load FreeType library!");
+    enforce(loadFreeType() != FTSupport.noLibrary, "Not find FreeType library!");
+    enforce(!FT_Init_FreeType(&_FTLibrary),"Not initialize FreeType Library!");
 }
 
-/++
-    Font object.
-+/
-public class Font
+/// Font object
+class Font
 {
+    import std.file : exists;
+    import std.string : toStringz;
+
     private
     {
         FT_Face _face;
@@ -55,21 +37,18 @@ public class Font
 
     public
     {
-        string path, name;
+        string  path,
+                name;
     }
 
-    /++
-        Returns a font object loaded from another library.
-    +/
-    public FT_Face face() @safe @property
+    /// Returns a font object loaded from another library.
+    FT_Face face() @safe @property
     {
         return _face;
     }
 
-    /++
-        Font size
-    +/
-    public size_t size() @safe @property
+    /// Font size
+    size_t size() @safe @property
     {
         return _size;
     }
@@ -82,52 +61,40 @@ public class Font
             size = Font size.
             encode = Encode type string. 
             
-        Throws: `LoadException` If the font was not found in the file system. 
-        		`FontException` if the font is damaged.
+        Throws: `Exception` If the font was not found in the file system, or if the font is damaged.
     +/
-    public void load(string path,size_t size,EncodingMode encode = EncodingMode.Unicode) @trusted
+    auto load(string path,size_t size) @trusted
     {
-        import std.file : exists;
-        import std.string : toStringz;
-        import tida.exception;
+        enforce(exists(path),"Not file file `"~path~"`");
 
-        if(!exists(path))
-            throw new LoadException(path);
+        enforce(!FT_New_Face(_FTLibrary,path.toStringz,0,&_face),"Error load font!");
 
-        this.path = path;
+        FT_CharMap found;
 
-        if(auto ret = FT_New_Face(FTlibrary,path.toStringz,0,&_face)) {
-            throw new FontException(ret,"Error load font!");
+        foreach(i; 0 .. _face.num_charmaps)
+        {
+            FT_CharMap charmap = _face.charmaps[i];
+            if ((charmap.platform_id == 3 && charmap.encoding_id == 1) /* Windows Unicode */
+             || (charmap.platform_id == 3 && charmap.encoding_id == 0) /* Windows Symbol */
+             || (charmap.platform_id == 2 && charmap.encoding_id == 1) /* ISO Unicode */
+             || (charmap.platform_id == 0)) { /* Apple Unicode */
+                found = charmap;
+                break;
+            }
         }
 
-		FT_CharMap found;
-
-		foreach(i; 0 .. _face.num_charmaps)
-		{
-    		FT_CharMap charmap = _face.charmaps[i];
-    		if ((charmap.platform_id == 3 && charmap.encoding_id == 1) /* Windows Unicode */
-    		 || (charmap.platform_id == 3 && charmap.encoding_id == 0) /* Windows Symbol */
-    		 || (charmap.platform_id == 2 && charmap.encoding_id == 1) /* ISO Unicode */
-    		 || (charmap.platform_id == 0)) { /* Apple Unicode */
-    			found = charmap;
-    			break;
-    		}
-  		}
-  		
-  		FT_Set_Charmap(_face, found);
+        FT_Set_Charmap(_face, found);
 
         FT_Set_Char_Size(_face, 0, cast(int) size*32, 300, 300);
         FT_Set_Pixel_Sizes(_face, 0, cast(int) size*2);
 
-        FT_Matrix matrix;
-
         this._size = size;
+
+        return this;
     }
 
-    /++
-        Free face.
-    +/
-    public void free() @trusted
+    /// Free memory
+    void free() @trusted
     {
         FT_Done_Face(_face);
     }
@@ -139,30 +106,45 @@ public class Font
 }
 
 /++
+    Determines the type of character by line.
+    
+    Example:
+    ---
+    alias Character = TypeChar!wstring.Type; // It's wchar
+    ---
++/
+template TypeChar(TypeString)
+{
+    static if(is(TypeString : string))
+        alias TypeChar = char;
+    else
+    static if(is(TypeString : wstring))
+        alias TypeChar = wchar;
+    else
+    static if(is(TypeString : dstring))
+        alias TypeChar = dchar;
+}
+
+/++
     Returns the size of the rendered text for the given font.   
     
     Params:
-    	T = String type.
-    	text = Text.
-    	font = Font.
+        T = String type.
+        text = Text.
+        font = Font.
 +/
-public size_t widthText(T)(T text,Font font) @safe
+int withText(T)(T text,Font font) @safe
 {
-    int width;
-
+    int width = 0;
     auto ss = new Text(font).renderSymbols!T(text);
-    
-    foreach(s; ss) {
-        width += (s.advance.intX) + s.position.intX;
-    }
+
+    foreach(s; ss) width += (s.advance.intX) + s.position.intX;
 
     return width;
 }
 
-/++
-    Symbol object. Needed for rendering.
-+/
-public class Symbol
+/// Symbol object. Needed for rendering.
+class Symbol
 {
     import tida.graph.image, tida.vector, tida.color;
 
@@ -186,30 +168,8 @@ public class Symbol
     }
 }
 
-/++
-	Determines the type of character by line.
-	
-	Example:
-	---
-	alias Character = TypeChar!wstring.Type; // It's wchar
-	---
-+/
-template TypeChar(TypeString)
-{
-	static if(is(TypeString : string))
-		alias Type = char;
-	else
-	static if(is(TypeString : wstring))
-		alias Type = wchar;
-	else
-	static if(is(TypeString : dstring))
-		alias Type = dchar;
-}
-
-/++
-    Object for rendering text. Use the `renderSymbol` function to render symbols.
-+/
-public class Text
+/// Object for rendering text. Use the `renderSymbol` function to render symbols.
+class Text
 {
     import tida.graph.image, tida.color, tida.vector;
 
@@ -242,9 +202,9 @@ public class Text
 
         for(size_t j = 0; j < symbols.length; ++j)
         {
-            TypeChar!T.Type s = symbols[j];
+            TypeChar!T s = symbols[j];
 
-            TypeChar!T.Type ns;
+            TypeChar!T ns;
             if(j != symbols.length-1) 
                 ns = symbols[j+1];
 
@@ -256,7 +216,7 @@ public class Text
             {
                 image = new Image();
 
-				FT_Load_Char(_font.face, s, FT_LOAD_RENDER);
+                FT_Load_Char(_font.face, s, FT_LOAD_RENDER);
                 const glyphIndex = FT_Get_Char_Index(_font.face, s);
 
                 FT_Load_Glyph(_font.face, glyphIndex, FT_LOAD_DEFAULT);
@@ -271,7 +231,7 @@ public class Text
 
                 foreach(i; 0 .. bitmap.width * bitmap.rows)
                 {
-                    pixels[i] = bitmap.buffer[i] > 128 ? grayscale(bitmap.buffer[i]) : Color!ubyte();
+                    pixels[i] = bitmap.buffer[i] > 128 ? grayscale(bitmap.buffer[i]) : rgba(0,0,0,0);
                 }
             }
 

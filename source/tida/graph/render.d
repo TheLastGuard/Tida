@@ -1,582 +1,134 @@
 /++
-    Module for drawing in a window using opengl.
+    Module for drawing in a window using opengl or processor.
 
-    Authors: TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.graph.render;
 
-import tida.window;
+/++
+    What type of rendering.
++/
+enum BlendMode {
+    noBlend, // Without alpha channel
+    Blend /// With an alpha channel.
+};
 
+/// Rendering type
 enum RenderType
 {
-    OpenGL,
-    DirectX,
-    Soft
+    OpenGL, ///
+    Soft ///
 }
 
 /++
-    Object to draw in a specific window.
+    Object for rendering objects.
 +/
-public class Renderer
+interface IRenderer
 {
-    import tida.color;
-    import tida.vector;
-    import tida.graph.gl;
-    import tida.graph.drawable;
-    import tida.graph.text;
-    import tida.graph.image;
-    import tida.shape;
-    import tida.graph.camera;
-    import tida.graph.software;
-    import tida.graph.blend;
-
-    private
-    {
-        Window toRender;
-        Color!ubyte _background;
-        Vecf size;
-        Camera _camera;
-
-        Software software;
-        RenderType _type;
-    }
+    import tida.vector, tida.color, tida.graph.drawable, tida.graph.camera, tida.graph.text;
 
     /++
-        Render initialization.
+        Updates the rendering surface if, for example, the window is resized.
+    +/
+    void reshape() @safe;
+
+    ///Camera for rendering.
+    void camera(Camera camera) @safe @property;
+
+    /// Camera for rendering.
+    Camera camera() @safe @property;
+
+    /++
+        Drawing a point.
 
         Params:
-            window = Window render. 
+            vec = Point position.
+            color = Point color.
     +/
-    this(Window window,bool isSoft = false) @safe
-    {
-        import tida.info;
-        import tida.exception;
-
-        try
-        {
-            if(!isSoft)
-            {
-                GL.initialize();
-                _type = RenderType.OpenGL;
-            }else {
-                _type = RenderType.Soft;
-            }
-
-        }catch(ContextException exception)
-        {
-            _type = RenderType.Soft;
-        }
-
-        toRender = window;
-
-        if(_type == RenderType.OpenGL)
-        {
-            if(!toRender.fullscreen) {
-                size = Vecf(toRender.width,toRender.height);
-                GL.viewport(0,0,toRender.width,toRender.height);
-            }
-            else
-            {
-                size = Vecf(Display.getWidth,Display.getHeight);
-                GL.viewport(0,0,size.intX,size.intY);
-            }
-
-            GL.matrixMode(GL_PROJECTION);
-            GL.loadIdentity();
-
-            GL.ortho(0.0, size.x, size.y, 0.0, -1.0, 1.0);
-
-            GL.matrixMode(GL_MODELVIEW);
-            GL.loadIdentity();
-
-            blend = BlendMode.Blend;
-        }else
-        if(_type == RenderType.Soft)
-        {
-            software = new Software(window);
-
-            if(!toRender.fullscreen) {
-                size = Vecf(toRender.width,toRender.height);
-                software.viewport(toRender.width,toRender.height);
-            }else
-            {
-                size = Vecf(Display.getWidth,Display.getHeight);
-                software.viewport(size.intX,size.intY);
-            }
-        }
-    }
-
-    public RenderType type() @safe @property
-    {
-        return _type;
-    }
-
-    public Software getSoftClass() @safe @property
-    {
-        return software;
-    }
-
-    ///
-    public void reshape() @trusted
-    {
-        import tida.info, std.conv : to;
-
-        size = _camera.port.end;
-        auto begin = _camera.shape.begin;
-
-        if(_type == RenderType.OpenGL)
-        {
-            if(!toRender.fullscreen) {
-                GL.viewport(0,0,toRender.width,toRender.height);
-            } else {
-                GL.viewport(0,0,Display.getWidth(),Display.getHeight());
-            }
-
-            clear();
-
-            GL.matrixMode(GL_PROJECTION);
-            GL.loadIdentity();
-
-            if(size.x == 0 && size.y == 0) {
-                if(!toRender.fullscreen) {
-                    GL.ortho(0.0, toRender.width, toRender.height, 0.0, -1.0, 1.0);
-                }
-                else {
-                    GL.ortho(0.0, Display.getWidth(),Display.getHeight(), 0.0, -1.0, 1.0);
-                }
-            }
-            else {
-                GL.ortho(0.0, size.x, size.y, 0.0, -1.0, 1.0);
-            }
-
-            GL.matrixMode(GL_MODELVIEW);
-            GL.loadIdentity();
-        }else
-        if(_type == RenderType.OpenGL)
-        {
-            if(!toRender.fullscreen) {
-                size = Vecf(toRender.width,toRender.height);
-                software.viewport(toRender.width,toRender.height);
-            }else
-            {
-                size = Vecf(Display.getWidth,Display.getHeight);
-                software.viewport(size.intX,size.intY);
-            }
-        }
-    }
-
-    /// 
-    public Camera camera() @safe @property
-    {
-        return _camera;
-    }
-
-    ///
-    public void camera(Camera value) @safe @property
-    {
-        _camera = value;
-        reshape();
-    }
+    void point(Vecf vec,Color!ubyte color) @safe;
 
     /++
-        Object rendering mode.
+        Line drawing.
 
         Params:
-            blend = Rendering mode. 
+            points = Tops of lines.
+            color = Line color.
     +/
-    public void blend(BlendMode blend) @trusted
-    {
-        if(_type == RenderType.OpenGL)
-        {
-            if(blend == BlendMode.Blend) {
-                GL.enable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            }else if(blend == BlendMode.noBlend) {
-                GL.disable(GL_BLEND);
-            }
-        }else
-        if(_type == RenderType.Soft)
-        {
-            software.blendMode(blend);
-        }
-    }
+    void line(Vecf[2] points,Color!ubyte color) @safe;
 
     /++
-        The background.
-    +/
-    public void background(Color!ubyte color) @safe @property
-    {
-        _background = color;
-
-        if(_type == RenderType.OpenGL)
-        {
-            GL.clearColor = color;
-        }
-        else
-        if(_type == RenderType.Soft)
-        {
-            software.background = color;
-        }
-    }
-
-    /// ditto
-    public Color!ubyte background() @safe @property
-    {
-        return _background;
-    }
-
-    /++
-        Clears what is drawn.
-    +/
-    public void clear() @safe
-    {
-        if(_type == RenderType.OpenGL)
-        {
-            GL.clear();
-        }
-        else
-        if(_type == RenderType.Soft)
-        {
-            software.clear();
-        }
-    }
-
-    public void point(Vecf position,Color!ubyte color) @safe
-    {
-        if(_type == RenderType.OpenGL)
-        {
-            GL.color = color;
-
-            GL.draw!Points({
-                GL.vertex(position - _camera.port.begin);
-            });
-        }else
-        if(_type == RenderType.Soft)
-        {
-            software.point(position - _camera.port.begin,color);
-        }
-    }
-
-    /++
-        Draws only a regular triangle.
-
-        Params:
-            points = Tringle vertex.
-            color = Triangle color.
-            isFill = Triangle is filled.
-    +/
-    public void triangle(Vecf[3] points,Color!ubyte color,bool isFill = true) @safe
-    {
-        if(_type == RenderType.OpenGL)
-        {
-            GL.color = color;
-
-            if(isFill) {
-                GL.draw!Polygons({
-                    GL.vertex(points[0] - _camera.port.begin);
-                    GL.vertex(points[1] - _camera.port.begin);
-                    GL.vertex(points[2] - _camera.port.begin);
-                });
-            }else {
-                GL.draw!Lines({
-                    GL.vertex(points[0] - _camera.port.begin);
-                    GL.vertex(points[1] - _camera.port.begin);
-
-                    GL.vertex(points[1] - _camera.port.begin);
-                    GL.vertex(points[2] - _camera.port.begin);
-
-                    GL.vertex(points[2] - _camera.port.begin);
-                    GL.vertex(points[0] - _camera.port.begin);
-                });
-            }
-        }else
-        if(_type == RenderType.Soft)
-        {
-            throw new Exception("Triangle not drawning in software mode.");
-        }
-    }
-
-    /++
-        Draws a rectangle.
+        Drawing a rectangle.
 
         Params:
             position = Rectangle position.
             width = Rectangle width.
             height = Rectangle height.
             color = Rectangle color.
-            isFill = Rectangle is filled.
+            isFill = Whether to fill the rectangle with color.
     +/
-    public void rectangle(Vecf position,float width,float height,Color!ubyte color,bool isFill = true) @safe
-    {
-        position -= _camera.port.begin;
-
-        if(_type == RenderType.OpenGL)
-        {
-            GL.color = color;
-
-            if(isFill) {
-                GL.draw!Rectangle({
-                    GL.vertex(position);
-                    GL.vertex(position + Vecf(width,0));
-                    GL.vertex(position + Vecf(width,height));
-                    GL.vertex(position + Vecf(0,height));
-                });
-            }else {
-                GL.draw!Lines({
-                    GL.vertex(position);
-                    GL.vertex(position + Vecf(width,0));
-
-                    GL.vertex(position + Vecf(width,0));
-                    GL.vertex(position + Vecf(width,height));
-
-                    GL.vertex(position + Vecf(width,height));
-                    GL.vertex(position + Vecf(0,height));
-
-                    GL.vertex(position + Vecf(0,height));
-                    GL.vertex(position);
-                });
-            }
-        }else
-        {
-            software.rectangle(position,width,height,color,isFill);
-        }
-    }
+    void rectangle(Vecf position,int width,int height,Color!ubyte color,bool isFill) @safe;
 
     /++
-        Draws a line.
-
-        Params:
-            points = Line vertex.
-            color = Line color.
-    +/
-    public void line(Vecf[2] points,Color!ubyte color) @safe
-    {
-        auto ps = points.dup;
-
-        ps[0] -= _camera.port.begin;
-        ps[1] -= _camera.port.begin;
-
-        if(_type == RenderType.OpenGL)
-        {
-            GL.color = color;
-
-            GL.draw!Lines({
-                GL.vertex(ps[0]);
-                GL.vertex(ps[1]);
-            });
-        }else
-        if(_type == RenderType.Soft)
-        {
-            software.line(points,color);
-        }
-    }
-
-    /++
-        Draws a circle.
+        Drawning a circle.
 
         Params:
             position = Circle position.
             radious = Circle radious.
             color = Circle color.
-            isFill = Circle is filled.
+            isFill = Whether to fill the circle with color.
     +/
-    public void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe
+    void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe;
+
+    /// Cleans the surface by filling it with color.
+    void clear() @safe;
+
+    /// Outputs the buffer to the window.
+    void drawning() @safe;
+
+    /// Gives the type of render.
+    RenderType type() @safe;
+
+    /// Set the coloring method. Those. with or without alpha blending.
+    void blendMode(BlendMode mode) @safe;
+
+    /// The color to fill when clearing.
+    void background(Color!ubyte background) @safe @property;
+
+    /// ditto
+    Color!ubyte background() @safe @property;
+
+    /++
+        Renders an object.
+
+        See_Also: `tida.graph.drawable`.
+    +/
+    final void draw(IDrawable drawable,Vecf position) @safe
     {
-        position -= _camera.port.begin;
+        drawable.draw(this, position);
+    }
 
-        if(_type == RenderType.OpenGL)
-        {
-            GL.color = color;
+    /// ditto
+    final void drawEx(IDrawableEx drawable,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha) @safe
+    {
+        drawable.drawEx(this, position, angle, center, size, alpha);
+    }
 
-            if (isFill)
-            {
-                int x = 0;
-                int y = cast(int) radious;
-
-                int X1 = position.intX();
-                int Y1 = position.intY();
-
-                int delta = 1 - 2 * cast(int) radious;
-                int error = 0;
-
-                GL.draw!Lines({
-                    while (y >= 0)
-                    {
-                        GL.vertex(Vecf(X1 + x, Y1 + y));
-                        GL.vertex(Vecf(X1 + x, Y1 - y));
-
-                        GL.vertex(Vecf(X1 - x, Y1 + y));
-                        GL.vertex(Vecf(X1 - x, Y1 - y));
-
-                        error = 2 * (delta + y) - 1;
-                        if ((delta < 0) && (error <= 0))
-                        {
-                            delta += 2 * ++x + 1;
-                            continue;
-                        }
-                        if ((delta > 0) && (error > 0))
-                        {
-                            delta -= 2 * --y + 1;
-                            continue;
-                        }
-                        delta += 2 * (++x - --y);
-                    }
-                });
-            }
-            else
-            {
-                int x = 0;
-                int y = cast(int) radious;
-
-                int X1 = position.intX();
-                int Y1 = position.intY();
-
-                int delta = 1 - 2 * cast(int) radious;
-                int error = 0;
-
-                GL.draw!Points({
-                    while (y >= 0)
-                    {
-                        GL.vertex(Vecf(X1 + x, Y1 + y));
-                        GL.vertex(Vecf(X1 + x, Y1 - y));
-                        GL.vertex(Vecf(X1 - x, Y1 + y));
-                        GL.vertex(Vecf(X1 - x, Y1 - y));
-
-
-                        error = 2 * (delta + y) - 1;
-                        if ((delta < 0) && (error <= 0))
-                        {
-                            delta += 2 * ++x + 1;
-                            continue;
-                        }
-                        if ((delta > 0) && (error > 0))
-                        {
-                            delta -= 2 * --y + 1;
-                            continue;
-                        }
-                        delta += 2 * (++x - --y);
-                    }
-                });
-            }
-        }else
-        if(_type == RenderType.Soft)
-        {
-            software.circle(position,radious,color,isFill);
-        }
+    /// ditto
+    final void drawColor(IDrawableColor drawable,Vecf position,Color!ubyte color) @safe
+    {
+        drawable.drawColor(this, position, color);
     }
 
     /++
-		Rendering shape.
-		
-		Params:
-			shape = Shape struct. 
-			position = Shape position.
-			color = Shape color.
-			isFill = Shape state filled.
-    +/
-    public void draw(Shape shape,Vecf position,Color!ubyte color,bool isFill = true) @safe
-    {
-        position -= _camera.port.begin;
-
-        switch(shape.type) {
-            case ShapeType.point:
-                GL.color = color;
-
-                GL.draw!Points({
-                    GL.vertex(position + shape.begin);
-                });
-            break;
-
-            case ShapeType.line:
-                line([
-                    position + shape.begin,
-                    position + shape.end
-                ],color);
-            break;
-
-            case ShapeType.rectangle:
-                rectangle(
-                    position + shape.begin,
-                    shape.endX - shape.x,
-                    shape.endY - shape.y,
-                    color,
-                    isFill
-                );
-            break;
-
-            case ShapeType.circle:
-                circle(shape.begin,shape.radious,color,true);
-            break; 
-
-            case ShapeType.triangle:
-                triangle([
-                    shape.vertex!0,
-                    shape.vertex!1,
-                    shape.vertex!2
-                ],color,isFill);
-            break;
-
-            case ShapeType.multi:
-                foreach(e; shape.shapes) {
-                    draw(e,position + shape.begin,color,isFill);
-                }
-            break;
-
-            default:
-                assert(0,"This type is not supported!");
-        }
-    }
-
-    /++	
-		Copies part of the picture to the window.
-		
-		Params:
-			shape = Capture area.
-			
-		Returns:
-			The copied area as a picture.
-    +/
-    public Image copy(Shape shape) @trusted
-    in(shape.type == ShapeType.rectangle)
-    body
-    {
-        import std.conv : to;
-
-        Image image = new Image();
-
-        image.create(shape.endX.to!int - shape.x.to!int,
-                     shape.endY.to!int - shape.y.to!int);
-
-        ubyte[] pixels = new ubyte[](image.width * image.height * 4);
-
-        if(_type == RenderType.OpenGL)
-        {
-            GL.readPixels(shape.x.to!int,shape.y.to!int,
-                          shape.endX.to!int - shape.x.to!int,
-                          shape.endY.to!int - shape.y.to!int,
-                          GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) pixels);
-        }else
-        if(_type == RenderType.Soft)
-        {
-            software.copy(pixels,shape.begin,shape.end);
-        }
-
-        image.bytes!ubyte(pixels.dup,PixelFormat.RGBA);
-        
-        return image;
-    }
-
-    /++
-        Draws characters rendered by the text class.
+        Renders symbols.
 
         Params:
-            symbols = Symbols rendered.
-            position = Text position.
+            symbols = Symbol's.
+            position = Symbols renders position.
     +/
-    public void draw(Symbol[] symbols,Vecf position) @safe
+    final void draw(Symbol[] symbols,Vecf position) @safe
     {
-        position -= _camera.port.begin;
         position.y += (symbols[0].size + (symbols[0].size / 2)); 
 
         foreach(s; symbols) 
@@ -592,61 +144,738 @@ public class Renderer
             position.x += (s.advance.intX) + s.position.x;
         }
     }
+}
 
-    public bool isSoftware() @safe
+class GLRender : IRenderer
+{
+    import tida.window, tida.color, tida.vector, tida.graph.camera, tida.shape, tida.graph.gl;
+    import std.conv : to;
+
+    private
     {
-        return _type == RenderType.Soft;
+        IWindow window;
+        Color!ubyte _background;
+        Camera _camera;
+        RenderType _type = RenderType.OpenGL;
     }
 
-    /++
-    	Renders an object for rendering.
-    	
-    	Params:
-    		drawable = Object to render.
-    		position = Position.
-    +/
-    public void draw(IDrawable drawable,Vecf position) @safe
+    this(IWindow window) @safe
     {
-        if(drawable !is null)
-            drawable.draw(this,position - _camera.port.begin);
+        this.window = window;
+
+        _camera = new Camera();
+
+        _camera.shape = Shape.Rectangle(Vecf(0,0),Vecf(window.width,window.height));
+        _camera.port  = Shape.Rectangle(Vecf(0,0),Vecf(window.width,window.height));
+
+        reshape();
+
+        blendMode(BlendMode.Blend);
     }
 
-    ///
-    public void drawEx(IDrawableEx drawable,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha) @safe
+    override void reshape() @safe
     {
-        if(drawable !is null)
-            drawable.drawEx(this,position - _camera.port.begin,angle,center,size,alpha);
+        GL.viewport(0,0, _camera.shape.end.x.to!int, _camera.shape.end.y.to!int);
+
+        clear();
+
+        GL.matrixMode(GL_PROJECTION);
+        GL.loadIdentity();
+
+        GL.ortho(0.0, _camera.port.end.x, _camera.port.end.y, 0.0, -1.0, 1.0);
+
+        GL.matrixMode(GL_MODELVIEW);
+        GL.loadIdentity();
+    }
+    
+    override void camera(Camera camera) @safe
+    in(camera,"Camera is no allocated!")
+    do
+    {
+        _camera = camera;
     }
 
-    ///
-    public void drawColor(IDrawableColor drawable,Vecf position,Color!ubyte color) @safe
+    override Camera camera() @safe
     {
-        if(drawable !is null)
-            drawable.drawColor(this,position - _camera.port.begin,color);
+        return _camera;
     }
 
-    /++
-        Display the drawing canvas.
-    +/
-    public void drawning() @safe
+    override void background(Color!ubyte color) @safe @property
     {
-        if(_type != RenderType.Soft)
+        GL.clearColor = color;
+
+        _background = color;
+    }
+
+    override Color!ubyte background() @safe @property
+    {
+        return _background;
+    }
+
+    override void point(Vecf position,Color!ubyte color) @safe
+    {
+        GL.color = color;
+
+        GL.draw!Points({
+            GL.vertex(position - _camera.port.begin);
+        });
+    }
+
+    override void rectangle(Vecf position,int width,int height,Color!ubyte color,bool isFill) @safe
+    {
+        position -= _camera.port.begin;
+
+        GL.color = color;
+
+        if(isFill) 
         {
-            toRender.swapBuffers();
+            GL.draw!Rectangle({
+                GL.vertex(position);
+                GL.vertex(position + Vecf(width,0));
+                GL.vertex(position + Vecf(width,height));
+                GL.vertex(position + Vecf(0,height));
+            });
+        }else 
+        {
+            GL.draw!Lines({
+                GL.vertex(position);
+                GL.vertex(position + Vecf(width,0));
+
+                GL.vertex(position + Vecf(width,0));
+                GL.vertex(position + Vecf(width,height));
+
+                GL.vertex(position + Vecf(width,height));
+                GL.vertex(position + Vecf(0,height));
+
+                GL.vertex(position + Vecf(0,height));
+                GL.vertex(position);
+            });
+        }
+    }
+
+    override void line(Vecf[2] points,Color!ubyte color) @safe
+    {
+        auto ps = points.dup;
+
+        ps[0] -= _camera.port.begin;
+        ps[1] -= _camera.port.begin;
+
+        GL.color = color;
+
+        GL.draw!Lines({
+            GL.vertex(ps[0]);
+            GL.vertex(ps[1]);
+        });
+    }
+
+    override void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe
+    {
+        GL.color = color;
+
+        if (isFill)
+        {
+            int x = 0;
+            int y = cast(int) radious;
+
+            int X1 = position.intX();
+            int Y1 = position.intY();
+
+            int delta = 1 - 2 * cast(int) radious;
+            int error = 0;
+
+            GL.draw!Lines({
+                while (y >= 0)
+                {
+                    GL.vertex(Vecf(X1 + x, Y1 + y));
+                    GL.vertex(Vecf(X1 + x, Y1 - y));
+
+                    GL.vertex(Vecf(X1 - x, Y1 + y));
+                    GL.vertex(Vecf(X1 - x, Y1 - y));
+
+                    error = 2 * (delta + y) - 1;
+                    if ((delta < 0) && (error <= 0))
+                    {
+                        delta += 2 * ++x + 1;
+                        continue;
+                    }
+                    if ((delta > 0) && (error > 0))
+                    {
+                        delta -= 2 * --y + 1;
+                        continue;
+                    }
+                    delta += 2 * (++x - --y);
+                }
+            });
         }
         else
         {
-            software.flush();
+            int x = 0;
+            int y = cast(int) radious;
+
+            int X1 = position.intX();
+            int Y1 = position.intY();
+
+            int delta = 1 - 2 * cast(int) radious;
+            int error = 0;
+
+            GL.draw!Points({
+                while (y >= 0)
+                {
+                    GL.vertex(Vecf(X1 + x, Y1 + y));
+                    GL.vertex(Vecf(X1 + x, Y1 - y));
+                    GL.vertex(Vecf(X1 - x, Y1 + y));
+                    GL.vertex(Vecf(X1 - x, Y1 - y));
+
+
+                    error = 2 * (delta + y) - 1;
+                    if ((delta < 0) && (error <= 0))
+                    {
+                        delta += 2 * ++x + 1;
+                        continue;
+                    }
+                    if ((delta > 0) && (error > 0))
+                    {
+                        delta -= 2 * --y + 1;
+                        continue;
+                    }
+                    delta += 2 * (++x - --y);
+                }
+            });
         }
     }
 
-    ///
-    public void drawning(void delegate() @safe func) @safe
+    override void clear() @safe
     {
-        this.clear();
-
-        func();
-
-        this.drawning();
+        GL.clear();
     }
+
+    override void drawning() @safe
+    {
+        window.swapBuffers();
+    }
+
+    override RenderType type() @safe
+    {
+        return _type;
+    }
+
+    override void blendMode(BlendMode mode) @trusted
+    {
+        if(mode == BlendMode.Blend) {
+            GL.enable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }else if(mode == BlendMode.noBlend) {
+            GL.disable(GL_BLEND);
+        }
+    }
+}
+
+interface IPlane
+{
+    import tida.color, tida.window, tida.vector;
+
+    void alloc(uint width,uint height) @safe;
+    void clearPlane(Color!ubyte color) @safe;
+    void putToWindow(IWindow window) @safe;
+    void blendMode(BlendMode mode) @safe @property;
+    void pointTo(Vecf position,Color!ubyte color) @safe;
+    void viewport(int w,int h) @safe;
+    void move(int x,int y) @safe;
+}
+
+version(Posix)
+class Plane : IPlane
+{
+    import tida.x11, tida.color, tida.window, tida.runtime, tida.vector;
+
+    private
+    {
+        GC context;
+        XImage* ximage;
+
+        tida.window.Window window;
+
+        ubyte[] buffer;
+        uint _width;
+        uint _height;
+
+        BlendMode bmode;
+        uint _pwidth;
+        uint _pheight;
+
+        uint xput;
+        uint yput;
+    }
+
+    this(tida.window.Window window) @trusted
+    {
+        this.window = window;
+
+        context = XCreateGC(runtime.display, window.handle, 0, null);
+    }
+
+    override void alloc(uint width,uint height) @trusted
+    {
+        _width = width;
+        _height = height;
+
+        buffer = new ubyte[](_width * _height * 4);
+
+        if(ximage !is null) {
+            XFree(ximage);
+            ximage = null;
+        }
+
+        Visual* visual = (cast(tida.window.Window) window).getVisual();
+        int depth = (cast(tida.window.Window) window).getDepth();
+
+        ximage = XCreateImage(runtime.display, visual, depth,
+            ZPixmap, 0, cast(char*) buffer, _width, _height, 32, 0);
+
+        if(ximage is null) throw new Exception("[X11] XImage is not create!");
+    }
+
+    override void viewport(int w,int h) @safe
+    {
+        _pwidth = w;
+        _pheight = h;
+        alloc(_width,_height);
+    }
+
+    override void move(int x,int y) @safe
+    {
+        xput = x;
+        yput = y;
+    }
+
+    override void clearPlane(Color!ubyte color) @safe
+    {
+        for(size_t i = 0; i < _width * _height * 4; i += 4)
+        {
+            buffer[i] = color.b;
+            buffer[i+1] = color.g;
+            buffer[i+2] = color.r; 
+        }
+    }
+
+    override void putToWindow(IWindow window) @trusted
+    {
+        XPutImage(runtime.display, (cast(tida.window.Window) window).handle, context, ximage,
+            0, 0, 0, 0, _width, _height);
+
+        XSync(runtime.display, False);
+    }
+
+    override void blendMode(BlendMode mode) @safe @property
+    {
+        bmode = mode;
+    }
+
+    override void pointTo(Vecf position,Color!ubyte color) @safe @property
+    {
+        import std.conv : to;
+
+        position = position - Vecf(xput,yput);
+
+        if(position.x.to!int >= _width || position.y.to!int >= _height || 
+           position.x.to!int < 0 || position.y.to!int < 0)
+            return;
+
+        if(_pwidth == _width && _pheight == _height)
+        {
+            auto pos = ((_width * position.y.to!int) + position.x.to!int) * 4;
+
+            if(bmode == BlendMode.Blend) 
+                color.colorize!Alpha(rgba(buffer[pos+2],buffer[pos+1],buffer[pos],255));
+
+            buffer[pos] = color.b;
+            buffer[pos+1] = color.g;
+            buffer[pos+2] = color.r;
+        }else
+        {
+            import tida.graph.each;
+
+            auto scaleWidth = cast(double) _pwidth / cast(double) _width;
+            auto scaleHeight = cast(double) _pheight / cast(double) _height;
+
+            int w = cast(int) _width / _pwidth + 1;
+            int h = cast(int) _height / _pheight + 1;
+
+            import std.stdio;
+
+            position =  Vecf(position.x / scaleWidth, position.y / scaleHeight);
+
+            Color!ubyte original = color;
+
+            foreach(ix, iy; Coord(position.x.to!int + w,position.y.to!int + h,
+                                  position.x.to!int,position.y.to!int))
+            {
+                auto pos = (iy * _width) + ix;
+                pos *= 4;
+
+                color = original;
+                if(bmode == BlendMode.Blend)
+                    color.colorize!Alpha(rgba(buffer[pos+2],buffer[pos+1],buffer[pos],255));
+
+                if(pos < buffer.length)
+                {
+                    buffer[pos] = color.b;
+                    buffer[pos+1] = color.g;
+                    buffer[pos+2] = color.r;
+                }
+            }
+        }
+    }
+}
+
+version(Windows)
+class Plane : IPlane
+{
+    import tida.winapi, tida.window, tida.vector, tida.color;
+
+    private
+    {
+        PAINTSTRUCT paintstr;
+        HDC hdc;
+        HDC pdc;
+        HBITMAP wimage = null;
+
+        tida.window.Window window;
+        
+        ubyte[] buffer;
+        uint _width;
+        uint _height;
+        Color!ubyte _background;
+        BlendMode bmode;
+
+        int _pwidth;
+        int _pheight;
+        int xput;
+        int yput;
+    }
+
+    this(tida.window.Window window) @trusted
+    {
+        this.window = window;
+    }
+
+    void recreateBitmap() @trusted
+    {
+        if(wimage !is null) DeleteObject(wimage);
+        if(hdc is null) hdc = GetDC((cast(Window) window).handle);
+
+        wimage = CreateBitmap(_width,_height,1,32,cast(LPBYTE) buffer);
+
+        assert(wimage,"[WINAPI] Bitmap is not create!");
+
+        pdc = CreateCompatibleDC(hdc);
+
+        SelectObject(pdc, wimage);
+    }
+
+    override void alloc(uint width,uint height) @trusted
+    {
+        import std.algorithm : fill;
+
+        _width = width;
+        _height = height;
+
+        buffer = new ubyte[](_width * _height * 4);
+    }
+
+    override void viewport(int w,int h) @safe
+    {
+        _pwidth = w;
+        _pheight = h;
+    }
+
+    override void move(int x,int y) @safe
+    {
+        xput = x;
+        yput = y;
+    }
+
+    override void clearPlane(Color!ubyte color) @safe
+    {
+        for(size_t i = 0; i < _width * _height * 4; i += 4)
+        {
+            buffer[i] = color.b;
+            buffer[i+1] = color.g;
+            buffer[i+2] = color.r; 
+            buffer[i+3] = 255;
+        }
+    }
+
+    override void putToWindow(IWindow window) @trusted
+    {
+        recreateBitmap();
+        BitBlt(hdc, 0, 0, _width, _height, pdc, 0, 0, SRCCOPY);
+    }
+
+    override void blendMode(BlendMode mode) @safe @property
+    {
+        bmode = mode;
+    }
+
+    override void pointTo(Vecf position,Color!ubyte color) @safe @property
+    {
+        import std.conv : to;
+
+        position = position - Vecf(xput,yput);
+
+        if(position.x.to!int >= _width || position.y.to!int >= _height || 
+           position.x.to!int < 0 || position.y.to!int < 0)
+            return;
+
+        if(_pwidth == _width && _pheight == _height)
+        {
+            auto pos = ((_width * position.y.to!int) + position.x.to!int) * 4;
+
+            if(bmode == BlendMode.Blend) 
+                color.colorize!Alpha(rgba(buffer[pos+2],buffer[pos+1],buffer[pos],255));
+
+            buffer[pos] = color.b;
+            buffer[pos+1] = color.g;
+            buffer[pos+2] = color.r;
+        }else
+        {
+            import tida.graph.each;
+
+            auto scaleWidth = cast(double) _pwidth / cast(double) _width;
+            auto scaleHeight = cast(double) _pheight / cast(double) _height;
+
+            int w = cast(int) _width / _pwidth + 1;
+            int h = cast(int) _height / _pheight + 1;
+
+            import std.stdio;
+
+            position =  Vecf(position.x / scaleWidth, position.y / scaleHeight);
+
+            foreach(ix, iy; Coord(position.x.to!int + w,position.y.to!int + h,
+                                  position.x.to!int,position.y.to!int))
+            {
+                auto pos = (iy * _width) + ix;
+                pos *= 4;
+
+                if(pos < buffer.length)
+                {
+                    buffer[pos] = color.b;
+                    buffer[pos+1] = color.g;
+                    buffer[pos+2] = color.r;
+                }
+            }
+        }
+    }
+}
+
+class Software : IRenderer
+{
+    import tida.window, tida.color, tida.vector, tida.graph.camera, tida.shape;
+    import std.conv : to;
+
+    private
+    {
+        IWindow window;
+        Color!ubyte _background;
+        Camera _camera;
+        RenderType _type = RenderType.Soft;
+        IPlane plane;
+    }
+
+    this(IWindow window) @safe
+    {
+        this.window = window;
+
+        plane = new Plane(cast(Window) window);
+
+        _camera = new Camera();
+
+        _camera.shape = Shape.Rectangle(Vecf(0,0),Vecf(window.width,window.height));
+        _camera.port  = Shape.Rectangle(Vecf(0,0),Vecf(window.width,window.height));
+
+        plane.blendMode(BlendMode.Blend);
+
+        reshape();
+    }
+
+    override RenderType type() @safe
+    {
+        return _type;
+    }
+
+    override void reshape() @safe
+    {
+        import std.conv : to;
+
+        plane.alloc(_camera.shape.end.x.to!int,_camera.shape.end.y.to!int);
+        plane.viewport(_camera.port.end.y.to!int,_camera.port.end.y.to!int);
+    }    
+
+    override void camera(Camera camera) @safe
+    in(camera,"Camera is no allocated!")
+    do
+    {
+        _camera = camera;
+    }
+
+    override Camera camera() @safe
+    {
+        return _camera;
+    }
+
+    override void background(Color!ubyte color) @safe @property
+    {
+        _background = color;
+    }
+
+    override Color!ubyte background() @safe @property
+    {
+        return _background;
+    }
+
+    override void point(Vecf position,Color!ubyte color) @safe
+    {
+        plane.pointTo(position,color);
+    }
+
+    override void rectangle(Vecf position,int width,int height,Color!ubyte color,bool isFill) @safe
+    {
+        import tida.graph.each;
+
+        if(isFill)
+        {
+            foreach(ix,iy; Coord(width.to!int,height.to!int))
+            {
+                point(Vecf(position.x.to!int + ix,position.y.to!int + iy),color);
+            }
+        }else
+        {
+            foreach(ix,iy; Coord(width.to!int,height.to!int))
+            {
+                point(Vecf(position.x.to!int + ix,position.y.to!int),color);
+                point(Vecf(position.x.to!int + ix,position.y.to!int + height.to!int),color);
+ 
+                point(Vecf(position.x.to!int,position.y.to!int + iy),color);
+                point(Vecf(position.x.to!int + width.to!int,position.y.to!int + iy),color);
+            }
+        }
+    }
+
+    override void line(Vecf[2] points,Color!ubyte color) @safe
+    {
+        import std.math : abs;
+
+        int x1 = points[0].x.to!int;
+        int y1 = points[0].y.to!int;
+        const x2 = points[1].x.to!int;
+        const y2 = points[1].y.to!int;
+
+        const deltaX = abs(x2 - x1);
+        const deltaY = abs(y2 - y1);
+        const signX = x1 < x2 ? 1 : -1;
+        const signY = y1 < y2 ? 1 : -1;
+
+        int error = deltaX - deltaY;
+
+        while(x1 != x2 || y1 != y2) {
+            point(Vecf(x1,y1),color);
+
+            const int error2 = error * 2;
+
+            if(error2 > -deltaY) {
+                error -= deltaY;
+                x1 += signX;
+            }
+
+            if(error2 < deltaX) {
+                error += deltaX;
+                y1 += signY;
+            }
+        }
+    }
+
+    override void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe
+    {
+        int x = 0;
+        int y = cast(int) radious;
+
+        int X1 = position.intX();
+        int Y1 = position.intY();
+
+        int delta = 1 - 2 * cast(int) radious;
+        int error = 0;
+
+        while (y >= 0)
+        {
+            if(isFill)
+            {
+                line([Vecf(X1 + x, Y1 + y),Vecf(X1 + x, Y1 - y)],color);
+                line([Vecf(X1 - x, Y1 + y),Vecf(X1 - x, Y1 - y)],color);
+            }else
+            {
+                point(Vecf(X1 + x, Y1 + y),color);
+                point(Vecf(X1 + x, Y1 - y),color);
+                point(Vecf(X1 - x, Y1 + y),color);
+                point(Vecf(X1 - x, Y1 - y),color);
+            }
+
+            error = 2 * (delta + y) - 1;
+            if ((delta < 0) && (error <= 0))
+            {
+                delta += 2 * ++x + 1;
+                continue;
+            }
+            if ((delta > 0) && (error > 0))
+            {
+                delta -= 2 * --y + 1;
+                continue;
+            }
+            delta += 2 * (++x - --y);
+        }
+    }
+
+    override void clear() @safe
+    {
+        import std.conv : to;
+
+        plane.move(_camera.port.begin.x.to!int,_camera.port.begin.y.to!int);
+        plane.clearPlane(_background);
+    }
+
+    override void drawning() @safe
+    {
+        plane.putToWindow(window);
+    }
+
+    override void blendMode(BlendMode mode) @safe
+    {
+        plane.blendMode(mode);
+    }
+}
+
+import tida.window;
+import tida.graph.gl;
+
+/++
+    Creates a render depending on the situation. If graphics output is available through the video card, 
+    it will create a render for OpenGL, otherwise it will create a render subprocessor.
+
+    Params:
+        window = Window.
++/
+IRenderer CreateRenderer(IWindow window) @safe
+{
+    IRenderer render;
+
+    try
+    {
+        GL.initialize();
+
+        render = new GLRender(window);
+    }catch(Exception e)
+    {
+        render = new Software(window);
+    }
+
+    return render;
 }

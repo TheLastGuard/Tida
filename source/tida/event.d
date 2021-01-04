@@ -1,311 +1,228 @@
 /++
-    Event handler module.
-    
-    Authors: TodNaz
-    License: MIT
+    Module for handling events.
+
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.event;
 
+/// Mouse keys.
+enum MouseButton
+{
+    unknown = 0,
+    left = 1,
+    right = 3,
+    middle = 2
+}
+
+///
+interface IEventHandler
+{
+    /++
+        Shows the key pressed or released in the current event.
+
+        Returns: state, whether there is still an event in the queue.
+    +/
+    bool update() @safe;
+
+    /// Indicates whether any key is pressed.
+    bool isKeyDown() @safe;
+
+    /// Indicates whether any key is released.
+    bool isKeyUp() @safe;
+
+    /// Shows the key pressed or released in the current event.
+    int key() @safe @property;
+
+    /// Whether any mouse button is pressed.
+    bool isMouseDown() @safe;
+
+    /// Whether any mouse button is released.
+    bool isMouseUp() @safe;
+
+    /// The currently pressed mouse button.
+    MouseButton mouseButton() @safe @property;
+
+    /// The current position of the cursor.
+    int[2] mousePosition() @safe @property;
+
+    /// Whether the window is resized.
+    bool isResize() @safe;
+
+    /// Gives the new window size if it was changed by the user.
+    uint[2] newSizeWindow() @safe;
+
+    /// Did they send a signal to end the program.
+    bool isQuit() @safe;
+
+    /// Returns the pressed key.
+    final int keyDown() @safe
+    {
+        return isKeyDown ? key : 0;
+    }
+
+    /// Returns the released key.
+    final int keyUp() @safe
+    {
+        return isKeyUp ? key : 0;
+    }
+
+    /// Returns the pressed mouse button.
+    final MouseButton mouseDownButton() @safe
+    {
+        return isMouseDown ? mouseButton : MouseButton.unknown;
+    }
+
+    /// Returns the released mouse button.
+    final MouseButton mouseUpButton() @safe
+    {
+        return isMouseDown ? mouseButton : MouseButton.unknown;
+    }
+}
+
 version(Posix)
+class EventHandler : IEventHandler
 {
-    enum _IOC_NONE = 1U;
-    enum _IOC_READ = 2U;
-    enum _IOC_WRITE = 4U;
+    import tida.x11, tida.runtime;
 
-    enum _IOC_NRBITS = 8;
-    enum _IOC_TYPEBITS = 8;
-    enum _IOC_SIZEBITS = 13;
-    enum _IOC_DIRBITS	= 3;
-
-    enum _IOC_NRMASK = (1 << _IOC_NRBITS) - 1;
-    enum _IOC_TYPEMASK = (1 << _IOC_TYPEBITS) - 1;
-    enum _IOC_SIZEMASK = (1 << _IOC_SIZEBITS) - 1;
-    enum _IOC_DIRMASK	= (1 << _IOC_DIRBITS) - 1;
-
-    enum _IOC_NRSHIFT	= 0;
-    enum _IOC_TYPESHIFT = _IOC_NRSHIFT + _IOC_NRBITS;
-    enum _IOC_SIZESHIFT = _IOC_TYPESHIFT + _IOC_TYPEBITS;
-    enum _IOC_DIRSHIFT = _IOC_SIZESHIFT + _IOC_SIZEBITS;
-
-    template _IOC(uint dir,uint type,uint nr,uint size)
-    {
-        enum _IOC = 
-                (dir << _IOC_DIRSHIFT) |
-                (type << _IOC_TYPESHIFT) |
-                (nr << _IOC_NRSHIFT) |
-                (size << _IOC_SIZESHIFT);
-    }
-    
-    template _IOR(uint type,uint nr,uint size)
-    {
-        enum _IOR = _IOC!(_IOC_READ,type,nr,size);
-    }
-    
-    /// 2147576338
-    enum JSIOCGBUTTONS = _IOR!('j',0x12,1);
-}
-
-public struct Joystick
-{
-    import core.sys.posix.sys.ioctl;
-
-    public
-    {
-        version(Posix) 
-        {
-            string device;
-            js_event event;
-            int fd;
-        }
-        
-        int id;
-    }
-    
-
-    version(Posix) public int xCountButtons() @trusted
-    {
-        ubyte count;
-        ioctl(fd,JSIOCGBUTTONS,&count);
-        
-        return count;
-    }
-    
-    ~this()
-    {
-        version(Posix)
-        {
-            import core.sys.posix.unistd;
-        
-            close(fd);
-        }
-    }
-}
-
-private struct js_event
-{
-    uint time;
-    short value;
-    ubyte type;
-    ubyte number;
-}
-
-/// Event handler.
-public class EventHandler
-{
-    version(Posix)
-    {
-        import tida.x11;
-    }
-
-    version(Windows)
-    {
-        import core.sys.windows.windows;
-    }
-
-    import tida.runtime, tida.window;
-
-    private
+    private 
     {
         tida.window.Window window;
-
-        version(Posix) 
-        {
-            Atom destroyWindowEvent;
-            XEvent event;
-        }
-
-        version(Windows)
-        {
-            MSG msg;
-        }
-        
-        Joystick[] joysticks;
-        bool joystickEventHandle = false;
+        Atom destroyWindowEvent;
+        XEvent event;
     }
 
-    /++
-        Initializes an event handler.
-        
-        Params:
-            window = For which window to process events.
-    +/
-    this(tida.window.Window window) @trusted
+    this(tida.window.Window window) @safe
     {
         this.window = window;
 
-        version(Posix)
-        {
-            destroyWindowEvent = XInternAtom(runtime.display, "WM_DELETE_WINDOW", False);
-        }
+        destroyWindowEvent = GetAtom!"WM_DELETE_WINDOW";
     }
 
-    public void handle(void delegate() func) @trusted @property
+    override bool update() @trusted
     {
-        while(this.update)
-        {
-            func();
-        }
-    }
-
-    /++
-        Updates the event queue. Returns whether there are events in the queue. 
-        On each call, the queue is advanced.
-    +/
-    public bool update() @safe
-    {
-        version(Posix) return xUpdate();
-        version(Windows) return wUpdate();
-    }
-
-    ///
-    version(Windows) public bool wUpdate() @trusted
-    {
-        TranslateMessage(&msg); 
-        DispatchMessage(&msg);
-
-        return PeekMessage(&msg, window.wWindow,0,0,PM_REMOVE) != 0;
-    }
-
-    ///
-    version(Posix) public bool xUpdate() @trusted
-    {
-        import 	core.sys.posix.sys.ioctl,
-                core.sys.posix.unistd, 
-                core.sys.posix.fcntl;
-    
         auto pen = XPending(runtime.display);
         
         if(pen != 0) {
             XNextEvent(runtime.display, &event);
-            
-            if(joystickEventHandle) {
-                foreach(i; 0 .. joysticks.length)
-                {
-                    read(joysticks[i].fd,&joysticks[i].event,js_event.sizeof);
-                }
-            }
         }
 
         return pen != 0;
-    }  
+    }
 
-    ///
-    version(Posix) public bool xIsKeyDown() @trusted
+    override bool isKeyDown() @safe
     {
         return event.type == KeyPress;
     }
 
-    ///
-    version(Posix) public bool xIsKeyUp() @trusted
+    override bool isKeyUp() @safe
     {
         return event.type == KeyRelease;
     }
 
-    ///
-    version(Windows) public bool wIsKeyDown() @trusted
-    {
-        return msg.message == WM_KEYDOWN;
-    }
-
-    ///
-    version(Windows) public bool wIsKeyUp() @trusted
-    {
-        return msg.message == WM_KEYUP;
-    }
-
-    ///
-    version(Posix) public auto xGetKey() @trusted
+    override int key() @trusted
     {
         return event.xkey.keycode;
     }
 
-    ///
-    version(Windows) public auto wGetKey() @trusted
-    {
-        return msg.wParam;
-    }
-
-    /++
-        Returns the pressed key.
-    +/
-    public auto getKeyDown() @safe
-    {
-        version(Posix) return xIsKeyDown ? xGetKey() : 0;
-        version(Windows) return wIsKeyDown ? wGetKey() : 0;
-    }
-
-    /++
-        Returns the released key.
-    +/
-    public auto getKeyRelease() @safe
-    {
-        version(Posix) return xIsKeyUp ? xGetKey() : 0;
-        version(Windows) return wIsKeyUp ? wGetKey() : 0;
-    }
-
-    /++
-        Returns the key.
-    +/
-    public auto getKey() @safe
-    {
-        version(Posix) return xGetKey();
-        version(Windows) return wGetKey();
-    }
-
-    /++
-        Returns a state indicating whether a key is pressed.
-    +/
-    public bool isKeyDown() @safe
-    {
-        version(Posix) return xIsKeyDown();
-        version(Windows) return wIsKeyDown();
-    }
-
-    /++
-        Returns a state indicating whether a key is released.
-    +/ 
-    public bool isKeyUp() @safe
-    {
-        version(Posix) return xIsKeyUp();
-        version(Windows) return wIsKeyUp();
-    }
-
-    ///
-    version(Posix) public bool xIsMouseDown() @trusted
+    override bool isMouseDown() @safe
     {
         return event.type == ButtonPress;
     }
 
-    ///
-    version(Posix) public bool xIsMouseUp() @trusted
+    override bool isMouseUp() @safe
     {
         return event.type == ButtonRelease;
     }
 
-    ///
-    version(Posix) public auto xGetMouseButton() @trusted
+    override MouseButton mouseButton() @trusted
     {
-        return event.xbutton.button;
+        return cast(MouseButton) event.xbutton.button;
     }
 
-    ///
-    version(Windows) public bool wIsMouseDown() @trusted
+    override int[2] mousePosition() @trusted
+    {
+        int x = event.xmotion.x;
+        int y = event.xmotion.y;
+
+        return [x,y];
+    }
+
+    override bool isResize() @trusted
+    {
+        XWindowAttributes attr;
+        XGetWindowAttributes(runtime.display, (cast(tida.window.Window) window).handle, &attr);
+        return (window.width != attr.width || window.height != attr.height);
+    }
+
+    override uint[2] newSizeWindow() @trusted
+    {
+        XWindowAttributes attr;
+        XGetWindowAttributes(runtime.display, (cast(tida.window.Window) window).handle, &attr);
+
+        return [attr.width,attr.height];
+    }
+
+    override bool isQuit() @trusted
+    {
+        return event.xclient.data.l[0] == destroyWindowEvent;
+    }
+}
+
+version(Windows)
+class EventHandler : IEventHandler
+{
+    import tida.winapi, tida.window;
+
+    private
+    {
+        MSG msg;
+        tida.window.Window window;
+    }
+
+    this(tida.window.Window window)
+    {
+        this.window = window;
+    }
+
+    override bool update() @trusted
+    {
+        TranslateMessage(&msg); 
+        DispatchMessage(&msg);
+
+        return PeekMessage(&msg, window.handle,0,0,PM_REMOVE) != 0;
+    }
+
+    override bool isKeyDown() @safe
+    {
+        return msg.message == WM_KEYDOWN;
+    }
+
+    override bool isKeyUp() @safe
+    {
+        return msg.message == WM_KEYUP;
+    }
+
+    override int key() @safe
+    {
+        return cast(int) msg.wParam;
+    }
+
+    override bool isMouseDown() @safe
     {
         return msg.message == WM_LBUTTONDOWN ||
                msg.message == WM_RBUTTONDOWN ||
                msg.message == WM_MBUTTONDOWN;
     }
 
-    ///
-    version(Windows) public bool wIsMouseUp() @trusted
+    override bool isMouseUp() @safe
     {
         return msg.message == WM_LBUTTONUP ||
                msg.message == WM_RBUTTONUP ||
                msg.message == WM_MBUTTONUP;
     }
 
-    ///
-    version(Windows) public auto wGetMouseButton() @trusted
+    override MouseButton mouseButton() @safe
     {
         if(msg.message == WM_LBUTTONUP || msg.message == WM_LBUTTONDOWN)
             return MouseButton.left;
@@ -316,179 +233,39 @@ public class EventHandler
         if(msg.message == WM_MBUTTONUP || msg.message == WM_MBUTTONDOWN)
             return MouseButton.middle;
 
-        return 0;
+        return MouseButton.unknown;
     }
 
-    /++
-        Returns the pressed mouse button.
-    +/
-    public auto getMouseDown() @safe
-    {
-        version(Posix) return xIsMouseDown ? xGetMouseButton() : 0;
-        version(Windows) return wIsMouseDown ? wGetMouseButton() : 0;
-    }
-
-    /++
-        Returns the released mouse button.
-    +/
-    public auto getMouseUp() @safe
-    {
-        version(Posix) return xIsMouseUp ? xGetMouseButton() : 0;
-        version(Windows) return wIsMouseUp ? wGetMouseButton() : 0;
-    }
-
-    ///
-    version(Posix) public int[2] xMousePosition() @trusted
-    {
-        int x,y;
-        uint mask;
-
-        auto win = window.xWindow;
-
-        x = event.xmotion.x;
-        y = event.xmotion.y;
-
-        return [x,y];
-    }
-
-    ///
-    version(Windows) public int[2] wMousePosition() @trusted
+    override int[2] mousePosition() @trusted
     {
         POINT p;
 
         GetCursorPos(&p);
 
-        ScreenToClient(window.wWindow,&p);
+        ScreenToClient((cast(Window) window).handle,&p);
 
         return [p.x,p.y];
     }
 
-    ///
-    version(Posix) public bool xIsResize() @trusted
-    {
-        XWindowAttributes attr;
-        XGetWindowAttributes(runtime.display, window.xWindow, &attr);
-        return (window.width != attr.width || window.height != attr.height);
-    }
-
-    ///
-    version(Windows) public bool wIsResize() @trusted
+    override bool isResize() @safe
     {
         return msg.message == WM_SIZE;
     }
 
-    /++
-        Returns whether the window has been resized.
-    +/
-    public bool isResize() @safe
-    {
-        version(Posix) return xIsResize();
-        version(Windows) return wIsResize();
-    } 
-
-    ///
-    version(Posix) public int[2] xResizeWindowSize() @trusted
-    {
-        XWindowAttributes attr;
-        XGetWindowAttributes(runtime.display, window.xWindow, &attr);
-        return [attr.width,attr.height];
-    }
-
-    ///
-    version(Windows) public int[2] wResizeWindowSize() @trusted
+    override uint[2] newSizeWindow() @trusted
     {
         RECT rect;
 
-        GetWindowRect(window.wWindow,&rect);
+        GetWindowRect((cast(Window) window).handle, &rect);
 
         return [rect.right,rect.bottom];
     }
 
-    /++
-        Returns whether the window has been resized.
-    +/
-    public int[2] resizeWindowSize() @safe
-    {
-        version(Posix) return xResizeWindowSize();
-        version(Windows) return wResizeWindowSize();
-    }
-
-    /++
-        Returns mouse position.
-    +/
-    public int[2] mouse() @safe @property
-    {
-        version(Posix) return xMousePosition();
-        version(Windows) return wMousePosition();
-    }
-    
-    version(Posix) public void xInitJoysticks() @trusted
-    {
-        import std.file;
-        import std.string;
-        import std.conv : to;
-        import core.sys.posix.unistd, core.sys.posix.fcntl;
-
-        foreach(dir; dirEntries("/dev/input/",SpanMode.depth))
-        {
-            if(dir.name[0 .. 13] == "/dev/input/js") {
-                Joystick js;
-                js.device = dir.name;
-                js.id = dir.name[13 .. 14].to!int;
-                js.fd = open(js.device.toStringz,O_RDONLY);
-                
-                if(js.fd == -1) assert(null,"Joystick `"~js.device~"` is not init!");
-                joysticks ~= js;
-            }
-        }
-        
-        joystickEventHandle = true;
-    }
-    
-    version(Posix) public auto xCountJoysticks() @trusted
-    {
-        return joysticks.length;
-    }
-
-    public void initJoysticks() @safe
-    {
-        version(Posix) xInitJoysticks();
-    }
-    
-    public Joystick[] getJoysticks() @safe
-    {
-        return joysticks;
-    }
-
-    ///
-    version(Posix) public bool xIsQuit() @trusted
-    {
-        return event.xclient.data.l[0] == destroyWindowEvent;
-    }
-
-    ///
-    version(Windows) public bool wIsQuit() @trusted
+    override bool isQuit() @safe
     {
         return msg.message == WM_QUIT || msg.message == WM_CLOSE || 
                (msg.message == WM_SYSCOMMAND && msg.wParam == SC_CLOSE);
     }
-
-    /++
-        Do they close the window.
-    +/
-    public bool isQuit() @safe
-    {
-        version(Posix) return xIsQuit();
-        version(Windows) return wIsQuit();
-    }
-}
-
-///
-static enum MouseButton
-{
-    left = 1,
-    right = 3,
-    middle = 2
 }
 
 version(Posix)///

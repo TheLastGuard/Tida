@@ -9,65 +9,52 @@
     not exist, it is implemented using the download-upload method. It will 
     load the resource from the .temp folder.
     
-
-    Authors: TodNaz
-    Copyright: © 2020, TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.game.loader;
 
 import std.path : baseName, stripExtension;
 import std.file : exists,mkdir;
+import tida.templates;
 
-/++
-    Resource Loader Instance
-+/
-__gshared Loader _loader;
-
-/++
-    A global resource loader instance. It is through 
-    it that you can download and receive resources.
-+/
-public Loader loader() @trusted nothrow
-{
-    return _loader;
-}
+mixin Global!(Loader,"loader");
 
 struct Resource
 {
-	public
-	{
-		Object object;
-		string type;
-		string path;
-		string name;
-		bool isFont = false;
-	}
+    public
+    {
+        Object object;
+        string type;
+        string path;
+        string name;
+        bool isFont = false;
+    }
 
-	public void init(T)(T resource) @trusted
-	{
-		object = resource;
-		type = typeid(T).toString;
-	}
+    void init(T)(T resource) @trusted
+    {
+        object = resource;
+        type = typeid(T).toString;
+    }
 
-	public T get(T)() @trusted
-	in(typeid(T).toString == type)
-	body
-	{
-		return cast(T) object;
-	}
+    T get(T)() @trusted
+    in(typeid(T).toString == type)
+    body
+    {
+        return cast(T) object;
+    }
 
-	public string getPath() @safe nothrow
-	{
-		return path;
-	}
+    string getPath() @safe nothrow
+    {
+        return path;
+    }
 
-	public string getName() @safe nothrow
-	{
-		return name;
-	}
+    string getName() @safe nothrow
+    {
+        return name;
+    }
 
-    public void free() @trusted
+    void free() @trusted
     {
         destroy(object);
     }
@@ -77,10 +64,10 @@ struct Resource
     Resource loader. Loads resources, fonts and more 
     and keeps it in memory.
 +/
-public class Loader
+class Loader
 {
-	import std.path;
-	import tida.graph.text;
+    import std.path;
+    import tida.graph.text;
 
     private
     {
@@ -112,7 +99,7 @@ public class Loader
         Image img = loader.load!Image("a.png");
         ---
     +/
-    public T load(T)(immutable string path,string name = "null") @safe
+    T load(T)(immutable string path,string name = "null") @safe
     {
         if(this.get!T(path) !is null)
             return this.get!T(path);
@@ -123,7 +110,7 @@ public class Loader
         synchronized 
         {
             if(!path.exists)
-            	throw new Exception("Not find file!");
+                throw new Exception("Not find file!");
 
             if(name == "null")
                 name = path.baseName.stripExtension;
@@ -160,7 +147,7 @@ public class Loader
         ]);
         ---
     +/
-    public T load(T)(immutable string[string] paths) @safe
+    T load(T)(immutable string[string] paths) @safe
     {
         foreach(key; paths.keys) {
             this.load!T(paths[key],key);
@@ -192,7 +179,7 @@ public class Loader
         loader.free!Image("myImage");
         ---
     +/
-    public void free(T)(immutable string path) @trusted
+    void free(T)(immutable string path) @trusted
     {
         auto obj = get!T(path);
 
@@ -219,7 +206,7 @@ public class Loader
         loader.free(myImage);
         ---
     +/
-    public void free(T)(T obj) @trusted
+    void free(T)(T obj) @trusted
     {
         if(obj is null)
             return;
@@ -239,7 +226,7 @@ public class Loader
             If found, will return a `T` of the 
             appropriate size.
     +/
-    public T get(T)(immutable string name) @safe
+    T get(T)(immutable string name) @safe
     {
         foreach(e; this.resources)
         {
@@ -266,7 +253,7 @@ public class Loader
             If found, will return a `Font` of the 
             appropriate size.
     +/
-    public Font getFont(immutable string path,immutable int size) @safe
+    Font getFont(immutable string path,immutable int size) @safe
     {
         foreach(ref e; fonts)
         {
@@ -305,7 +292,7 @@ public class Loader
         Returns:
             `Font`
     +/
-    public Font loadFont(immutable string path,immutable int size,string name = "null") @safe
+    Font loadFont(immutable string path,immutable int size,string name = "null") @safe
     {
         if(getFont(path,size) !is null)
             return getFont(path,size);
@@ -331,7 +318,7 @@ public class Loader
         Params:
             res = Resource.
     +/
-    public void add(Resource res) @safe
+    void add(Resource res) @safe
     {
         this.resources ~= (res);
     }

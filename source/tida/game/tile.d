@@ -1,3 +1,9 @@
+/++
+    TODO: self
+
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
++/
 module tida.game.tile;
 
 /// Tile

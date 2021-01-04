@@ -1,8 +1,8 @@
 /++
     A module for describing an object in the game.
 
-    Authors: TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.scene.instance;
 
@@ -28,7 +28,7 @@ private void remove(T)(ref T[] obj,size_t index) @trusted nothrow
 }
 
 /// Instance information
-public struct InstanceInfo
+struct InstanceInfo
 {
     import tida.vector, tida.shape;
 
@@ -76,7 +76,7 @@ public struct InstanceInfo
 /++
     A object for describing an object in the game.
 +/
-public class Instance
+class Instance
 {
     import tida.scene.component;
     import tida.vector;
@@ -150,7 +150,7 @@ public class Instance
 
         Please note that this action will be performed in the next step.
     +/
-    public void sort() @safe
+    void sort() @safe
     {
         _sort = 1;
     }
@@ -160,7 +160,7 @@ public class Instance
 
         Please note that this action will be performed in the next step.
     +/
-    public void destroy() @safe
+    void destroy() @safe
     {
         _destroy = 1;
     }
@@ -168,7 +168,7 @@ public class Instance
     /++
         Instance information
     +/
-    public InstanceInfo info() @safe @property
+    InstanceInfo info() @safe @property
     {
         return InstanceInfo(
             name, tags, position, previous, mask, 
@@ -182,7 +182,7 @@ public class Instance
         Params:
             cmp = Component.
     +/
-    public void add(Component cmp) @safe
+    void add(Component cmp) @safe
     in
     {
         assert(cmp,"Component is not create!");
@@ -199,7 +199,7 @@ public class Instance
         Params:
             Name = Component.
     +/
-    public void add(Name)() @safe
+    void add(Name)() @safe
     in(new Name().from!Component,"Its not component!")
     body
     {
@@ -218,7 +218,7 @@ public class Instance
         instance.of!Gravity.F = 0.1f;
         ---
     +/
-    public T of(T)() @safe
+    T of(T)() @safe
     in(new T().from!Component,"It not component!")
     body
     {
@@ -238,7 +238,7 @@ public class Instance
         Params:
             name = Component name. 
     +/
-    public Component of(string name)() @safe
+    Component of(string name)() @safe
     {
         Component obj;
 
@@ -258,7 +258,7 @@ public class Instance
         Params:
             name = Component name. 
     +/
-    public Component of(string name) @safe
+    Component of(string name) @safe
     {
         Component obj;
 
@@ -272,7 +272,8 @@ public class Instance
         return obj;
     }
 
-    public void dissconnect(Name)() @trusted
+    /// Dissconnect component
+    void dissconnect(Name)() @trusted
     {
         import core.memory;
 
@@ -296,7 +297,7 @@ public class Instance
             instance, since this link will enter into the previous scene. 
             For real it is better to use `sceneManager.initable`.
     +/
-    public void init() @safe {}
+    void init() @safe {}
     
     /++
         This event will be triggered when control is not transferred 
@@ -307,7 +308,7 @@ public class Instance
             instance, since this link will enter into the previous scene. 
             For real it is better to use `sceneManager.initable`.
     +/
-    public void restart() @safe {}
+    void restart() @safe {}
 
     /++
         This event is always called when control is transferred to the scene.
@@ -316,74 +317,74 @@ public class Instance
             instance, since this link will enter into the previous scene. 
             For real it is better to use `sceneManager.initable`.
     +/
-    public void entry() @safe {}
+    void entry() @safe {}
 
-    public void leave() @safe {}
+    void leave() @safe {}
 
     /++
         This event will be triggered when the user enters something. 
         This does not mean that it is equivalent to `step`.
     +/
-    public void event(EventHandler event) @safe {}
+    void event(EventHandler event) @safe {}
 
     /++
         This event is called always and constantly at the rate of the specified 
         frame counter. Also, when new threads are declared and the instance is 
         redefined in a different thread, this event will run on a different thread.
     +/
-    public void step() @safe {}
+    void step() @safe {}
 
     /++
         This event is for drawing something on the screen.
         Params:
             graph = Instance to render.
     +/
-    public void draw(Renderer graph) @safe {}
+    void draw(IRenderer graph) @safe {}
 
     /++
         This event is intended for rendering in debug mode.
         Params:
             graph = Instance to render.
     +/
-    debug public void drawDebug(Renderer graph) @safe {}
+    debug void drawDebug(IRenderer graph) @safe {}
 
     /++
         This event will be triggered when the game is closed by the user or 
         the program.
     +/
-    public void gameExit() @safe {}
+    void gameExit() @safe {}
 
     /++
         This event will be triggered when the game is restarted by the program.
     +/
-    public void gameRestart() @safe {}
+    void gameRestart() @safe {}
 
     /++
         This event will be triggered when the game is launched with `game.run`.
     +/
-    public void gameStart() @safe {}
+    void gameStart() @safe {}
 
     /++
         This event is fired when someone has thrown a trigger.
         Params:
             oftrigger = Trigger name.
     +/
-    public void trigger(string oftrigger) @safe {}
+    void trigger(string oftrigger) @safe {}
 
     /++
         This event will be thrown when any exception is thrown.
     +/
-    public void onError() @safe {}
+    void onError() @safe {}
 
     /++
         This event will be triggered when the instance is destroyed.
     +/
-    public void eventDestroy(ubyte type) @safe {}
+    void eventDestroy(ubyte type) @safe {}
 
     /++
         This event will be triggered when this instance collides with someone.
     +/
-    public void collision(Instance other) @safe {}
+    void collision(Instance other) @safe {}
 
     package(tida.scene) 
     {

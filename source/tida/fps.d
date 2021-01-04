@@ -1,61 +1,53 @@
 /++
+    A module for controlling the number of frames, and taking into account the time of the program.
 
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.fps;
 
-public class FPSManager
+/// Class for controlling program time and number of frames.
+class FPSManager
 {
-	import std.datetime;
-
-	public
-    {
-        ulong maxFps = 60; /// Maximum FPS
-    }
+    import std.datetime, core.thread;
 
     private
     {
         MonoTime time;
         MonoTime lastTime;
-
         long _deltatime;
-        long _fps = 0;
 
-        long __frames = 0;
         MonoTime _gameJob;
         bool startTimeRate = false;
     }
 
-    /++
-        Give current FPS.
-
-        Returns:
-            float - FPS
-    ++/
-    public immutable(ulong) fps() @safe @property
+    public
     {
-        return _fps;
+        long maxFPS = 60;
     }
 
-    ///
-    immutable(ulong) opCall() @safe
+    /// Gives the number of frames.
+    long fps() @safe
     {
-        return fps();
+        return (1000 / (_deltatime + 1));
     }
 
-    /++
-        Returns deltatime
-    +/
-    public immutable(ulong) deltatime() @safe @property
+    /// Gives the deltatime.
+    long deltatime() @safe
     {
         return _deltatime;
     }
 
-    /++
-        Starts counting.
-    ++/
-    public void start() @trusted
+    /// Gives the running time of the program.
+    Duration durationJobProgram() @safe
     {
-        this.time = MonoTime.currTime;
+        return MonoTime.currTime - _gameJob;
+    }
+
+    /// Counts from the beginning of the cycle body.
+    void start() @safe
+    {
+        time = MonoTime.currTime;
 
         if(!startTimeRate) {
             _gameJob = MonoTime.currTime;
@@ -64,27 +56,16 @@ public class FPSManager
         }
     }
 
-    public Duration getTimeJobProgram() @trusted
+    /// Limiting the number of frames.
+    void rate() @trusted
     {
-        return lastTime - _gameJob;
-    }
-
-    /++
-        Delay process itself.
-    ++/
-    public void rate() @trusted
-    {
-        import core.thread;
-
         this.lastTime = MonoTime.currTime;
         this._deltatime = (this.lastTime - this.time).total!"msecs";
 
-        if(this._deltatime < 1000 / maxFps)
+        if(this._deltatime < 1000 / maxFPS)
         {
             import std.datetime;
-            Thread.sleep(dur!"msecs"((1000 / maxFps) - this._deltatime));
+            Thread.sleep(dur!"msecs"((1000 / maxFPS) - this._deltatime));
         }
-
-        this._fps = (1000 / (this._deltatime + 1));
     }
 }

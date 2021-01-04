@@ -1,14 +1,15 @@
 /++
     
 
-    Authors: TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.graph.gl;
 
 public import bindbc.opengl;
+import tida.templates;
 
-__gshared bool _glIsInitialize = false;
+mixin Global!(bool,"glIsInitialize");
 
 enum 
 {
@@ -19,15 +20,10 @@ enum
     Points = GL_POINTS
 }
 
-public struct GL
+struct GL
 {
     import tida.color;
     import tida.vector;
-
-    version(WebAssembly) {} else 
-    {
-        import tida.exception;
-    }
 
     static bool isInitialize() @trusted
     {
@@ -39,7 +35,7 @@ public struct GL
         auto retValue = loadOpenGL();
 
         if(retValue == GLSupport.noContext)
-           throw new ContextException(ContextError.noContext,"Context is not create!");
+           throw new Exception("Context is not create!");
 
        _glIsInitialize = true;
     }
@@ -168,7 +164,7 @@ public struct GL
     }
 }
 
-class GL3
+struct GL3
 {
 	import bindbc.opengl;
 
