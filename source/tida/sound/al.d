@@ -40,7 +40,7 @@ class Device
 
         context = alcCreateContext(device,null);
 
-        enforce(!alcMakeContextCurrent(context),"Error make context current!");
+        enforce(alcMakeContextCurrent(context),"Error make context current!");
 
         ALfloat[] listenerOri = [ 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f ];
 

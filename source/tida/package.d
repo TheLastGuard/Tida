@@ -23,6 +23,8 @@ public
 	import tida.graph.render;
 	import tida.graph.text;
 
+	import tida.sound.al;
+
 	import tida.scene;
 	import tida.game;
 }
