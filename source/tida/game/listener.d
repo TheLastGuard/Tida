@@ -137,7 +137,7 @@ class Listener
     {
         timers ~= Timer(MonoTime.currTime,duration,isRepeat,func);
 
-        return &timers[$];
+        return &timers[$-1];
     }
     
     /++
