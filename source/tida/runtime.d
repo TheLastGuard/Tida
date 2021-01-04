@@ -47,6 +47,7 @@ class TidaRuntime : ITidaRuntime
 {
     import tida.x11;
     import dglx.glx;
+    import tida.sound.al;
 
     private
     {
@@ -54,6 +55,7 @@ class TidaRuntime : ITidaRuntime
         int xDisplayID;
 
         string[] mainArguments;
+        Device device;
     }
 
     /++
@@ -85,6 +87,9 @@ class TidaRuntime : ITidaRuntime
         }finally
         {
             FreeTypeLoad();
+            InitSoundLibrary();
+            device = new Device();
+            device.open();
         }
     }
 
@@ -135,7 +140,7 @@ class TidaRuntime : ITidaRuntime
 version(Windows)
 class TidaRuntime : ITidaRuntime
 {
-    import tida.winapi;
+    import tida.winapi, tida.sound.al;
 
     pragma(lib,"opengl32.lib");
 
@@ -144,6 +149,7 @@ class TidaRuntime : ITidaRuntime
         string[] mainArguments;
 
         HINSTANCE hInstance;
+        Device device;
     }
 
     static void initialize(string[] args) @trusted
@@ -159,6 +165,9 @@ class TidaRuntime : ITidaRuntime
         import tida.graph.text;
 
         FreeTypeLoad();
+        InitSoundLibrary();
+        device = new Device();
+        device.open();
     }
 
     this(string[] mainArguments) @safe
