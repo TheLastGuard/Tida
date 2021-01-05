@@ -39,13 +39,13 @@
         Indicates the attributes of the context.
     */
     context.attrib = GLAttributes(...);
-    context.attribInitialize(window);
-    context.initialize(window);
+    context.attributeInitialize();
+    context.initialize();
 
     /*
         Sets the context to this window.
     */
-    window.contextSet(context);
+    window.context = context;
     ---
 
     At the moment, windows cannot work in parallel, as well as event tracking and object rendering, so 
@@ -228,6 +228,8 @@ class Context : IContext
 
         int fbcount;
         auto fbc = glXChooseFBConfig(runtime.display,runtime.displayID,glxAttribs.ptr,&fbcount);
+        
+        assert(fbc, "fbc was not found!");
 
         int bestFbc = -1, bestNum = -1;
         foreach(int i; 0 .. fbcount)

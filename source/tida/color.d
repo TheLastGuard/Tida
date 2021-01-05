@@ -81,64 +81,103 @@ Color!ubyte rgba(ubyte red,ubyte green,ubyte blue,ubyte alpha) @safe
 
     Returns: `Color!ubyte`
 +/
-Color!ubyte HEX(string hex,PixelFormat format = PixelFormat.AUTO) @safe
+Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe
 {
-    import std.conv : to;
-    import std.bigint;
+	static if(is(T : string))
+	{
+        import std.conv : to;
+        import std.bigint;
 
-    size_t cv = 0;
-    if(hex[0] == '#') cv++;
-    else if(hex[0 .. 2] == "0x") cv += 2;
+        size_t cv = 0;
+        if(hex[0] == '#') cv++;
+        else if(hex[0 .. 2] == "0x") cv += 2;
 
-    if(format == PixelFormat.AUTO) {
-        const alpha = hex[cv .. $].length > 6;
+        static if(format == PixelFormat.AUTO) {
+            const alpha = hex[cv .. $].length > 6;
 
-        return rgba(
-            BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte,
-            alpha ? BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte : 255
-        );
-    }else
-    if(format == PixelFormat.RGB) {
-        return rgb(
-            BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte
-        );
-    }else
-    if(format == PixelFormat.RGBA) {
-        assert(hex[cv .. $].length > 6,"This is not alpha-channel hex color!");
+            return rgba(
+                BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte,
+                alpha ? BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte : 255
+            );
+        }else
+        static if(format == PixelFormat.RGB) {
+            return rgb(
+                BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte
+            );
+        }else
+       static if(format == PixelFormat.RGBA) {
+            assert(hex[cv .. $].length > 6,"This is not alpha-channel hex color!");
 
-        return rgba(
-            BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte
-        );
-    }else
-    if(format == PixelFormat.ARGB) {
-        assert(hex[cv .. $].length > 6,"This is not alpha-channel hex color!");
+            return rgba(
+                BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte
+            );
+        }else
+        static if(format == PixelFormat.ARGB) {
+            assert(hex[cv .. $].length > 6,"This is not alpha-channel hex color!");
 
-        return rgba(
-            BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte
-        );
-    }else
-    if(format == PixelFormat.BGRA) {
-        assert(hex[cv .. $].length > 6,"This is not alpha-channel hex color!");
+            return rgba(
+                BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte
+            );
+        }else
+        static if(format == PixelFormat.BGRA) {
+            assert(hex[cv .. $].length > 6,"This is not alpha-channel hex color!");
 
-        return rgba(
-            BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte,
-            BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte
-        );
-    }
-
-    assert(null,"Unknown pixel format");
+            return rgba(
+                BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte
+            );
+        }else
+    	  static assert(null,"Unknown pixel format");
+	}else
+	static if(is(T : int) || is(T : long) || is(T : uint) || is(T : ulong))
+	{
+		Color!ubyte result;
+	
+		static if(format == PixelFormat.RGBA)
+		{
+			result.r = (hex & 0xFF000000) >> 24;
+			result.g = (hex & 0x00FF0000) >> 16;
+			result.b = (hex & 0x0000FF00) >> 8;
+			result.a = (hex & 0x000000FF);
+			
+			return result;
+		}else
+		static if(format == PixelFormat.RGB)
+		{
+			result.r = (hex & 0xFF0000) >> 16;
+			result.g = (hex & 0x00FF00) >> 8;
+			result.b = (hex & 0x0000FF);
+			result.a = 255;
+		}else
+		static if(format == PixelFormat.ARGB)
+		{
+			result.a = (hex & 0xFF000000) >> 24;
+			result.r = (hex & 0x00FF0000) >> 16;
+			result.g = (hex & 0x0000FF00) >> 8;
+			result.b = (hex & 0x000000FF);
+		}else
+		static if(format == PixelFormat.BGRA)
+		{
+			result.b = (hex & 0xFF000000) >> 24;
+			result.g = (hex & 0x00FF0000) >> 16;
+			result.r = (hex & 0x0000FF00) >> 8;
+			result.a = (hex & 0x000000FF);
+		}else
+			static assert(null, "Unknown pixel format!");
+	}else
+		static assert(null, "Unknown type hex!");
 }
 
 /// HSL color structure
@@ -517,6 +556,7 @@ struct Color(T)
         }
     }
 
+	///
     string stringComponents() @safe
     {
         import std.conv : to;
@@ -538,6 +578,7 @@ struct Color(T)
         return this.conv!string;
     }
 
+	///
     T[] fromBytes(R,int format)() @safe
     {
         static if(format == PixelFormat.RGBA)
@@ -555,6 +596,7 @@ struct Color(T)
             return [];
     }
 
+	///
     T[] fromBytes(R,int format)() @safe immutable
     {
         static if(format == PixelFormat.RGBA)
@@ -666,6 +708,14 @@ template isCorrectFormat(int format)
     enum isCorrectFormat = format != PixelFormat.AUTO;
 }
 
+/++
+	Converts the format of a sequence of color bytes.
+	
+	Params:
+		format1 = What is the original format.
+		format2 = What format should be converted.
+		pixels = Sequence of color bytes.
++/
 ubyte[] fromFormat(int format1,int format2)(ubyte[] pixels) @safe
 {
     static assert(isCorrectFormat!format1,"The format cannot be detected automatically!");

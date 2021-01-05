@@ -283,7 +283,7 @@ static enum Key
     F9 = 75,
     F10 = 76,
     F11 = 95,
-  F12 = 96,
+  	F12 = 96,
     PrintScrn = 111,
     ScrollLock = 78,
     Pause = 110,

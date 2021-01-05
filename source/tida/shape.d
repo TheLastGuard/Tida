@@ -49,7 +49,7 @@ enum ShapeType
 /++
     Figure description structure.
 +/
-public struct Shape
+struct Shape
 {
     import tida.vector;
 
@@ -80,7 +80,7 @@ public struct Shape
         Vecf[][] points = myPolygon.to!Vecf[][];
         ---
     +/
-    public T to(T)() @safe @property 
+    T to(T)() @safe @property 
     {
         static if(is(T : Vecf)) {
             return begin;
@@ -119,13 +119,13 @@ public struct Shape
     }
 
     /// The beginning of the figure.
-    public Vecf begin() @safe @property nothrow
+    Vecf begin() @safe @property nothrow
     {
         return _begin;
     }
 
     /// The end of the figure.
-    public Vecf end() @safe @property nothrow
+    Vecf end() @safe @property nothrow
     in(type != ShapeType.point && type != ShapeType.circle,"This shape does not support end coordinates!")
     body
     {
@@ -135,7 +135,7 @@ public struct Shape
     /++
         Move shape
     +/
-    public void move(Vecf pos) @safe nothrow
+    void move(Vecf pos) @safe nothrow
     {
         _begin = _begin + pos;
 
@@ -145,13 +145,13 @@ public struct Shape
     }
 
     /// The beginning of the figure.
-    public Vecf begin() @safe @property nothrow immutable
+    Vecf begin() @safe @property nothrow immutable
     {
         return _begin;
     }
 
     /// The end of the figure.
-    public Vecf end() @safe @property nothrow immutable
+    Vecf end() @safe @property nothrow immutable
     in(type != ShapeType.point && type != ShapeType.circle,"This shape does not support end coordinates!")
     body
     {
@@ -159,13 +159,13 @@ public struct Shape
     }
 
     /// The beginning of the figure.
-    public void begin(Vecf vec) @safe @property nothrow
+    void begin(Vecf vec) @safe @property nothrow
     {
         _begin = vec;
     }
 
     /// The end of the figure.
-    public void end(Vecf vec) @safe @property nothrow
+    void end(Vecf vec) @safe @property nothrow
     in(type != ShapeType.point && type != ShapeType.circle,"This shape does not support end coordinates!")
     body
     {
@@ -173,67 +173,67 @@ public struct Shape
     }
 
     /// The beginning of the figure along the x-axis.
-    public float x() @safe @property nothrow
+    float x() @safe @property nothrow
     {
         return begin.x;
     }
 
     /// The beginning of the figure along the y-axis.
-    public float y() @safe @property nothrow
+    float y() @safe @property nothrow
     {
         return begin.y;
     }
 
     /// The beginning of the figure along the x-axis.
-    public void x(float value) @safe @property nothrow
+    void x(float value) @safe @property nothrow
     {
         begin.x = value;
     }
 
     /// The beginning of the figure along the y-axis.
-    public void y(float value) @safe @property nothrow
+    void y(float value) @safe @property nothrow
     {
         begin.x = value;
     }
 
     /// The beginning of the figure along the x-axis.
-    public float x() @safe @property nothrow immutable
+    float x() @safe @property nothrow immutable
     {
         return begin.x;
     }
 
     /// The beginning of the figure along the y-axis.
-    public float y() @safe @property nothrow immutable
+    float y() @safe @property nothrow immutable
     {
         return begin.y;
     }
     
     /// The end of the figure along the x-axis.
-    public float endX() @safe @property nothrow
+    float endX() @safe @property nothrow
     {
         return end.x;
     }
 
     /// The end of the figure along the y-axis.
-    public float endY() @safe @property nothrow
+    float endY() @safe @property nothrow
     {
         return end.y;
     }
 
     /// The end of the figure along the x-axis.
-    public float endX() @safe @property nothrow immutable
+    float endX() @safe @property nothrow immutable
     {
         return end.x;
     }
 
     /// The end of the figure along the y-axis.
-    public float endY() @safe @property nothrow immutable
+    float endY() @safe @property nothrow immutable
     {
         return end.y;
     }
 
     /// The radious the figure.
-    public float radious() @safe @property nothrow
+    float radious() @safe @property nothrow
     in(type == ShapeType.circle,"This is not a circle!")
     body
     {
@@ -241,7 +241,7 @@ public struct Shape
     }
 
     /// The radious the figure.
-    public float radious() @safe @property nothrow immutable
+    float radious() @safe @property nothrow immutable
     in(type == ShapeType.circle,"This is not a circle!")
     body
     {
@@ -249,7 +249,7 @@ public struct Shape
     }
 
     /// ditto
-    public void radious(float value) @safe @property nothrow
+    void radious(float value) @safe @property nothrow
     in(type == ShapeType.circle,"This is not a circle!")
     body
     {
@@ -257,7 +257,7 @@ public struct Shape
     }
 
     /// The top of the triangle.
-    public Vecf vertex(uint num)() @safe @property nothrow
+    Vecf vertex(uint num)() @safe @property nothrow
     in
     {
         static assert(num < 3,"The triangle has only three vertices! (0 .. 2)");
@@ -275,19 +275,19 @@ public struct Shape
     }
 
     /// The top of the triangle.
-    public Vecf[] vertexs() @safe @property nothrow
+    Vecf[] vertexs() @safe @property nothrow
     {
         return [begin,end,_trType];
     }
 
     ///
-    public Vecf[] vertexs() @safe @property nothrow immutable
+    Vecf[] vertexs() @safe @property nothrow immutable
     {
         return [begin,end,_trType];
     }
 
     /// ditto
-    public void vertex(uint num)(Vecf value) @safe @property nothrow
+    void vertex(uint num)(Vecf value) @safe @property nothrow
     in
     {
         static assert(num < 3,"The triangle has only three vertices! (0 .. 2)");

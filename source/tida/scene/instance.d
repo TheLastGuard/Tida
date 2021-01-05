@@ -9,6 +9,11 @@ module tida.scene.instance;
 static immutable ubyte InMemory = 0; ///
 static immutable ubyte InScene = 0; ///
 
+template isComponent(T)
+{
+	enum isComponent = is(T : Component);
+}
+
 private void remove(T)(ref T[] obj,size_t index) @trusted nothrow
 {
     auto dump = obj.dup;
@@ -200,7 +205,7 @@ class Instance
             Name = Component.
     +/
     void add(Name)() @safe
-    in(new Name().from!Component,"Its not component!")
+    in(isComponent!Name,"Its not component!")
     body
     {
         add(new Name());
@@ -219,7 +224,7 @@ class Instance
         ---
     +/
     T of(T)() @safe
-    in(new T().from!Component,"It not component!")
+    in(isComponent!T,"It not component!")
     body
     {
         T obj;
@@ -274,6 +279,8 @@ class Instance
 
     /// Dissconnect component
     void dissconnect(Name)() @trusted
+    in(isComponent!Name,"It's not component!")
+    do
     {
         import core.memory;
 

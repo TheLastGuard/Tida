@@ -100,7 +100,7 @@ class Scene
         return index < bufferThread.length;
     }
 
-    ///
+    /// Starts a buffer of instances with the specified number.
     void initThread(size_t count = 1) @safe nothrow
     {
         foreach(_; 0 .. count)
@@ -129,8 +129,6 @@ class Scene
         bufferThread[threadID] ~= instance;
 
         this.sort();
-
-        // TODO: scene manager
     }
 
     /++
@@ -144,7 +142,7 @@ class Scene
             There must be no arguments in the constructor.
     +/
     void add(Name)(size_t threadID = 0) @safe
-    in(new Name().from!Instance,"It's not instance!")
+    in(isInstance!Name,"It's not instance!")
     body
     {
         Instance instance = new Name();
@@ -298,6 +296,8 @@ class Scene
     
     ///
     T getInstanceByClass(T)() @safe nothrow
+    in(isInstance!T)
+    body
     {
     	foreach(instance; getList)
     	{
@@ -518,5 +518,4 @@ class Scene
             graph = Instance to render.
     +/
     debug void drawDebug(IRenderer graph) @safe {}
-
 }

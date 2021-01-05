@@ -52,7 +52,7 @@ public struct Vector(T)
         Returns:
             int
     ++/
-    public int intX() @safe nothrow
+    int intX() @safe nothrow
     {
         return cast(int) this.x;
     }
@@ -62,12 +62,12 @@ public struct Vector(T)
         Returns:
             int
     ++/
-    public int intY() @safe nothrow
+    int intY() @safe nothrow
     {
         return cast(int) this.y;
     }
 
-    public bool opEquals(Vector a, Vector b) @safe nothrow 
+    bool opEquals(Vector a, Vector b) @safe nothrow 
     {
         if (a is b)
             return true;
@@ -75,7 +75,7 @@ public struct Vector(T)
         return a.x == b.x && a.y == b.y;
     }
 
-    public bool opEquals(Vector!T rhs) @safe nothrow const
+    bool opEquals(Vector!T rhs) @safe nothrow const
     {
         if (this is rhs)
             return true;
@@ -93,7 +93,7 @@ public struct Vector(T)
         assert(a != b);
     }
 
-    public Vector!T opBinary(string op)(Vector rhs) @safe nothrow 
+    Vector!T opBinary(string op)(Vector rhs) @safe nothrow 
     {
         static if (op == "+")
         {
@@ -105,7 +105,7 @@ public struct Vector(T)
         }
     }
 
-    public Vector!T opBinary(string op)(T num) @safe nothrow 
+    Vector!T opBinary(string op)(T num) @safe nothrow 
     {
         static if (op == "*")
         {
@@ -129,7 +129,7 @@ public struct Vector(T)
         assert(a == Vecf(32, 32));
     }
 
-    public void opOpAssign(string op)(Vector rhs) @safe nothrow 
+    void opOpAssign(string op)(Vector rhs) @safe nothrow 
     {
         static if (op == "+")
         {
@@ -143,7 +143,7 @@ public struct Vector(T)
         }
     }
 
-    public void opOpAssign(string op)(T num) @safe nothrow 
+    void opOpAssign(string op)(T num) @safe nothrow 
     {
         static if (op == "*")
         {
@@ -172,7 +172,7 @@ public struct Vector(T)
     /++
         Return length Vector.
     ++/
-    public T length() @safe
+    T length() @safe
     {
         static if(is(T : int))
         {
@@ -184,7 +184,7 @@ public struct Vector(T)
             return sqrt(sqr(this.x) + sqr(this.y));
     }
     
-    public string toString() @trusted
+    string toString() @trusted
     {
         import std.conv : to;
 

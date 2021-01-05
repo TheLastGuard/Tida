@@ -21,6 +21,16 @@ T from(T)(Object obj) @trusted
     return cast(T) obj;
 }
 
+template isScene(T)
+{
+	enum isScene = is(T : Scene);
+}
+
+template isInstance(T)
+{
+	enum isInstance = is(T : Instance);
+}
+
 import core.thread;
 
 class InstanceThread : Thread 
@@ -221,7 +231,7 @@ class SceneManager
         ---
     +/
     void add(T)() @safe
-    in(new T().from!Scene)
+    in(isScene!T,"It's not scene!")
     body
     {
         add(new T);
