@@ -261,7 +261,7 @@ public class Sound
     +/
     void free() @trusted
     {
-        if(_isPlay)
+        if(isPlay)
             stop();
 
         alDeleteSources(1,&_source);
