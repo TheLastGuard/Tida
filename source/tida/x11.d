@@ -18,6 +18,9 @@ public
     import x11.Xutil;
 }
 
+/++
+	Returns an atom for handling events.
++/
 template GetAtom(string name)
 {
 	import tida.runtime;

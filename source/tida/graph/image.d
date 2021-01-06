@@ -16,7 +16,7 @@ static immutable Blue = 2; /// Blue component
 /// Image.
 class Image : IDrawable, IDrawableEx, IDrawableColor
 {
-    import tida.color, tida.vector, tida.graph.gl, tida.graph.render, tida.graph.each;;
+    import tida.color, tida.vector, tida.graph.gl, tida.graph.render, tida.graph.each, tida.graph.texture;
     import imageformats;
     import std.algorithm;
     import std.conv : to;
@@ -26,7 +26,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         Color!ubyte[] _pixels;
         uint _width;
         uint _height;
-        uint glTextureID;
+        Texture _texture;
     }
 
     /// Empty initialization.
@@ -72,7 +72,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             format = Pixel format.
     +/
-    ubyte[] bytes(int format)() @safe
+    ubyte[] bytes(int format = PixelFormat.RGBA)() @safe
     {
         ubyte[] tryBytes;
 
@@ -223,7 +223,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             path = Relative or full path to the image file.
     +/
-    void load(string path) @trusted
+    auto load(string path) @trusted
     {
         import std.file : exists;
 
@@ -238,12 +238,14 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         create(_width,_height);
 
         this.bytes!(PixelFormat.RGBA)(temp.pixels);
+
+        return this;
     }
 
     /// Whether the picture is a texture.
     bool isTexture() @safe
     {
-        return glTextureID != 0;
+        return texture !is null;
     }
 
     /++
@@ -253,19 +255,20 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     {
         if(GL.isInitialize)
         {
-            GL.genTextures(1,glTextureID);
+            _texture = new Texture();
 
-            GL.bindTexture(glTextureID);
+            _texture.width = _width;
+            _texture.height = _height;
 
-            GL.texParameteri(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            GL.texParameteri(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-            GL.texImage2D(_width,_height,bytes!(PixelFormat.RGBA));
-
-            GL.bindTexture(0);
+            _texture.initFromBytes!(PixelFormat.RGBA)(bytes!(PixelFormat.RGBA));
         }
 
         return this;
+    }
+
+    Texture texture() @safe @property
+    {
+        return _texture;
     }
 
     /++
@@ -407,8 +410,11 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     /// Updates the texture if the picture has changed.
     void swap() @safe
     {
-        if(isTexture) freeTexture();
-        fromTexture();
+        if(isTexture) texture.destroy();
+
+        texture.width = _width;
+        texture.height = _height;
+        texture.initFromBytes!(PixelFormat.RGBA)(bytes!(PixelFormat.RGBA));
     }
 
     override void draw(IRenderer renderer,Vecf position) @safe
@@ -417,7 +423,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         {
             GL.color = rgb(255,255,255);
 
-            GL.bindTexture(glTextureID);
+            GL.bindTexture(texture.glID);
             GL.enable(GL_TEXTURE_2D);
 
             GL.draw!Rectangle({
@@ -442,7 +448,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         {
             GL.color = rgba(255,255,255,alpha);
 
-            GL.bindTexture(glTextureID);
+            GL.bindTexture(texture.glID);
             GL.enable(GL_TEXTURE_2D);
 
             GL.loadIdentity();
@@ -502,7 +508,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         {
             GL.color = color;
 
-            GL.bindTexture(glTextureID);
+            GL.bindTexture(texture.glID);
             GL.enable(GL_TEXTURE_2D);
 
             GL.draw!Rectangle({
@@ -527,18 +533,6 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         }
     }
 
-    /// Destroys the texture, not the image.
-    void freeTexture() @trusted
-    {
-        if(GL.isInitialize)
-        {
-            if(glTextureID != 0) {
-                glDeleteTextures(1,&glTextureID);
-                glTextureID = 0;
-            }
-        }
-    }
-
     /// Frees up space for pixels. Does not destroy texture.
     void freePixels() @trusted
     {
@@ -548,15 +542,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         }
     }
 
-    /// Frees memory completely from texture and pixels.
-    void free() @safe
-    {
-        freeTexture();
-        freePixels();
-
-        _width = 0;
-        _height = 0;
-    }
+    alias free = freePixels;
 
     ~this() @safe
     {
