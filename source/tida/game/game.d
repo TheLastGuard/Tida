@@ -13,6 +13,17 @@ import tida.templates;
 mixin Global!(IWindow,"window");
 mixin Global!(IRenderer,"renderer");
 
+struct GameConfig
+{
+    public
+    {
+        uint width = 0;
+        uint height = 0;
+        string caption;
+        ubyte contextType;
+    }
+}
+
 /// Game instance
 class Game
 {
@@ -29,13 +40,27 @@ class Game
         InstanceThread[] threads;
     }
 
+    this(GameConfig config) @trusted
+    {
+        initSceneManager();
+        _window = new Window(config.width,config.height,config.caption);
+
+        if(config.contextType == Simple) (cast(Window) window).initialize!Simple;
+        if(config.contextType == ContextIn) (cast(Window) window).initialize!ContextIn;
+
+        event = new EventHandler(cast(Window) window);
+        _renderer = CreateRenderer(window);
+        _loader = new Loader();
+        _listener = new Listener();
+
+        threads ~= null;
+    }
+
     this(int width,int height,string caption) @trusted
     {
         initSceneManager();
         _window = new Window(width,height,caption);
         (cast(Window) _window).initialize!ContextIn;
-
-        _window.resizable = false;
 
         event = new EventHandler(cast(Window) window);
         _renderer = CreateRenderer(window);
