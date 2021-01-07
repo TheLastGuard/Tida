@@ -55,4 +55,9 @@ class Camera
     {
         return _port;
     }
+
+    override string toString() @safe
+    {
+        return "Camera(port: "~port.toString~", shape: "~shape.toString~")";
+    }
 }

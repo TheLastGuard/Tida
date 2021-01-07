@@ -190,6 +190,8 @@ interface IWindow
     uint height() @safe @property;
 
     void destroyWindow() @safe;
+
+    void eventResize(uint[2] size) @safe;
 }
 
 version(Posix)
@@ -596,6 +598,12 @@ class Window : IWindow
         XDestroyWindow(runtime.display, window);
     }
 
+    override void eventResize(uint[2] size) @safe
+    {
+        _width = size[0];
+        _height = size[1];
+    }
+
     ulong handle() @safe @property
     {
         return window;
@@ -939,6 +947,12 @@ class Window : IWindow
     override void destroyWindow() @trusted
     {
         DestroyWindow(window);
+    }
+
+    override void eventResize(uint[2] size) @safe
+    {
+        _width = size[0];
+        _height = size[1];
     }
 
     HWND handle() @safe

@@ -178,7 +178,7 @@ class GLRender : IRenderer
 
     override void reshape() @safe
     {
-        GL.viewport(0,0, _camera.shape.end.x.to!int, _camera.shape.end.y.to!int);
+        GL.viewport(0,0, window.width, window.height);
 
         clear();
 
