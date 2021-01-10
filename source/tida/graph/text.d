@@ -196,7 +196,7 @@ class Text
             symbols = Text for rendering.
             color = Text color.
     +/
-    public Symbol[] renderSymbols(T)(T symbols,Color!ubyte color = rgba(255,255,255,255)) @trusted
+    Symbol[] renderSymbols(T)(T symbols,Color!ubyte color = rgba(255,255,255,255)) @trusted
     {
         Symbol[] chars;
 
