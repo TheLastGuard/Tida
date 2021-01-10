@@ -546,10 +546,6 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
 
     ~this() @safe
     {
-        if(_texture !is null) {
-            _texture.destroy();
-        }
-        
         free();
     }
 }
