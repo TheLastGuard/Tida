@@ -274,6 +274,22 @@ struct Shape
             return _trType;
     }
 
+    /// Shape width
+    float width() @safe @property
+    in(type == ShapeType.rectangle,"This is not a rectangle!")
+    do
+    {
+        return end.x - begin.x;
+    }
+
+    /// Shape height
+    float height() @safe @property
+    in(type == ShapeType.rectangle,"This is not a rectangle!")
+    do
+    {
+        return end.y - begin.y;
+    }
+
     /// The top of the triangle.
     Vecf[] vertexs() @safe @property nothrow
     {

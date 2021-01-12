@@ -314,6 +314,38 @@ class Window : IWindow
         _title = newTitle;
     }
 
+    void createFromXVisual(XVisualInfo* vinfo,int posX = 100,int posY = 100) @trusted 
+    {
+        scope Visual* visual = vinfo.visual;
+        int depth = vinfo.depth;
+
+        _visual = visual;
+        _depth = depth;
+
+        auto rootWindow = runtime.rootWindow;
+
+        XSetWindowAttributes windowAttribs;
+        windowAttribs.border_pixel = 0x000000;
+        windowAttribs.background_pixel = 0xFFFFFF;
+        windowAttribs.override_redirect = True;
+        windowAttribs.colormap = XCreateColormap(runtime.display, rootWindow, 
+                                                 visual, AllocNone);
+
+        windowAttribs.event_mask = ExposureMask | ButtonPressMask | KeyPressMask |
+                                   KeyReleaseMask | ButtonReleaseMask | EnterWindowMask |
+                                   LeaveWindowMask | PointerMotionMask;
+
+        window = XCreateWindow (runtime.display, rootWindow, posX, posY, width, height, 0, depth,
+                                InputOutput, visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, 
+                                &windowAttribs);
+
+        title = _title;
+
+        auto wmAtom = GetAtom!"WM_DELETE_WINDOW";
+
+        XSetWMProtocols(runtime.display, window, &wmAtom, 1);
+    }
+
     /++
         Window initialization. In the class, it must be executed as a template to generate the appropriate context.
 
@@ -617,6 +649,24 @@ class Window : IWindow
     int getDepth() @safe
     {
         return _depth;
+    }
+
+    /++
+        Sets the alpha value to the window. Only applicable to x11 windows.
+
+        Params:
+            alpha = Alpha value.
+    +/
+    void alpha(float alpha) @trusted @property
+    {
+        auto atom = GetAtom!"_NET_WM_WINDOW_OPACITY";
+        auto cardinal = GetAtom!"CARDINAL";
+
+        auto tAlpha = cast(ulong) (cast(ulong) 0xFFFFFF * alpha);
+
+
+        XChangeProperty(runtime.display, window, atom, cardinal, 32,
+                PropModeReplace, cast(ubyte*) &tAlpha, 1);
     }
 
     ~this() @safe

@@ -69,5 +69,9 @@
 		"FT_210",
 		"GL_AllowDeprecated",
 		"GL_46"
+	],
+	"subPackages": [
+		"./examples/simplewindow",
+		"./examples/simplerender"
 	]
 }

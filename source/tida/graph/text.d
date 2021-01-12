@@ -59,7 +59,6 @@ class Font
         Params:
             path = The path to the font.
             size = Font size.
-            encode = Encode type string. 
             
         Throws: `Exception` If the font was not found in the file system, or if the font is damaged.
     +/

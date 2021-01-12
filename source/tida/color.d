@@ -25,7 +25,7 @@ enum NoAlpha = 1;
     Converts grayscale to the library's standard color scheme.
 
     Params:
-        gsc = Grayscale value.
+        value = Grayscale value.
 
     Example:
     ---

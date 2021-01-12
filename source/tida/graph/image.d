@@ -138,9 +138,9 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             y = The y-axis position pixel.
             color = Pixel.
     +/
-    void setPixel(uint x,uint y,Color!ubyte color) @safe nothrow
+    void setPixel(int x,int y,Color!ubyte color) @safe nothrow
     {
-        if(x >= width || y >= height)
+        if(x >= width || y >= height || x < 0 || y < 0)
             return;
 
         _pixels [
@@ -157,7 +157,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     +/
     Color!ubyte getPixel(int x,int y) @safe nothrow
     {
-        if(x > width && y > height && x < 0 && y < 0) return rgba(0,0,0,0);
+        if(x >= width || y >= height || x < 0 || y < 0) return rgba(0,0,0,0);
 
         return _pixels[(width * y) + x];
     }
@@ -357,6 +357,13 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         return this;
     }
 
+    /++
+        Applies alpha blending. Works only when drawing on other surfaces, 
+        because this function edits the alpha channel of colors.
+
+        Params:
+            value = Alpha-channel.
+    +/
     auto alpha(ubyte value) @safe nothrow
     {
         import std.algorithm : each;
@@ -407,6 +414,19 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         return this;
     }
 
+    /++
+        Reverses the picture along the specified axis.
+
+        Params:
+            FlipType = Axis.
+
+        Example:
+        ---
+        image
+            .flip!XAxis
+            .flip!YAxis;
+        ---
+    +/
     auto flip(int FlipType)() @safe nothrow
     {
         Image image = this.dup();
@@ -603,10 +623,120 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 }
 
+/++
+    Save image in file.
+
+    Params:
+        image = Image.
+        path = Path to the file.
++/
 void saveImageFromFile(Image image,string path) @trusted
 {
     import imageformats;
     import tida.color;
 
     write_image(path, image.width, image.height, image.bytes!(PixelFormat.RGBA), ColFmt.RGBA);
+}
+
+import tida.shape;
+
+/++
+    Creates a cropped version of the picture according to the given shape.
+
+    Params:
+        shape = Shape.
+        image = Cropped shape.
+        outImage = Link to the edited picture. Usually needed for recursion.
+
+    Returns: Cropped picture.
++/
+Image shapeCopy(Shape shape,Image image,Image outImage = null) @safe
+in(shape.type != ShapeType.triangle)
+body
+{
+    import tida.graph.each;
+    import tida.color, std.conv : to;
+    import tida.vector;
+
+    Image copyImage;
+
+    if(outImage is null) {
+        copyImage = new Image(image.width, image.height);
+        copyImage.fill(rgba(0,0,0,0));
+    } else {
+        copyImage = outImage;
+    }
+
+    Color!ubyte[] pixels = image.pixels;
+
+    switch(shape.type)
+    {
+        case ShapeType.point:
+            copyImage.setPixel(shape.begin.x.to!int, shape.begin.y.to!int,
+                image.getPixel(shape.x.to!int,shape.y.to!int));
+        break;
+
+        case ShapeType.line:
+            foreach(x,y; Line(shape.begin,shape.end)) 
+            {
+                copyImage.setPixel(x,y, image.getPixel(x,y));
+            }
+        break;
+
+        case ShapeType.rectangle:
+            foreach(x,y; Coord (shape.end.x.to!int,shape.end.y.to!int,
+                                shape.begin.x.to!int,shape.begin.y.to!int))
+            {
+                copyImage.setPixel(x,y, image.getPixel(x,y));
+            }
+        break;
+
+        case ShapeType.circle:
+            int x = 0;
+            int y = cast(int) shape.radious;
+
+            int X1 = shape.begin.intX();
+            int Y1 = shape.begin.intY();
+
+            int delta = 1 - 2 * cast(int) shape.radious;
+            int error = 0;
+
+            while (y >= 0)
+            {
+                foreach(ix,iy; Line(Vecf(X1 + x, Y1 + y),Vecf(X1 + x, Y1 - y))) {
+                    copyImage.setPixel(ix,iy, image.getPixel(ix,iy));
+                }
+
+                foreach(ix,iy; Line(Vecf(X1 - x, Y1 + y),Vecf(X1 - x, Y1 - y))) {
+                    copyImage.setPixel(ix,iy, image.getPixel(ix,iy));
+                }
+
+                error = 2 * (delta + y) - 1;
+
+                if ((delta < 0) && (error <= 0))
+                {
+                    delta += 2 * ++x + 1;
+                    continue;
+                }
+
+                if ((delta > 0) && (error > 0))
+                {
+                    delta -= 2 * --y + 1;
+                    continue;
+                }
+
+                delta += 2 * (++x - --y);
+            }
+        break;
+
+        case ShapeType.multi:
+            foreach(shapef; shape.shapes) {
+                shapeCopy(shapef, image, copyImage);
+            }
+        break;
+        
+        default: break;
+    }
+
+    return copyImage;
 }

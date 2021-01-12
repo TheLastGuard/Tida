@@ -9,6 +9,14 @@ module tida.runtime;
 
 import tida.templates;
 
+/// Struct library loader
+struct LibraryLoader
+{
+    bool openAL = true; /// OpenAL
+    bool freeType = true; /// FreeType
+    version(Posix) bool glx = true; /// GLX
+}
+
 version(Posix) mixin Global!(bool,"glxIsLoad");
 mixin Global!(TidaRuntime,"runtime");
 
@@ -20,7 +28,7 @@ interface ITidaRuntime
     /++
         Loads dynamic libraries that will be needed into memory.
     +/
-    void loadLibraries() @trusted;
+    void loadLibraries(LibraryLoader libstr) @trusted;
 
     /++
         Terminates the program immediately.
@@ -63,36 +71,39 @@ class TidaRuntime : ITidaRuntime
 
         Params:
             args = Program arguments.
+            libstr = Library struct.
     +/
-    static void initialize(string[] args,bool isLoadLibrary = true) @trusted
+    static void initialize(string[] args,LibraryLoader libstr = LibraryLoader()) @trusted
     {
         _runtime = new TidaRuntime(args);
         
-        if(isLoadLibrary)
-        {
-            runtime.loadLibraries();
-            runtime.xDisplayOpen();
-        }
+        runtime.loadLibraries(libstr);
+        if(libstr.glx) runtime.xDisplayOpen();
     }
 
-    override void loadLibraries() @trusted
+    override void loadLibraries(LibraryLoader libstr) @trusted
     {
         import tida.graph.text;
 
         try
         {
-            GLXLoadLibrary();
+            if(libstr.glx) {
+                GLXLoadLibrary();
 
-            _glxIsLoad = true;
+                _glxIsLoad = true;
+            }
         }catch(Exception e)
         {
             _glxIsLoad = false;
         }finally
         {
-            FreeTypeLoad();
-            InitSoundLibrary();
-            device = new Device();
-            device.open();
+            if(libstr.freeType) FreeTypeLoad();
+
+            if(libstr.openAL) {
+                InitSoundLibrary();
+                device = new Device();
+                device.open();
+            }
         }
     }
 
@@ -155,25 +166,25 @@ class TidaRuntime : ITidaRuntime
         Device device;
     }
 
-    static void initialize(string[] args,bool isLoadLibrary = true) @trusted
+    static void initialize(string[] args,LibraryLoader libstr = LibraryLoader()) @trusted
     {
         _runtime = new TidaRuntime(args);
 
-        if(isLoadLibrary)
-        {
-            runtime.instanceOpen();
-            runtime.loadLibraries();
-        }
+        runtime.instanceOpen();
+        runtime.loadLibraries(libstr);
     }
 
-    override void loadLibraries() @trusted
+    override void loadLibraries(LibraryLoader libstr) @trusted
     {
         import tida.graph.text;
 
-        FreeTypeLoad();
-        InitSoundLibrary();
-        device = new Device();
-        device.open();
+        if(libstr.freeType) FreeTypeLoad();
+
+            if(libstr.openAL) {
+                InitSoundLibrary();
+                device = new Device();
+                device.open();
+            }
     }
 
     this(string[] mainArguments) @safe

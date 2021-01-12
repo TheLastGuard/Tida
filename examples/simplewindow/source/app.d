@@ -4,7 +4,11 @@ import tida;
 
 void main(string[] args)
 {
-    TidaRuntime.initialize(args);
+    LibraryLoader lib;
+    lib.openAL = false;
+    lib.freeType = false;
+
+    TidaRuntime.initialize(args,lib);
 
     Window window = new Window(640,480,"Simple window.");
     window.initialize!Simple;
@@ -20,7 +24,7 @@ void main(string[] args)
             if(event.isQuit)
                 isGame = false;
 
-            if(event.getKeyDown == Key.Escape)
+            if(event.keyDown == Key.Escape)
                 isGame = false;
         }
     }

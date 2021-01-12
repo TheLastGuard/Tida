@@ -1,5 +1,5 @@
 {
-    "name" : "simplewindow",
+    "name" : "simplerender",
     "targetType": "executable",
     "dependencies" : {
     	"tida" : "*"

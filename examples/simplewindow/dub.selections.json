@@ -1,0 +1,12 @@
+{
+	"fileVersion": 1,
+	"versions": {
+		"bindbc-freetype": "0.9.1",
+		"bindbc-loader": "0.3.2",
+		"bindbc-openal": "0.4.1",
+		"bindbc-opengl": "0.13.0",
+		"imageformats": "7.0.2",
+		"mp3decoder": "1.0.0",
+		"x11": "1.0.21"
+	}
+}

@@ -82,7 +82,13 @@ I don't think that you can seriously use this project, but if you decide, you ca
 ```
 
 # Documentation
-Currently available only through the Wiki and through the reference API, which can be found [here](https://todnaz.github.io/Tida/).
+The documentation is not available from source, however you can generate it yourself. Enter the following to generate the documentation:
+```
+$ cd .../Tida
+$ dub fetch gendoc
+$ dub run gendoc
+$ cd docs/
+```
 
 # License
 Copyright 2020 (c) TodNaz
