@@ -81,7 +81,7 @@ Color!ubyte rgba(ubyte red,ubyte green,ubyte blue,ubyte alpha) @safe nothrow
 
     Returns: `Color!ubyte`
 +/
-Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe nothrow
+Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe
 {
 	static if(is(T : string))
 	{
