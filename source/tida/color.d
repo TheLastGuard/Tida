@@ -36,7 +36,7 @@ enum NoAlpha = 1;
 +/
 Color!ubyte grayscale(ubyte value) @safe nothrow
 {
-    return Color!ubyte(value,value,value);
+    return rgba(value,value,value,255);
 }
 
 /++
@@ -49,7 +49,7 @@ Color!ubyte grayscale(ubyte value) @safe nothrow
 
     Returns: RGBA
 +/
-Color!ubyte rgb(ubyte red,ubyte green,ubyte blue) @safe
+Color!ubyte rgb(ubyte red,ubyte green,ubyte blue) @safe nothrow
 {
     return Color!ubyte(red,green,blue,255);
 }
@@ -65,7 +65,7 @@ Color!ubyte rgb(ubyte red,ubyte green,ubyte blue) @safe
 
     Returns: RGBA
 +/
-Color!ubyte rgba(ubyte red,ubyte green,ubyte blue,ubyte alpha) @safe
+Color!ubyte rgba(ubyte red,ubyte green,ubyte blue,ubyte alpha) @safe nothrow
 {
     return Color!ubyte(red,green,blue,alpha);
 }
@@ -81,7 +81,7 @@ Color!ubyte rgba(ubyte red,ubyte green,ubyte blue,ubyte alpha) @safe
 
     Returns: `Color!ubyte`
 +/
-Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe
+Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe nothrow
 {
 	static if(is(T : string))
 	{
@@ -194,7 +194,7 @@ struct HSL
         alias l = lightness;
     }
 
-    T conv(T)() @safe
+    T conv(T)() @safe nothrow
     {
         static if(is(T : Color!ubyte))
         {
@@ -267,7 +267,7 @@ struct HSB
         alias v = value;
     }
 
-    T conv(T)() @safe
+    T conv(T)() @safe nothrow
     {
         static if(is(T : Color!ubyte))
         {
@@ -356,7 +356,7 @@ struct HSB
         format = Pixel format.
         bytes = byte sequence.
 +/
-Color!ubyte fromColor(int format)(ubyte[] bytes) @safe
+Color!ubyte fromColor(int format)(ubyte[] bytes) @safe nothrow
 {
     bytes = bytes.fromFormat!(format,PixelFormat.RGBA);
 
@@ -370,11 +370,9 @@ Color!ubyte fromColor(int format)(ubyte[] bytes) @safe
         format = Pixel format.
         bytes = byte sequence.
 +/
-Color!ubyte[] fromColors(int format)(ubyte[] bytes) @safe
+Color!ubyte[] fromColors(int format)(ubyte[] bytes) @safe nothrow
 {
     Color!ubyte[] result;
-
-    bytes = bytes.fromFormat!(format,PixelFormat.RGBA);
 
     for(size_t i = 0; i < bytes.length; i += 4)
     {
@@ -401,7 +399,7 @@ struct Color(T)
     }
 
     ///
-    this(T red,T green,T blue,T alpha = T.max) @safe
+    this(T red,T green,T blue,T alpha = T.max) @safe nothrow
     {
         this.red = red;
         this.green = green;
@@ -416,7 +414,7 @@ struct Color(T)
             T = Type.
             format = Pixel format.
     +/
-    T conv(T,int format = PixelFormat.RGBA)() @safe
+    T conv(T,int format = PixelFormat.RGBA)() @safe nothrow
     {
         static if(is(T : ulong) || is(T : uint))
         {
@@ -486,7 +484,7 @@ struct Color(T)
         }
     }
 
-    T conv(T,int format = PixelFormat.RGBA)() @safe immutable
+    T conv(T,int format = PixelFormat.RGBA)() @safe immutable nothrow
     {
         static if(is(T : ulong) || is(T : uint))
         {
@@ -573,13 +571,13 @@ struct Color(T)
     }
     
     ///
-    string toString() @safe
+    string toString() @safe nothrow
     {
         return this.conv!string;
     }
 
 	///
-    T[] fromBytes(R,int format)() @safe
+    T[] fromBytes(R,int format)() @safe nothrow
     {
         static if(format == PixelFormat.RGBA)
             return [r,g,b,a];
@@ -597,7 +595,7 @@ struct Color(T)
     }
 
 	///
-    T[] fromBytes(R,int format)() @safe immutable
+    T[] fromBytes(R,int format)() @safe immutable nothrow
     {
         static if(format == PixelFormat.RGBA)
             return [r,g,b,a];
@@ -621,7 +619,7 @@ struct Color(T)
             blending = Whether to apply alpha blending.
             color = Mixed color.
     +/
-    Color!T colorize(ubyte blending)(Color!T color) @safe
+    Color!T colorize(ubyte blending)(Color!T color) @safe nothrow
     {
         import std.math : abs;
 
@@ -644,7 +642,7 @@ struct Color(T)
     }
 
     /// Inverts the color.
-    auto invert() @safe
+    auto invert() @safe nothrow
     {
         r = r ^ 0xff;
         g = g ^ 0xff;
@@ -654,7 +652,7 @@ struct Color(T)
     }
 
     ///
-    auto clearRed() @safe
+    auto clearRed() @safe nothrow
     {
         r = 0;
 
@@ -662,7 +660,7 @@ struct Color(T)
     }
 
     ///
-    auto clearGreen() @safe
+    auto clearGreen() @safe nothrow
     {
         g = 0;
 
@@ -670,7 +668,7 @@ struct Color(T)
     }
 
     ///
-    auto clearBlue() @safe
+    auto clearBlue() @safe nothrow
     {
         b = 0;
 
@@ -678,25 +676,25 @@ struct Color(T)
     }
 
     ///
-    float rf() @safe
+    float rf() @safe nothrow
     {
         return cast(float) r / cast(float) T.max;
     }
 
     ///
-    float gf() @safe
+    float gf() @safe nothrow
     {
         return cast(float) g / cast(float) T.max;
     }
 
     ///
-    float bf() @safe
+    float bf() @safe nothrow
     {
         return cast(float) b / cast(float) T.max;
     }
 
     ///
-    float af() @safe
+    float af() @safe nothrow
     {
         return cast(float) a / cast(float) T.max;
     }
@@ -716,7 +714,7 @@ template isCorrectFormat(int format)
 		format2 = What format should be converted.
 		pixels = Sequence of color bytes.
 +/
-ubyte[] fromFormat(int format1,int format2)(ubyte[] pixels) @safe
+ubyte[] fromFormat(int format1,int format2)(ubyte[] pixels) @safe nothrow
 {
     static assert(isCorrectFormat!format1,"The format cannot be detected automatically!");
     static assert(isCorrectFormat!format2,"The format cannot be detected automatically!");

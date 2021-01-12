@@ -13,6 +13,9 @@ static immutable Red = 0; /// Red component
 static immutable Green = 1; /// Green component
 static immutable Blue = 2; /// Blue component
 
+static immutable XAxis = 0;
+static immutable YAxis = 1;
+
 /// Image.
 class Image : IDrawable, IDrawableEx, IDrawableColor
 {
@@ -30,7 +33,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /// Empty initialization.
-    this() @safe
+    this() @safe nothrow
     {
         _pixels = null;
     }
@@ -44,7 +47,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             newWidth = Image width.
             newHeight = Image height.
     +/
-    this(uint newWidth,uint newHeight) @safe
+    this(uint newWidth,uint newHeight) @safe nothrow
     {
         _pixels = new Color!ubyte[](newWidth * newHeight);
 
@@ -55,13 +58,13 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /// A sequence of pixels.
-    Color!ubyte[] pixels() @safe @property
+    Color!ubyte[] pixels() @safe @property nothrow
     {
         return _pixels;
     }
 
     /// ditto
-    void pixels(Color!ubyte[] otherPixels) @safe @property
+    void pixels(Color!ubyte[] otherPixels) @safe @property nothrow
     {
         _pixels = otherPixels;
     }
@@ -72,7 +75,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             format = Pixel format.
     +/
-    ubyte[] bytes(int format = PixelFormat.RGBA)() @safe
+    ubyte[] bytes(int format = PixelFormat.RGBA)() @safe nothrow
     {
         ubyte[] tryBytes;
 
@@ -88,9 +91,11 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             color = Color fill.
     +/
-    void fill(Color!ubyte color) @safe
+    auto fill(Color!ubyte color) @safe nothrow
     {
         _pixels.fill(color);
+
+        return this;
     }
 
     /++
@@ -110,7 +115,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         image.bytes!(PixelFormat.RGBA)(bt);
         ---
     +/
-    void bytes(int format = PixelFormat.RGBA)(ubyte[] bt) @safe
+    void bytes(int format = PixelFormat.RGBA)(ubyte[] bt) @safe nothrow
     in
     {
         if(format == PixelFormat.RGB)
@@ -133,7 +138,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             y = The y-axis position pixel.
             color = Pixel.
     +/
-    void setPixel(uint x,uint y,Color!ubyte color) @safe
+    void setPixel(uint x,uint y,Color!ubyte color) @safe nothrow
     {
         if(x >= width || y >= height)
             return;
@@ -150,8 +155,10 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             x = The x-axis position pixel.
             y = The y-axis position pixel.
     +/
-    Color!ubyte getPixel(uint x,uint y) @safe
+    Color!ubyte getPixel(int x,int y) @safe nothrow
     {
+        if(x > width && y > height && x < 0 && y < 0) return rgba(0,0,0,0);
+
         return _pixels[(width * y) + x];
     }
 
@@ -206,7 +213,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             newWidth = Image width.
             newHeight = Image height.
     +/
-    void create(uint newWidth,uint newHeight) @safe
+    void create(uint newWidth,uint newHeight) @safe nothrow
     {
         _pixels = new Color!ubyte[](newWidth * newHeight);
 
@@ -243,7 +250,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /// Whether the picture is a texture.
-    bool isTexture() @safe
+    bool isTexture() @safe nothrow
     {
         return texture !is null;
     }
@@ -266,7 +273,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         return this;
     }
 
-    Texture texture() @safe @property
+    Texture texture() @safe @property nothrow
     {
         return _texture;
     }
@@ -278,7 +285,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             newWidth = Image new width.
             newHeight = Image new height.
     +/
-    void resize(uint newWidth,uint newHeight) @safe
+    auto resize(uint newWidth,uint newHeight) @safe nothrow
     {
         uint oldWidth = _width;
         uint oldHeight = _height;
@@ -303,6 +310,8 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         }
 
         _pixels = npixels;
+
+        return this;
     }
 
     /++
@@ -311,22 +320,24 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             k = factor.
     +/
-    void scale(float k) @safe
+    auto scale(float k) @safe nothrow
     {
         uint newWidth = cast(uint) ((cast(float) _width) * k);
         uint newHeight = cast(uint) ((cast(float) _height) * k);
 
-        resize(newWidth,newHeight);
+        return resize(newWidth,newHeight);
     }
 
     /++
         Invents the picture by color.
     +/
-    void invert() @safe
+    auto invert() @safe nothrow
     {
         import std.algorithm : each;
 
         _pixels.each!((ref e) => e.invert());
+
+        return this;
     }
 
     /++
@@ -335,13 +346,24 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             Component = Component color.
     +/
-    void clearComponent(ubyte Component)() @safe
+    auto clearComponent(ubyte Component)() @safe nothrow
     {
         import std.algorithm : each;
 
         static if(Component == Red) _pixels.each!((ref e) => e.clearRed());
         static if(Component == Green) _pixels.each!((ref e) => e.clearGreen());
         static if(Component == Blue) _pixels.each!((ref e) => e.clearBlue());
+
+        return this;
+    }
+
+    auto alpha(ubyte value) @safe nothrow
+    {
+        import std.algorithm : each;
+
+        _pixels.each!((ref e) => e.alpha = value);
+
+        return this;
     }
 
     /++
@@ -351,7 +373,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             Component = Component color.
             value = How much to increase.
     +/
-    void addComponent(ubyte Component)(ubyte value) @safe
+    auto addComponent(ubyte Component)(ubyte value) @safe nothrow
     {
         import std.algorithm : each;
 
@@ -381,22 +403,46 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
                     e.b = 255;
             });
         }
+
+        return this;
+    }
+
+    auto flip(int FlipType)() @safe nothrow
+    {
+        Image image = this.dup();
+
+        static if(FlipType == XAxis) {
+            foreach(x,y; Coord(width,height)) {
+                setPixel(width - x,y, image.getPixel(x,y));
+            }
+        }else
+        static if(FlipType == YAxis)
+        {
+            foreach(x,y; Coord(width,height)) {
+                setPixel(x, height - y, image.getPixel(x,y));
+            }
+        }else
+            static assert(null, "You can only rotate along the x or y axis.");
+
+        image.freePixels();
+
+        return this;
     }
 
     /// The widht of the picture.
-    uint width() @safe @property
+    uint width() @safe @property nothrow
     {
         return _width;
     }
 
     /// The height of the picture.
-    uint height() @safe @property
+    uint height() @safe @property nothrow 
     {
         return _height;
     }
 
     /// Creates a copy of the picture. Doesn't create a copy of the texture.
-    Image dup() @safe @property
+    Image dup() @safe @property nothrow 
     {
         Image image = new Image();
 
@@ -408,13 +454,20 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /// Updates the texture if the picture has changed.
-    void swap() @safe
+    void swap() @safe nothrow
     {
         if(isTexture) texture.destroy();
 
         texture.width = _width;
         texture.height = _height;
         texture.initFromBytes!(PixelFormat.RGBA)(bytes!(PixelFormat.RGBA));
+    }
+
+    override string toString()
+    {
+        import std.conv : to;
+
+        return "Image(width: "~width.to!string~", height: "~height.to!string~")";
     }
 
     override void draw(IRenderer renderer,Vecf position) @safe
@@ -548,4 +601,12 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     {
         free();
     }
+}
+
+void saveImageFromFile(Image image,string path) @trusted
+{
+    import imageformats;
+    import tida.color;
+
+    write_image(path, image.width, image.height, image.bytes!(PixelFormat.RGBA), ColFmt.RGBA);
 }

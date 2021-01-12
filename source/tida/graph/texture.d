@@ -17,27 +17,27 @@ class Texture
         uint glTextureID;
     }
 
-    void width(uint newWidth) @safe @property
+    void width(uint newWidth) @safe @property nothrow
     {
         _width = newWidth;
     }
 
-    uint width() @safe @property
+    uint width() @safe @property nothrow
     {
         return _width;
     }
 
-    void height(uint newHeight) @safe @property
+    void height(uint newHeight) @safe @property nothrow
     {
         _height = newHeight;
     }
 
-    uint height() @safe @property
+    uint height() @safe @property nothrow
     {
         return _height;
     }
 
-    void initFromBytes(int format)(ubyte[] bytes) @safe @property
+    void initFromBytes(int format)(ubyte[] bytes) @safe @property nothrow
     {
         bytes = bytes.fromFormat!(format,PixelFormat.RGBA);
 
@@ -53,12 +53,12 @@ class Texture
         GL.bindTexture(0);
     }
 
-    uint glID() @safe @property
+    uint glID() @safe @property nothrow
     {
         return glTextureID;
     }
 
-    void destroy() @trusted @property
+    void destroy() @trusted @property nothrow
     {
         if(glTextureID != 0)
         {

@@ -384,6 +384,8 @@ interface IPlane
     void pointTo(Vecf position,Color!ubyte color) @safe;
     void viewport(int w,int h) @safe;
     void move(int x,int y) @safe;
+
+    ubyte[] data() @safe @property;
 }
 
 version(Posix)
@@ -408,13 +410,24 @@ class Plane : IPlane
 
         uint xput;
         uint yput;
+
+        bool _isAlloc = true;
     }
 
-    this(tida.window.Window window) @trusted
+    this(tida.window.Window window,bool isAlloc = true) @trusted
     {
         this.window = window;
 
-        context = XCreateGC(runtime.display, window.handle, 0, null);
+        _isAlloc = isAlloc;
+
+        if(_isAlloc) {
+            context = XCreateGC(runtime.display, window.handle, 0, null);
+        }
+    }
+
+    override ubyte[] data() @safe @property
+    {
+        return buffer;
     }
 
     override void alloc(uint width,uint height) @trusted
@@ -424,18 +437,21 @@ class Plane : IPlane
 
         buffer = new ubyte[](_width * _height * 4);
 
-        if(ximage !is null) {
-            XFree(ximage);
-            ximage = null;
+        if(_isAlloc)
+        {
+            if(ximage !is null) {
+                XFree(ximage);
+                ximage = null;
+            }
+
+            Visual* visual = (cast(tida.window.Window) window).getVisual();
+            int depth = (cast(tida.window.Window) window).getDepth();
+
+            ximage = XCreateImage(runtime.display, visual, depth,
+                ZPixmap, 0, cast(char*) buffer, _width, _height, 32, 0);
+
+            if(ximage is null) throw new Exception("[X11] XImage is not create!");
         }
-
-        Visual* visual = (cast(tida.window.Window) window).getVisual();
-        int depth = (cast(tida.window.Window) window).getDepth();
-
-        ximage = XCreateImage(runtime.display, visual, depth,
-            ZPixmap, 0, cast(char*) buffer, _width, _height, 32, 0);
-
-        if(ximage is null) throw new Exception("[X11] XImage is not create!");
     }
 
     override void viewport(int w,int h) @safe
@@ -463,10 +479,13 @@ class Plane : IPlane
 
     override void putToWindow(IWindow window) @trusted
     {
-        XPutImage(runtime.display, (cast(tida.window.Window) window).handle, context, ximage,
-            0, 0, 0, 0, _width, _height);
+        if(_isAlloc)
+        {
+            XPutImage(runtime.display, (cast(tida.window.Window) window).handle, context, ximage,
+                0, 0, 0, 0, _width, _height);
 
-        XSync(runtime.display, False);
+            XSync(runtime.display, False);
+        }
     }
 
     override void blendMode(BlendMode mode) @safe @property
@@ -555,11 +574,14 @@ class Plane : IPlane
         int _pheight;
         int xput;
         int yput;
+
+        bool _isAlloc = true;
     }
 
-    this(tida.window.Window window) @trusted
+    this(tida.window.Window window,bool isAlloc = true) @trusted
     {
         this.window = window;
+        _isAlloc = isAlloc;
     }
 
     void recreateBitmap() @trusted
@@ -574,6 +596,11 @@ class Plane : IPlane
         pdc = CreateCompatibleDC(hdc);
 
         SelectObject(pdc, wimage);
+    }
+
+    override ubyte[] data() @safe @property
+    {
+        return buffer;
     }
 
     override void alloc(uint width,uint height) @trusted
@@ -611,8 +638,11 @@ class Plane : IPlane
 
     override void putToWindow(IWindow window) @trusted
     {
-        recreateBitmap();
-        BitBlt(hdc, 0, 0, _width, _height, pdc, 0, 0, SRCCOPY);
+        if(_isAlloc)
+        {
+            recreateBitmap();
+            BitBlt(hdc, 0, 0, _width, _height, pdc, 0, 0, SRCCOPY);
+        }
     }
 
     override void blendMode(BlendMode mode) @safe @property
@@ -676,7 +706,7 @@ class Software : IRenderer
     import tida.window, tida.color, tida.vector, tida.graph.camera, tida.shape;
     import std.conv : to;
 
-    private
+    protected
     {
         IWindow window;
         Color!ubyte _background;
@@ -685,20 +715,32 @@ class Software : IRenderer
         IPlane plane;
     }
 
-    this(IWindow window) @safe
+    this(IWindow window,bool _isAlloc = true) @safe
     {
         this.window = window;
 
-        plane = new Plane(cast(Window) window);
+        plane = new Plane(cast(Window) window, _isAlloc);
 
         _camera = new Camera();
 
-        _camera.shape = Shape.Rectangle(Vecf(0,0),Vecf(window.width,window.height));
-        _camera.port  = Shape.Rectangle(Vecf(0,0),Vecf(window.width,window.height));
+        if(window !is null)
+        {
+            _camera.shape = Shape.Rectangle(Vecf(0,0),Vecf(window.width,window.height));
+            _camera.port  = Shape.Rectangle(Vecf(0,0),Vecf(window.width,window.height));
+        }
 
         plane.blendMode(BlendMode.Blend);
 
         reshape();
+    }
+
+    this(IPlane plane) @safe
+    {
+        this(null, false);
+
+        this.plane = plane;
+
+        plane.blendMode(BlendMode.Blend);
     }
 
     override RenderType type() @safe
@@ -853,6 +895,11 @@ class Software : IRenderer
     override void blendMode(BlendMode mode) @safe
     {
         plane.blendMode(mode);
+    }
+
+    IPlane getPlane() @safe
+    {
+        return plane;
     }
 }
 

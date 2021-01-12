@@ -22,6 +22,7 @@ public
 	import tida.graph.image;
 	import tida.graph.render;
 	import tida.graph.text;
+	import tida.graph.softimage;
 
 	import tida.sound.al;
 

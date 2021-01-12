@@ -64,12 +64,15 @@ class TidaRuntime : ITidaRuntime
         Params:
             args = Program arguments.
     +/
-    static void initialize(string[] args) @trusted
+    static void initialize(string[] args,bool isLoadLibrary = true) @trusted
     {
         _runtime = new TidaRuntime(args);
         
-        runtime.loadLibraries();
-        runtime.xDisplayOpen();
+        if(isLoadLibrary)
+        {
+            runtime.loadLibraries();
+            runtime.xDisplayOpen();
+        }
     }
 
     override void loadLibraries() @trusted
@@ -152,12 +155,15 @@ class TidaRuntime : ITidaRuntime
         Device device;
     }
 
-    static void initialize(string[] args) @trusted
+    static void initialize(string[] args,bool isLoadLibrary = true) @trusted
     {
         _runtime = new TidaRuntime(args);
 
-        runtime.instanceOpen();
-        runtime.loadLibraries();
+        if(isLoadLibrary)
+        {
+            runtime.instanceOpen();
+            runtime.loadLibraries();
+        }
     }
 
     override void loadLibraries() @trusted

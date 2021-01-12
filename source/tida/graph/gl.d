@@ -25,7 +25,7 @@ struct GL
     import tida.color;
     import tida.vector;
 
-    static bool isInitialize() @trusted
+    static bool isInitialize() @trusted nothrow
     {
         return _glIsInitialize;
     }
@@ -40,52 +40,52 @@ struct GL
        _glIsInitialize = true;
     }
 
-    static void alphaFunc(int mode,float alpha) @trusted
+    static void alphaFunc(int mode,float alpha) @trusted nothrow
     {
         glAlphaFunc(mode,alpha);
     }
 
-    static void readPixels(int x,int y,int width,int height,GLenum format,GLenum type,void* data) @trusted
+    static void readPixels(int x,int y,int width,int height,GLenum format,GLenum type,void* data) @trusted nothrow
     {
         glReadPixels(x,y,width,height,format,type,data);
     }
 
-    static void viewport(int x,int y,int width,int height) @trusted
+    static void viewport(int x,int y,int width,int height) @trusted nothrow
     {
         glViewport(x,y,width,height);
     }
 
-    static void frustum(float a,float b,float c,float d,float e,float f) @trusted
+    static void frustum(float a,float b,float c,float d,float e,float f) @trusted nothrow
     {
         glFrustum(a,b,c,d,e,f);
     }
     
-    static void clearColor(Color!ubyte color) @trusted @property
+    static void clearColor(Color!ubyte color) @trusted @property nothrow
     {
         glClearColor(color.rf,color.gf,color.bf,color.af);
     }
 
-    static void clear(int mode = GL_COLOR_BUFFER_BIT) @trusted
+    static void clear(int mode = GL_COLOR_BUFFER_BIT) @trusted nothrow
     {
         glClear(mode);
     }
 
-    static void translate(float x,float y,float z) @trusted
+    static void translate(float x,float y,float z) @trusted nothrow
     {
         glTranslatef(x,y,z);
     }
 
-    static void rotate(float angle,float x,float y,float z) @trusted
+    static void rotate(float angle,float x,float y,float z) @trusted nothrow
     {
         glRotatef(angle,x,y,z);
     }
 
-    static void pushMatrix() @trusted
+    static void pushMatrix() @trusted nothrow
     {
         glPushMatrix();
     }
 
-    static void popMatrix() @trusted
+    static void popMatrix() @trusted nothrow
     {
         glPopMatrix();
     }
@@ -97,67 +97,67 @@ struct GL
         glEnd();
     }
 
-    static void genTextures(int nums,ref uint texID) @trusted
+    static void genTextures(int nums,ref uint texID) @trusted nothrow
     {
         glGenTextures(nums, &texID);
     }
 
-    static void enable(int mode) @trusted
+    static void enable(int mode) @trusted nothrow
     {
         glEnable(mode);
     }
 
-    static void disable(int mode) @trusted
+    static void disable(int mode) @trusted nothrow
     {
         glDisable(mode);
     }
 
-    static void texCoord2i(int a,int b) @trusted
+    static void texCoord2i(int a,int b) @trusted nothrow
     {
         glTexCoord2i(a,b);
     }
 
-    static void bindTexture(int texID) @trusted
+    static void bindTexture(int texID) @trusted nothrow
     {
         glBindTexture(GL_TEXTURE_2D, texID);
     }
 
-    static void texParameteri(int a,int b) @trusted
+    static void texParameteri(int a,int b) @trusted nothrow
     {
         glTexParameteri(GL_TEXTURE_2D,a,b);
     }
 
-    static void texImage2D(uint width,uint height,ubyte[] pixels) @trusted
+    static void texImage2D(uint width,uint height,ubyte[] pixels) @trusted nothrow
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width,height, 0, GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) pixels);
     }
 
-    static void vertex(Vecf vector,Vecf size = Vecf()) @trusted
+    static void vertex(Vecf vector,Vecf size = Vecf()) @trusted nothrow
     {
         glVertex3f(vector.x,vector.y,0.0f);
     }
 
-    static void color(Color!ubyte color) @trusted
+    static void color(Color!ubyte color) @trusted nothrow
     {
         glColor4f(color.rf,color.gf,color.bf,color.af);
     }
 
-    static void ortho(float a, float b, float c, float d, float e,float f) @trusted
+    static void ortho(float a, float b, float c, float d, float e,float f) @trusted nothrow
     {
         glOrtho(a,b,c,d,e,f);
     }
 
-    static void matrixMode(int mode) @trusted
+    static void matrixMode(int mode) @trusted nothrow
     {
         glMatrixMode(mode);
     }
 
-    static void loadIdentity() @trusted
+    static void loadIdentity() @trusted nothrow
     {
         glLoadIdentity();
     }
 
-    static void releative(ref Vecf position,Vecf size) @trusted
+    static void releative(ref Vecf position,Vecf size) @trusted nothrow
     {
         position.x = position.x / size.x - 1.0f;
         position.y = ((size.y - position.y) / size.y);
