@@ -10,8 +10,20 @@ import tida.window;
 import tida.graph.render;
 import tida.templates;
 
-mixin Global!(IWindow,"window");
-mixin Global!(IRenderer,"renderer");
+__gshared IWindow _window;
+__gshared IRenderer _renderer;
+
+/// Window instance.
+IWindow window() @trusted
+{
+    return _window;
+}
+
+/// Renderer instance.
+IRenderer renderer() @trusted
+{
+    return _renderer;
+}
 
 struct GameConfig
 {

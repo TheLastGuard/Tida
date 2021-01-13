@@ -35,6 +35,7 @@ body
 {
     import std.conv : to;
     import std.math : abs;
+    import tida.graph.each;
 
     first.begin = first.begin + firstPos;
     second.begin = second.begin + secondPos;
@@ -59,37 +60,11 @@ body
                        first.begin == second.end)
                       return true;
 
-                    /+
-                        Virtually by drawing a line, but at each step we check if there is the same collision.
-                    +/
-                    int x1 = second.begin.x.to!int;
-                    int y1 = second.begin.y.to!int;
-                    const x2 = second.end.x.to!int;
-                    const y2 = second.end.y.to!int;
-
-                    const deltaX = abs(x2 - x1);
-                    const deltaY = abs(y2 - y1);
-                    const signX = x1 < x2 ? 1 : -1;
-                    const signY = y1 < y2 ? 1 : -1;
-
-                    int error = deltaX - deltaY;
-
-                    while(x1 != x2 || y1 != y2) {
-                        if(first.begin.x.to!int == x1 &&
-                           first.begin.y.to!int == y1)
+                    foreach(x,y; Line(second.begin, second.end)) {
+                        if(first.begin.x.to!int == x &&
+                           first.begin.y.to!int == y)
                            return true;
 
-                        const int error2 = error * 2;
-
-                        if(error2 > -deltaY) {
-                            error -= deltaY;
-                            x1 += signX;
-                        }
-
-                        if(error2 < deltaX) {
-                            error += deltaX;
-                            y1 += signY;
-                        }
                     }
 
                     return false;
@@ -121,37 +96,10 @@ body
                       second.begin == first.end)
                       return true;
 
-                    /+
-                        Virtually by drawing a line, but at each step we check if there is the same collision.
-                    +/
-                    int x1 = first.begin.x.to!int;
-                    int y1 = first.begin.y.to!int;
-                    const x2 = first.end.x.to!int;
-                    const y2 = first.end.y.to!int;
-
-                    const deltaX = abs(x2 - x1);
-                    const deltaY = abs(y2 - y1);
-                    const signX = x1 < x2 ? 1 : -1;
-                    const signY = y1 < y2 ? 1 : -1;
-
-                    int error = deltaX - deltaY;
-
-                    while(x1 != x2 || y1 != y2) {
-                        if(second.begin.x.to!int == x1 &&
-                           second.begin.y.to!int == y1)
+                    foreach(x, y; Line(first.begin, first.end)) {
+                        if(second.begin.x.to!int == x &&
+                           second.begin.y.to!int == y)
                            return true;
-
-                        const int error2 = error * 2;
-
-                        if(error2 > -deltaY) {
-                            error -= deltaY;
-                            x1 += signX;
-                        }
-
-                        if(error2 < deltaX) {
-                            error += deltaX;
-                            y1 += signY;
-                        }
                     }
 
                     return false;
@@ -181,40 +129,13 @@ body
                       second.end == first.end)
                       return true;
 
-                    /+
-                        Virtually by drawing a line, but at each step we check if there is the same collision.
-                    +/
-                    int x1 = first.begin.x.to!int;
-                    int y1 = first.begin.y.to!int;
-                    const x2 = first.end.x.to!int;
-                    const y2 = first.end.y.to!int;
-
-                    const deltaX = abs(x2 - x1);
-                    const deltaY = abs(y2 - y1);
-                    const signX = x1 < x2 ? 1 : -1;
-                    const signY = y1 < y2 ? 1 : -1;
-
-                    int error = deltaX - deltaY;
-
-                    while(x1 != x2 || y1 != y2) {
-                        if(x1 > second.begin.x &&
-                           x1 < second.end.x   &&
-                           y1 > second.begin.y &&
-                           y1 < second.end.y) 
+                    foreach(x,y; Line(first.begin, first.end)) {
+                        if(x > second.begin.x &&
+                           x < second.end.x   &&
+                           y > second.begin.y &&
+                           y < second.end.y) 
                         {
                            return true;
-                        }
-
-                        const error2 = error * 2;
-
-                        if(error2 > -deltaY) {
-                            error -= deltaY;
-                            x1 += signX;
-                        }
-
-                        if(error2 < deltaX) {
-                            error += deltaX;
-                            y1 += signY;
                         }
                     }
 
@@ -249,40 +170,13 @@ body
                        second.end == first.end)
                       return true;
 
-                    /+
-                        Virtually by drawing a line, but at each step we check if there is the same collision.
-                    +/
-                    int x1 = second.begin.x.to!int;
-                    int y1 = second.begin.y.to!int;
-                    const x2 = second.end.x.to!int;
-                    const y2 = second.end.y.to!int;
-
-                    const deltaX = abs(x2 - x1);
-                    const deltaY = abs(y2 - y1);
-                    const signX = x1 < x2 ? 1 : -1;
-                    const signY = y1 < y2 ? 1 : -1;
-
-                    int error = deltaX - deltaY;
-
-                    while(x1 != x2 || y1 != y2) {
-                        if(x1 > first.begin.x &&
-                           x1 < first.end.x   &&
-                           y1 > first.begin.y &&
-                           y1 < first.end.y) 
+                    foreach(x,y; Line(second.begin, second.end)) {
+                        if(x > first.begin.x &&
+                           x < first.end.x   &&
+                           y > first.begin.y &&
+                           y < first.end.y) 
                         {
                            return true;
-                        }
-
-                        const error2 = error * 2;
-
-                        if(error2 > -deltaY) {
-                            error -= deltaY;
-                            x1 += signX;
-                        }
-
-                        if(error2 < deltaX) {
-                            error += deltaX;
-                            y1 += signY;
                         }
                     }
 

@@ -29,34 +29,34 @@ module tida.graph.drawable;
     }
     ---
 +/
-public interface IDrawable
+interface IDrawable
 {
     import tida.window;
     import tida.vector;
     import tida.graph.render;
 
     ///
-    public void draw(IRenderer renderer,Vecf position) @trusted;
+    void draw(IRenderer renderer,Vecf position) @trusted;
 }
 
 /++
     Interface for advanced object rendering. 
     It contains both the rotation of the object and such a property as size.
 +/
-public interface IDrawableEx
+interface IDrawableEx
 {
     import tida.window;
     import tida.vector;
     import tida.graph.render;
 
     ///
-    public void drawEx(IRenderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha) @trusted;
+    void drawEx(IRenderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha) @trusted;
 }
 
 /++
     Interface for rendering an object with a given color.
 +/
-public interface IDrawableColor
+interface IDrawableColor
 {
     import tida.window;
     import tida.vector;
@@ -64,5 +64,5 @@ public interface IDrawableColor
     import tida.graph.render;
 
     ///
-    public void drawColor(IRenderer renderer,Vecf position,Color!ubyte color) @trusted;
+    void drawColor(IRenderer renderer,Vecf position,Color!ubyte color) @trusted;
 }

@@ -10,7 +10,13 @@ import bindbc.freetype;
 import tida.templates;
 import std.exception;
 
-mixin Global!(FT_Library,"FTLibrary");
+__gshared FT_Library _FTLibrary;
+
+/// FTLibrary instance.
+FT_Library FTLibrary() @trusted
+{
+    return _FTLibrary;
+}
 
 /++
     Loads the `FreeType` library.

@@ -17,8 +17,24 @@ struct LibraryLoader
     version(Posix) bool glx = true; /// GLX
 }
 
-version(Posix) mixin Global!(bool,"glxIsLoad");
-mixin Global!(TidaRuntime,"runtime");
+version(Posix)
+{
+    __gshared bool _glxIsLoad = false;
+
+    /// Is load glx library
+    bool glxIsLoad() @trusted
+    {
+        return _glxIsLoad;
+    }
+}
+
+__gshared TidaRuntime _runtime;
+
+/// Runtime instance.
+TidaRuntime runtime() @trusted
+{
+    return _runtime;
+}
 
 /++
     The main functions of the runtime that should be.

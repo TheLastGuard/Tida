@@ -1,5 +1,5 @@
 /++
-    
+    OpenGL module.
 
     Authors: $(HTTP https://github.com/TodNaz, TodNaz)
     License: $(HTTP https://opensource.org/licenses/MIT, MIT)
@@ -9,7 +9,13 @@ module tida.graph.gl;
 public import bindbc.opengl;
 import tida.templates;
 
-mixin Global!(bool,"glIsInitialize");
+__gshared bool _glIsInitialize;
+
+/// Is OpenGL loaded state.
+bool glIsInitialize() @trusted
+{
+    return _glIsInitialize;
+}
 
 enum 
 {

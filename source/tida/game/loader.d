@@ -18,7 +18,13 @@ import std.path : baseName, stripExtension;
 import std.file : exists,mkdir;
 import tida.templates;
 
-mixin Global!(Loader,"loader");
+__gshared Loader _loader;
+
+/// Loader instance.
+Loader loader() @trusted
+{
+    return _loader;
+}
 
 struct Resource
 {

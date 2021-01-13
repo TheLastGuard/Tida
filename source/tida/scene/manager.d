@@ -80,7 +80,13 @@ class InstanceThread : Thread
 
 import tida.templates;
 
-mixin Global!(SceneManager,"sceneManager");
+__gshared SceneManager _sceneManager;
+
+/// Scene manager instance.
+SceneManager sceneManager() @trusted
+{
+    return _sceneManager;
+}
 
 void initSceneManager() @trusted
 {

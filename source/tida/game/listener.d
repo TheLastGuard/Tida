@@ -9,7 +9,12 @@ module tida.game.listener;
 public import std.datetime;
 import tida.templates;
 
-mixin Global!(Listener,"listener");
+__gshared Listener _listener;
+
+Listener listener() @trusted
+{
+    return _listener;
+}
 
 alias TimerID = size_t;
 

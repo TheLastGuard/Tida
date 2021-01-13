@@ -809,33 +809,11 @@ class Software : IRenderer
     override void line(Vecf[2] points,Color!ubyte color) @safe
     {
         import std.math : abs;
+        import tida.graph.each;
 
-        int x1 = points[0].x.to!int;
-        int y1 = points[0].y.to!int;
-        const x2 = points[1].x.to!int;
-        const y2 = points[1].y.to!int;
-
-        const deltaX = abs(x2 - x1);
-        const deltaY = abs(y2 - y1);
-        const signX = x1 < x2 ? 1 : -1;
-        const signY = y1 < y2 ? 1 : -1;
-
-        int error = deltaX - deltaY;
-
-        while(x1 != x2 || y1 != y2) {
-            point(Vecf(x1,y1),color);
-
-            const int error2 = error * 2;
-
-            if(error2 > -deltaY) {
-                error -= deltaY;
-                x1 += signX;
-            }
-
-            if(error2 < deltaX) {
-                error += deltaX;
-                y1 += signY;
-            }
+        foreach(x,y; Line(points[0],points[1]))
+        {
+            point(Vecf(x,y),color);
         }
     }
 

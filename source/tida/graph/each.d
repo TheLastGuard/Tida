@@ -1,6 +1,6 @@
 module tida.graph.each;
 
-public auto Coord(uint width,uint height,int beginX = 0,int beginY = 0) @safe 
+auto Coord(uint width,uint height,int beginX = 0,int beginY = 0) @safe 
 {
     return (int delegate(ref int x,ref int y) @safe dg) @safe {
         for(int ix = beginX; ix < width; ix++)
@@ -17,7 +17,7 @@ public auto Coord(uint width,uint height,int beginX = 0,int beginY = 0) @safe
 
 import tida.vector, std.conv : to;
 
-public auto Line(Vecf begin,Vecf end) @safe
+auto Line(Vecf begin,Vecf end) @safe
 {
     import std.math : abs;
 
@@ -37,7 +37,7 @@ public auto Line(Vecf begin,Vecf end) @safe
         while(x1 != x2 || y1 != y2) {
             dh(x1,y1);
 
-            const int error2 = error * 2;
+            const error2 = error * 2;
 
             if(error2 > -deltaY) {
                 error -= deltaY;
