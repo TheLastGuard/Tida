@@ -522,4 +522,19 @@ struct Shape
 
         return shape;
     }
+
+    /++
+        Create a square.
+
+        Params:
+            pos = Square position.
+            len = Square length;
+
+        Returns:
+            Square (ShapeType: Rectangle).
+    +/
+    static Shape Square(Vecf pos,float len) @safe
+    {
+        return Shape.Rectangle(pos,pos + Vecf(len,len));
+    }
 }

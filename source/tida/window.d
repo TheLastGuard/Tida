@@ -1,59 +1,30 @@
 /++
-    A module for working with windows in a cross-platform environment. A window is created in both Windows and Linux 
-    environments. OS X and other operating systems are currently not supported due to lack of testing on these 
-    platforms.
+    A module describing interaction with a window, which should work with both Windows 
+    environment and Linux with the X11 protocol.
 
-    The window is created primarily not in the constructor, in the constructor the window parameters are initialized 
-    for its creation. All this is created by the `initialize` method, with an indication of the template parameter, 
-    which window to create.
+    For a window, you first need to allocate memory for it through the garbage collector, 
+    while in the constructor only parameters are set, you do not need to conclude that 
+    the window is created directly in the constructor.
 
-    A window can be created either with a ready-made context or without it (i.e., created manually)(Please note that 
-    the context is strictly created only for the opengl library).
+    All window creation is done through the `initialize` template function, where the 
+    type of the window to create is specified in the template argument.
+    (See the documentation for `Window.initialize`. The problem is that it is not part 
+    of the interface since the template cannot be defined in the interface.)
 
-    Creating a simple window is done with a simple `initialize` function:
-    ---
-    /*
-        We just allocate memory for the window, this is not yet the 
-        stages of its creation.
-    */
-    Window window = new Window(640,480,"MyTitle");
+    Also, if you want to create a context manually, you can create it through the `Context` 
+    interface, setting the attributes through the GLAttributes structure, but, because of this, 
+    you have to consider the peculiarities of the platform. Or do it completely manually, 
+    through GLX or WGL, getting the window identifier through `handle` in` Window`, if maximum 
+    optimization is needed.
 
-    /*
-        Creates a simple window with no graphics context.
-    */
-    window.initialize!Simple;
-    ---
+    Unfortunately, the creation of a window for platforms such as Mac OS, IOS is not considered. 
+    Console platforms will also be poorly viewed due to the lack of adequate testing hardware. 
+    The plans only include support for the android platform.
 
-    There are two ways to create a context:
-    1. Initialize the window immediately with the context:
-    ---
-    window.initialize!ContextIn;
-    ---
-    2. Create it manually:
-    ---
-    window.initialize!Simple;
+    Also, it is worth noting that the library is designed for two-dimensional logic than others, 
+    therefore, there may be problems with a different representation of graphics.
 
-    Context context = new Context();
-
-    /*
-        Indicates the attributes of the context.
-    */
-    context.attrib = GLAttributes(...);
-    context.attributeInitialize();
-    context.initialize();
-
-    /*
-        Sets the context to this window.
-    */
-    window.context = context;
-    ---
-
-    At the moment, windows cannot work in parallel, as well as event tracking and object rendering, so 
-    you shouldn't even try to create windows in different threads, this will lead to data segmentation.
-    
-    It is also recommended to create a window in the recommended way, but if you want to create your 
-    own render, then immediately put a context in the window so that there are no errors when creating 
-    a render or manual rendering.
+    The easiest way to create a window without a graphics context can be seen in `examples/simplewindow`.
 
     Authors: $(HTTP https://github.com/TodNaz, TodNaz)
     License: $(HTTP https://opensource.org/licenses/MIT, MIT)
@@ -80,6 +51,15 @@ struct GLAttributes
     }
 }
 
+/++
+    Automatically resizes all colors when creating context.
+
+    sizeAll = Color component size.
++/
+template GLAttribAutoColorSize(ubyte sizeAll)
+{
+    enum GLAttribAutoColorSize = GLAttributes(sizeAll, sizeAll, sizeAll, sizeAll);
+}
 
 /++
     The context interface that describes how to interact with the context.
@@ -207,7 +187,7 @@ class Context : IContext
         GLXFBConfig bestFbcs;   
     }
 
-    override void attributeInitialize(GLAttributes attributes) @trusted
+    override void attributeInitialize(GLAttributes attributes = GLAttribAutoColorSize!8) @trusted
     in(glxIsLoad,"GLX libraries were not loaded!")
     {
         import std.conv : to;
@@ -281,6 +261,7 @@ class Context : IContext
     }
 }
 
+/// X11 window structure
 version(Posix)
 class Window : IWindow
 {
@@ -691,7 +672,7 @@ class Context : IContext
         deviceHandle = GetDC(window);
     }
 
-    override void attributeInitialize(GLAttributes attributes) @trusted
+    override void attributeInitialize(GLAttributes attributes = GLAttribAutoColorSize!8) @trusted
     {
         PIXELFORMATDESCRIPTOR pfd;
 
@@ -734,6 +715,7 @@ class Context : IContext
     }
 }
 
+/// Windows window structure
 version(Windows)
 class Window : IWindow
 {

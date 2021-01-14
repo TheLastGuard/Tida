@@ -83,6 +83,16 @@ public struct Vector(T)
         return this.x == rhs.x && this.y == rhs.y;
     }
 
+    int opCmp(Vector!T rhs) @safe nothrow
+    {
+        return (x > rhs.x && y > rhs.y) ? 1 : -1;
+    }
+
+    int opCmp(Vector!T rhs) @safe nothrow const
+    {
+        return (x > rhs.x && y > rhs.y) ? 1 : -1;
+    }
+
     @("opEquals")
     @safe unittest
     {
@@ -114,7 +124,8 @@ public struct Vector(T)
         else static if (op == "/")
         {
             return Vector!T(this.x / num, this.y / num);
-        }
+        }else
+            static assert(null, "Unknown operator");
     }
 
     @("opBinary")
@@ -190,4 +201,63 @@ public struct Vector(T)
 
         return "[" ~ x.to!string ~ "," ~ y.to!string ~ "]";
     }
+}
+
+Vecf abs(Vecf vec) @safe
+{
+    import std.math : abs;
+
+    return Vecf(abs(vec.x), abs(vec.y));
+}
+
+template Abs(Vecf vec)
+{
+    import std.math : abs;
+
+    enum Abs = Vecf(abs(vec.x), abs(vec.y));
+}
+
+float distance(Vecf a,Vecf b) @safe
+{
+    import std.math : sqrt;
+
+    return sqrt(sqr(b.x - a.x) + sqr(b.y - a.y));
+}
+
+float distance(Vecf[2] vecs) @safe
+{
+    return vecs[0].distance(vecs[1]);
+}
+
+template Sqr(float a)
+{
+    enum Sqr = a * a;
+}
+
+template Distance(Vecf a,Vecf b)
+{
+    import std.math : sqrt;
+
+    enum Distance = sqrt(Sqr!(b.x - a.x)  + Sqr!(b.y - a.y));
+}
+
+template Distance(Vecf[2] vecs)
+{
+    import std.math : sqrt;
+
+    enum Distance = Distance!(vecs[0],vecs[1]);
+}
+
+/++
+    Average distance between vectors.
++/
+Vecf averateVectors(Vecf a,Vecf b) @safe
+{
+    return ((b - a) / 2) + ((a > b) ? b : a);
+}
+
+/// ditto
+template AverateVectors(Vecf a,Vecf b)
+{
+    enum AverateVectors = ((b - a) / 2) + ((a > b) ? b : a);
 }

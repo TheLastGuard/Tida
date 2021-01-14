@@ -17,6 +17,9 @@ struct LibraryLoader
     version(Posix) bool glx = true; /// GLX
 }
 
+enum NoLibrary = LibraryLoader(false,false);
+enum AllLibrary = LibraryLoader(true,true);
+
 version(Posix)
 {
     __gshared bool _glxIsLoad = false;
@@ -89,7 +92,7 @@ class TidaRuntime : ITidaRuntime
             args = Program arguments.
             libstr = Library struct.
     +/
-    static void initialize(string[] args,LibraryLoader libstr = LibraryLoader()) @trusted
+    static void initialize(string[] args,LibraryLoader libstr = AllLibrary) @trusted
     {
         _runtime = new TidaRuntime(args);
         
@@ -182,7 +185,7 @@ class TidaRuntime : ITidaRuntime
         Device device;
     }
 
-    static void initialize(string[] args,LibraryLoader libstr = LibraryLoader()) @trusted
+    static void initialize(string[] args,LibraryLoader libstr = AllLibrary) @trusted
     {
         _runtime = new TidaRuntime(args);
 

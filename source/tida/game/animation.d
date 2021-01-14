@@ -50,28 +50,6 @@ class Animation
     {
         _speed = value;
     }
-    
-    /++
-        Creates frames from one sample picture.
-
-        Params:
-            image = The picture from where the frames will be received.
-            x = The beginning of the cut by x-axis.
-            y = The beginning of the cut by y-axis.
-            w = Width frames.
-            h = Height frames.
-
-        Example:
-        ---
-        anim.strip(new Image("atlas.png"),0,0,32,32);
-        ---
-    +/
-    void strip(Image image,int x,int y,int w,int h) @safe
-    {
-        for(int ix = x; ix < image.width; ix += w) {
-            _frames ~= image.copy(ix,y,w,h);
-        }
-    }
 
     /// Return current frame
     Image currentFrame() @safe

@@ -13,8 +13,18 @@ static immutable Red = 0; /// Red component
 static immutable Green = 1; /// Green component
 static immutable Blue = 2; /// Blue component
 
+template isCorrectComponent(int cmp)
+{
+    enum isCorrectComponent = cmp == Red || cmp == Green || cmp == Blue;
+}
+
 static immutable XAxis = 0;
 static immutable YAxis = 1;
+
+template isCorrectAxis(int axis)
+{
+    enum isCorrectAxis = axis == XAxis || axis == YAxis;
+}
 
 /// Image.
 class Image : IDrawable, IDrawableEx, IDrawableColor
@@ -76,11 +86,14 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             format = Pixel format.
     +/
     ubyte[] bytes(int format = PixelFormat.RGBA)() @safe nothrow
+    in(isCorrectFormat!format)
+    body
     {
         ubyte[] tryBytes;
 
-        foreach(pixel; _pixels)
+        foreach(pixel; _pixels) {
             tryBytes ~= pixel.fromBytes!(ubyte,format);
+        }
 
         return tryBytes;
     }
@@ -118,6 +131,8 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     void bytes(int format = PixelFormat.RGBA)(ubyte[] bt) @safe nothrow
     in
     {
+        static assert(isCorrectFormat!format, "You cannot find out the format on the fly.");
+
         if(format == PixelFormat.RGB)
             assert(bt.length <= _width * _height * 3,
             "The size of the picture is much larger than this one!");
@@ -347,6 +362,8 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             Component = Component color.
     +/
     auto clearComponent(ubyte Component)() @safe nothrow
+    in(isCorrectComponent!Component)
+    body
     {
         import std.algorithm : each;
 
@@ -381,6 +398,8 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             value = How much to increase.
     +/
     auto addComponent(ubyte Component)(ubyte value) @safe nothrow
+    in(isCorrectComponent!Component)
+    body
     {
         import std.algorithm : each;
 
@@ -428,6 +447,8 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         ---
     +/
     auto flip(int FlipType)() @safe nothrow
+    in(isCorrectAxis!FlipType)
+    body
     {
         Image image = this.dup();
 
@@ -441,8 +462,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             foreach(x,y; Coord(width,height)) {
                 setPixel(x, height - y, image.getPixel(x,y));
             }
-        }else
-            static assert(null, "You can only rotate along the x or y axis.");
+        }
 
         image.freePixels();
 
@@ -739,4 +759,53 @@ body
     }
 
     return copyImage;
+}
+
+/++
+
++/
+Image[] strip(Image image,int x,int y,int w,int h) @safe
+{
+    Image[] result;
+
+    foreach(ix; x .. x + w)
+    {
+        result ~= image.copy(ix,y,w,h);
+    }
+
+    return result;
+}
+
+import tida.vector;
+
+Image unite(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @safe
+{ 
+    import std.algorithm, std.conv;
+    import tida.color;
+
+    Image result = new Image();
+
+    int width = max(posA.x,posB.y).to!int + max(a.width,b.width);
+    int height = max(posA.y,posB.y).to!int + max(a.height,b.height);
+
+    result.create(width,height);
+    result.fill(rgba(0,0,0,0));
+
+    for(int x = posA.x.to!int; x < posA.x.to!int + a.width; x++) {
+        for(int y = posA.y.to!int; y < posA.y.to!int + a.height; y++) {
+            Color!ubyte color = a.getPixel(x - posA.x.to!int, y - posA.y.to!int);
+            result.setPixel(x,y,color);
+        }
+    }
+
+    for(int x = posB.x.to!int; x < posB.x.to!int + b.width; x++) {
+        for(int y = posB.y.to!int; y < posB.y.to!int + b.height; y++) {
+            Color!ubyte color = b.getPixel(x - posB.x.to!int, y - posB.y.to!int);
+            Color!ubyte backColor = result.getPixel(x,y);
+            color.colorize!Alpha(backColor);
+            result.setPixel(x,y,color);
+        }
+    }
+
+    return result;
 }

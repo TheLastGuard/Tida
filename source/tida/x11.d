@@ -20,15 +20,15 @@ public
 
 /++
 	Returns an atom for handling events.
+
+	Params:
+		name = Atom name.
 +/
-template GetAtom(string name)
+Atom GetAtom(string name)() @trusted
 {
 	import tida.runtime;
 
-	Atom GetAtom() @trusted
-	{
-		return XInternAtom(runtime.display, name, 0);
-	}
+	return XInternAtom(runtime.display, name, 0);
 }
 
 struct WMEvent

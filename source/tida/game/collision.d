@@ -60,14 +60,17 @@ body
                        first.begin == second.end)
                       return true;
 
+                    bool result = false;
+
                     foreach(x,y; Line(second.begin, second.end)) {
                         if(first.begin.x.to!int == x &&
-                           first.begin.y.to!int == y)
-                           return true;
-
+                           first.begin.y.to!int == y) {
+                            result = true;
+                            break;
+                        }
                     }
 
-                    return false;
+                    return result;
 
                 case ShapeType.rectangle:
                     return first.begin.x > second.begin.x &&
@@ -96,13 +99,17 @@ body
                       second.begin == first.end)
                       return true;
 
+                    bool result = false;
+
                     foreach(x, y; Line(first.begin, first.end)) {
                         if(second.begin.x.to!int == x &&
-                           second.begin.y.to!int == y)
-                           return true;
+                           second.begin.y.to!int == y) {
+                            result = true;
+                            break;
+                        }
                     }
 
-                    return false;
+                    return result;
 
                 case ShapeType.line:
                     const a = first.begin;
@@ -129,17 +136,20 @@ body
                       second.end == first.end)
                       return true;
 
+                    bool result = false;
+
                     foreach(x,y; Line(first.begin, first.end)) {
                         if(x > second.begin.x &&
                            x < second.end.x   &&
                            y > second.begin.y &&
                            y < second.end.y) 
                         {
-                           return true;
+                           result = true;
+                           break;
                         }
                     }
 
-                    return false;
+                    return result;
 
                 case ShapeType.multi:
                     foreach(shape; second.shapes) {
@@ -170,17 +180,20 @@ body
                        second.end == first.end)
                       return true;
 
+                    bool result = false;
+
                     foreach(x,y; Line(second.begin, second.end)) {
                         if(x > first.begin.x &&
                            x < first.end.x   &&
                            y > first.begin.y &&
                            y < first.end.y) 
                         {
-                           return true;
+                           result = true;
+                           break;
                         }
                     }
 
-                    return false;
+                    return result;
 
                 case ShapeType.rectangle:
                     const a = first.begin;
