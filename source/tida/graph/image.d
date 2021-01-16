@@ -18,6 +18,8 @@ template isCorrectComponent(int cmp)
     enum isCorrectComponent = cmp == Red || cmp == Green || cmp == Blue;
 }
 
+enum M_PI = 3.14159265358979323846;
+
 static immutable XAxis = 0;
 static immutable YAxis = 1;
 
@@ -778,6 +780,17 @@ Image[] strip(Image image,int x,int y,int w,int h) @safe
 
 import tida.vector;
 
+/++
+    Combines two pictures, for example, if they are both of low transparency, you can create a single picture.
+
+    Params:
+        a = First image.
+        b = Second image.
+        posA = Position combines first image.
+        posB = Position combines second image.
+
+    Returns: Unites images
++/
 Image unite(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @safe
 { 
     import std.algorithm, std.conv;
@@ -808,4 +821,104 @@ Image unite(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @safe
     }
 
     return result;
+}
+
+/++
+    Generates a gauss matrix.
+
+    Params:
+        width = Matrix width.
+        height = Matrix height.
+        sigma = Radious gaus.
+
+    Return: Matrix
++/
+float[][] gausKernel(int width,int height,float sigma) @safe
+{
+    import std.math : exp;
+
+    float[][] result = new float[][](width,height);
+
+    float sum = 0f;
+
+    foreach(i; 0 .. height)
+    {
+        foreach(j; 0 .. width)
+        {
+            result[i][j] = exp(-(i * i + j * j) / (2 * sigma * sigma) / (2 * M_PI * sigma * sigma));
+            sum += result[i][j];
+        }
+    }
+
+    foreach(i; 0 .. height)
+    {
+        foreach(j; 0 .. width)
+        {
+            result[i][j] /= sum;
+        }
+    }
+
+    return result;
+}
+
+/++
+    Generates a gauss matrix.
+
+    Params:
+        r = Radiuos gaus.
++/
+float[][] gausKernel(float r) @safe
+{
+    return gausKernel(cast(int) (r * 2), cast(int) (r * 2), r);
+}
+
+/++
+    Blurs the picture by the specified factor.
+
+    Params:
+        image = Blurse image.
+        otherKernel = Matrix.
++/
+Image blur(Image image,float[][] otherKernel) @safe
+{
+    import tida.color;
+    import tida.graph.each;
+
+    auto kernel = otherKernel; 
+    
+    int width = image.width;
+    int height = image.height;
+
+    int kernelWidth = cast(int) kernel.length;
+    int kernelHeight = cast(int) kernel[0].length;
+
+    Image result = new Image(width,height);
+    result.fill(rgba(0,0,0,0));
+
+    foreach(x,y; Coord(width, height))
+    {
+        Color!ubyte color = rgb(0,0,0);
+
+        foreach(ix,iy; Coord(kernelWidth, kernelHeight))
+        {
+            color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy).mul(kernel[ix][iy]));
+        }
+
+        color.a = image.getPixel(x,y).a;
+        result.setPixel(x,y,color);
+    }
+
+    return result;
+}
+
+/++
+    Blurs the picture by the specified factor.
+
+    Params:
+        image = Blurse image.
+        k = Factor.
++/
+Image blur(Image image,float k) @safe
+{
+    return blur(image, gausKernel(k));
 }

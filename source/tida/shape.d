@@ -232,6 +232,11 @@ struct Shape
         return end.y;
     }
 
+    alias left = x; /// Rectangle left
+    alias right = endX; /// Rectangle right
+    alias top = y; /// Rectangle top
+    alias bottom = endY; /// Rectange bottom
+
     /// The radious the figure.
     float radious() @safe @property nothrow
     in(type == ShapeType.circle,"This is not a circle!")
@@ -319,11 +324,6 @@ struct Shape
         static if(num == 2)
             _trType = value;
     }
-
-    alias left = x;
-    alias top = y;
-    alias right = endX;
-    alias bottom = endY;
 
     string toString() @safe immutable
     {

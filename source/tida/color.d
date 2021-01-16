@@ -641,6 +641,35 @@ struct Color(T)
         return this;
     }
 
+    auto mulf(float koe) @safe
+    {
+        r = cast(T) ((rf * koe) * T.max);
+        g = cast(T) ((gf * koe) * T.max);
+        b = cast(T) ((bf * koe) * T.max);
+
+        return this;
+    }
+
+    auto mul(float koe) @safe
+    {
+        import std.conv : to;
+
+        r = cast(T) ((r.to!float * koe)); 
+        g = cast(T) ((g.to!float * koe)); 
+        b = cast(T) ((b.to!float * koe)); 
+
+        return this;
+    }
+
+    auto add(Color!T other) @safe
+    {
+        r += other.r;
+        g += other.g;
+        b += other.b;
+
+        return this;
+    }
+
     /// Inverts the color.
     auto invert() @safe nothrow
     {
