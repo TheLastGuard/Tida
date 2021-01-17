@@ -83,7 +83,7 @@ Color!ubyte rgba(ubyte red,ubyte green,ubyte blue,ubyte alpha) @safe nothrow
 +/
 Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe
 {
-	static if(is(T : string))
+	static if(is(T : string) || is(T : wstring) || is(T : dstring))
 	{
         import std.conv : to;
         import std.bigint;

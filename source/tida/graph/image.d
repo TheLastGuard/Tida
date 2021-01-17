@@ -13,6 +13,10 @@ static immutable Red = 0; /// Red component
 static immutable Green = 1; /// Green component
 static immutable Blue = 2; /// Blue component
 
+static immutable Parallel = 0;
+static immutable NoParallel = 1;
+enum DefaultOperation = Parallel;
+
 template isCorrectComponent(int cmp)
 {
     enum isCorrectComponent = cmp == Red || cmp == Green || cmp == Blue;
@@ -186,11 +190,26 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             otherImage = Other image.
             pos = Other image position.
     +/
-    void blit(Image otherImage,Vecf pos) @safe
+    void blit(int Type = DefaultOperation)(Image otherImage,Vecf pos) @trusted
     {
-        foreach(x,y; Coord(pos.intX + otherImage.width,pos.intY + otherImage.height,pos.intX,pos.intY))
+        static if(Type == NoParallel)
         {
-            setPixel(x,y,otherImage.getPixel(x - pos.intX,y - pos.intY));
+            foreach(x,y; Coord(pos.intX + otherImage.width,pos.intY + otherImage.height,pos.intX,pos.intY))
+            {
+                setPixel(x,y,otherImage.getPixel(x - pos.intX,y - pos.intY));
+            }
+        }else
+        static if(Type == Parallel)
+        {
+            import std.parallelism, std.range;
+
+            foreach(x; parallel(iota(pos.intX,pos.intX + otherImage.width)))
+            {
+                foreach(y; parallel(iota(pos.intY,pos.intY + otherImage.height)))
+                {
+                    setPixel(x,y,otherImage.getPixel(x - pos.intX,y - pos.intY));
+                }
+            }
         }
     }
 
@@ -204,18 +223,36 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             cWidth = Width new picture.
             cHeight = Hight new picture.
     +/
-    Image copy(int x,int y,int cWidth,int cHeight) @safe
+    Image copy(int Type = DefaultOperation)(int x,int y,int cWidth,int cHeight) @trusted
     {
         Image image = new Image();
 
         image.create(cWidth,cHeight);
 
-        foreach(ix,iy; Coord(x + cWidth,y + cHeight,x,y))
+        static if(Type == NoParallel)
         {
-            image.setPixel(
-                ix - x, iy - y,
-                this.getPixel(ix,iy)
-            );
+            foreach(ix,iy; Coord(x + cWidth,y + cHeight,x,y))
+            {
+                image.setPixel(
+                    ix - x, iy - y,
+                    this.getPixel(ix,iy)
+                );
+            }
+        }else
+        static if(Type == Parallel)
+        {
+            import std.parallelism, std.range;
+
+            foreach(ix; parallel(iota(x,x + cWidth)))
+            {
+                foreach(iy; parallel(iota(y,y + cHeight)))
+                {
+                    image.setPixel(
+                        ix - x, iy - y,
+                        this.getPixel(ix,iy)
+                    );
+                }
+            }
         }
 
         return image;
@@ -672,7 +709,7 @@ import tida.shape;
 
     Returns: Cropped picture.
 +/
-Image shapeCopy(Shape shape,Image image,Image outImage = null) @safe
+Image shapeCopy(int Type = DefaultOperation)(Shape shape,Image image,Image outImage = null) @safe
 in(shape.type != ShapeType.triangle)
 body
 {
@@ -706,11 +743,7 @@ body
         break;
 
         case ShapeType.rectangle:
-            foreach(x,y; Coord (shape.end.x.to!int,shape.end.y.to!int,
-                                shape.begin.x.to!int,shape.begin.y.to!int))
-            {
-                copyImage.setPixel(x,y, image.getPixel(x,y));
-            }
+            copyImage = image.blit!Type(shape.x.to!int,shape.y.to!int,shape.width.to!int,shape.height.to!int);
         break;
 
         case ShapeType.circle:
@@ -753,7 +786,7 @@ body
 
         case ShapeType.multi:
             foreach(shapef; shape.shapes) {
-                shapeCopy(shapef, image, copyImage);
+                shapeCopy!Type(shapef, image, copyImage);
             }
         break;
         
@@ -791,7 +824,7 @@ import tida.vector;
 
     Returns: Unites images
 +/
-Image unite(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @safe
+Image uniteWP(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @safe
 { 
     import std.algorithm, std.conv;
     import tida.color;
@@ -813,6 +846,39 @@ Image unite(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @safe
 
     for(int x = posB.x.to!int; x < posB.x.to!int + b.width; x++) {
         for(int y = posB.y.to!int; y < posB.y.to!int + b.height; y++) {
+            Color!ubyte color = b.getPixel(x - posB.x.to!int, y - posB.y.to!int);
+            Color!ubyte backColor = result.getPixel(x,y);
+            color.colorize!Alpha(backColor);
+            result.setPixel(x,y,color);
+        }
+    }
+
+    return result;
+}
+
+/// ditto
+Image uniteParallel(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @trusted
+{
+    import std.algorithm, std.conv, std.range, std.parallelism;
+    import tida.color;
+
+    Image result = new Image();
+
+    int width = max(posA.x,posB.y).to!int + max(a.width,b.width);
+    int height = max(posA.y,posB.y).to!int + max(a.height,b.height);
+
+    result.create(width,height);
+    result.fill(rgba(0,0,0,0));
+
+    foreach(x; parallel(iota(posA.x.to!int, posA.x.to!int + a.width))) {
+        foreach(y; parallel(iota(posA.y.to!int, posA.y.to!int + a.height))) {
+            Color!ubyte color = a.getPixel(x - posA.x.to!int, y - posA.y.to!int);
+            result.setPixel(x,y,color);
+        }
+    }
+
+    foreach(x; parallel(iota(posB.x.to!int, posB.x.to!int + b.width))) {
+        foreach(y; parallel(iota(posB.y.to!int, posB.y.to!int + b.height))) {
             Color!ubyte color = b.getPixel(x - posB.x.to!int, y - posB.y.to!int);
             Color!ubyte backColor = result.getPixel(x,y);
             color.colorize!Alpha(backColor);
@@ -879,7 +945,7 @@ float[][] gausKernel(float r) @safe
         image = Blurse image.
         otherKernel = Matrix.
 +/
-Image blur(Image image,float[][] otherKernel) @safe
+Image blurWP(Image image,float[][] otherKernel) @safe
 {
     import tida.color;
     import tida.graph.each;
@@ -918,7 +984,92 @@ Image blur(Image image,float[][] otherKernel) @safe
         image = Blurse image.
         k = Factor.
 +/
-Image blur(Image image,float k) @safe
+Image blurWP(Image image,float k) @safe
 {
     return blur(image, gausKernel(k));
+}
+
+/++
+    Applies blur using parallel computation.
+
+    Params:
+        image = Image.
+        otherKernel = Filter kernel.
++/
+Image blurParallel(Image image,float[][] otherKernel) @trusted
+{
+    import tida.color;
+    import tida.graph.each;
+    import std.parallelism, std.range;
+
+    auto kernel = otherKernel; 
+    
+    int width = image.width;
+    int height = image.height;
+
+    int kernelWidth = cast(int) kernel.length;
+    int kernelHeight = cast(int) kernel[0].length;
+
+    Image result = new Image(width,height);
+    result.fill(rgba(0,0,0,0));
+
+    foreach(x; parallel(iota(0,width)))
+    {
+        foreach(y; parallel(iota(0,height)))
+        {
+            Color!ubyte color = rgb(0,0,0);
+
+            foreach(ix,iy; Coord(kernelWidth, kernelHeight))
+            {
+                color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy).mul(kernel[ix][iy]));
+            }
+
+            color.a = image.getPixel(x,y).a;
+            result.setPixel(x,y,color);
+        }
+    }
+
+    return result;
+}
+
+/++
+    Applies blur using parallel computation.
+
+    Params:
+        image = Image.
+        k = Factor.
++/
+Image blurParallel(Image image,float k) @safe
+{
+    return blurParallel(image, gausKernel(k));
+}
+
+/++
+    Applies blur in image.
+
+    Params:
+        Type = Is parallel operation? (Parallel/NoParallel)
++/
+template blur(int Type = DefaultOperation)
+{
+    static if(Type == Parallel)
+        alias blur = blurParallel;
+    else
+    static if(Type == NoParallel)
+        alias blur = blurWP;
+}
+
+/++
+    Combines two pictures, for example, if they are both of low transparency, you can create a single picture.
+
+    Params:
+        Type = Is parallel operation? (Parallel/NoParallel)
++/
+template unite(int Type = DefaultOperation)
+{
+    static if(Type == Parallel)
+        alias unite = uniteParallel;
+    else
+    static if(Type == NoParallel)
+        alias unite = uniteWP;
 }

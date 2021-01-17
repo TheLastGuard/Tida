@@ -115,7 +115,7 @@ class Font
     
     Example:
     ---
-    alias Character = TypeChar!wstring.Type; // It's wchar
+    alias Character = TypeChar!wstring; // It's wchar
     ---
 +/
 template TypeChar(TypeString)
@@ -250,5 +250,54 @@ class Text
         }
 
         return chars;
+    }
+
+    /++
+        Renders text in color format. Formatting example:
+        `Simple text!$<#FF0000>Red text!$<0x00FF00> Green! $<0000FF> Blue Text!`
+
+        Params:
+            symbols = Text for renders.
+            defaultColor = Default color.
+    +/
+    Symbol[] renderSymbolsFormat(T)(T symbols,Color!ubyte defaultColor = rgba(255,255,255,255)) @safe 
+    {
+        Symbol[] result;
+        int previous = 0;
+        int j = 0;
+
+        Color!ubyte color = defaultColor;
+
+        for(int i = 0; i < symbols.length; i++)
+        {
+            if(symbols[i] == '$')
+            {
+                if(symbols[i+1] == '<') {
+                    T colorText;
+
+                    __symEach: for(j = i; j < symbols.length; j++)
+                    {
+                        if(symbols[j] == '>')
+                        {
+                            colorText = symbols[i+2 .. j];
+                            break __symEach;
+                        }
+                    }
+
+                    if(colorText != "") 
+                    {
+                        result ~= this.renderSymbols(symbols[previous .. i], color);
+
+                        color = HEX!(PixelFormat.AUTO,T)(colorText);
+                        i = j + 1;
+                        previous = i;
+                    }
+                }
+            }
+        }
+
+        result ~= this.renderSymbols(symbols[previous .. $], color);
+
+        return result;
     }
 }
