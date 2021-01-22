@@ -267,7 +267,30 @@ class Scene
             destroy(instance);
     }
 
-    ///
+    /++
+        Destroys an instance from the scene or from memory, depending on the template argument, by its class.
+
+        Params:
+            type = Type destroy.
+            Name = Instance class.
+
+        Type:
+            `InScene`  - Removes only from the scene, does not free memory.
+            `InMemory` - Removes permanently, from the scene and from memory 
+                         (by the garbage collector).
+    +/
+    void instanceDestroy(ubyte type,Name)() @trusted
+    in(isInstance!Name)
+    {
+        instanceDestroy!type(getInstanceByClass!Name);
+    }
+
+    /++
+        Returns an instance by name.
+
+        Params:
+            name = Instance name.
+    +/ 
     Instance getInstanceByName(string name) @safe nothrow
     {
         foreach(instance; getList)
@@ -279,7 +302,13 @@ class Scene
         return null;
     }
 
-    ///
+    /++
+        Returns an instance by name and tag.
+
+        Params:
+            name = Instance name.
+            tag = Instance tag.
+    +/
     Instance getInstanceByNameTag(string name,string tag) @safe nothrow
     {
         foreach(instance; getList)
@@ -294,7 +323,12 @@ class Scene
         return null;
     } 
     
-    ///
+    /++
+        Returns an object by its instance inheritor.
+
+        Params:
+            T = Class name.
+    +/
     T getInstanceByClass(T)() @safe nothrow
     in(isInstance!T)
     body

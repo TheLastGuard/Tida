@@ -83,7 +83,7 @@ interface IEventHandler
 version(Posix)
 class EventHandler : IEventHandler
 {
-    import tida.x11, tida.runtime;
+    import tida.x11, tida.runtime, tida.window;
 
     private 
     {

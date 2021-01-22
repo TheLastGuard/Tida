@@ -279,7 +279,12 @@ class Instance
         return obj;
     }
 
-    /// Dissconnect component
+    /++ 
+        Dissconnect component
+
+        Params:
+            Name = Class component.
+    +/
     void dissconnect(Name)() @trusted
     in(isComponent!Name,"It's not component!")
     do
@@ -293,6 +298,21 @@ class Instance
                 cmp = components[i];
                 components.remove(i);
                 break;
+            }
+        }
+    }
+
+    /++
+        Dissconnect component
+
+        Params:
+            name = Component name.
+    +/
+    void dissconnect(string name) @safe
+    {
+        foreach(i; 0 .. components.length) {
+            if(components[i].getName == name) {
+                components.remove(i);
             }
         }
     }

@@ -485,7 +485,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             .flip!YAxis;
         ---
     +/
-    auto flip(int FlipType)() @safe nothrow
+    auto flip(int FlipType)() @safe
     in(isCorrectAxis!FlipType)
     body
     {

@@ -482,7 +482,7 @@ class Plane : IPlane
         if(_isAlloc)
         {
             XPutImage(runtime.display, (cast(tida.window.Window) window).handle, context, ximage,
-                0, 0, 0, 0, _width, _height);
+                xput, yput, xput, yput, _width, _height);
 
             XSync(runtime.display, False);
         }
@@ -589,7 +589,7 @@ class Plane : IPlane
         if(wimage !is null) DeleteObject(wimage);
         if(hdc is null) hdc = GetDC((cast(Window) window).handle);
 
-        wimage = CreateBitmap(_width,_height,1,32,cast(LPBYTE) buffer);
+        wimage = CreateBitmap(_width, _height,1,32,cast(LPBYTE) buffer);
 
         assert(wimage,"[WINAPI] Bitmap is not create!");
 
@@ -754,6 +754,7 @@ class Software : IRenderer
 
         plane.alloc(_camera.shape.end.x.to!int,_camera.shape.end.y.to!int);
         plane.viewport(_camera.port.end.y.to!int,_camera.port.end.y.to!int);
+        plane.move(_camera.shape.begin.x.to!int,_camera.shape.begin.y.to!int);
     }    
 
     override void camera(Camera camera) @safe

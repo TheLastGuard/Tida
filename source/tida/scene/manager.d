@@ -304,6 +304,29 @@ class SceneManager
         }
     }
 
+    /++
+        Goes to the scene by its class.
+
+        Params:
+            Name = Scene.
+    +/
+    void gotoin(Name)() @safe
+    in(isScene!Name)
+    body
+    {
+        Scene scene;
+
+        foreach(s; scenes)
+        {
+            if((scene = s.from!Name) !is null)
+            {
+                gotoin(scene.name);
+
+                break;
+            }
+        }
+    }
+
     import tida.game.game, tida.graph.camera;
 
     Camera camera() @trusted

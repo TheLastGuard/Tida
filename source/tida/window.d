@@ -1,30 +1,135 @@
 /++
-    A module describing interaction with a window, which should work with both Windows 
-    environment and Linux with the X11 protocol.
+    This module gives access to the creation and management of a window. Unfortunately, 
+    it is not supported to create more than one window, due to security concerns of accessing 
+    memory and connecting to the window manager server. At the moment, you can create a window, 
+    and a context for the graphics pipeline, set the size, window, window resistivity and some 
+    other window parameters, which are inherent in both the x11 environment and the Windows window manager 
+    in both ways. However, there are features of the implementations, for example, so far only x11 can be 
+    used to set the transparency of the window.
 
-    For a window, you first need to allocate memory for it through the garbage collector, 
-    while in the constructor only parameters are set, you do not need to conclude that 
-    the window is created directly in the constructor.
+    # 1. Create window components.
+    ## 1.1 Creating a simple window.
+    A window is created by calling the window manager server, and for this, you first need to connect to it 
+    to send requests such as initializing the window and changing its parameters. To do this, you need to 
+    create a runtime to connect to the window manager server. Import the runtime module, and instantiate it. 
+    In addition, it will load other libraries, this can be undone, the following example will show how to create 
+    a runtime for the server connection without loading unnecessary libraries:
+    ---
+    TidaRuntime.initialize(args, NoLibrary);
+    ---
 
-    All window creation is done through the `initialize` template function, where the 
-    type of the window to create is specified in the template argument.
-    (See the documentation for `Window.initialize`. The problem is that it is not part 
-    of the interface since the template cannot be defined in the interface.)
+    (You can download individual components as needed, see: 
+    [tida.runtime](https://github.com/TodNaz/Tida/blob/master/source/tida/runtime.d))
+    In this case, the library will connect to the window manager, and then it will be possible to work with windows.
+    First, you need to allocate memory for properties through the garbage collector, setting in the constructor. 
+    The constructor only sets parameters, but not how not to create a window:
+    ---
+    auto window = new Window(640, 480, "Title!");
+    ---
 
-    Also, if you want to create a context manually, you can create it through the `Context` 
-    interface, setting the attributes through the GLAttributes structure, but, because of this, 
-    you have to consider the peculiarities of the platform. Or do it completely manually, 
-    through GLX or WGL, getting the window identifier through `handle` in` Window`, if maximum 
-    optimization is needed.
+    The random step is to create the window itself. The easiest way is through the `initialize` function. 
+    The template parameter includes the window type.
+    * `Simple` - Options for creating a window in which the graphics pipeline will not be created.
+    * `ContextIn` - Creates both a window and a graphics pipeline for applying hardware accelerated graphics.
+    Now, let's create a window without a graphics pipeline:
+    ---
+    window.initialize!Simple;
+    ---
 
-    Unfortunately, the creation of a window for platforms such as Mac OS, IOS is not considered. 
-    Console platforms will also be poorly viewed due to the lack of adequate testing hardware. 
-    The plans only include support for the android platform.
+    When creating a window, it will automatically show the window, and now you can handle the event, or draw in it.
 
-    Also, it is worth noting that the library is designed for two-dimensional logic than others, 
-    therefore, there may be problems with a different representation of graphics.
+    ## 1.2 Creating a graphics pipeline and using it.
+    Once hardware acceleration is required, you can create a window with a graphics pipeline that you can interact 
+    with through the Open Graphics Library. Unfortunately, the rendering engine uses the capabilities of the first 
+    versions, but you can refuse rendering in favor of your own by inheriting the interface. The easiest way to create 
+    such a window is also with `initialize`:
+    ---
+    window.initialize!ContextIn;
+    ---
 
-    The easiest way to create a window without a graphics context can be seen in `examples/simplewindow`.
+    And in this case, the window itself will create a graphic pipeline and determine the creation parameters. 
+    However, you can create a manual context, regardless of the platform through the `IContext` interface, 
+    by setting the necessary context parameters. The following example will show you how this can be done. 
+    First, you need to create a window from where the context will be created:
+    ---
+    window.initialize!Simple;
+    ---
+
+    The next step is to allocate memory for the context:
+    ---
+    auto context = new Context();
+    ---
+
+    Now, we can define the attributes of the graphics pipeline:
+    ---
+    context.attributeInitialize(GLAttributes(...));
+    ---
+
+    After, when the attributes are initialized, you need to create the context itself:
+    ---
+    context.initialize()
+    ---
+
+    The pipeline properties are defined in the GLAttributes structure, create a pipeline from its properties.
+    Now this context can be assigned to a window:
+    ---
+    window.context = context;
+    ---
+
+    Unfortunately, in the Windows environment, before creating, you need to declare a window for the context, 
+    from where the parameters will be displayed:
+    ---
+    context.deviceMake(window.handle);
+    ---
+
+    # 2. Window control.
+    ## 2.1 Window size.
+    The size of the window is set using the constructor, however, if you need to dynamically resize, 
+    you can use the `resize` method, where you can change the visual size of the window. 
+    You can find out the parameters using the properties `width`,` height`, however, when the user resizes manually, 
+    they will not be recorded automatically, you must perform this action yourself using event tracking through 
+    the handler:
+    ---
+    IEventHandler event = new EventHandler(window);
+
+    ...
+    if(event.isResize) {
+        window.eventResize(event.newSizeWindow);
+    }
+    ---
+
+    In this situation, you yourself keep track of the size of the window. If not tracked, the size will visually change, 
+    however, the properties of the window will not be changed, and when using it, there may be unexpected behavior. 
+    This is due to the fact that automatic markup is impossible due to a bug in x11, when the event is set to be tracked, 
+    he graphic pipeline does not change size along with the window, from where there are gaps with scaling.
+
+    If you don't want the user to be able to resize, set such a property to `resizable`. 
+    If you want, this can also be canceled. Not only the user, but also the program cannot change the size.
+
+    It is also available to switch the window to full screen mode through the 'fullscreen' property. 
+    Both translation and translation into windowed mode are available:
+    ---
+    window.fullscreen = true; // Fullscreen mode
+    ...
+    window.fullscreen = false; // Window mode
+    ---
+
+    ## 2.2 External component.
+    The window represents the icon, title, icon and frame for the window. All such properties can be set through 
+    the corresponding functions.
+
+    `window.icon` - 
+    The parameters indicate the structure of the picture, where the sequence is taken from, covented the icon, 
+    and send the data to the server. An example of how to set an icon from a file:
+    ---
+    window.icon = new Image().load("icon.png");
+    ---
+
+    `window.border` -
+    Determines whether the window will have frames.
+
+    `window.title` - 
+    Sets the title of the window.
 
     Authors: $(HTTP https://github.com/TodNaz, TodNaz)
     License: $(HTTP https://opensource.org/licenses/MIT, MIT)
