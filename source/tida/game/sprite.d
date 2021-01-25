@@ -55,14 +55,14 @@ class Sprite : IDrawable
     {
         Image ofimage = isAnimation ? (!(animation is null) ? animation.step() : null) : image;
 
-        if(ofimage is null)
-            return;
-
-        renderer.drawEx(ofimage,
-        this.position + otherPosition,angle,center,Vecf(
-                                    width == 0 ? ofimage.width : width, 
-                                    height == 0 ? ofimage.height : height
-                                    ),alpha);
+        if(ofimage !is null)
+        {
+            renderer.drawEx(ofimage,
+            this.position + otherPosition,angle,center,Vecf(
+                                        width == 0 ? ofimage.width : width, 
+                                        height == 0 ? ofimage.height : height
+                                        ),alpha);
+        }
 
         if(skelet.length != 0) {
             foreach(spr; skelet) {
