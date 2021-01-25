@@ -62,6 +62,9 @@
 		"bindbc-opengl": "~>0.13.0",
 		"imageformats": "~>7.0.2"
 	},
+	"-ddoxFilterArgs" : [
+		"source/tida/"
+	],
 	"description": "Tida is a library for creating 2D games, which is written with manual window creation and rendering using opengl and other tools for D games.",
 	"license": "MIT",
 	"name": "tida",

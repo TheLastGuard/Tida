@@ -211,6 +211,15 @@ class SceneManager
         return false;
     }
 
+    bool hasScene(Name)() @safe
+    {
+        foreach(scene; scenes) {
+            if(scene.from!Name !is null) return true;
+        }
+
+        return false;
+    }
+
     /++
         Adds a scene to the list.
 
@@ -312,6 +321,7 @@ class SceneManager
     +/
     void gotoin(Name)() @safe
     in(isScene!Name)
+    in(hasScene!Name)
     body
     {
         Scene scene;
@@ -320,7 +330,7 @@ class SceneManager
         {
             if((scene = s.from!Name) !is null)
             {
-                gotoin(scene.name);
+                gotoin(scene);
 
                 break;
             }
@@ -505,6 +515,11 @@ class SceneManager
             foreach(instance; current.getErentInstances()) {
             	if(instance is null) continue;
                 instance.draw(render);
+
+                foreach(component; instance.getComponents())
+                {
+                    component.draw(render);
+                }
 			}
 
             debug
@@ -516,11 +531,6 @@ class SceneManager
                 	if(instance is null) continue;
                 
                     instance.drawDebug(render);
-
-                    foreach(component; instance.getComponents())
-                    {
-                        component.draw(render);
-                    }
                 }
             }
         }

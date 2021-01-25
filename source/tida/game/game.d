@@ -25,14 +25,27 @@ IRenderer renderer() @trusted
     return _renderer;
 }
 
+/// Game config structure
 struct GameConfig
 {
+    import tida.graph.image;
+    import tida.color;
+
     public
     {
-        uint width = 0;
-        uint height = 0;
-        string caption;
-        ubyte contextType;
+        uint width = 320; /// Window width
+        uint height = 240; /// Window height
+        string caption = "Tida"; /// Window caption
+        Image icon = null; /// Window icon
+        ubyte contextType = ContextIn; /// Graphics pipeline type
+        Color!ubyte background = rgb(0,0,0); /// Window background
+        int positionX = 100; /// Window position x-axis
+        int positionY = 100; /// Window position y-axis
+        bool isRendererCreate = true; ///
+        bool isLoaderCreate = true; ///
+        bool isListenerCreate = true; ///
+
+        void delegate() @safe onDrawCall = null; ///
     }
 }
 
@@ -50,6 +63,8 @@ class Game
         EventHandler event;
         bool isGame = true;
         InstanceThread[] threads;
+
+        void delegate() @safe onDrawCall;
     }
 
     this(GameConfig config) @trusted
@@ -57,13 +72,24 @@ class Game
         initSceneManager();
         _window = new Window(config.width,config.height,config.caption);
 
-        if(config.contextType == Simple) (cast(Window) window).initialize!Simple;
-        if(config.contextType == ContextIn) (cast(Window) window).initialize!ContextIn;
+        if(config.contextType == Simple)    (cast(Window) window).initialize!Simple
+                                                (config.positionX,config.positionY);
+        if(config.contextType == ContextIn) (cast(Window) window).initialize!ContextIn
+                                                (config.positionX,config.positionY);
 
         event = new EventHandler(cast(Window) window);
-        _renderer = CreateRenderer(window);
-        _loader = new Loader();
-        _listener = new Listener();
+
+        if(config.isRendererCreate) {
+            _renderer = CreateRenderer(window);
+            _renderer.background = config.background;
+        }
+
+        if(config.isLoaderCreate) _loader = new Loader();
+        if(config.isListenerCreate) _listener = new Listener();
+
+        if(config.icon !is null) window.icon = config.icon;
+
+        if(config.onDrawCall !is null) onDrawCall = config.onDrawCall;
 
         threads ~= null;
     }
@@ -114,10 +140,10 @@ class Game
                 }
 
                 sceneManager.callEvent(event);
-                listener.eventHandle(event);
+                if(listener !is null) listener.eventHandle(event);
             }
 
-			listener.timerHandle();
+			if(listener !is null) listener.timerHandle();
 
             if(sceneManager.apiThreadCreate) {
                 foreach(_; 0 .. sceneManager.apiThreadValue) {
@@ -136,9 +162,15 @@ class Game
 
             sceneManager.callStep(0,renderer);
 
-            renderer.clear();
-                sceneManager.callDraw(renderer);
-            renderer.drawning();
+            if(renderer !is null)
+            {
+                renderer.clear();
+                    sceneManager.callDraw(renderer);
+                renderer.drawning();
+            }else
+            {
+                onDrawCall();
+            }
             
             fps.rate();
         }

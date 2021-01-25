@@ -131,6 +131,24 @@
     `window.title` - 
     Sets the title of the window.
 
+    ## 2.3 Features with platform.
+    There may be a case when you need to work with a window directly through its native API, 
+    for this there is a `handle` method. It gives a pointer to a window in its plafform, and based on it, 
+    you can change some of its parameters. Care should be taken with this, because by changing it outside 
+    of the class, you can cause the program to behave undefined. To prevent this from happening, change those 
+    properties that the handler, renderer and the window itself will not track when it works with it.
+    Here's an example of interaction:
+    ---
+    auto winPtr = window.handle();
+
+    // Fixes the title bar in X11 environment.
+    XStoreName(runtime.display, winPtr, newTitle.toUTFz!(char*));
+    ---
+
+    This example shows a bad attitude of work outside the stratum, since now the object, when we request a title, 
+    will return the old title because it did not remember the old one. Therefore, be extremely careful when working 
+    outside the interlayer.
+
     Authors: $(HTTP https://github.com/TodNaz, TodNaz)
     License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
