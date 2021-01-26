@@ -11,7 +11,7 @@ void main(string[] args)
     TidaRuntime.initialize(args,lib);
 
     Window window = new Window(640,480,"Simple render");
-    window.initialize!Simple;
+    window.initialize!ContextIn;
 
     EventHandler event = new EventHandler(window);
     auto render = CreateRenderer(window);
@@ -30,14 +30,14 @@ void main(string[] args)
                 isGame = false;
 
             if(event.isResize) {
-                render.camera.shape = Shape.Rectangle(Vecf(0,0),
+                render.camera.port = Shape.Rectangle(Vecf(0,0),
                                                      Vecf(event.newSizeWindow[0],event.newSizeWindow[1]));
                 render.reshape();
             }
         }
 
         render.clear();
-        render.circle(Vecf(128,128),64,rgb(255,0,0),true);
+        render.circle(Vecf(128,128),64,rgb(255,0,0),!true);
         render.drawning();
     }
 }

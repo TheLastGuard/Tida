@@ -194,6 +194,19 @@ public struct Vector(T)
         else
             return sqrt(sqr(this.x) + sqr(this.y));
     }
+
+    /// ditto
+    T length() @safe immutable
+    {
+        static if(is(T : int))
+        {
+            import std.conv : to;
+            
+            return sqrt(to!float(sqr(this.x) + sqr(this.y))).to!T;
+        }
+        else
+            return sqrt(sqr(this.x) + sqr(this.y));
+    }
     
     string toString() @trusted
     {
@@ -217,6 +230,13 @@ template Abs(Vecf vec)
     enum Abs = Vecf(abs(vec.x), abs(vec.y));
 }
 
+/++
+    Distance between two points.
+
+    Params:
+        a = First point.
+        b = Second point.
++/
 float distance(Vecf a,Vecf b) @safe
 {
     import std.math : sqrt;
@@ -224,6 +244,12 @@ float distance(Vecf a,Vecf b) @safe
     return sqrt(sqr(b.x - a.x) + sqr(b.y - a.y));
 }
 
+/++
+    Distance between two points.
+
+    Params:
+        vecs = Two points.
++/
 float distance(Vecf[2] vecs) @safe
 {
     return vecs[0].distance(vecs[1]);

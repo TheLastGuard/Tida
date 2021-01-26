@@ -63,7 +63,7 @@ struct Shape
 
     private
     {
-        float _radious;
+        float _radius;
         Vecf _trType;
         Vecf _begin;
         Vecf _end;
@@ -237,28 +237,28 @@ struct Shape
     alias top = y; /// Rectangle top
     alias bottom = endY; /// Rectange bottom
 
-    /// The radious the figure.
-    float radious() @safe @property nothrow
+    /// The radius the figure.
+    float radius() @safe @property nothrow
     in(type == ShapeType.circle,"This is not a circle!")
     body
     {
-        return _radious;
+        return _radius;
     }
 
-    /// The radious the figure.
-    float radious() @safe @property nothrow immutable
+    /// The radius the figure.
+    float radius() @safe @property nothrow immutable
     in(type == ShapeType.circle,"This is not a circle!")
     body
     {
-        return _radious;
+        return _radius;
     }
 
     /// ditto
-    void radious(float value) @safe @property nothrow
+    void radius(float value) @safe @property nothrow
     in(type == ShapeType.circle,"This is not a circle!")
     body
     {
-        _radious = value;
+        _radius = value;
     }
 
     /// The top of the triangle.
@@ -295,6 +295,22 @@ struct Shape
         return end.y - begin.y;
     }
 
+    /// Shape width
+    void width(float value) @safe @property
+    in(type == ShapeType.rectangle,"This is not a rectangle!")
+    do
+    {
+        _end = begin + Vecf(value,height);
+    }
+
+    /// Shape height
+    void height(float value) @safe @property
+    in(type == ShapeType.rectangle,"This is not a rectangle!")
+    do
+    {
+        _end = begin + Vecf(width,value);
+    }
+
     /// The top of the triangle.
     Vecf[] vertexs() @safe @property nothrow
     {
@@ -325,6 +341,42 @@ struct Shape
             _trType = value;
     }
 
+    float length() @safe @property nothrow
+    in(type == ShapeType.line,"This is not a line!")
+    body
+    {
+        import std.math : sqrt;
+
+        auto distX = begin.x - end.x;
+        auto distY = begin.y - end.y;
+
+        return sqrt((distX * distX) + (distY * distY));
+    }
+
+    float length() @safe @property nothrow immutable
+    in(type == ShapeType.line,"This is not a line!")
+    body
+    {
+        import std.math : sqrt;
+
+        auto distX = begin.x - end.x;
+        auto distY = begin.y - end.y;
+
+        return sqrt((distX * distX) + (distY * distY));
+    }
+
+    void length(float value) @safe @property
+    in(type == ShapeType.line,"This is not a line!")
+    body
+    {
+        import tida.angle;
+
+        float dir = begin.pointDirection(end);
+        float k = value - this.length;
+
+        end = end - (vectorDirection(dir) * value);
+    }
+
     string toString() @safe immutable
     {
         import std.conv : to;
@@ -339,7 +391,7 @@ struct Shape
             return "Shape.Line(begin: "~begin.to!string~", end: "~end.to!string~")";
         }else
         if(type == ShapeType.circle) {
-            return "Shape.Circle(position: "~begin.to!string~", radious: "~radious.to!string~")";
+            return "Shape.Circle(position: "~begin.to!string~", radius: "~radius.to!string~")";
         }else 
         if(type == ShapeType.triangle) {
             return "Shape.Triangle(0: "~vertexs[0].to!string~", 1:"~vertexs[1].to!string~
@@ -367,7 +419,7 @@ struct Shape
             return "Shape.Line(begin: "~begin.to!string~", end: "~end.to!string~")";
         }else
         if(type == ShapeType.circle) {
-            return "Shape.Circle(position: "~begin.to!string~", radious: "~radious.to!string~")";
+            return "Shape.Circle(position: "~begin.to!string~", radius: "~radius.to!string~")";
         }else 
         if(type == ShapeType.triangle) {
             return "Shape.Triangle(0: "~vertex!0.to!string~", 1:"~vertex!1.to!string~", 2:"~vertex!2.to!string~")";
@@ -486,7 +538,7 @@ struct Shape
 
         Params:
             pos = Circle position.
-            r = Circle radious.  
+            r = Circle radius.  
 
         Returns:
             Circle. 
@@ -497,7 +549,7 @@ struct Shape
 
         shape.type = ShapeType.circle;
         shape.begin = pos;
-        shape.radious = r;
+        shape.radius = r;
 
         return shape;
     }

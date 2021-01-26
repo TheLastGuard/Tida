@@ -275,75 +275,54 @@ class GLRender : IRenderer
     {
         GL.color = color;
 
+        import std.math : cos, sin;
+
         if (isFill)
         {
-            int x = 0;
-            int y = cast(int) radious;
+            float x = 0.0f;
+            float y = 0.0f;
 
-            int X1 = position.intX();
-            int Y1 = position.intY();
+            for(float i = 0; i <= 360;)
+            {
+                GL.draw!Triangle({
+                    x = radious * cos(i);
+                    y = radious * sin(i);
 
-            int delta = 1 - 2 * cast(int) radious;
-            int error = 0;
+                    GL.vertex(position + Vecf(x,y));
 
-            GL.draw!Lines({
-                while (y >= 0)
-                {
-                    GL.vertex(Vecf(X1 + x, Y1 + y));
-                    GL.vertex(Vecf(X1 + x, Y1 - y));
+                    i += 0.5;
+                    x = radious * cos(i);
+                    y = radious * sin(i);
 
-                    GL.vertex(Vecf(X1 - x, Y1 + y));
-                    GL.vertex(Vecf(X1 - x, Y1 - y));
+                    GL.vertex(position + Vecf(x,y));
+                    GL.vertex(position);
+                });
 
-                    error = 2 * (delta + y) - 1;
-                    if ((delta < 0) && (error <= 0))
-                    {
-                        delta += 2 * ++x + 1;
-                        continue;
-                    }
-                    if ((delta > 0) && (error > 0))
-                    {
-                        delta -= 2 * --y + 1;
-                        continue;
-                    }
-                    delta += 2 * (++x - --y);
-                }
-            });
+                i += 0.5;
+            }
         }
         else
         {
-            int x = 0;
-            int y = cast(int) radious;
+            float x = 0.0f;
+            float y = 0.0f;
 
-            int X1 = position.intX();
-            int Y1 = position.intY();
+            for(float i = 0; i <= 360;)
+            {
+                GL.draw!Lines({
+                    x = radious * cos(i);
+                    y = radious * sin(i);
 
-            int delta = 1 - 2 * cast(int) radious;
-            int error = 0;
+                    GL.vertex(position + Vecf(x,y));
 
-            GL.draw!Points({
-                while (y >= 0)
-                {
-                    GL.vertex(Vecf(X1 + x, Y1 + y));
-                    GL.vertex(Vecf(X1 + x, Y1 - y));
-                    GL.vertex(Vecf(X1 - x, Y1 + y));
-                    GL.vertex(Vecf(X1 - x, Y1 - y));
+                    i += 0.5;
+                    x = radious * cos(i);
+                    y = radious * sin(i);
 
+                    GL.vertex(position + Vecf(x,y));
+                });
 
-                    error = 2 * (delta + y) - 1;
-                    if ((delta < 0) && (error <= 0))
-                    {
-                        delta += 2 * ++x + 1;
-                        continue;
-                    }
-                    if ((delta > 0) && (error > 0))
-                    {
-                        delta -= 2 * --y + 1;
-                        continue;
-                    }
-                    delta += 2 * (++x - --y);
-                }
-            });
+                i += 0.5;
+            }
         }
     }
 

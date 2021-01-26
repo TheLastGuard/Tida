@@ -30,11 +30,10 @@ import tida.shape, tida.vector;
 bool isCollide(Shape first,Shape second,Vecf firstPos = Vecf(0,0),Vecf secondPos = Vecf(0,0)) @safe
 in(first.type != ShapeType.unknown  && second.type != ShapeType.unknown)
 in(first.type != ShapeType.triangle && second.type != ShapeType.triangle)
-in(first.type != ShapeType.circle   && second.type != ShapeType.circle)
 body
 {
     import std.conv : to;
-    import std.math : abs;
+    import std.math : abs, sqrt;
     import tida.graph.each;
 
     first.begin = first.begin + firstPos;
@@ -63,8 +62,8 @@ body
                     bool result = false;
 
                     foreach(x,y; Line(second.begin, second.end)) {
-                        if(first.begin.x.to!int == x &&
-                           first.begin.y.to!int == y) {
+                        if(cast(int) first.begin.x == x &&
+                           cast(int) first.begin.y == y) {
                             result = true;
                             break;
                         }
@@ -77,6 +76,9 @@ body
                            first.begin.y > second.begin.y &&
                            first.begin.x < second.end.x &&
                            first.begin.y < second.end.y;
+
+                case ShapeType.circle:
+                    return first.begin.distance(second.begin) <= second.radius;
 
                 case ShapeType.multi:
                     foreach(shape; second.shapes) {
@@ -102,8 +104,8 @@ body
                     bool result = false;
 
                     foreach(x, y; Line(first.begin, first.end)) {
-                        if(second.begin.x.to!int == x &&
-                           second.begin.y.to!int == y) {
+                        if(cast(int) second.begin.x == x &&
+                           cast(int) second.begin.y == y) {
                             result = true;
                             break;
                         }
@@ -150,6 +152,29 @@ body
                     }
 
                     return result;
+
+                case ShapeType.circle:
+                    bool inside1 = isCollide(second, Shape.Point(first.begin));
+                    bool inside2 = isCollide(second, Shape.Point(first.end));
+                    if(inside1 || inside2) return true;
+
+                    float len = first.length;
+
+                    float dot = (   (second.x - first.x) * (first.end.x - first.begin.x)) +
+                                (   (second.y - first.y) * (first.end.y - first.begin.y)) / (len * len);
+
+                    float closestX = first.x + (dot * (first.end.x - first.begin.y));
+                    float closestY = first.y + (dot * (first.end.y - first.begin.y));
+
+                    bool onSegment = isCollide(first, Shape.Point(Vecf(closestX,closestY)));
+                    if(onSegment) return true;
+
+                    float distX = closestX - second.x;
+                    float distY = closestY - second.y;
+
+                    len = Vecf(distX,distY).length;
+
+                    return (len <= second.radius);
 
                 case ShapeType.multi:
                     foreach(shape; second.shapes) {
@@ -209,9 +234,83 @@ body
                         a.y <= c.y + (d.y - c.y)
                     );
 
+                case ShapeType.circle:
+                    Vecf temp = second.begin;
+
+                    if(second.x < first.left) temp.x = first.left; else
+                    if(second.x > first.right) temp.y = first.right;
+
+                    if(second.y < first.top) temp.y = first.top; else
+                    if(second.y > first.bottom) temp.y = first.bottom;
+
+                    immutable dist = second.begin - temp;
+                    immutable len = dist.length;
+
+                    return len <= second.radius;
+
                 case ShapeType.multi:
                     foreach(shape; second.shapes) {
                         if(isCollide(first, shape,Vecf(0,0),second.begin))
+                            return true;
+                    }
+
+                    return false;
+
+                default:
+                    return false;
+            }
+
+        case ShapeType.circle:
+            switch(second.type)
+            {
+                case ShapeType.point:
+                    return second.begin.distance(first.begin) <= first.radius;
+
+                case ShapeType.line:
+                    bool inside1 = isCollide(first, Shape.Point(second.begin));
+                    bool inside2 = isCollide(first, Shape.Point(second.end));
+                    if(inside1 || inside2) return true;
+
+                    float len = second.length;
+
+                    float dot = (   (first.x - second.x) * (second.end.x - second.begin.x)) +
+                                (   (first.y - second.y) * (second.end.y - second.begin.y)) / (len * len);
+
+                    float closestX = second.x + (dot * (second.end.x - second.begin.y));
+                    float closestY = second.y + (dot * (second.end.y - second.begin.y));
+
+                    bool onSegment = isCollide(second, Shape.Point(Vecf(closestX,closestY)));
+                    if(onSegment) return true;
+
+                    float distX = closestX - first.x;
+                    float distY = closestY - first.y;
+
+                    len = Vecf(distX,distY).length;
+
+                    return (len <= first.radius);
+
+                case ShapeType.rectangle:
+                    Vecf temp = first.begin;
+
+                    if(first.x < second.left) temp.x = second.left; else
+                    if(first.x > second.right) temp.y = second.right;
+
+                    if(first.y < second.top) temp.y = second.top; else
+                    if(first.y > second.bottom) temp.y = second.bottom;
+
+                    immutable dist = first.begin - temp;
+                    immutable len = dist.length;
+
+                    return len <= first.radius;
+
+                case ShapeType.circle:
+                    immutable dist = first.begin - second.begin;
+
+                    return dist.length <= first.radius + second.radius;
+
+                case ShapeType.multi:
+                    foreach(shape; second.shapes) {
+                        if(isCollide(first,shape,Vecf(0,0),second.begin))
                             return true;
                     }
 
