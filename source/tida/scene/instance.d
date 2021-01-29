@@ -9,7 +9,7 @@ module tida.scene.instance;
 import tida.scene.component;
 
 static immutable ubyte InMemory = 0; ///
-static immutable ubyte InScene = 0; ///
+static immutable ubyte InScene = 1; ///
 
 template isComponent(T)
 {

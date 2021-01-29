@@ -375,18 +375,16 @@ class SceneManager
                     persistents ~= instance;
             }
 
-            foreach(ref e; persistents)
+            foreach(e; persistents)
             {
                 auto threadID = e.threadID;
                 current.instanceDestroy!InScene(e);
-                
+
                 if(scene.isThreadExists(threadID))
                     scene.add(e,threadID);
                 else
                     scene.add(e);
             }
-
-            persistents = null;
         }
 
         _initable = scene;
