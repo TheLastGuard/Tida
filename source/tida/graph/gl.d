@@ -212,7 +212,7 @@ struct GL3
 	{
 		import std.conv : to;
 	
-		char[]clog = new char[length];
+		char[] clog = new char[length];
 	
 		glGetShaderInfoLog(shader,length,sizeMax,clog.ptr);
 		
@@ -273,4 +273,9 @@ struct GL3
 	{
 		glDrawArrays(mode, a, b);
 	}
+
+    static void deleteProgram(uint id) @trusted
+    {
+        glDeleteProgram(id);
+    }
 }

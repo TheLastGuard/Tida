@@ -368,7 +368,7 @@ static enum Key
     ShiftRight = 62,
 
     BackSlash = 51,
-    Up = 98,
+    Up = 111,
 
     KP1 = 87,
     KP2 = 88,
@@ -383,9 +383,9 @@ static enum Key
     LogoRight = 116,
     Menu = 117,
     CtrlRight = 109,
-    Left = 100,
-    Down = 104,
-    Right = 102,
+    Left = 113,
+    Down = 116,
+    Right = 114,
     KP0 = 90,
     KPPoint = 91
 }

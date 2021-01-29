@@ -8,10 +8,12 @@ module tida.game.game;
 
 import tida.window;
 import tida.graph.render;
+import tida.fps;
 import tida.templates;
 
 __gshared IWindow _window;
 __gshared IRenderer _renderer;
+__gshared FPSManager _fps;
 
 /// Window instance.
 IWindow window() @trusted
@@ -23,6 +25,11 @@ IWindow window() @trusted
 IRenderer renderer() @trusted
 {
     return _renderer;
+}
+
+FPSManager fps() @trusted
+{
+    return _fps;
 }
 
 /// Game config structure
@@ -54,7 +61,6 @@ class Game
 {
     import tida.event;
     import tida.scene.manager;
-    import tida.fps;
     import tida.game.loader;
     import tida.game.listener;
 
@@ -122,7 +128,7 @@ class Game
     {
         sceneManager.callGameStart();
 
-        FPSManager fps = new FPSManager();
+        _fps = new FPSManager();
 
         while(isGame)
         {
