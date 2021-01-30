@@ -46,6 +46,8 @@ template isShader(int Type)
 
 class Shader(int Type)
 {
+    import tida.color;
+
     private
     {
         uint _id;
@@ -128,6 +130,18 @@ class Shader(int Type)
         GL3.attachShader(_id, vertex.id);
         GL3.attachShader(_id, fragment.id);
         GL3.linkProgram(_id);
+
+        int status;
+        GL3.getProgramiv(_id, GL_LINK_STATUS, status);
+        if(!status)
+        {
+            int lenLog;
+            string error;
+            GL3.getProgramiv(_id, GL_INFO_LOG_LENGTH, lenLog);
+            GL3.getProgramInfoLog(_id, lenLog, null, error);
+
+            throw new Exception(error.formatError);
+        }
         
         return this;
     }
@@ -136,6 +150,48 @@ class Shader(int Type)
     void using() @safe
     {
         GL3.useProgram(_id);
+    }
+
+    static if(isProgram!Type)
+    void bindAttribLocation(uint index,string name) @safe
+    {
+        GL3.bindAttribLocation(_id, index, name);
+    }
+
+    static if(isProgram!Type)
+    int getAttribLocation(string name) @safe
+    {
+        return GL3.getAttribLocation(_id, name);
+    }
+
+    static if(isProgram!Type)
+    void setUniform(string name, float[] value) @safe
+    {
+        auto uid = GL3.getUniformLocation(_id, name);
+        GL3.uniform4f(uid, value);
+    }
+
+    static if(isProgram!Type)
+    void setUniform(string name, Color!ubyte color) @safe
+    {
+        auto uid = GL3.getUniformLocation(_id, name);
+        GL3.uniform4f(uid, color);
+    }
+
+    static if(isProgram!Type)
+    void setUniform(string name, float value) @safe
+    {
+        auto uid = GL3.getUniformLocation(_id, name);
+        GL3.uniformf(uid, value);
+    }
+
+    static if(isProgram!Type)
+    uint lengthUniforms() @safe
+    {
+        int len;
+        GL3.getProgramiv(_id, GL_ACTIVE_UNIFORMS, len);
+
+        return len;
     }
 
     void destroy() @safe

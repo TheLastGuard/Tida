@@ -218,11 +218,27 @@ struct GL3
 		
 		log = clog.to!string;
 	}
+
+    static void getProgramInfoLog(uint program, uint length, int* sizeMax, ref string log) @trusted
+    {
+        import std.conv : to;
+
+        char[] clog = new char[length];
+
+        glGetProgramInfoLog(program,length,sizeMax,clog.ptr);
+
+        log = clog.to!string;
+    }
 	
 	static void getShaderiv(uint shader, uint mode, ref int result) @trusted
 	{
 		glGetShaderiv(shader,mode,&result);
 	}
+
+    static void getProgramiv(uint program, uint mode, ref int result) @trusted
+    {
+        glGetProgramiv(program, mode, &result);
+    }
 	
 	static void useProgram(uint program) @trusted
 	{
@@ -261,7 +277,7 @@ struct GL3
 	
 	static void vertexAttribPointer(uint a,uint b,uint mode,bool norm,uint size,void* data) @trusted
 	{
-		glVertexAttribPointer(0, 3, mode ,norm ? GL_TRUE : GL_FALSE, size, data);
+		glVertexAttribPointer(a, b, mode ,norm ? GL_TRUE : GL_FALSE, size, data);
 	}
 	
 	static void enableVertexAttribArray(uint mode) @trusted
@@ -277,5 +293,48 @@ struct GL3
     static void deleteProgram(uint id) @trusted
     {
         glDeleteProgram(id);
+    }
+
+    static void bindAttribLocation(uint program, uint index, string name) @trusted
+    {
+        import std.utf;
+
+        glBindAttribLocation(program, index, name.toUTFz!(char*));
+    }
+
+    static int getAttribLocation(uint program, string name) @trusted
+    {
+        import std.utf;
+
+        return glGetAttribLocation(program, name.toUTFz!(char*));
+    }
+
+    static int getUniformLocation(uint program, string name) @trusted
+    {
+        import std.utf;
+
+        return glGetUniformLocation(program, name.toUTFz!(char*));
+    }
+
+    static void uniform4f(uint uniformID, float a, float b, float c, float d) @trusted
+    {
+        glUniform4f(uniformID, a, b, c, d);
+    }
+
+    static void uniform4f(uint uniformID, float[] arr) @trusted
+    {
+        uniform4f(uniformID, arr[0], arr[1], arr[2], arr[3]);
+    }
+
+    import tida.color;
+
+    static void uniform4f(uint uniformID, Color!ubyte color) @trusted
+    {
+        uniform4f(uniformID, color.rf, color.gf, color.bf, color.af);
+    }
+
+    static void uniformf(uint uniformID, float value) @trusted
+    {
+        glUniform1f(uniformID, value);
     }
 }

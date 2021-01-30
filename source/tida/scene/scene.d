@@ -209,17 +209,20 @@ class Scene
         foreach(first; getList()) {
             foreach(second; getList()) {
                 if(first !is second && first.solid && second.solid) {
-                    if(
-                        isCollide(  first.mask,
-                                    second.mask,
-                                    first.position,
-                                    second.position)
-                    ) {
-                        first.collision(second);
-                        second.collision(first);
-                    } else {
-                        first.collision(null);
-                        second.collision(null);
+                    if(first.active && second.active)
+                    {
+                        if(
+                            isCollide(  first.mask,
+                                        second.mask,
+                                        first.position,
+                                        second.position)
+                        ) {
+                            first.collision(second);
+                            second.collision(first);
+                        } else {
+                            first.collision(null);
+                            second.collision(null);
+                        }
                     }
                 }
             }

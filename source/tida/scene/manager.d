@@ -424,8 +424,10 @@ class SceneManager
         foreach(scene; scenes) {
             scene.gameStart();
 
-            foreach(instance; scene.getList())
-                instance.gameStart();
+            foreach(instance; scene.getList()) {
+                if(instance.active && !instance.withDraw)
+                    instance.gameStart();
+            }
         }
     }
 
@@ -435,8 +437,10 @@ class SceneManager
         foreach(scene; scenes) {
             scene.gameExit();
 
-            foreach(instance; scene.getList())
-                instance.gameExit();
+            foreach(instance; scene.getList()) {
+                if(instance.active && !instance.withDraw)
+                    instance.gameExit();
+            }
         }
     }
 
@@ -447,8 +451,10 @@ class SceneManager
         {
             current.onError();
 
-            foreach(instance; current.getList())
-                instance.onError();
+            foreach(instance; current.getList()) {
+                if(instance.active && !instance.withDraw)
+                    instance.onError();
+            }
         }
     }
 
@@ -486,11 +492,14 @@ class SceneManager
 
             foreach(instance; current.getList()) 
             {
-                instance.event(event);
-
-                foreach(component; instance.getComponents())
+                if(instance.active && !instance.withDraw)
                 {
-                    component.event(event);
+                    instance.event(event);
+
+                    foreach(component; instance.getComponents())
+                    {
+                        component.event(event);
+                    }
                 }
             }
         }
@@ -512,11 +521,15 @@ class SceneManager
 
             foreach(instance; current.getErentInstances()) {
             	if(instance is null) continue;
-                instance.draw(render);
 
-                foreach(component; instance.getComponents())
+                if(instance.active)
                 {
-                    component.draw(render);
+                    instance.draw(render);
+
+                    foreach(component; instance.getComponents())
+                    {
+                        component.draw(render);
+                    }
                 }
 			}
 
