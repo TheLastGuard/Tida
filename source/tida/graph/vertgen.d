@@ -112,11 +112,20 @@ class VertexInfo
         }
     }
 
-    ~this() @safe nothrow
+    void deleting() @safe
     {
         if(idBufferArray != 0) GL3.deleteBuffer(_idBufferArr);
         if(idVertexArray != 0) GL3.deleteVertexArray(_idVertexArr);
         if(idElementArray != 0) GL3.deleteBuffer(_idElemenArr);
+
+        _idBufferArr = 0;
+        _idVertexArr = 0;
+        _idElemenArr = 0;
+    }
+
+    ~this() @safe nothrow
+    {
+        this.deleting();
     }
 }
 

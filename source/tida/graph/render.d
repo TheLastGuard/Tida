@@ -347,6 +347,8 @@ class GLRender : IRenderer
         GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
         GL3.bindVertexArray(0);
 
+        vid.deleting();
+
         resetShader();
     }
 
@@ -381,6 +383,8 @@ class GLRender : IRenderer
 
         GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
         GL3.bindVertexArray(0);
+
+        vid.deleting();
 
         resetShader();
     }
@@ -420,6 +424,8 @@ class GLRender : IRenderer
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
+
+            vid.deleting();
         } else {
             Shape shape = Shape.Multi(  [
                                             Shape.Line(position, position + Vecf(width, 0)),
@@ -449,6 +455,8 @@ class GLRender : IRenderer
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
+
+            vid.deleting();
         }
 
         resetShader();
@@ -485,6 +493,8 @@ class GLRender : IRenderer
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
+
+            vid.deleting();
         } else {
             import std.math;
 
@@ -531,6 +541,8 @@ class GLRender : IRenderer
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
+
+            vid.deleting();
         }
 
         resetShader();
