@@ -188,6 +188,7 @@ float[4][4] ortho(float left, float right, float bottom, float top, float zNear 
                 ];
 }
 
+deprecated("The render is experimental, not recommended for use.")
 class GLRender : IRenderer
 {
     import tida.window, tida.color, tida.vector, tida.graph.camera, tida.shape, tida.graph.gl;
@@ -1358,7 +1359,7 @@ IRenderer CreateRenderer(IWindow window) @safe
     {
         GL.initialize();
 
-        render = new GLRender(window);
+        render = new OldGLRender(window);
     }catch(Exception e)
     {
         render = new Software(window);
