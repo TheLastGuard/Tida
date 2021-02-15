@@ -612,6 +612,21 @@ struct Color(T)
             return [];
     }
 
+    T[] rg() @safe nothrow
+    {
+        return [r, g];
+    }
+
+    T[] rb() @safe nothrow
+    {
+        return [r, b];
+    }
+
+    T[] rgb() @safe nothrow
+    {
+        return fromBytes!(ubyte, PixelFormat.RGB);
+    }
+
     /++
         Colors the color.
 

@@ -7,6 +7,11 @@ module tida.graph.shader;
 
 import tida.graph.gl;
 
+enum One = 1;
+enum Two = 2;
+enum Three = 3;
+enum Four = 4; 
+
 string formatError(string error) @safe
 {
     import std.array : replace;
@@ -91,7 +96,7 @@ class Shader(int Type)
             GL3.getShaderiv(_id, GL_INFO_LOG_LENGTH, lenLog);
             GL3.getShaderInfoLog(_id, lenLog, null, error);
 
-            throw new Exception(error.formatError);
+            throw new Exception("Shader compile error:\n" ~ error.formatError);
         }
 
         return this;
@@ -142,6 +147,9 @@ class Shader(int Type)
 
             throw new Exception(error.formatError);
         }
+
+        vertex = null;
+        fragment = null;
         
         return this;
     }
@@ -165,10 +173,40 @@ class Shader(int Type)
     }
 
     static if(isProgram!Type)
-    void setUniform(string name, float[] value) @safe
+    void setUniform(int Type = Four)(string name, float[] value) @safe
     {
         auto uid = GL3.getUniformLocation(_id, name);
-        GL3.uniform4f(uid, value);
+
+        static if(Type == One)
+        {
+            GL3.uniformf(uid, value);
+        }else
+        static if(Type == Two)
+        {
+            GL3.uniform2f(uid, value);
+        }else
+        static if(Type == Three)
+        {
+            GL3.uniform3f(uid, value);
+        }else
+        static if(Type == Four)
+        {
+            GL3.uniform4f(uid, value);
+        }
+    }
+
+    import tida.graph.texture;
+
+    static if(isProgram!Type)
+    void setUniform(string name, Texture tex) @safe
+    {
+        GL3.uniform1i(GL3.getUniformLocation(_id, name), tex.glID);
+    }
+
+    static if(isProgram!Type)
+    auto getUniformLocation(string name) @safe
+    {
+        return GL3.getUniformLocation(_id, name);
     }
 
     static if(isProgram!Type)
@@ -183,6 +221,35 @@ class Shader(int Type)
     {
         auto uid = GL3.getUniformLocation(_id, name);
         GL3.uniformf(uid, value);
+    }
+
+    static if(isProgram!Type)
+    void setUniform(string name, float[4][4] value) @safe
+    {
+        auto uid = GL3.getUniformLocation(_id, name);
+        GL3.uniformMatrix4fv(uid, value);
+    }
+
+    static if(isProgram!Type)
+    void setUniform(string name, float[3][3] value) @safe
+    {
+        auto uid = GL3.getUniformLocation(_id, name);
+        GL3.uniformMatrix3fv(uid, value);
+    }
+
+    static if(isProgram!Type)
+    void setUniformMat(int Type)(string name, float* matPTR) @safe
+    {
+        auto uid = GL3.getUniformLocation(_id, name);
+
+        static if(Type == Four)
+        {
+            GL3.uniformMatrix4fP(uid, matPTR);
+        }else
+        static if(Type == Three)
+        {
+            GL3.uniformMatrix3fP(uid, matPTR);
+        }
     }
 
     static if(isProgram!Type)

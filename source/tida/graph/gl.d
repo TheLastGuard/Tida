@@ -128,6 +128,11 @@ struct GL
         glBindTexture(GL_TEXTURE_2D, texID);
     }
 
+    static void generateMipmap(int mode) @trusted nothrow
+    {
+        glGenerateMipmap(mode);
+    }
+
     static void texParameteri(int a,int b) @trusted nothrow
     {
         glTexParameteri(GL_TEXTURE_2D,a,b);
@@ -172,54 +177,59 @@ struct GL
 
 struct GL3
 {
-	import bindbc.opengl;
+    import bindbc.opengl;
 
-	static uint createProgram() @trusted
-	{
-		return glCreateProgram();
-	}
-	
-	static void attachShader(uint program, uint shader) @trusted
-	{
-		glAttachShader(program,shader);
-	}
-	
-	static void linkProgram(uint program) @trusted
-	{
-		glLinkProgram(program);
-	}
-	
-	static uint createShader(uint typeShader) @trusted
-	{
-		return glCreateShader(typeShader);
-	}
-	
-	static void shaderSource(uint shader,int count,ref string source) @trusted
-	{
-		import std.utf;
-	
-		const int len = cast(const(int)) source.length;
-	
-		glShaderSource(shader, count, [source.ptr].ptr, &len);
-	}
-	
-	static void compileShader(uint shader) @trusted
-	{
-		glCompileShader(shader);
-	}
-	
-	static void getShaderInfoLog(uint shader, uint length, int* sizeMax, ref string log) @trusted
-	{
-		import std.conv : to;
-	
-		char[] clog = new char[length];
-	
-		glGetShaderInfoLog(shader,length,sizeMax,clog.ptr);
-		
-		log = clog.to!string;
-	}
+    static uint createProgram() @trusted nothrow
+    {
+        return glCreateProgram();
+    }
+    
+    static void attachShader(uint program, uint shader) @trusted nothrow
+    {
+        glAttachShader(program,shader);
+    }
+    
+    static void linkProgram(uint program) @trusted nothrow
+    {
+        glLinkProgram(program);
+    }
 
-    static void getProgramInfoLog(uint program, uint length, int* sizeMax, ref string log) @trusted
+    static void activeTexture(uint id) @trusted nothrow
+    {
+        glActiveTexture(id);
+    }
+    
+    static uint createShader(uint typeShader) @trusted nothrow
+    {
+        return glCreateShader(typeShader);
+    }
+    
+    static void shaderSource(uint shader,int count,ref string source) @trusted nothrow
+    {
+        import std.utf;
+    
+        const int len = cast(const(int)) source.length;
+    
+        glShaderSource(shader, count, [source.ptr].ptr, &len);
+    }
+    
+    static void compileShader(uint shader) @trusted nothrow
+    {
+        glCompileShader(shader);
+    }
+    
+    static void getShaderInfoLog(uint shader, uint length, int* sizeMax, ref string log) @trusted nothrow
+    {
+        import std.conv : to;
+    
+        char[] clog = new char[length];
+    
+        glGetShaderInfoLog(shader,length,sizeMax,clog.ptr);
+        
+        log = clog.to!string;
+    }
+
+    static void getProgramInfoLog(uint program, uint length, int* sizeMax, ref string log) @trusted nothrow
     {
         import std.conv : to;
 
@@ -229,112 +239,167 @@ struct GL3
 
         log = clog.to!string;
     }
-	
-	static void getShaderiv(uint shader, uint mode, ref int result) @trusted
-	{
-		glGetShaderiv(shader,mode,&result);
-	}
+    
+    static void getShaderiv(uint shader, uint mode, ref int result) @trusted nothrow
+    {
+        glGetShaderiv(shader,mode,&result);
+    }
 
-    static void getProgramiv(uint program, uint mode, ref int result) @trusted
+    static void getProgramiv(uint program, uint mode, ref int result) @trusted nothrow
     {
         glGetProgramiv(program, mode, &result);
     }
-	
-	static void useProgram(uint program) @trusted
-	{
-		glUseProgram(program);
-	}
-	
-	static void deleteShader(uint shader) @trusted
-	{
-		glDeleteShader(shader);
-	}
-	
-	static void genBuffers(ref uint vbo) @trusted
-	{
-		glGenBuffers(1, &vbo);
-	}
-	
-	static void bindBuffer(uint mode, uint vbo) @trusted
-	{
-		glBindBuffer(mode, vbo);
-	}
-	
-	static void bufferData(uint mode,float[] data, uint mode2) @trusted
-	{
-		glBufferData(mode,data.sizeof * data.length, cast(void*) data.ptr, mode2);
-	}
-	
-	static void genVertexArrays(ref uint vao) @trusted
-	{
-		glGenVertexArrays(1, &vao);
-	}
-	
-	static void bindVertexArray(uint vao) @trusted
-	{
-		glBindVertexArray(vao);
-	}
-	
-	static void vertexAttribPointer(uint a,uint b,uint mode,bool norm,uint size,void* data) @trusted
-	{
-		glVertexAttribPointer(a, b, mode ,norm ? GL_TRUE : GL_FALSE, size, data);
-	}
-	
-	static void enableVertexAttribArray(uint mode) @trusted
-	{
-		glEnableVertexAttribArray(mode);
-	}
-	
-	static void drawArrays(uint mode, uint a, uint b) @trusted
-	{
-		glDrawArrays(mode, a, b);
-	}
+    
+    static void useProgram(uint program) @trusted nothrow
+    {
+        glUseProgram(program);
+    }
+    
+    static void deleteShader(uint shader) @trusted nothrow
+    {
+        glDeleteShader(shader);
+    }
+    
+    static void genBuffers(ref uint vbo) @trusted nothrow
+    {
+        glGenBuffers(1, &vbo);
+    }
+    
+    static void bindBuffer(uint mode, uint vbo) @trusted nothrow
+    {
+        glBindBuffer(mode, vbo);
+    }
+    
+    static void bufferData(T)(uint mode,T[] data, uint mode2) @trusted nothrow
+    {
+        glBufferData(mode,T.sizeof * data.length, cast(void*) data.ptr, mode2);
+    }
+    
+    static void genVertexArrays(ref uint vao) @trusted nothrow
+    {
+        glGenVertexArrays(1, &vao);
+    }
+    
+    static void bindVertexArray(uint vao) @trusted nothrow
+    {
+        glBindVertexArray(vao);
+    }
 
-    static void deleteProgram(uint id) @trusted
+    static void deleteBuffer(ref uint id) @trusted nothrow
+    {
+        glDeleteBuffers(1, &id);
+    }
+    
+    static void deleteVertexArray(ref uint id) @trusted nothrow
+    {
+        glDeleteVertexArrays(1, &id);
+    }
+
+    static void vertexAttribPointer(uint a,uint b,uint mode,bool norm,uint size,void* data) @trusted nothrow
+    {
+        glVertexAttribPointer(a, b, mode ,norm ? GL_TRUE : GL_FALSE, size, data);
+    }
+    
+    static void enableVertexAttribArray(uint mode) @trusted nothrow
+    {
+        glEnableVertexAttribArray(mode);
+    }
+
+    static void disableVertexAttribArray(uint mode) @trusted nothrow
+    {
+        glDisableVertexAttribArray(mode);
+    }
+    
+    static void drawArrays(uint mode, uint a, uint b) @trusted nothrow
+    {
+        glDrawArrays(mode, a, b);
+    }
+
+    static void drawElements(uint mode, int a, int b, void* c) @trusted nothrow
+    {
+        glDrawElements(mode, a, b, c);
+    }
+
+    static void deleteProgram(uint id) @trusted nothrow
     {
         glDeleteProgram(id);
     }
 
-    static void bindAttribLocation(uint program, uint index, string name) @trusted
+    static void bindAttribLocation(uint program, uint index, string name) @trusted nothrow
     {
         import std.utf;
 
         glBindAttribLocation(program, index, name.toUTFz!(char*));
     }
 
-    static int getAttribLocation(uint program, string name) @trusted
+    static int getAttribLocation(uint program, string name) @trusted nothrow
     {
         import std.utf;
 
         return glGetAttribLocation(program, name.toUTFz!(char*));
     }
 
-    static int getUniformLocation(uint program, string name) @trusted
+    static int getUniformLocation(uint program, string name) @trusted nothrow
     {
         import std.utf;
 
         return glGetUniformLocation(program, name.toUTFz!(char*));
     }
 
-    static void uniform4f(uint uniformID, float a, float b, float c, float d) @trusted
+    static void uniform4f(uint uniformID, float a, float b, float c, float d) @trusted nothrow
     {
         glUniform4f(uniformID, a, b, c, d);
     }
 
-    static void uniform4f(uint uniformID, float[] arr) @trusted
+    static void uniform4f(uint uniformID, float[] arr) @trusted nothrow
     {
         uniform4f(uniformID, arr[0], arr[1], arr[2], arr[3]);
     }
 
     import tida.color;
 
-    static void uniform4f(uint uniformID, Color!ubyte color) @trusted
+    static void uniform4f(uint uniformID, Color!ubyte color) @trusted nothrow
     {
         uniform4f(uniformID, color.rf, color.gf, color.bf, color.af);
     }
 
-    static void uniformf(uint uniformID, float value) @trusted
+    static void uniform3f(uint uniformID, float[] value) @trusted nothrow
+    {
+        glUniform3f(uniformID, value[0], value[1], value[2]);
+    }
+
+    static void uniform2f(uint uniformID, float[] value) @trusted nothrow
+    {
+        glUniform2f(uniformID, value[0], value[1]);
+    }
+
+    static void uniformf(uint uniformID, float value) @trusted nothrow
     {
         glUniform1f(uniformID, value);
+    }
+
+    static void uniformMatrix4fv(uint uniformID, ref float[4][4] mat) @trusted nothrow
+    {
+        glUniformMatrix4fv(uniformID, 1, GL_FALSE, &mat[0][0]);
+    }
+
+    static void uniformMatrix4fP(uint uniformID, float* mat) @trusted nothrow
+    {
+        glUniformMatrix4fv(uniformID, 1, GL_FALSE, mat);
+    }
+
+    static void uniformMatrix3fP(uint uniformID, float* mat) @trusted nothrow
+    {
+        glUniformMatrix3fv(uniformID, 1, GL_FALSE, mat);
+    }
+
+    static void uniformMatrix3fv(uint uniformID, float[3][3] mat) @trusted nothrow
+    {
+        glUniformMatrix3fv(uniformID, 1, GL_FALSE, &mat[0][0]);
+    }
+
+    static void uniform1i(uint uniformID, uint id) @trusted nothrow
+    {
+        glUniform1i(uniformID, id);
     }
 }

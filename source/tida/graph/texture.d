@@ -6,6 +6,17 @@
 +/
 module tida.graph.texture;
 
+struct TextureInfo
+{
+    public 
+    {
+        int[] params;
+        int width;
+        int height;
+        ubyte[] bytes;
+    }
+}
+
 class Texture
 {
     import tida.graph.gl, tida.color;
@@ -39,16 +50,33 @@ class Texture
 
     void initFromBytes(int format)(ubyte[] bytes) @safe @property nothrow
     {
-        bytes = bytes.fromFormat!(format,PixelFormat.RGBA);
+        TextureInfo info;
+        info.width = _width;
+        info.height = _height;
+        info.bytes = bytes;
+        info.params = [ GL_TEXTURE_MIN_FILTER, GL_NEAREST,
+                        GL_TEXTURE_MAG_FILTER, GL_NEAREST];
 
-        GL.genTextures(1,glTextureID);
+        initFromInfo!format(info);
+    }
 
+    void initFromInfo(int format)(TextureInfo info) @safe @property nothrow
+    {
+        _width = info.width;
+        _height = info.height;
+
+        ubyte[] bytes = info.bytes.fromFormat!(format, PixelFormat.RGBA);
+
+        GL.genTextures(1, glTextureID);
         GL.bindTexture(glTextureID);
 
-        GL.texParameteri(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        GL.texParameteri(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        for(int i = 0; i < info.params.length; i += 2)
+        {
+            GL.texParameteri(info.params[i], info.params[i + 1]);
+        }
 
-        GL.texImage2D(_width,_height,bytes);
+        GL.texImage2D(_width, _height, bytes);
+        GL.generateMipmap(GL_TEXTURE_2D);
 
         GL.bindTexture(0);
     }
@@ -56,6 +84,11 @@ class Texture
     uint glID() @safe @property nothrow
     {
         return glTextureID;
+    }
+
+    void bind() @safe
+    {
+        GL.bindTexture(glID);
     }
 
     void destroy() @trusted @property nothrow

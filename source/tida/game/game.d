@@ -45,7 +45,8 @@ struct GameConfig
         string caption = "Tida"; /// Window caption
         Image icon = null; /// Window icon
         ubyte contextType = ContextIn; /// Graphics pipeline type
-        Color!ubyte background = rgb(0,0,0); /// Window background
+        RenderType renderType = RenderType.AUTO; /// RenderType
+        Color!ubyte background = rgb(255, 255, 255); /// Window background
         int positionX = 100; /// Window position x-axis
         int positionY = 100; /// Window position y-axis
         bool isRendererCreate = true; ///
@@ -86,7 +87,18 @@ class Game
         event = new EventHandler(cast(Window) window);
 
         if(config.isRendererCreate) {
-            _renderer = CreateRenderer(window);
+            if(config.renderType == RenderType.AUTO) {
+                _renderer = CreateRenderer(window);
+            } else {
+                if(config.renderType == RenderType.OpenGL) {
+                    _renderer = new OldGLRender(window);
+                } else 
+                if(config.renderType == RenderType.ModernOpenGL) {
+                    _renderer = new GLRender(window);
+                } else
+                    _renderer = new Software(window);
+            }
+
             _renderer.background = config.background;
         }
 
@@ -100,18 +112,14 @@ class Game
         threads ~= null;
     }
 
-    this(int width,int height,string caption) @trusted
+    this(int width,int height,string caption) @safe
     {
-        initSceneManager();
-        _window = new Window(width,height,caption);
-        (cast(Window) _window).initialize!ContextIn;
+        GameConfig config;
+        config.width = width;
+        config.height = height;
+        config.caption = caption;
 
-        event = new EventHandler(cast(Window) window);
-        _renderer = CreateRenderer(window);
-        _loader = new Loader();
-        _listener = new Listener();
-
-        threads ~= null;
+        this(config);
     }
 
     private void exit() @safe
@@ -142,7 +150,7 @@ class Game
             {
                 if(event.isQuit) {
                     exit();
-                    isGame = false;
+                    return;
                 }
 
                 sceneManager.callEvent(event);
@@ -164,6 +172,7 @@ class Game
 
             if(sceneManager.apiExit) {
                 exit();
+                return;
             }
 
             sceneManager.callStep(0,renderer);

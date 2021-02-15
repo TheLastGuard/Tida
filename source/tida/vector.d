@@ -9,7 +9,7 @@ module tida.vector;
 alias Vecf = Vector!float;
 
 ///
-T sqr(T)(T value) @safe
+T sqr(T)(T value) @safe nothrow pure @nogc
 {
     return value * value;
 }
@@ -18,7 +18,7 @@ T sqr(T)(T value) @safe
     Vector structure. Two-dimensional, because the framework does not 
     imply 3D capabilities.
 +/
-public struct Vector(T)
+struct Vector(T)
 {
     import std.math : sqrt;
 
@@ -67,6 +67,11 @@ public struct Vector(T)
         return cast(int) this.y;
     }
 
+    T[] array() @safe nothrow pure
+    {
+        return [x, y];
+    }
+
     bool opEquals(Vector a, Vector b) @safe nothrow 
     {
         if (a is b)
@@ -105,23 +110,42 @@ public struct Vector(T)
 
     Vector!T opBinary(string op)(Vector rhs) @safe nothrow 
     {
-        static if (op == "+")
+        static if(op == "+")
         {
             return Vector!T(this.x + rhs.x, this.y + rhs.y);
         }
-        else static if (op == "-")
+        else 
+        static if(op == "-")
         {
             return Vector!T(this.x - rhs.x, this.y - rhs.y);
+        }
+        else 
+        static if(op == "*")
+        {
+            return Vector!T(this.x * rhs.x, this.y * rhs.y);
+        }else
+        static if(op == "/")
+        {
+            return Vector!T(this.x / rhs.y, this.y / rhs.y);
         }
     }
 
     Vector!T opBinary(string op)(T num) @safe nothrow 
     {
-        static if (op == "*")
+        static if(op == "+")
+        {
+            return Vector!T(this.x + num, this.y + num);
+        }else
+        static if(op == "-")
+        {
+            return Vector!T(this.x - num, this.y - num);
+        }else
+        static if(op == "*")
         {
             return Vector!T(this.x * num, this.y * num);
         }
-        else static if (op == "/")
+        else 
+        static if(op == "/")
         {
             return Vector!T(this.x / num, this.y / num);
         }else
@@ -180,29 +204,63 @@ public struct Vector(T)
         assert(a == Vecf(32, 32));
     }
 
+    Vector!T negative() @safe nothrow pure
+    {
+        return Vector!T(-x, -y);
+    }
+
+    Vector!T normalize() @safe nothrow pure
+    {
+        return Vector!T(x / length, y / length);
+    }
+
+    void norm() @safe nothrow pure
+    {
+        x /= length;
+        y /= length;
+    }
+
+    auto invertX() @safe nothrow pure
+    {
+        x = -x;
+
+        return this;
+    }
+
+    auto invertY() @safe nothrow pure
+    {
+        y = -y;
+
+        return this;
+    }
+
+    auto invert() @safe nothrow pure
+    {
+        x = -x;
+        y = -y;
+
+        return this;
+    }
+
     /++
         Return length Vector.
     ++/
-    T length() @safe
+    T length() @safe nothrow
     {
         static if(is(T : int))
-        {
-            import std.conv : to;
-            
-            return sqrt(to!float(sqr(this.x) + sqr(this.y))).to!T;
+        {   
+            return sqrt(cast(float) (sqr(this.x) + sqr(this.y)));
         }
         else
             return sqrt(sqr(this.x) + sqr(this.y));
     }
 
     /// ditto
-    T length() @safe immutable
+    T length() @safe immutable nothrow
     {
         static if(is(T : int))
-        {
-            import std.conv : to;
-            
-            return sqrt(to!float(sqr(this.x) + sqr(this.y))).to!T;
+        {   
+            return sqrt(cast(float) (sqr(this.x) + sqr(this.y)));
         }
         else
             return sqrt(sqr(this.x) + sqr(this.y));
@@ -216,7 +274,7 @@ public struct Vector(T)
     }
 }
 
-Vecf abs(Vecf vec) @safe
+Vecf abs(Vecf vec) @safe nothrow
 {
     import std.math : abs;
 
@@ -237,7 +295,7 @@ template Abs(Vecf vec)
         a = First point.
         b = Second point.
 +/
-float distance(Vecf a,Vecf b) @safe
+float distance(Vecf a,Vecf b) @safe nothrow
 {
     import std.math : sqrt;
 
@@ -250,7 +308,7 @@ float distance(Vecf a,Vecf b) @safe
     Params:
         vecs = Two points.
 +/
-float distance(Vecf[2] vecs) @safe
+float distance(Vecf[2] vecs) @safe nothrow
 {
     return vecs[0].distance(vecs[1]);
 }
@@ -277,7 +335,7 @@ template Distance(Vecf[2] vecs)
 /++
     Average distance between vectors.
 +/
-Vecf averateVectors(Vecf a,Vecf b) @safe
+Vecf averateVectors(Vecf a,Vecf b) @safe nothrow
 {
     return ((b - a) / 2) + ((a > b) ? b : a);
 }
@@ -286,4 +344,25 @@ Vecf averateVectors(Vecf a,Vecf b) @safe
 template AverateVectors(Vecf a,Vecf b)
 {
     enum AverateVectors = ((b - a) / 2) + ((a > b) ? b : a);
+}
+
+/++
+    Creates a random vector.
+
+    Params:
+        begin = Begin.
+        end = End.
+
+    Example:
+    ---
+    Vecf rnd = uniform(Vecf(32, 16), Vecf(64, 48));
+    // vec.x = random: 32 .. 64
+    // vec.y = random: 16 .. 48
+    ---
++/
+Vecf uniform(Vecf begin, Vecf end) @safe
+{
+    import std.random : uniform;
+
+    return Vecf(uniform(begin.x, end.x), uniform(begin.y, end.y));
 }

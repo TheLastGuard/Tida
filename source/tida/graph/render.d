@@ -17,6 +17,8 @@ enum BlendMode {
 /// Rendering type
 enum RenderType
 {
+    AUTO, ///
+    ModernOpenGL, ///
     OpenGL, ///
     Soft ///
 }
@@ -27,6 +29,7 @@ enum RenderType
 interface IRenderer
 {
     import tida.vector, tida.color, tida.graph.drawable, tida.graph.camera, tida.graph.text;
+    import tida.graph.shader;
 
     /++
         Updates the rendering surface if, for example, the window is resized.
@@ -98,6 +101,21 @@ interface IRenderer
     /// ditto
     Color!ubyte background() @safe @property;
 
+    ///
+    void setShader(string name, Shader!Program program) @safe;
+
+    ///
+    Shader!Program getShader(string name) @safe;
+
+    ///
+    void currentShader(Shader!Program program) @safe @property; 
+
+    ///
+    Shader!Program currentShader() @safe @property;
+
+    ///
+    void resetShader() @safe;
+
     /++
         Renders an object.
 
@@ -149,7 +167,402 @@ interface IRenderer
     }
 }
 
+float[4][4] ortho(float left, float right, float bottom, float top, float zNear = -1.0f, float zFar = 0.0f) 
+@safe nothrow pure
+{
+    immutable defl = 0.0f;
+
+    immutable mRL = right - left;
+    immutable mTB = top - bottom;
+    immutable mFN = zFar - zNear;
+
+    immutable tRL = -(right + left) / mRL;
+    immutable tTB = -(top + bottom) / mTB;
+    immutable tFN = -(zFar + zNear) / mFN;
+
+    return      [
+                    [2 / mRL, defl,  defl,    defl],
+                    [defl,  2 / mTB, defl,    defl],
+                    [defl,    defl, -2 / mFN, defl],
+                    [ tRL,    tTB,   tFN,     1.0f]
+                ];
+}
+
 class GLRender : IRenderer
+{
+    import tida.window, tida.color, tida.vector, tida.graph.camera, tida.shape, tida.graph.gl;
+    import tida.graph.vertgen, tida.graph.shader;
+    import std.conv : to;
+
+    private
+    {
+        IWindow window;
+        Color!ubyte _background;
+        Camera _camera;
+        RenderType _type = RenderType.ModernOpenGL;
+        float[4][4] _projection;
+
+        Shader!Program[string] shaders;
+        Shader!Program current;
+    }
+
+    this(IWindow window) @safe
+    {
+        this.window = window;
+
+        _camera = new Camera();
+
+        _camera.shape = Shape.Rectangle(Vecf(0,0), Vecf(window.width,window.height));
+        _camera.port = Shape.Rectangle(Vecf(0,0), Vecf(window.width,window.height));
+
+        Shader!Program defaultShader = new Shader!Program();
+        Shader!Vertex vertex = new Shader!Vertex().bindSource(
+        `
+        #version 130
+        in vec3 position;
+        uniform mat4 projection;
+
+        void main() {
+            gl_Position = projection * vec4(position, 1.0f);
+        }
+        `);
+
+        Shader!Fragment fragment = new Shader!Fragment().bindSource(
+        `
+        #version 130
+        uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+        void main() {
+            gl_FragColor = color;
+        }
+        `
+        );
+
+        defaultShader
+            .attach(vertex)
+            .attach(fragment)
+            .link();
+
+        shaders["Default"] = defaultShader;
+
+        blendMode(BlendMode.Blend);
+
+        this.reshape();
+    }
+
+    ///
+    float[4][4] projection() @safe
+    {
+        return _projection;
+    }
+
+    override void reshape() @safe
+    {
+        GL.viewport(0, 0, _camera.shape.width.to!int,_camera.shape.height.to!int);
+
+        clear();
+
+        this._projection = ortho(0.0, _camera.port.end.x, _camera.port.end.y, 0.0, -1.0, 1.0);
+    }
+
+    override void camera(Camera otherCamera) @safe @property
+    in(camera,"Camera is not allocated!")
+    body
+    {
+        this._camera = otherCamera;
+    }
+
+    override Camera camera() @safe @property
+    {
+        return this._camera;
+    }
+
+    override void background(Color!ubyte color) @safe @property
+    {
+        GL.clearColor = color;
+
+        _background = color;
+    }
+
+    override Color!ubyte background() @safe @property
+    {
+        return _background;
+    }
+
+    override void setShader(string name, Shader!Program program) @safe
+    {
+        shaders[name] = program;
+    }
+
+    override Shader!Program getShader(string name) @safe
+    {
+        if(name in shaders)
+            return shaders[name];
+        else
+            return null;
+    }
+
+    override void currentShader(Shader!Program program) @safe @property
+    {
+        current = program;
+    }
+
+    override Shader!Program currentShader() @safe @property
+    {
+        return current;
+    }
+ 
+    override void resetShader() @safe
+    {
+        current = null;
+    }
+
+    override void point(Vecf position, Color!ubyte color) @safe
+    {
+        if(currentShader is null) {
+            currentShader = getShader("Default");
+        } else {
+            assert(currentShader.getUniformLocation("projection") != 0, "Shader is not valid!");
+            assert(currentShader.getUniformLocation("color") != 0, "Shader is not valid!");
+        }
+
+        auto vid = generateVertex(Shape.Point(position));
+
+        vid.bindVertexArray();
+        GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
+        GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
+        GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 2, GL_FLOAT, false, 0, null);
+
+        GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+        GL3.bindVertexArray(0);
+
+        currentShader.using();
+        vid.bindVertexArray();
+
+        currentShader.setUniform("projection", _projection);
+        currentShader.setUniform("color", color);
+
+        GL3.drawArrays(GL_POINTS, 0, 2);
+
+        GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+        GL3.bindVertexArray(0);
+
+        resetShader();
+    }
+
+    override void line(Vecf[2] points, Color!ubyte color) @safe
+    {
+        if(currentShader is null) {
+            currentShader = getShader("Default");
+        } else {
+            assert(currentShader.getUniformLocation("projection") != 0, "Shader is not valid!");
+            assert(currentShader.getUniformLocation("color") != 0, "Shader is not valid!");
+        }
+
+        const shape = Shape.Line(points[0], points[1]);
+
+        auto vid = generateVertex(shape);
+
+        vid.bindVertexArray();
+        GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
+        GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
+        GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 2, GL_FLOAT, false, 2 * float.sizeof, null);
+
+        GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+        GL3.bindVertexArray(0);
+
+        currentShader.using();
+        vid.bindVertexArray();
+
+        currentShader.setUniform("projection", _projection);
+        currentShader.setUniform("color", color);
+
+        GL3.drawArrays(GL_LINES, 0, 2);
+
+        GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+        GL3.bindVertexArray(0);
+
+        resetShader();
+    }
+
+    override void rectangle(Vecf position, int width, int height, Color!ubyte color, bool isFill) @safe
+    {
+        if(currentShader is null) {
+            currentShader = getShader("Default");
+        } else {
+            assert(currentShader.getUniformLocation("projection") != 0, "Shader is not valid!");
+            assert(currentShader.getUniformLocation("color") != 0, "Shader is not valid!");
+        }
+
+        if(isFill)
+        {
+            Shape shape = Shape.Rectangle(position, position + Vecf(width, height));
+
+            auto vid = generateVertex(shape);
+
+            vid.bindVertexArray();
+            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
+            GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, vid.idElementArray);
+
+            GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 3, GL_FLOAT, false, 3 * float.sizeof, null);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            currentShader.using();
+            vid.bindVertexArray();
+
+            currentShader.setUniform("projection", _projection);
+            currentShader.setUniform("color", color);
+
+            GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+        } else {
+            Shape shape = Shape.Multi(  [
+                                            Shape.Line(position, position + Vecf(width, 0)),
+                                            Shape.Line(position + Vecf(width, 0), position + Vecf(width, height)),
+                                            Shape.Line(position, position + Vecf(0, height)),
+                                            Shape.Line(position + Vecf(0, height), position + Vecf(width, height))
+                                        ]);
+
+            auto vid = generateVertex(shape);
+
+            vid.bindVertexArray();
+            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
+
+            GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 2, GL_FLOAT, false, 0, null);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            currentShader.using();
+            vid.bindVertexArray();
+
+            currentShader.setUniform("projection", _projection);
+            currentShader.setUniform("color", color);
+
+            GL3.drawArrays(GL_LINES, 0, 2 * 4);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+        }
+
+        resetShader();
+    }
+
+    override void circle(Vecf position, float radius, Color!ubyte color, bool isFill) @safe
+    {
+        if(currentShader is null) {
+            currentShader = getShader("Default");
+        } else {
+            assert(currentShader.getUniformLocation("projection") != 0, "Shader is not valid!");
+            assert(currentShader.getUniformLocation("color") != 0, "Shader is not valid!");
+        }
+
+        if(isFill) {
+            auto vid = generateVertex(Shape.Circle(position, radius));
+
+            vid.bindVertexArray();
+            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
+
+            GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 2, GL_FLOAT, false, 0, null);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            currentShader.using();
+            vid.bindVertexArray();
+
+            currentShader.setUniform("projection", _projection);
+            currentShader.setUniform("color", color);
+
+            GL3.drawArrays(GL_TRIANGLES, 0, cast(uint) vid.length / 3);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+        } else {
+            import std.math;
+
+            Shape shape;
+            shape.type = ShapeType.multi;
+
+            float x = 0.0f;
+            float y = 0.0f;
+
+            for(float i = 0; i <= 360;)
+            {
+                x = radius * cos(i);
+                y = radius * sin(i);
+
+                auto vec = Vecf(position.x + x, position.y + y);
+
+                i += 0.5;
+                x = radius * cos(i);
+                y = radius * sin(i);
+
+                shape.shapes ~= Shape.Line(vec, Vecf(position.x + x,position.y + y));
+
+                i += 0.5;
+            }
+
+            auto vid = generateVertex(shape);
+
+            vid.bindVertexArray();
+            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
+
+            GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 2, GL_FLOAT, false, 0, null);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            currentShader.using();
+            vid.bindVertexArray();
+
+            currentShader.setUniform("projection", _projection);
+            currentShader.setUniform("color", color);
+
+            GL3.drawArrays(GL_LINES, 0, vid.length / 2);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+        }
+
+        resetShader();
+    }
+
+    override void clear() @safe
+    {
+        GL.clear();
+    }
+
+    override void drawning() @safe
+    {
+        window.swapBuffers();
+    }
+
+    override void blendMode(BlendMode mode) @trusted
+    {
+        if(mode == BlendMode.Blend) {
+            GL.enable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }else if(mode == BlendMode.noBlend) {
+            GL.disable(GL_BLEND);
+        }
+    }
+
+    override RenderType type() @safe
+    {
+        return _type;
+    }
+}
+
+class OldGLRender : IRenderer
 {
     import tida.window, tida.color, tida.vector, tida.graph.camera, tida.shape, tida.graph.gl;
     import std.conv : to;
@@ -349,6 +762,33 @@ class GLRender : IRenderer
         }else if(mode == BlendMode.noBlend) {
             GL.disable(GL_BLEND);
         }
+    }
+
+    import tida.graph.shader;
+
+    override Shader!Program getShader(string name) @safe
+    {
+        assert(null, "There are no shaders in this version of the render.");
+    }
+
+    override void setShader(string name,Shader!Program program) @safe
+    {
+        assert(null, "There are no shaders in this version of the render.");
+    }
+
+    override void currentShader(Shader!Program program) @safe @property
+    {
+        assert(null, "There are no shaders in this version of the render.");
+    }
+
+    override Shader!Program currentShader() @safe @property
+    {
+        assert(null, "There are no shaders in this version of the render.");
+    }
+
+    override void resetShader() @safe
+    {
+        assert(null, "There are no shaders in this version of the render.");
     }
 }
 
@@ -858,6 +1298,33 @@ class Software : IRenderer
     IPlane getPlane() @safe
     {
         return plane;
+    }
+
+    import tida.graph.shader;
+
+    override Shader!Program getShader(string name) @safe
+    {
+        assert(null, "There are no shaders in this version of the render.");
+    }
+
+    override void setShader(string name,Shader!Program program) @safe
+    {
+        assert(null, "There are no shaders in this version of the render.");
+    }
+
+    override void currentShader(Shader!Program program) @safe @property
+    {
+        assert(null, "There are no shaders in this version of the render.");
+    }
+
+    override Shader!Program currentShader() @safe @property
+    {
+        assert(null, "There are no shaders in this version of the render.");
+    }
+
+    override void resetShader() @safe
+    {
+        assert(null, "There are no shaders in this version of the render.");
     }
 }
 
