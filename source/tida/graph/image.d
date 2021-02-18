@@ -1000,7 +1000,7 @@ body
         break;
 
         case ShapeType.rectangle:
-            copyImage = image.blit!Type(shape.x.to!int,shape.y.to!int,shape.width.to!int,shape.height.to!int);
+            copyImage = image.copy(shape.x.to!int, shape.y.to!int, shape.width.to!int, shape.height.to!int);
         break;
 
         case ShapeType.circle:
