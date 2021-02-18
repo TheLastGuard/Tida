@@ -1005,12 +1005,12 @@ body
 
         case ShapeType.circle:
             int x = 0;
-            int y = cast(int) shape.radious;
+            int y = cast(int) shape.radius;
 
             int X1 = shape.begin.intX();
             int Y1 = shape.begin.intY();
 
-            int delta = 1 - 2 * cast(int) shape.radious;
+            int delta = 1 - 2 * cast(int) shape.radius;
             int error = 0;
 
             while (y >= 0)
