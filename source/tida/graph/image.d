@@ -885,6 +885,9 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
 
+            GL3.activeTexture(_texture.glID);
+            _texture.bind();
+
             shader.using();
             vid.bindVertexArray();
 
@@ -895,9 +898,6 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             shader.setUniform("projection", proj);
             shader.setUniform("model", model);
             shader.setUniform("color", color);
-
-            GL3.activeTexture(_texture.glID);
-            _texture.bind();
             
             GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
 
@@ -1087,9 +1087,12 @@ Image uniteWP(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @safe
     import tida.color;
 
     Image result = new Image();
+    
+    int width = int.init,
+        height = int.init;
 
-    int width = max(posA.x,posB.y).to!int + max(a.width,b.width);
-    int height = max(posA.y,posB.y).to!int + max(a.height,b.height);
+    width = (posA.x + a.width > posB.x + b.width) ? posA.x.to!int + a.width : posB.x.to!int + b.width;
+    height = (posA.y + a.height > posB.y + b.height) ? posA.y.to!int + a.height : posB.x.to!int + b.height;
 
     result.create(width,height);
     result.fill(rgba(0,0,0,0));
@@ -1121,8 +1124,14 @@ Image uniteParallel(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0))
 
     Image result = new Image();
 
-    int width = max(posA.x,posB.y).to!int + max(a.width,b.width);
-    int height = max(posA.y,posB.y).to!int + max(a.height,b.height);
+    int width = int.init,
+        height = int.init;
+
+    width = (posA.x + a.width > posB.x + b.width) ? posA.x.to!int + a.width : posB.x.to!int + b.width;
+    height = (posA.y + a.height > posB.y + b.height) ? posA.y.to!int + a.height : posB.x.to!int + b.height;
+
+    result.create(width,height);
+    result.fill(rgba(0,0,0,0));
 
     result.create(width,height);
     result.fill(rgba(0,0,0,0));

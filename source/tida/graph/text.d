@@ -138,7 +138,7 @@ template TypeChar(TypeString)
         text = Text.
         font = Font.
 +/
-int withText(T)(T text,Font font) @safe
+int widthText(T)(T text,Font font) @safe
 {
     int width = 0;
     auto ss = new Text(font).renderSymbols!T(text);
@@ -170,6 +170,11 @@ class Symbol
         this.color = color;
         this.size = size;
         this.advance = rel;
+    }
+
+    ~this() @trusted
+    {
+        
     }
 }
 
