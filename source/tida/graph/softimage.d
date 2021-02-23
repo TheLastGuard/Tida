@@ -48,7 +48,7 @@ class SoftImage : IPlane
         if(image.pixels.length == 0)
             buffer = new ubyte[](width * height * 4);
         else
-            buffer = image.bytes!(PixelFormat.RGB);
+            buffer = image.bytes!(PixelFormat.RGBA);
 
         _width = width;
         _height = height;
