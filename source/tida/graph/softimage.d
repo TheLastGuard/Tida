@@ -45,7 +45,10 @@ class SoftImage : IPlane
 
     override void alloc(uint width,uint height) @safe
     {
-        buffer = new ubyte[](width * height * 4);
+        if(image.pixels.length == 0)
+            buffer = new ubyte[](width * height * 4);
+        else
+            buffer = image.bytes!(PixelFormat.RGB);
 
         _width = width;
         _height = height;

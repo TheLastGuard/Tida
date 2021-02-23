@@ -26,6 +26,7 @@ class Texture
         uint _width;
         uint _height;
         uint glTextureID;
+        ubyte[] data;
     }
 
     void width(uint newWidth) @safe @property nothrow
@@ -54,8 +55,8 @@ class Texture
         info.width = _width;
         info.height = _height;
         info.bytes = bytes;
-        info.params = [ GL_TEXTURE_MIN_FILTER, GL_NEAREST,
-                        GL_TEXTURE_MAG_FILTER, GL_NEAREST];
+        info.params = [ GL_TEXTURE_MIN_FILTER, GL_LINEAR,
+                        GL_TEXTURE_MAG_FILTER, GL_LINEAR];
 
         initFromInfo!format(info);
     }
@@ -66,6 +67,7 @@ class Texture
         _height = info.height;
 
         ubyte[] bytes = info.bytes.fromFormat!(format, PixelFormat.RGBA);
+        data = bytes;
 
         GL.genTextures(1, glTextureID);
         GL.bindTexture(glTextureID);
@@ -86,7 +88,7 @@ class Texture
         return glTextureID;
     }
 
-    void bind() @safe
+    void bind() @safe nothrow
     {
         GL.bindTexture(glID);
     }

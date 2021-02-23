@@ -202,9 +202,9 @@ struct HSL
             ubyte g = 0;
             ubyte b = 0;
 
-            immutable hue = str.h;
-            immutable saturation = str.s / 100;
-            immutable lightness = str.l / 100;
+            immutable hue = h;
+            immutable saturation = s / 100;
+            immutable lightness = l / 100;
 
             if(saturation == 0)
             {
