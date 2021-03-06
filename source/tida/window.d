@@ -468,34 +468,14 @@ class Window : IWindow
     {
         static if(Type == Simple)
         {
-            scope Visual* visual = XDefaultVisual(runtime.display, runtime.displayID);
+            Visual* visual = XDefaultVisual(runtime.display, runtime.displayID);
             int depth = XDefaultDepth(runtime.display, runtime.displayID);
 
-            _visual = visual;
-            _depth = depth;
+            XVisualInfo* info = new XVisualInfo();
+            info.visual = visual;
+            info.depth = depth;
 
-            auto rootWindow = runtime.rootWindow;
-
-            XSetWindowAttributes windowAttribs;
-            windowAttribs.border_pixel = 0x000000;
-            windowAttribs.background_pixel = 0xFFFFFF;
-            windowAttribs.override_redirect = True;
-            windowAttribs.colormap = XCreateColormap(runtime.display, rootWindow, 
-                                                     visual, AllocNone);
-
-            windowAttribs.event_mask = ExposureMask | ButtonPressMask | KeyPressMask |
-                                       KeyReleaseMask | ButtonReleaseMask | EnterWindowMask |
-                                       LeaveWindowMask | PointerMotionMask;
-
-            window = XCreateWindow (runtime.display, rootWindow, posX, posY, width, height, 0, depth,
-                                    InputOutput, visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, 
-                                    &windowAttribs);
-
-            title = _title;
-
-            auto wmAtom = GetAtom!"WM_DELETE_WINDOW";
-
-            XSetWMProtocols(runtime.display, window, &wmAtom, 1);
+            createFromXVisual(info);
         }else
         static if(Type == ContextIn)
         {
@@ -505,31 +485,11 @@ class Window : IWindow
             scope Visual* visual = (cast(Context) _context).visualInfo.visual;
             int depth = (cast(Context) _context).visualInfo.depth;
 
-            _visual = visual;
-            _depth = depth;
+            XVisualInfo* info = new XVisualInfo();
+            info.visual = visual;
+            info.depth = depth;
 
-            auto rootWindow = runtime.rootWindow;
-
-            XSetWindowAttributes windowAttribs;
-            windowAttribs.border_pixel = 0x000000;
-            windowAttribs.background_pixel = 0xFFFFFF;
-            windowAttribs.override_redirect = True;
-            windowAttribs.colormap = XCreateColormap(runtime.display, rootWindow, 
-                                                     visual, AllocNone);
-
-            windowAttribs.event_mask = ExposureMask | ButtonPressMask | KeyPressMask |
-                                       KeyReleaseMask | ButtonReleaseMask | EnterWindowMask |
-                                       LeaveWindowMask | PointerMotionMask;
-
-            window = XCreateWindow (runtime.display, rootWindow, posX, posY, width, height, 0, depth,
-                                    InputOutput, visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, 
-                                    &windowAttribs);
-
-            title = _title;
-
-            auto wmAtom = GetAtom!"WM_DELETE_WINDOW";
-
-            XSetWMProtocols(runtime.display, window, &wmAtom, 1);
+            createFromXVisual(info);
 
             _context.initialize();
 
@@ -767,7 +727,6 @@ class Window : IWindow
         auto cardinal = GetAtom!"CARDINAL";
 
         auto tAlpha = cast(ulong) (cast(ulong) 0xFFFFFF * alpha);
-
 
         XChangeProperty(runtime.display, window, atom, cardinal, 32,
                 PropModeReplace, cast(ubyte*) &tAlpha, 1);

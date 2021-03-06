@@ -676,6 +676,47 @@ struct Color(T)
         return this;
     }
 
+    Color!T opBinary(string op)(float koe) @safe
+    {
+        import std.conv : to;
+
+        static if(op == "*")
+            return Color!T( cast(T) (r.to!float * koe),
+                            cast(T) (g.to!float * koe),
+                            cast(T) (b.to!float * koe));
+        else
+        static if(op == "/")
+            return Color!T( cast(T) (r.to!float / koe),
+                            cast(T) (g.to!float / koe),
+                            cast(T) (b.to!float / koe));
+        else
+            static assert(0, "Operator `" ~ op ~ "` not implemented.");
+    }
+
+    Color!T opBinary(string op)(Color!ubyte color) @safe
+    {
+        static if(op == "+") {
+            return Color!T( r + color.r,
+                            g + color.g,
+                            b + color.b);
+        }
+        else
+        static if(op == "-")
+            return Color!T( r - color.r,
+                            g - color.g,
+                            b - color.b);
+        else
+        static if(op == "*")
+            return color.colorize!NoAlpha(this);
+        else
+        static if(op == "/")
+            return Color!T( (color.rf / this.rf) * T.max,
+                            (color.gf / this.gf) * T.max,
+                            (color.bf / this.bf) * T.max);
+        else
+            static assert(0, "Operator `" ~ op ~ "` not implemented.");
+    }
+
     auto add(Color!T other) @safe
     {
         r += other.r;
@@ -688,9 +729,9 @@ struct Color(T)
     /// Inverts the color.
     auto invert() @safe nothrow
     {
-        r = r ^ 0xff;
-        g = g ^ 0xff;
-        b = b ^ 0xff;
+        r = r ^ T.max;
+        g = g ^ T.max;
+        b = b ^ T.max;
 
         return this;
     }

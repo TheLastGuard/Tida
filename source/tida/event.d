@@ -190,7 +190,7 @@ class EventHandler : IEventHandler
         TranslateMessage(&msg); 
         DispatchMessage(&msg);
 
-        return PeekMessage(&msg, window.handle,0,0,PM_REMOVE) != 0;
+        return PeekMessage(&msg, window.handle, 0, 0, PM_REMOVE) != 0;
     }
 
     override bool isKeyDown() @safe

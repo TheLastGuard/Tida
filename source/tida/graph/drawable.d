@@ -48,9 +48,10 @@ interface IDrawableEx
     import tida.window;
     import tida.vector;
     import tida.graph.render;
+    import tida.color;
 
     ///
-    void drawEx(IRenderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha) @trusted;
+    void drawEx(IRenderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha,Color!ubyte color) @trusted;
 }
 
 /++

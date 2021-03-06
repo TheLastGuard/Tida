@@ -130,6 +130,105 @@ template TypeChar(TypeString)
         alias TypeChar = dchar;
 }
 
+template isText(T)
+{
+    enum isText = is(T : string) || is(T : wstring) || is(T : dstring);
+}
+
+import tida.graph.drawable;
+
+class SymbolRender : IDrawable, IDrawableEx
+{
+    import tida.graph.render, tida.vector, tida.color;
+
+    private
+    {
+        Symbol[] symbols;
+    }
+
+    this(Symbol[] symbols) @safe
+    {
+        this.symbols = symbols;
+    }
+
+    override void draw(IRenderer render, Vecf position) @safe
+    {
+        position.y += (symbols[0].size + (symbols[0].size / 2));
+
+        foreach(s; symbols)
+        {
+            if(s.image !is null)
+            {
+                if(!s.image.isTexture)
+                    s.image.fromTexture();
+
+                render.drawColor(s.image,position - Vecf(0, s.position.y),
+                            s.color);
+            }
+
+            position.x += s.advance.intX >> 6;
+        }
+    }
+
+    override void drawEx(IRenderer render,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha,Color!ubyte color) @safe
+    {
+        import tida.angle;
+        import std.math : isNaN;
+        debug import std.stdio;
+
+        position.y += (symbols[0].size + (symbols[0].size / 2));
+
+        Vecf bpos = position;
+
+        if(center.x.isNaN) center = Vecf(widthSymbols(symbols) / 2, center.y);
+        if(center.y.isNaN) center = Vecf(center.x, symbols[0].size / 2);
+
+        foreach(s; symbols)
+        {
+            if(s.image !is null)
+            {
+                if(!s.image.isTexture)
+                    s.image.fromTexture();
+
+                Vecf tpos = position + s.position - Vecf(0, s.position.y);
+
+                tpos = tpos.rotate(angle.from!(Degrees, Radians), bpos + center);
+
+                render.drawEx(s.image, tpos, angle,
+                    Vecf(s.image.width / 2, s.image.height / 2),
+                    Vecf(s.image.width, s.image.height), s.color.a, s.color);
+            }
+
+            position.x += s.advance.intX >> 6;
+        }
+    }
+}
+
+///
+T cutFormat(T)(T symbols) @safe
+in(isText!T)
+body
+{
+    for(int i = 0; i < symbols.length; i++)
+    {
+        if(symbols[i] == '$')
+        {
+            if(symbols[i+1] == '<') {
+                __symEachCutter: for(int j = i; j < symbols.length; j++)
+                {
+                    if(symbols[j] == '>')
+                    {
+                        symbols = symbols[0 .. i] ~ symbols[j .. $];
+                        break __symEachCutter;
+                    }
+                }
+            }
+        }
+    }
+
+    return symbols;
+}
+
 /++
     Returns the size of the rendered text for the given font.   
     
@@ -139,11 +238,24 @@ template TypeChar(TypeString)
         font = Font.
 +/
 int widthText(T)(T text,Font font) @safe
+in(isText!T)
+body
 {
-    int width = 0;
-    auto ss = new Text(font).renderSymbols!T(text);
+    import std.algorithm : reduce;
+    text = cutFormat!T(text);
 
-    foreach(s; ss) width += (s.advance.intX) + s.position.intX;
+    return new Text(font)
+        .fromSymbols!T(text)
+        .widthSymbols;
+}
+
+///
+int widthSymbols(Symbol[] text) @safe
+{
+    import std.algorithm : reduce;
+    int width = int.init;
+
+    foreach(s; text) width += s.advance.intX >> 6;
 
     return width;
 }
@@ -170,11 +282,6 @@ class Symbol
         this.color = color;
         this.size = size;
         this.advance = rel;
-    }
-
-    ~this() @trusted
-    {
-        
     }
 }
 
@@ -206,7 +313,9 @@ class Text
             symbols = Text for rendering.
             color = Text color.
     +/
-    Symbol[] renderSymbols(T)(T symbols,Color!ubyte color = rgba(255,255,255,255)) @trusted
+    Symbol[] fromSymbols(T)(T symbols,Color!ubyte color = rgba(255,255,255,255)) @trusted
+    in(isText!T)
+    body
     {
         Symbol[] chars;
 
@@ -222,39 +331,39 @@ class Text
 
             FT_GlyphSlot glyph;
 
-            if(s != ' ')
+            image = new Image();
+
+            FT_Load_Char(_font.face, s, FT_LOAD_RENDER);
+            const glyphIndex = FT_Get_Char_Index(_font.face, s);
+
+            FT_Load_Glyph(_font.face, glyphIndex, FT_LOAD_DEFAULT);
+            FT_Render_Glyph(_font.face.glyph, FT_RENDER_MODE_NORMAL);
+
+            glyph = _font.face.glyph;
+            auto bitmap = glyph.bitmap;
+
+            image.create(bitmap.width,bitmap.rows);
+
+            auto pixels = image.pixels;
+
+            foreach(i; 0 .. bitmap.width * bitmap.rows)
             {
-                image = new Image();
-
-                FT_Load_Char(_font.face, s, FT_LOAD_RENDER);
-                const glyphIndex = FT_Get_Char_Index(_font.face, s);
-
-                FT_Load_Glyph(_font.face, glyphIndex, FT_LOAD_DEFAULT);
-                FT_Render_Glyph(_font.face.glyph, FT_RENDER_MODE_NORMAL);
-
-                glyph = _font.face.glyph;
-                auto bitmap = glyph.bitmap;
-
-                image.create(bitmap.width,bitmap.rows);
-
-                auto pixels = image.pixels;
-
-                foreach(i; 0 .. bitmap.width * bitmap.rows)
-                {
-                    pixels[i] = bitmap.buffer[i] > 128 ? grayscale(bitmap.buffer[i]) : rgba(0,0,0,0);
-                }
+                pixels[i] = rgba(255, 255, 255, bitmap.buffer[i]);
             }
 
             chars ~= new Symbol(image,
-                s == ' ' ? Vecf(0,0) : Vecf(glyph.bitmap_left,
-                     glyph.bitmap_top),
-                Vecf(
-                        s == ' ' ? _font.size / 2 : image.width, 0
-                    ),
-                _font.size, color);
+                Vecf(glyph.bitmap_left, glyph.bitmap_top),
+                Vecf(glyph.advance.x, 0),
+                _font.size,
+                color);
         }
 
         return chars;
+    }
+
+    SymbolRender renderSymbols(T)(T symbols,Color!ubyte color = rgba(255,255,255,255)) @trusted
+    {
+        return new SymbolRender(fromSymbols!T(symbols, color));
     }
 
     /++
@@ -265,7 +374,9 @@ class Text
             symbols = Text for renders.
             defaultColor = Default color.
     +/
-    Symbol[] renderSymbolsFormat(T)(T symbols,Color!ubyte defaultColor = rgba(255,255,255,255)) @safe 
+    SymbolRender renderSymbolsFormat(T)(T symbols,Color!ubyte defaultColor = rgba(255,255,255,255)) @safe
+    in(isText!T)
+    body
     {
         Symbol[] result;
         int previous = 0;
@@ -291,7 +402,7 @@ class Text
 
                     if(colorText != "") 
                     {
-                        result ~= this.renderSymbols(symbols[previous .. i], color);
+                        result ~= this.fromSymbols(symbols[previous .. i], color);
 
                         color = HEX!(PixelFormat.AUTO,T)(colorText);
                         i = j + 1;
@@ -301,8 +412,8 @@ class Text
             }
         }
 
-        result ~= this.renderSymbols(symbols[previous .. $], color);
+        result ~= this.fromSymbols(symbols[previous .. $], color);
 
-        return result;
+        return new SymbolRender(result);
     }
 }

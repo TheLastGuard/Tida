@@ -469,7 +469,39 @@ struct Shape
 
         float dir = begin.pointDirection(end);
 
-        end = end - (vectorDirection(dir) * value);
+        end = (vectorDirection(dir) * value);
+    }
+
+    unittest
+    {
+        Shape line = Shape.Line(Vecf(0,0), Vecf(32, 32));
+        
+        line.length = line.length * 2;
+
+        assert(round(line.end) == Vecf(64, 64));
+
+        line.length = line.length / 4;
+
+        assert(round(line.end) == Vecf(16, 16));
+
+        line.length = line.length * 8;
+
+        assert(round(line.end) == Vecf(128, 128));
+    }
+
+    void scale(float k) @safe
+    in(type != ShapeType.point)
+    body
+    {
+        end = end * k;
+    }
+
+    unittest
+    {
+        Shape rec = Shape.Rectangle(Vecf(32, 32), Vecf(64, 64));
+        rec.scale(2);
+
+        assert(round(rec.end) == Vecf(128, 128));
     }
 
     string toString() @safe immutable

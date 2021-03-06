@@ -6,7 +6,21 @@
 +/
 module tida.vector;
 
+import std.traits;
+
 alias Vecf = Vector!float;
+
+Vecf VecfNan() @safe nothrow pure
+{
+    return Vecf(float.nan, float.nan);
+}
+
+bool isVecfNan(Vecf vec) @safe nothrow pure
+{
+    import std.math : isNaN;
+
+    return vec.x.isNaN && vec.y.isNaN;
+}
 
 ///
 T sqr(T)(T value) @safe nothrow pure @nogc
@@ -244,7 +258,7 @@ struct Vector(T)
 
     /++
         Return length Vector.
-    ++/
+    +/
     T length() @safe nothrow
     {
         static if(is(T : int))
@@ -365,4 +379,11 @@ Vecf uniform(Vecf begin, Vecf end) @safe
     import std.random : uniform;
 
     return Vecf(uniform(begin.x, end.x), uniform(begin.y, end.y));
+}
+
+Vecf round(Vecf vec) @safe
+{
+    import std.math : round;
+
+    return Vecf(round(vec.x), round(vec.y));
 }

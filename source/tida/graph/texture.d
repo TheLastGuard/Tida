@@ -49,7 +49,7 @@ class Texture
         return _height;
     }
 
-    void initFromBytes(int format)(ubyte[] bytes) @safe @property nothrow
+    void initFromBytes(int format)(ubyte[] bytes) @safe @property
     {
         TextureInfo info;
         info.width = _width;
@@ -61,7 +61,7 @@ class Texture
         initFromInfo!format(info);
     }
 
-    void initFromInfo(int format)(TextureInfo info) @safe @property nothrow
+    void initFromInfo(int format)(TextureInfo info) @safe @property
     {
         _width = info.width;
         _height = info.height;
@@ -78,7 +78,7 @@ class Texture
         }
 
         GL.texImage2D(_width, _height, bytes);
-        GL.generateMipmap(GL_TEXTURE_2D);
+        //GL.generateMipmap(GL_TEXTURE_2D);
 
         GL.bindTexture(0);
     }
@@ -93,7 +93,7 @@ class Texture
         GL.bindTexture(glID);
     }
 
-    void destroy() @trusted @property nothrow
+    void destroy() @trusted @property 
     {
         if(glTextureID != 0)
         {

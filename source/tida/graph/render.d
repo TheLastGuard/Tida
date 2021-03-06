@@ -10,7 +10,7 @@ module tida.graph.render;
     What type of rendering.
 +/
 enum BlendMode {
-    noBlend, // Without alpha channel
+    noBlend, /// Without alpha channel
     Blend /// With an alpha channel.
 };
 
@@ -128,10 +128,10 @@ interface IRenderer
     }
 
     /// ditto
-    final void drawEx(IDrawableEx drawable,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha) @safe
+    final void drawEx(IDrawableEx drawable,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha,Color!ubyte color = rgb(255, 255, 255)) @safe
     {
         position -= camera.port.begin;
-        drawable.drawEx(this, position, angle, center, size, alpha);
+        drawable.drawEx(this, position, angle, center, size, alpha, color);
     }
 
     /// ditto
@@ -148,23 +148,6 @@ interface IRenderer
             symbols = Symbol's.
             position = Symbols renders position.
     +/
-    final void draw(Symbol[] symbols,Vecf position) @safe
-    {
-        position.y += (symbols[0].size + (symbols[0].size / 2)); 
-
-        foreach(s; symbols) 
-        {
-            if(s.image !is null)
-            {
-                if(!s.image.isTexture)
-                    s.image.fromTexture();
-
-                drawColor(s.image,position - Vecf(0,s.position.y),s.color);
-            }
-            
-            position.x += (s.advance.intX) + s.position.x;
-        }
-    }
 }
 
 float[4][4] ortho(float left, float right, float bottom, float top, float zNear = -1.0f, float zFar = 0.0f) 

@@ -533,7 +533,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /// Updates the texture if the picture has changed.
-    void swap() @safe nothrow
+    void swap() @safe
     {
         if(isTexture) texture.destroy();
 
@@ -543,6 +543,12 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     import tida.graph.shader;
+
+    void each(alias fun)() @safe
+    {
+        foreach(ref pixel; pixels)
+            fun(pixel);
+    }
 
     Shader!Program initShader(IRenderer renderer) @safe
     {
@@ -694,11 +700,11 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         }
     }
 
-    override void drawEx(IRenderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha) @trusted
+    override void drawEx(IRenderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha,Color!ubyte color) @trusted
     {
         if(renderer.type == RenderType.OpenGL)
         {
-            GL.color = rgba(255,255,255,alpha);
+            GL.color = rgba(color.r,color.g,color.b,alpha);
 
             GL.bindTexture(texture.glID);
             GL.enable(GL_TEXTURE_2D);
@@ -853,7 +859,6 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
 
             auto shader = initShader(renderer);
 
-            Shape shape = Shape.Rectangle(position, position + Vecf(width, height));
             
             auto size = Vecf(width, height);
 
@@ -1233,7 +1238,7 @@ Image blurWP(Image image,float[][] otherKernel) @safe
 
         foreach(ix,iy; Coord(kernelWidth, kernelHeight))
         {
-            color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy).mul(kernel[ix][iy]));
+            color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy) * kernel[ix][iy]);
         }
 
         color.a = image.getPixel(x,y).a;
