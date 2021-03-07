@@ -13,7 +13,7 @@ static immutable ubyte InScene = 1; ///
 
 template isComponent(T)
 {
-	enum isComponent = is(T : Component);
+    enum isComponent = is(T : Component);
 }
 
 private void remove(T)(ref T[] obj,size_t index) @trusted nothrow

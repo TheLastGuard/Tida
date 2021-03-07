@@ -44,7 +44,7 @@ class Device
 
         ALfloat[] listenerOri = [ 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f ];
 
-        alListener3f(AL_POSITION, 0, 0, 1.0f);
+        alListener3f(AL_POSITION, 0, 0, 0);
         alListener3f(AL_VELOCITY, 0, 0, 0);
         alListenerfv(AL_ORIENTATION, cast(float*) listenerOri);
 
@@ -68,7 +68,7 @@ class Device
 /++
     Sound object.
 +/
-public class Sound
+class Sound
 {
     import bindbc.openal;
     import std.datetime;

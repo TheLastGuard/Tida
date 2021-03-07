@@ -1,13 +1,14 @@
 /++
     Scene manager module.
 
-    Authors: TodNaz
-    License: MIT
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.scene.manager;
 
 import tida.scene.instance;
 import tida.scene.scene;
+import tida.scene.event;
 
 static enum APIError : ubyte
 {
@@ -23,12 +24,12 @@ T from(T)(Object obj) @trusted
 
 template isScene(T)
 {
-	enum isScene = is(T : Scene);
+    enum isScene = is(T : Scene);
 }
 
 template isInstance(T)
 {
-	enum isInstance = is(T : Instance);
+    enum isInstance = is(T : Instance);
 }
 
 import core.thread;
@@ -153,12 +154,12 @@ class SceneManager
         it will be convenient for the instances to communicate 
         with the scene. 
             For more convenient communication, there 
-        is a function `getScene`, by which you can access the 
+        is a function `from`, by which you can access the
         functions of the heir, but the main thing is to check 
         the correctness of the scene, otherwise you can get 
         an error:
         ---
-        sceneManager.current.getScene!HeirScene.callback();
+        sceneManager.current.from!HeirScene.callback();
         ---
     +/
     Scene current() @safe @property nothrow
@@ -234,6 +235,101 @@ class SceneManager
         _scenes[scene.name] = scene;
     }
 
+    private
+    {
+        import std.container, std.range;
+
+        alias FEInit = void delegate() @safe;
+        alias FEStep = void delegate() @safe;
+        alias FERestart = void delegate() @safe;
+        alias FEEntry = void delegate() @safe;
+        alias FELeave = void delegate() @safe;
+        alias FEGameStart = void delegate() @safe;
+        alias FEGameExit = void delegate() @safe;
+        alias FEGameRestart = void delegate() @safe;
+        alias FEEventHandle = void delegate(EventHandler) @safe;
+        alias FEDraw = void delegate(IRenderer) @safe;
+        alias FEOnError = void delegate() @safe;
+
+        Array!FEInit[Scene] InitFunctions;
+        Array!FEStep[Scene] StepFunctions;
+        Array!FERestart[Scene] RestartFunctions;
+        Array!FEEntry[Scene] EntryFunctions;
+        Array!FELeave[Scene] LeaveFunctions;
+        Array!FEGameStart[Scene] GameStartFunctions;
+        Array!FEGameExit[Scene] GameExitFunctions;
+        Array!FEGameRestart[Scene] GameRestartFunctions;
+        Array!FEEventHandle[Scene] EventHandleFunctions;
+        Array!FEDraw[Scene] DrawFunctions;
+        Array!FEOnError[Scene] OnErrorFunctions;
+
+        Array!FEInit[Instance] IInitFunctions;
+        Array!FEStep[Instance] IStepFunctions;
+        Array!FERestart[Instance] IRestartFunctions;
+        Array!FEEntry[Instance] IEntryFunctions;
+        Array!FELeave[Instance] ILeaveFunctions;
+        Array!FEGameStart[Instance] IGameStartFunctions;
+        Array!FEGameExit[Instance] IGameExitFunctions;
+        Array!FEGameRestart[Instance] IGameRestartFunctions;
+        Array!FEEventHandle[Instance] IEventHandleFunctions;
+        Array!FEDraw[Instance] IDrawFunctions;
+        Array!FEOnError[Instance] IOnErrorFunctions;
+    }
+
+    void InstanceHandle(T)(Scene scene, T instance) @trusted
+    {
+        IInitFunctions[instance] = Array!FEInit();
+        IStepFunctions[instance] = Array!FEStep();
+        IEntryFunctions[instance] = Array!FEEntry();
+        IRestartFunctions[instance] = Array!FERestart();
+        ILeaveFunctions[instance] = Array!FELeave();
+        IGameStartFunctions[instance] = Array!FEGameStart();
+        IGameExitFunctions[instance] = Array!FEGameExit();
+        IGameRestartFunctions[instance] = Array!FEGameRestart();
+        IEventHandleFunctions[instance] = Array!FEEventHandle();
+        IDrawFunctions[instance] = Array!FEDraw();
+        IOnErrorFunctions[instance] = Array!FEOnError();
+
+        static foreach(member; __traits(allMembers, T)) {
+            static foreach(attrib; __traits(getAttributes, __traits(getMember, instance, member)))
+            {
+                static if(is(attrib : FunEvent!Init)) {
+                    IInitFunctions[instance] ~= &__traits(getMember, instance, member);
+                }else
+                static if(is(attrib : FunEvent!Step)) {
+                    IStepFunctions[instance] ~= &__traits(getMember, instance, member);
+                }else
+                static if(is(attrib : FunEvent!Entry)) {
+                    IEntryFunctions[instance] ~= &__traits(getMember, instance, member);
+                }else
+                static if(is(attrib : FunEvent!Restart)) {
+                    IRestartFunctions[instance] ~= &__traits(getMember, instance, member);
+                }else
+                static if(is(attrib : FunEvent!Leave)) {
+                    ILeaveFunctions[instance] ~= &__traits(getMember, instance, member);
+                }else
+                static if(is(attrib : FunEvent!GameStart)) {
+                    IGameStartFunctions[instance] ~= &__traits(getMember, instance, member);
+                }else
+                static if(is(attrib : FunEvent!GameExit)) {
+                    IGameExitFuntions[instance] ~= &__traits(getMember, instance, member);
+                }else
+                static if(is(attrib : FunEvent!GameRestart)) {
+                    IGameRestartFunctions[instance] ~= &__traits(getMember, instance, member);
+                }else
+                static if(is(attrib : FunEvent!EventHandle)) {
+                    IEventHandleFunctions[instance] ~= cast(FEEventHandle) &__traits(getMember, instance, member);
+                }else
+                static if(is(attrib : FunEvent!Draw)) {
+                    IDrawFunctions[instance] ~= cast(FEDraw) &__traits(getMember, instance, member);
+                }else
+                static if(is(attrib : FunEvent!OnError)) {
+                    IOnErrorFunctions[instance] ~= &__traits(getMember, instance, member);
+                }
+            }
+        }
+    }
+
     /++
         Creates and adds a scene to the list.
 
@@ -245,11 +341,66 @@ class SceneManager
         sceneManager.add!MyScene;
         ---
     +/
-    void add(T)() @safe
+    void add(T)() @trusted
     in(isScene!T,"It's not scene!")
     body
     {
-        add(new T);
+        import std.stdio;
+        auto scene = new T();
+
+        InitFunctions[scene] = Array!FEInit();
+        StepFunctions[scene] = Array!FEStep();
+        EntryFunctions[scene] = Array!FEEntry();
+        RestartFunctions[scene] = Array!FERestart();
+        LeaveFunctions[scene] = Array!FELeave();
+        GameStartFunctions[scene] = Array!FEGameStart();
+        GameExitFunctions[scene] = Array!FEGameExit();
+        GameRestartFunctions[scene] = Array!FEGameRestart();
+        EventHandleFunctions[scene] = Array!FEEventHandle();
+        DrawFunctions[scene] = Array!FEDraw();
+        OnErrorFunctions[scene] = Array!FEOnError();
+
+        //auto members = __traits(allMembers, T);
+        static foreach(member; __traits(allMembers, T)) {
+            static foreach(attrib; __traits(getAttributes, __traits(getMember, scene, member)))
+            {
+                static if(is(attrib : FunEvent!Init)) {
+                    InitFunctions[scene] ~= &__traits(getMember, scene, member);
+                }else
+                static if(is(attrib : FunEvent!Step)) {
+                    StepFunctions[scene] ~= &__traits(getMember, scene, member);
+                }else
+                static if(is(attrib : FunEvent!Entry)) {
+                    EntryFunctions[scene] ~= &__traits(getMember, scene, member);
+                }else
+                static if(is(attrib : FunEvent!Restart)) {
+                    RestartFunctions[scene] ~= &__traits(getMember, scene, member);
+                }else
+                static if(is(attrib : FunEvent!Leave)) {
+                    LeaveFunctions[scene] ~= &__traits(getMember, scene, member);
+                }else
+                static if(is(attrib : FunEvent!GameStart)) {
+                    GameStartFunctions[scene] ~= &__traits(getMember, scene, member);
+                }else
+                static if(is(attrib : FunEvent!GameExit)) {
+                    GameExitFunctions[scene] ~= &__traits(getMember, scene, member);
+                }else
+                static if(is(attrib : FunEvent!GameRestart)) {
+                    GameRestartFunctions[scene] ~= &__traits(getMember, scene, member);
+                }else
+                static if(is(attrib : FunEvent!EventHandle)) {
+                    EventHandleFunctions[scene] ~= cast(FEEventHandle) &__traits(getMember, scene, member);
+                }else
+                static if(is(attrib : FunEvent!Draw)) {
+                    DrawFunctions[scene] ~= cast(FEDraw) &__traits(getMember, scene, member);
+                }else
+                static if(is(attrib : FunEvent!OnError)) {
+                    OnErrorFunctions[scene] ~= &__traits(getMember, scene, member);
+                }
+            }
+        }
+
+        add(scene);
     }
 
     public
@@ -350,7 +501,7 @@ class SceneManager
         Params:
             scene = Scene heir. 
     +/
-    void gotoin(Scene scene) @safe
+    void gotoin(Scene scene) @trusted
     in(hasScene(scene))
     body
     {
@@ -359,9 +510,21 @@ class SceneManager
         if(current !is null)
         {
             current.leave();
+
+            if(current in LeaveFunctions) {
+                foreach(fun; LeaveFunctions[current]) {
+                    fun();
+                }
+            }
         
             foreach(instance; current.getList()) {
                 instance.leave();
+
+                if(instance in ILeaveFunctions) {
+                    foreach(fun; ILeaveFunctions[instance]) {
+                        fun();
+                    }
+                }
             }
         }
 
@@ -393,8 +556,21 @@ class SceneManager
         {
             scene.init();
 
+            if(scene in InitFunctions)
+            {
+                foreach(fun; InitFunctions[scene]) {
+                    fun();
+                }
+            }
+
             foreach(instance; scene.getList()) {
                 instance.init();
+
+                if(instance in IInitFunctions) {
+                    foreach(fun; IInitFunctions[instance]) {
+                        fun();
+                    }
+                }
             }
 
             scene.isInit = true;
@@ -402,15 +578,40 @@ class SceneManager
         {
             scene.restart();
 
+            if(scene in RestartFunctions)
+            {
+                foreach(fun; RestartFunctions[scene]) {
+                    fun();
+                }
+            }
+
             foreach(instance; scene.getList()) {
                 instance.restart();
+
+                if(instance in IRestartFunctions) {
+                    foreach(fun; IRestartFunctions[instance]) {
+                        fun();
+                    }
+                }
             }
         }
 
         scene.entry();
 
+        if(scene in EntryFunctions) {
+            foreach(fun; EntryFunctions[scene]) {
+                fun();
+            }
+        }
+
         foreach(instance; scene.getList()) {
             instance.entry();
+
+            if(instance in IEntryFunctions) {
+                foreach(fun; IEntryFunctions[instance]) {
+                    fun();
+                }
+            }
         }
 
         _initable = null;
@@ -419,61 +620,112 @@ class SceneManager
     }
 
     ///
-    void callGameStart() @safe
+    void callGameStart() @trusted
     {
         foreach(scene; scenes) {
             scene.gameStart();
 
+            if(scene in GameStartFunctions) {
+                foreach(fun; GameStartFunctions[scene]) {
+                    fun();
+                }
+            }
+
             foreach(instance; scene.getList()) {
-                if(instance.active && !instance.withDraw)
+                if(instance.active && !instance.withDraw) {
                     instance.gameStart();
+
+                    if(instance in IGameStartFunctions) {
+                        foreach(fun; IGameStartFunctions[instance]) {
+                            fun();
+                        }
+                    }
+                }
             }
         }
     }
 
     ///
-    void callGameExit() @safe
+    void callGameExit() @trusted
     {
         foreach(scene; scenes) {
             scene.gameExit();
 
+            if(scene in GameExitFunctions) {
+                foreach(fun; GameExitFunctions[scene]) {
+                    fun();
+                }
+            }
+
             foreach(instance; scene.getList()) {
-                if(instance.active && !instance.withDraw)
+                if(instance.active && !instance.withDraw) {
                     instance.gameExit();
+
+                    if(instance in IGameExitFunctions) {
+                        foreach(fun; IGameExitFunctions[instance]) {
+                            fun();
+                        }
+                    }
+                }
             }
         }
     }
 
     ///
-    void callOnError() @safe
+    void callOnError() @trusted
     {
         if(current !is null)
         {
             current.onError();
+            if(current in OnErrorFunctions) {
+                foreach(fun; OnErrorFunctions[current]) {
+                    fun();
+                }
+            }
 
             foreach(instance; current.getList()) {
-                if(instance.active && !instance.withDraw)
+                if(instance.active && !instance.withDraw) {
                     instance.onError();
+
+                    if(instance in IOnErrorFunctions) {
+                        foreach(fun; IOnErrorFunctions[instance]) {
+                            fun();
+                        }
+                    }
+                }
             }
         }
     }
 
     ///
-    void callStep(size_t thread,IRenderer rend) @safe
+    void callStep(size_t thread,IRenderer rend) @trusted
     {
         if(current !is null)
         {
             current.worldCollision();
             current.step();
 
+            if(current in StepFunctions)
+            {
+                foreach(fun; StepFunctions[current]) {
+                    fun();
+                }
+            }
+
             foreach(instance; current.getThreadList(thread)) {
-            	if(instance.isDestroy) {
-            		current.instanceDestroy!InMemory(instance);
-            		current.sort();
-            		continue;
-            	}
+                if(instance.isDestroy) {
+                    current.instanceDestroy!InMemory(instance);
+                    current.sort();
+                    continue;
+                }
             
                 instance.step();
+
+                if(instance in IStepFunctions) {
+                    foreach(fun; IStepFunctions[instance]) {
+                        fun();
+                    }
+                }
 
                 foreach(component; instance.getComponents())
                 {
@@ -484,17 +736,29 @@ class SceneManager
     }
 
     ///
-    void callEvent(EventHandler event) @safe
+    void callEvent(EventHandler event) @trusted
     {
         if(current !is null)
         {
             current.event(event);
+
+            if(current in EventHandleFunctions) {
+                foreach(fun; EventHandleFunctions[current]) {
+                    fun(event);
+                }
+            }
 
             foreach(instance; current.getList()) 
             {
                 if(instance.active && !instance.withDraw)
                 {
                     instance.event(event);
+
+                    if(instance in IEventHandleFunctions) {
+                        foreach(fun; IEventHandleFunctions[instance]) {
+                            fun(event);
+                        }
+                    }
 
                     foreach(component; instance.getComponents())
                     {
@@ -506,7 +770,7 @@ class SceneManager
     }
 
     ///
-    void callDraw(IRenderer render) @safe
+    void callDraw(IRenderer render) @trusted
     {
         import tida.vector;
 
@@ -514,24 +778,36 @@ class SceneManager
         {
             current.draw(render);
 
+            if(current in DrawFunctions) {
+                foreach(fun; DrawFunctions[current]) {
+                    fun(render);
+                }
+            }
+
             foreach(instance; current.getErentInstances()) {
-            	if(instance is null) continue;
+                if(instance is null) continue;
                 render.draw(instance.spriteDraw(),instance.position);
             }
 
             foreach(instance; current.getErentInstances()) {
-            	if(instance is null) continue;
+                if(instance is null) continue;
 
                 if(instance.active)
                 {
                     instance.draw(render);
+
+                    if(instance in IDrawFunctions) {
+                        foreach(fun; IDrawFunctions[instance]) {
+                            fun(render);
+                        }
+                    }
 
                     foreach(component; instance.getComponents())
                     {
                         component.draw(render);
                     }
                 }
-			}
+            }
 
             debug
             {
@@ -539,7 +815,7 @@ class SceneManager
 
                 foreach(instance; current.getList())
                 {
-                	if(instance is null) continue;
+                    if(instance is null) continue;
                 
                     instance.drawDebug(render);
                 }

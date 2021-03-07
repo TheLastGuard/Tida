@@ -30,7 +30,7 @@ private void remove(T)(ref T[] obj,size_t index) @trusted nothrow
 class Scene
 {
     import tida.scene.manager;
-	import tida.scene.instance;
+    import tida.scene.instance;
     import tida.scene.component;
     import tida.graph.camera;
     import tida.graph.render;
@@ -145,7 +145,10 @@ class Scene
     in(isInstance!Name,"It's not instance!")
     body
     {
-        Instance instance = new Name();
+        auto instance = new Name();
+
+        sceneManager.InstanceHandle!Name(this, instance);
+
         add(instance,threadID);
     }
 
@@ -336,29 +339,29 @@ class Scene
     in(isInstance!T)
     body
     {
-    	foreach(instance; getList)
-    	{
-    		if(instance.from!T !is null)
-    			return instance.from!T;
-    	}
+        foreach(instance; getList)
+        {
+            if(instance.from!T !is null)
+                return instance.from!T;
+        }
     	
-    	return null;
+        return null;
     }
 
-	unittest
-	{
-		class A : Instance {}
-		class B : Instance {}
-		
-		Scene scene = new Scene();
-		
-		auto a = new A();
-		auto b = new B();
-		scene.add([a,b]);
-		
-		assert(scene.getInstanceByClass!A == a);
-		assert(scene.getInstanceByClass!B == b);
-	}
+    unittest
+    {
+        class A : Instance {}
+        class B : Instance {}
+    	
+        Scene scene = new Scene();
+    	
+        auto a = new A();
+        auto b = new B();
+        scene.add([a,b]);
+    	
+        assert(scene.getInstanceByClass!A == a);
+        assert(scene.getInstanceByClass!B == b);
+    }
 
     import tida.shape, tida.vector;
 
