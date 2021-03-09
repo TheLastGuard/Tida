@@ -655,6 +655,8 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
             GL.bindTexture(0);
+
+            renderer.resetShader();
         }else
         if(renderer.type == RenderType.Soft)
         {
@@ -714,6 +716,8 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
             GL.bindTexture(0);
+
+            renderer.resetShader();
         }else
         if(renderer.type == RenderType.Soft)
         {
@@ -793,6 +797,8 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
             GL.bindTexture(0);
+
+            renderer.resetShader();
         }else
         if(renderer.type == RenderType.Soft)
         {
