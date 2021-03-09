@@ -268,15 +268,11 @@ class Shader(int Type)
         static if(isProgram!Type)
         {
             GL3.deleteProgram(_id);
-            writeln("Delete program!");
-            writeln(_id);
         }
 
         static if(isShader!Type)
         {
             GL3.deleteShader(_id);
-            writeln("Delete shader!");
-            writeln(_id);
         }
     }
 
