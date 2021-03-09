@@ -18,7 +18,6 @@ enum BlendMode {
 enum RenderType
 {
     AUTO, ///
-    ModernOpenGL, ///
     OpenGL, ///
     Soft ///
 }
@@ -171,7 +170,6 @@ float[4][4] ortho(float left, float right, float bottom, float top, float zNear 
                 ];
 }
 
-deprecated("The render is experimental, not recommended for use.")
 class GLRender : IRenderer
 {
     import tida.window, tida.color, tida.vector, tida.graph.camera, tida.shape, tida.graph.gl;
@@ -183,7 +181,7 @@ class GLRender : IRenderer
         IWindow window;
         Color!ubyte _background;
         Camera _camera;
-        RenderType _type = RenderType.ModernOpenGL;
+        RenderType _type = RenderType.OpenGL;
         float[4][4] _projection;
 
         Shader!Program[string] shaders;
@@ -305,9 +303,6 @@ class GLRender : IRenderer
     {
         if(currentShader is null) {
             currentShader = getShader("Default");
-        } else {
-            assert(currentShader.getUniformLocation("projection") != 0, "Shader is not valid!");
-            assert(currentShader.getUniformLocation("color") != 0, "Shader is not valid!");
         }
 
         auto vid = generateVertex(Shape.Point(position));
@@ -340,9 +335,6 @@ class GLRender : IRenderer
     {
         if(currentShader is null) {
             currentShader = getShader("Default");
-        } else {
-            assert(currentShader.getUniformLocation("projection") != 0, "Shader is not valid!");
-            assert(currentShader.getUniformLocation("color") != 0, "Shader is not valid!");
         }
 
         const shape = Shape.Line(points[0], points[1]);
@@ -377,9 +369,6 @@ class GLRender : IRenderer
     {
         if(currentShader is null) {
             currentShader = getShader("Default");
-        } else {
-            assert(currentShader.getUniformLocation("projection") != 0, "Shader is not valid!");
-            assert(currentShader.getUniformLocation("color") != 0, "Shader is not valid!");
         }
 
         if(isFill)
@@ -408,8 +397,6 @@ class GLRender : IRenderer
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
-
-            vid.deleting();
         } else {
             Shape shape = Shape.Multi(  [
                                             Shape.Line(position, position + Vecf(width, 0)),
@@ -439,8 +426,6 @@ class GLRender : IRenderer
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
-
-            vid.deleting();
         }
 
         resetShader();
@@ -450,9 +435,6 @@ class GLRender : IRenderer
     {
         if(currentShader is null) {
             currentShader = getShader("Default");
-        } else {
-            assert(currentShader.getUniformLocation("projection") != 0, "Shader is not valid!");
-            assert(currentShader.getUniformLocation("color") != 0, "Shader is not valid!");
         }
 
         if(isFill) {
@@ -555,236 +537,6 @@ class GLRender : IRenderer
     override RenderType type() @safe
     {
         return _type;
-    }
-}
-
-class OldGLRender : IRenderer
-{
-    import tida.window, tida.color, tida.vector, tida.graph.camera, tida.shape, tida.graph.gl;
-    import std.conv : to;
-
-    private
-    {
-        IWindow window;
-        Color!ubyte _background;
-        Camera _camera;
-        RenderType _type = RenderType.OpenGL;
-    }
-
-    this(IWindow window) @safe
-    {
-        this.window = window;
-
-        _camera = new Camera();
-
-        _camera.shape = Shape.Rectangle(Vecf(0,0),Vecf(window.width,window.height));
-        _camera.port  = Shape.Rectangle(Vecf(0,0),Vecf(window.width,window.height));
-
-        reshape();
-
-        blendMode(BlendMode.Blend);
-    }
-
-    override void reshape() @safe
-    {
-        GL.viewport(0,0, window.width, window.height);
-
-        clear();
-
-        GL.matrixMode(GL_PROJECTION);
-        GL.loadIdentity();
-
-        GL.ortho(0.0, _camera.port.end.x, _camera.port.end.y, 0.0, -1.0, 1.0);
-
-        GL.matrixMode(GL_MODELVIEW);
-        GL.loadIdentity();
-    }
-    
-    override void camera(Camera camera) @safe
-    in(camera,"Camera is no allocated!")
-    do
-    {
-        _camera = camera;
-    }
-
-    override Camera camera() @safe
-    {
-        return _camera;
-    }
-
-    override void background(Color!ubyte color) @safe @property
-    {
-        GL.clearColor = color;
-
-        _background = color;
-    }
-
-    override Color!ubyte background() @safe @property
-    {
-        return _background;
-    }
-
-    override void point(Vecf position,Color!ubyte color) @safe
-    {
-        GL.color = color;
-
-        GL.draw!Points({
-            GL.vertex(position - _camera.port.begin);
-        });
-    }
-
-    override void rectangle(Vecf position,int width,int height,Color!ubyte color,bool isFill) @safe
-    {
-        position -= _camera.port.begin;
-
-        GL.color = color;
-
-        if(isFill) 
-        {
-            GL.draw!Rectangle({
-                GL.vertex(position);
-                GL.vertex(position + Vecf(width,0));
-                GL.vertex(position + Vecf(width,height));
-                GL.vertex(position + Vecf(0,height));
-            });
-        }else 
-        {
-            GL.draw!Lines({
-                GL.vertex(position);
-                GL.vertex(position + Vecf(width,0));
-
-                GL.vertex(position + Vecf(width,0));
-                GL.vertex(position + Vecf(width,height));
-
-                GL.vertex(position + Vecf(width,height));
-                GL.vertex(position + Vecf(0,height));
-
-                GL.vertex(position + Vecf(0,height));
-                GL.vertex(position);
-            });
-        }
-    }
-
-    override void line(Vecf[2] points,Color!ubyte color) @safe
-    {
-        auto ps = points.dup;
-
-        ps[0] -= _camera.port.begin;
-        ps[1] -= _camera.port.begin;
-
-        GL.color = color;
-
-        GL.draw!Lines({
-            GL.vertex(ps[0]);
-            GL.vertex(ps[1]);
-        });
-    }
-
-    override void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe
-    {
-        GL.color = color;
-
-        import std.math : cos, sin;
-
-        if (isFill)
-        {
-            float x = 0.0f;
-            float y = 0.0f;
-
-            for(float i = 0; i <= 360;)
-            {
-                GL.draw!Triangle({
-                    x = radious * cos(i);
-                    y = radious * sin(i);
-
-                    GL.vertex(position + Vecf(x,y));
-
-                    i += 0.5;
-                    x = radious * cos(i);
-                    y = radious * sin(i);
-
-                    GL.vertex(position + Vecf(x,y));
-                    GL.vertex(position);
-                });
-
-                i += 0.5;
-            }
-        }
-        else
-        {
-            float x = 0.0f;
-            float y = 0.0f;
-
-            for(float i = 0; i <= 360;)
-            {
-                GL.draw!Lines({
-                    x = radious * cos(i);
-                    y = radious * sin(i);
-
-                    GL.vertex(position + Vecf(x,y));
-
-                    i += 0.5;
-                    x = radious * cos(i);
-                    y = radious * sin(i);
-
-                    GL.vertex(position + Vecf(x,y));
-                });
-
-                i += 0.5;
-            }
-        }
-    }
-
-    override void clear() @safe
-    {
-        GL.clear();
-    }
-
-    override void drawning() @safe
-    {
-        window.swapBuffers();
-    }
-
-    override RenderType type() @safe
-    {
-        return _type;
-    }
-
-    override void blendMode(BlendMode mode) @trusted
-    {
-        if(mode == BlendMode.Blend) {
-            GL.enable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        }else if(mode == BlendMode.noBlend) {
-            GL.disable(GL_BLEND);
-        }
-    }
-
-    import tida.graph.shader;
-
-    override Shader!Program getShader(string name) @safe
-    {
-        assert(null, "There are no shaders in this version of the render.");
-    }
-
-    override void setShader(string name,Shader!Program program) @safe
-    {
-        assert(null, "There are no shaders in this version of the render.");
-    }
-
-    override void currentShader(Shader!Program program) @safe @property
-    {
-        assert(null, "There are no shaders in this version of the render.");
-    }
-
-    override Shader!Program currentShader() @safe @property
-    {
-        assert(null, "There are no shaders in this version of the render.");
-    }
-
-    override void resetShader() @safe
-    {
-        assert(null, "There are no shaders in this version of the render.");
     }
 }
 
@@ -1342,7 +1094,7 @@ IRenderer CreateRenderer(IWindow window) @safe
     {
         GL.initialize();
 
-        render = new OldGLRender(window);
+        render = new GLRender(window);
     }catch(Exception e)
     {
         render = new Software(window);

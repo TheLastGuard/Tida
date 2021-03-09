@@ -91,9 +91,6 @@ class Game
                 _renderer = CreateRenderer(window);
             } else {
                 if(config.renderType == RenderType.OpenGL) {
-                    _renderer = new OldGLRender(window);
-                } else 
-                if(config.renderType == RenderType.ModernOpenGL) {
                     _renderer = new GLRender(window);
                 } else
                     _renderer = new Software(window);
@@ -157,7 +154,7 @@ class Game
                 if(listener !is null) listener.eventHandle(event);
             }
 
-			if(listener !is null) listener.timerHandle();
+            if(listener !is null) listener.timerHandle();
 
             if(sceneManager.apiThreadCreate) {
                 foreach(_; 0 .. sceneManager.apiThreadValue) {

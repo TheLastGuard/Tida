@@ -153,6 +153,14 @@ class SymbolRender : IDrawable, IDrawableEx
 
     override void draw(IRenderer render, Vecf position) @safe
     {
+        import tida.graph.shader;
+
+        Shader!Program currShader;
+
+        if(render.currentShader !is null) {
+            currShader = render.currentShader;
+        }
+
         position.y += (symbols[0].size + (symbols[0].size / 2));
 
         foreach(s; symbols)
@@ -162,11 +170,14 @@ class SymbolRender : IDrawable, IDrawableEx
                 if(!s.image.isTexture)
                     s.image.fromTexture();
 
+                render.currentShader = currShader;
                 render.drawColor(s.image,position - Vecf(0, s.position.y),
                             s.color);
             }
 
             position.x += s.advance.intX >> 6;
+
+            if(s.image.texture !is null) s.image.texture.destroy();
         }
     }
 
@@ -200,6 +211,8 @@ class SymbolRender : IDrawable, IDrawableEx
             }
 
             position.x += s.advance.intX >> 6;
+
+            if(s.image.texture !is null) s.image.texture.destroy();
         }
     }
 }

@@ -56,3 +56,9 @@ struct FunEvent(int Type)
 {
 
 }
+
+struct CollisionEvent
+{
+    string name;
+    string tag = "";
+}

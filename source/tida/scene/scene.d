@@ -205,7 +205,7 @@ class Scene
     }
 
     ///
-    void worldCollision() @safe 
+    void worldCollision() @trusted
     {
         import tida.game.collision;
 
@@ -214,6 +214,8 @@ class Scene
                 if(first !is second && first.solid && second.solid) {
                     if(first.active && second.active)
                     {
+                        import std.algorithm : canFind;
+
                         if(
                             isCollide(  first.mask,
                                         second.mask,
@@ -222,6 +224,48 @@ class Scene
                         ) {
                             first.collision(second);
                             second.collision(first);
+                            
+                            auto coll = sceneManager.colliders;
+                            
+                            if(first in coll) {
+                                foreach(cls; coll[first]) {
+                                    if(cls.ev.name != "") {
+                                        if(cls.ev.name == second.name) {
+                                            if(cls.ev.tag != "") {
+                                                if(second.tags.canFind(cls.ev.tag)) {
+                                                    cls.fun(second);
+                                                }
+                                            }else
+                                                cls.fun(second);
+                                        }
+                                    }else {
+                                        if(cls.ev.tag != "") {
+                                            if(second.tags.canFind(cls.ev.tag)) {
+                                                cls.fun(second);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(second in coll) {
+                                foreach(cls; coll[second]) {
+                                    if(cls.ev.name != "") {
+                                        if(cls.ev.name == first.name) {
+                                            if(cls.ev.tag != "") {
+                                                if(first.tags.canFind(cls.ev.tag)) {
+                                                    cls.fun(first);
+                                                }
+                                            }else
+                                                cls.fun(first);
+                                        }
+                                    }else {
+                                        if(first.tags.canFind(cls.ev.tag)) {
+                                            cls.fun(first);
+                                        }
+                                    }
+                                }
+                            }
                         } else {
                             first.collision(null);
                             second.collision(null);

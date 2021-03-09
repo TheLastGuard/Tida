@@ -237,7 +237,7 @@ class SceneManager
 
     private
     {
-        import std.container, std.range;
+        import std.container, std.range, std.traits;
 
         alias FEInit = void delegate() @safe;
         alias FEStep = void delegate() @safe;
@@ -250,6 +250,13 @@ class SceneManager
         alias FEEventHandle = void delegate(EventHandler) @safe;
         alias FEDraw = void delegate(IRenderer) @safe;
         alias FEOnError = void delegate() @safe;
+        alias FECollision = void delegate(Instance) @safe;
+
+        struct SRCollider
+        {
+            CollisionEvent ev;
+            FECollision fun;
+        }
 
         Array!FEInit[Scene] InitFunctions;
         Array!FEStep[Scene] StepFunctions;
@@ -274,6 +281,12 @@ class SceneManager
         Array!FEEventHandle[Instance] IEventHandleFunctions;
         Array!FEDraw[Instance] IDrawFunctions;
         Array!FEOnError[Instance] IOnErrorFunctions;
+        Array!SRCollider[Instance] IColliderStructs;
+    }
+
+    Array!SRCollider[Instance] colliders() @safe @property
+    {
+        return IColliderStructs;
     }
 
     void InstanceHandle(T)(Scene scene, T instance) @trusted
@@ -289,6 +302,7 @@ class SceneManager
         IEventHandleFunctions[instance] = Array!FEEventHandle();
         IDrawFunctions[instance] = Array!FEDraw();
         IOnErrorFunctions[instance] = Array!FEOnError();
+        IColliderStructs[instance] = Array!SRCollider();
 
         static foreach(member; __traits(allMembers, T)) {
             static foreach(attrib; __traits(getAttributes, __traits(getMember, instance, member)))
@@ -325,6 +339,14 @@ class SceneManager
                 }else
                 static if(is(attrib : FunEvent!OnError)) {
                     IOnErrorFunctions[instance] ~= &__traits(getMember, instance, member);
+                }else
+                static if(is(attrib : CollisionEvent)) {
+                    pragma(msg, "YES!");
+                    SRCollider temp;
+                    temp.ev = attrib;
+                    temp.fun = cast(FECollision) &__traits(getMember, instance, member);
+
+                    IColliderStructs[instance] ~= temp;
                 }
             }
         }
@@ -345,7 +367,6 @@ class SceneManager
     in(isScene!T,"It's not scene!")
     body
     {
-        import std.stdio;
         auto scene = new T();
 
         InitFunctions[scene] = Array!FEInit();
@@ -360,7 +381,6 @@ class SceneManager
         DrawFunctions[scene] = Array!FEDraw();
         OnErrorFunctions[scene] = Array!FEOnError();
 
-        //auto members = __traits(allMembers, T);
         static foreach(member; __traits(allMembers, T)) {
             static foreach(attrib; __traits(getAttributes, __traits(getMember, scene, member)))
             {

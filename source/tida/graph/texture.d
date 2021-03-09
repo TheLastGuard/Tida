@@ -19,7 +19,7 @@ struct TextureInfo
 
 class Texture
 {
-    import tida.graph.gl, tida.color;
+    import tida.graph.gl, tida.color, tida.graph.vertgen;
 
     private
     {
@@ -27,6 +27,8 @@ class Texture
         uint _height;
         uint glTextureID;
         ubyte[] data;
+
+        VertexInfo vinfo;
     }
 
     void width(uint newWidth) @safe @property nothrow
@@ -81,6 +83,25 @@ class Texture
         //GL.generateMipmap(GL_TEXTURE_2D);
 
         GL.bindTexture(0);
+
+        float[] buffer =    [
+                                _width, 0,        0.0f,     1.0f, 0.0f,
+                                _width, _height,  0.0f,     1.0f, 1.0f,
+                                0,      _height,  0.0f,     0.0f, 1.0f,
+                                0,      0,        0.0f,     0.0f, 0.0f
+                            ];
+
+        uint[] elem =   [
+            0, 1, 3,
+            1, 2, 3
+        ];
+
+        vinfo = new VertexInfo().generateFromElemBuff(buffer, elem);
+    }
+
+    VertexInfo vertexInfo() @safe @property
+    {
+        return vinfo;
     }
 
     uint glID() @safe @property nothrow
@@ -104,6 +125,6 @@ class Texture
 
     ~this() @safe
     {
-        destroy();
+        this.destroy();
     }
 }
