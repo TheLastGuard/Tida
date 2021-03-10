@@ -140,7 +140,7 @@ struct Vector(T)
         }else
         static if(op == "/")
         {
-            return Vector!T(this.x / rhs.y, this.y / rhs.y);
+            return Vector!T(this.x / rhs.x, this.y / rhs.y);
         }
     }
 
