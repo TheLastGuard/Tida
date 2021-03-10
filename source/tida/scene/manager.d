@@ -227,8 +227,12 @@ class SceneManager
         Params:
             scene = Scene.
     +/
-    void add(Scene scene) @safe
+    void add(T)(T scene) @safe
+    in(isScene!T, "This is not scene!")
+    body
     {
+        uScene!T(scene);
+
         if(_ofbegin is null)
             _ofbegin = scene;
 
@@ -367,8 +371,13 @@ class SceneManager
     in(isScene!T,"It's not scene!")
     body
     {
-        auto scene = new T();
+        auto scene = new T();       
 
+        add!T(scene);
+    }
+
+    private void uScene(T)(T scene) @trusted
+    {
         InitFunctions[scene] = Array!FEInit();
         StepFunctions[scene] = Array!FEStep();
         EntryFunctions[scene] = Array!FEEntry();
@@ -419,8 +428,6 @@ class SceneManager
                 }
             }
         }
-
-        add(scene);
     }
 
     public

@@ -116,7 +116,8 @@ class Scene
             instance = Instance.
             threadID = In which thread to add execution.
     +/
-    void add(Instance instance,size_t threadID = 0) @safe
+    void add(T)(T instance,size_t threadID = 0) @safe
+    in(isInstance!T,"This is not a instance!")
     in(instance,"Instance is not create!")
     body
     {  
@@ -127,6 +128,8 @@ class Scene
         instance.threadID = threadID;
 
         bufferThread[threadID] ~= instance;
+
+        sceneManager.InstanceHandle!T(this, instance);
 
         this.sort();
     }
@@ -146,8 +149,6 @@ class Scene
     body
     {
         auto instance = new Name();
-
-        sceneManager.InstanceHandle!Name(this, instance);
 
         add(instance,threadID);
     }
