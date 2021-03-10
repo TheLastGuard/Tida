@@ -689,6 +689,9 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             float[4][4] proj = (cast(GLRender) renderer).projection();
             float[4][4] model = identity();
 
+            model = tida.graph.matrix.scale(model,  size.x / cast(float) width,
+                                                    size.y / cast(float) height);
+
             model = translate(model, -center.x, -center.y, 0.0f);
             model = rotateMat(model, angle.from!(Degrees, Radians), 0.0, 0.0, 1.0);
             model = translate(model, center.x, center.y, 0.0f);
@@ -1229,4 +1232,18 @@ template unite(int Type = DefaultOperation)
     else
     static if(Type == NoParallel)
         alias unite = uniteWP;
+}
+
+import tida.color, tida.graph.each;
+
+Image process(Image image, void delegate(ref Color!ubyte,const Vecf) @safe func) @safe
+{
+    foreach(x, y; Coord(image.width, image.height)) 
+    {
+        Color!ubyte color = image.getPixel(x, y);
+        func(color, Vecf(x, y));
+        image.setPixel(x, y, color);
+    }
+
+    return image;
 }

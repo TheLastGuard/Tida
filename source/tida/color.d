@@ -683,12 +683,14 @@ struct Color(T)
         static if(op == "*")
             return Color!T( cast(T) (r.to!float * koe),
                             cast(T) (g.to!float * koe),
-                            cast(T) (b.to!float * koe));
+                            cast(T) (b.to!float * koe),
+                            a);
         else
         static if(op == "/")
             return Color!T( cast(T) (r.to!float / koe),
                             cast(T) (g.to!float / koe),
-                            cast(T) (b.to!float / koe));
+                            cast(T) (b.to!float / koe),
+                            a);
         else
             static assert(0, "Operator `" ~ op ~ "` not implemented.");
     }
