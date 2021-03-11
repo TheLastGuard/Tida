@@ -157,8 +157,11 @@ class SymbolRender : IDrawable, IDrawableEx
 
         Shader!Program currShader;
 
-        if(render.currentShader !is null) {
-            currShader = render.currentShader;
+        if(render.type != RenderType.Soft)
+        {
+            if(render.currentShader !is null) {
+                currShader = render.currentShader;
+            }
         }
 
         position.y += (symbols[0].size + (symbols[0].size / 2));
@@ -170,7 +173,9 @@ class SymbolRender : IDrawable, IDrawableEx
                 if(!s.image.isTexture)
                     s.image.fromTexture();
 
-                render.currentShader = currShader;
+                if(render.type != RenderType.Soft)
+                    render.currentShader = currShader;
+
                 render.drawColor(s.image,position - Vecf(0, s.position.y),
                             s.color);
             }

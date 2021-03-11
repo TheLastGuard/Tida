@@ -1236,7 +1236,7 @@ template unite(int Type = DefaultOperation)
 
 import tida.color, tida.graph.each;
 
-Image process(Image image, void delegate(ref Color!ubyte,const Vecf) @safe func) @safe
+Image processWP(Image image, void delegate(ref Color!ubyte,const Vecf) @safe func) @safe
 {
     foreach(x, y; Coord(image.width, image.height)) 
     {
@@ -1246,4 +1246,57 @@ Image process(Image image, void delegate(ref Color!ubyte,const Vecf) @safe func)
     }
 
     return image;
+}
+
+Image processParallel(Image image, void delegate(ref Color!ubyte,const Vecf) @safe func) @trusted
+{
+    import std.parallelism, std.range;
+
+    foreach(x; parallel(iota(0, image.width)))
+    foreach(y; parallel(iota(0, image.height)))
+    {
+        Color!ubyte color = image.getPixel(x, y);
+        func(color, Vecf(x, y));
+        image.setPixel(x, y, color);
+    }
+
+    return image;
+}
+
+template process(int Type = DefaultOperation)
+{
+    static if(Type == Parallel)
+        alias process = processParallel;
+    else
+    static if(Type == NoParallel)
+        alias process = processWP;
+}
+
+Image transform(Image image, float[4][4] kernel) @trusted
+{
+    import std.parallelism, std.range;
+
+    Image result = new Image(image.width, image.height);
+    int width = image.width;
+    int height = image.height;
+    immutable kernelWidth = 4;
+    immutable kernelHeight = 4;
+
+    foreach(x; parallel(iota(0,width)))
+    {
+        foreach(y; parallel(iota(0,height)))
+        {
+            Color!ubyte color = rgb(0,0,0);
+
+            foreach(ix,iy; Coord(kernelWidth, kernelHeight))
+            {
+                color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy).mul(kernel[ix][iy]));
+            }
+
+            color.a = image.getPixel(x,y).a;
+            result.setPixel(x,y,color);
+        }
+    }
+
+    return result;
 }
