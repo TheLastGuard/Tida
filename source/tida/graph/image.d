@@ -13,10 +13,6 @@ static immutable Red = 0; /// Red component
 static immutable Green = 1; /// Green component
 static immutable Blue = 2; /// Blue component
 
-static immutable Parallel = 0;
-static immutable NoParallel = 1;
-enum DefaultOperation = Parallel;
-
 template isCorrectComponent(int cmp)
 {
     enum isCorrectComponent = cmp == Red || cmp == Green || cmp == Blue;
@@ -964,54 +960,8 @@ Image[] strip(Image image,int x,int y,int w,int h) @safe
 
 import tida.vector;
 
-/++
-    Combines two pictures, for example, if they are both of low transparency, you can create a single picture.
-
-    Params:
-        a = First image.
-        b = Second image.
-        posA = Position combines first image.
-        posB = Position combines second image.
-
-    Returns: Unites images
-+/
-Image uniteWP(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @safe
-{ 
-    import std.algorithm, std.conv;
-    import tida.color;
-
-    Image result = new Image();
-    
-    int width = int.init,
-        height = int.init;
-
-    width = (posA.x + a.width > posB.x + b.width) ? posA.x.to!int + a.width : posB.x.to!int + b.width;
-    height = (posA.y + a.height > posB.y + b.height) ? posA.y.to!int + a.height : posB.x.to!int + b.height;
-
-    result.create(width,height);
-    result.fill(rgba(0,0,0,0));
-
-    for(int x = posA.x.to!int; x < posA.x.to!int + a.width; x++) {
-        for(int y = posA.y.to!int; y < posA.y.to!int + a.height; y++) {
-            Color!ubyte color = a.getPixel(x - posA.x.to!int, y - posA.y.to!int);
-            result.setPixel(x,y,color);
-        }
-    }
-
-    for(int x = posB.x.to!int; x < posB.x.to!int + b.width; x++) {
-        for(int y = posB.y.to!int; y < posB.y.to!int + b.height; y++) {
-            Color!ubyte color = b.getPixel(x - posB.x.to!int, y - posB.y.to!int);
-            Color!ubyte backColor = result.getPixel(x,y);
-            color.colorize!Alpha(backColor);
-            result.setPixel(x,y,color);
-        }
-    }
-
-    return result;
-}
-
 /// ditto
-Image uniteParallel(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @trusted
+Image unite(int Type = DefaultOperation)(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @trusted
 {
     import std.algorithm, std.conv, std.range, std.parallelism;
     import tida.color;
@@ -1030,20 +980,20 @@ Image uniteParallel(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0))
     result.create(width,height);
     result.fill(rgba(0,0,0,0));
 
-    foreach(x; parallel(iota(posA.x.to!int, posA.x.to!int + a.width))) {
-        foreach(y; parallel(iota(posA.y.to!int, posA.y.to!int + a.height))) {
-            Color!ubyte color = a.getPixel(x - posA.x.to!int, y - posA.y.to!int);
-            result.setPixel(x,y,color);
-        }
+    foreach(x, y; Coord!Type(posA.x.to!int + a.width, posA.y.to!int + a.height,
+                             posA.x.to!int, posA.y.to!int))
+    {
+        Color!ubyte color = a.getPixel(x - posA.x.to!int, y - posA.y.to!int);
+        result.setPixel(x,y,color);
     }
 
-    foreach(x; parallel(iota(posB.x.to!int, posB.x.to!int + b.width))) {
-        foreach(y; parallel(iota(posB.y.to!int, posB.y.to!int + b.height))) {
-            Color!ubyte color = b.getPixel(x - posB.x.to!int, y - posB.y.to!int);
-            Color!ubyte backColor = result.getPixel(x,y);
-            color.colorize!Alpha(backColor);
-            result.setPixel(x,y,color);
-        }
+    foreach(x, y; Coord!Type(posB.x.to!int + b.width, posB.y.to!int + b.height,
+                             posB.x.to!int, posB.y.to!int))
+    {
+        Color!ubyte color = b.getPixel(x - posB.x.to!int, y - posB.y.to!int);
+        Color!ubyte backColor = result.getPixel(x,y);
+        color.colorize!Alpha(backColor);
+        result.setPixel(x,y,color);
     }
 
     return result;
@@ -1071,8 +1021,8 @@ float[][] gausKernel(int width,int height,float sigma) @safe
     {
         foreach(j; 0 .. width)
         {
-            result[i][j] = exp(-(i * i + j * j) / (2 * sigma * sigma) / (2 * M_PI * sigma * sigma));
-            sum += result[i][j];
+            result[j][i] = exp(-(i * i + j * j) / (2 * sigma * sigma) / (2 * M_PI * sigma * sigma));
+            sum += result[j][i];
         }
     }
 
@@ -1080,7 +1030,7 @@ float[][] gausKernel(int width,int height,float sigma) @safe
     {
         foreach(j; 0 .. width)
         {
-            result[i][j] /= sum;
+            result[j][i] /= sum;
         }
     }
 
@@ -1099,16 +1049,46 @@ float[][] gausKernel(float r) @safe
 }
 
 /++
-    Blurs the picture by the specified factor.
+    Applies blur.
 
     Params:
-        image = Blurse image.
-        otherKernel = Matrix.
+        Type = Operation type.
+        image = Image.
+        r = radius gaus kernel.
 +/
-Image blurWP(Image image,float[][] otherKernel) @safe
+Image blur(int Type = DefaultOperation)(Image image,float r) @trusted
+{
+    return blur!Type(image, gausKernel(r));
+}
+
+/++
+    Apolies blur.
+
+    Params:
+        Type = Operation type.
+        image = Image.
+        width = gaus kernel width.
+        height = gaus kernel height.
+        r = radius gaus kernel.
++/
+Image blur(int Type = DefaultOperation)(Image image,int width,int height,float r) @trusted
+{
+    return blur!Type(image,gausKernel(width,height,r));
+}
+
+/++
+    Applies blur.
+
+    Params:
+        Type = Operation type.
+        image = Image.
+        otherKernel = Filter kernel.
++/
+Image blur(int Type = DefaultOperation)(Image image,float[][] otherKernel) @trusted
 {
     import tida.color;
     import tida.graph.each;
+    import std.parallelism, std.range;
 
     auto kernel = otherKernel; 
     
@@ -1121,13 +1101,13 @@ Image blurWP(Image image,float[][] otherKernel) @safe
     Image result = new Image(width,height);
     result.fill(rgba(0,0,0,0));
 
-    foreach(x,y; Coord(width, height))
+    foreach(x, y; Coord!Type(width, height))
     {
         Color!ubyte color = rgb(0,0,0);
 
         foreach(ix,iy; Coord(kernelWidth, kernelHeight))
         {
-            color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy) * kernel[ix][iy]);
+            color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy).mul(kernel[ix][iy]));
         }
 
         color.a = image.getPixel(x,y).a;
@@ -1137,108 +1117,11 @@ Image blurWP(Image image,float[][] otherKernel) @safe
     return result;
 }
 
-/++
-    Blurs the picture by the specified factor.
-
-    Params:
-        image = Blurse image.
-        k = Factor.
-+/
-Image blurWP(Image image,float k) @safe
-{
-    return blur(image, gausKernel(k));
-}
-
-/++
-    Applies blur using parallel computation.
-
-    Params:
-        image = Image.
-        otherKernel = Filter kernel.
-+/
-Image blurParallel(Image image,float[][] otherKernel) @trusted
-{
-    import tida.color;
-    import tida.graph.each;
-    import std.parallelism, std.range;
-
-    auto kernel = otherKernel; 
-    
-    int width = image.width;
-    int height = image.height;
-
-    int kernelWidth = cast(int) kernel.length;
-    int kernelHeight = cast(int) kernel[0].length;
-
-    Image result = new Image(width,height);
-    result.fill(rgba(0,0,0,0));
-
-    foreach(x; parallel(iota(0,width)))
-    {
-        foreach(y; parallel(iota(0,height)))
-        {
-            Color!ubyte color = rgb(0,0,0);
-
-            foreach(ix,iy; Coord(kernelWidth, kernelHeight))
-            {
-                color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy).mul(kernel[ix][iy]));
-            }
-
-            color.a = image.getPixel(x,y).a;
-            result.setPixel(x,y,color);
-        }
-    }
-
-    return result;
-}
-
-/++
-    Applies blur using parallel computation.
-
-    Params:
-        image = Image.
-        k = Factor.
-+/
-Image blurParallel(Image image,float k) @safe
-{
-    return blurParallel(image, gausKernel(k));
-}
-
-/++
-    Applies blur in image.
-
-    Params:
-        Type = Is parallel operation? (Parallel/NoParallel)
-+/
-template blur(int Type = DefaultOperation)
-{
-    static if(Type == Parallel)
-        alias blur = blurParallel;
-    else
-    static if(Type == NoParallel)
-        alias blur = blurWP;
-}
-
-/++
-    Combines two pictures, for example, if they are both of low transparency, you can create a single picture.
-
-    Params:
-        Type = Is parallel operation? (Parallel/NoParallel)
-+/
-template unite(int Type = DefaultOperation)
-{
-    static if(Type == Parallel)
-        alias unite = uniteParallel;
-    else
-    static if(Type == NoParallel)
-        alias unite = uniteWP;
-}
-
 import tida.color, tida.graph.each;
 
-Image processWP(Image image, void delegate(ref Color!ubyte,const Vecf) @safe func) @safe
+Image process(int Type = DefaultOperation)(Image image, void delegate(ref Color!ubyte,const Vecf) @safe func) @safe
 {
-    foreach(x, y; Coord(image.width, image.height)) 
+    foreach(x, y; Coord!Type(image.width, image.height)) 
     {
         Color!ubyte color = image.getPixel(x, y);
         func(color, Vecf(x, y));
@@ -1246,57 +1129,4 @@ Image processWP(Image image, void delegate(ref Color!ubyte,const Vecf) @safe fun
     }
 
     return image;
-}
-
-Image processParallel(Image image, void delegate(ref Color!ubyte,const Vecf) @safe func) @trusted
-{
-    import std.parallelism, std.range;
-
-    foreach(x; parallel(iota(0, image.width)))
-    foreach(y; parallel(iota(0, image.height)))
-    {
-        Color!ubyte color = image.getPixel(x, y);
-        func(color, Vecf(x, y));
-        image.setPixel(x, y, color);
-    }
-
-    return image;
-}
-
-template process(int Type = DefaultOperation)
-{
-    static if(Type == Parallel)
-        alias process = processParallel;
-    else
-    static if(Type == NoParallel)
-        alias process = processWP;
-}
-
-Image transform(Image image, float[4][4] kernel) @trusted
-{
-    import std.parallelism, std.range;
-
-    Image result = new Image(image.width, image.height);
-    int width = image.width;
-    int height = image.height;
-    immutable kernelWidth = 4;
-    immutable kernelHeight = 4;
-
-    foreach(x; parallel(iota(0,width)))
-    {
-        foreach(y; parallel(iota(0,height)))
-        {
-            Color!ubyte color = rgb(0,0,0);
-
-            foreach(ix,iy; Coord(kernelWidth, kernelHeight))
-            {
-                color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy).mul(kernel[ix][iy]));
-            }
-
-            color.a = image.getPixel(x,y).a;
-            result.setPixel(x,y,color);
-        }
-    }
-
-    return result;
 }

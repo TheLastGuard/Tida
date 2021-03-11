@@ -149,6 +149,7 @@ public
     import tida.graph.render;
     import tida.graph.text;
     import tida.graph.softimage;
+    import tida.graph.each;
 
     import tida.sound.al;
 

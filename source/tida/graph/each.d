@@ -1,18 +1,45 @@
 module tida.graph.each;
 
-auto Coord(uint width,uint height,int beginX = 0,int beginY = 0) @safe 
-{
-    return (int delegate(ref int x,ref int y) @safe dg) @safe {
-        for(int ix = beginX; ix < width; ix++)
-        {
-            for(int iy = beginY; iy < height; iy++)
-            {
-                dg(ix,iy);
-            }
-        }
+static immutable Parallel = 1;
+static immutable NoParallel = 0;
 
-        return 0;
-    };
+enum DefaultOperation = NoParallel;
+
+auto Coord(int Type = DefaultOperation)(uint width,uint height,int beginX = 0,int beginY = 0) @safe
+{
+    static if(Type == NoParallel)
+    {
+        return (int delegate(ref int x,ref int y) @safe dg) @safe {
+            for(int ix = beginX; ix < width; ix++)
+            {
+                for(int iy = beginY; iy < height; iy++)
+                {
+                    dg(ix,iy);
+                }
+            }
+
+            return 0;
+        };
+    }else
+    static if(Type == Parallel)
+    {
+        return (int delegate(ref int x,ref int y) @safe dg) @trusted {
+            import std.parallelism, std.range;
+
+            foreach(ix; parallel(iota(beginX, width)))
+            {
+                foreach(iy; parallel(iota(beginY, height)))
+                {
+                    int dx = ix;
+                    int dy = iy;
+
+                    dg(dx,dy);
+                }
+            }
+
+            return 0;
+        };
+    }
 }
 
 import tida.vector, std.conv : to;

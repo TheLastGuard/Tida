@@ -381,6 +381,9 @@ Vecf uniform(Vecf begin, Vecf end) @safe
     return Vecf(uniform(begin.x, end.x), uniform(begin.y, end.y));
 }
 
+/++
+    
++/
 Vecf round(Vecf vec) @safe
 {
     import std.math : round;
