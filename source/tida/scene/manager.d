@@ -345,11 +345,8 @@ class SceneManager
                     IOnErrorFunctions[instance] ~= &__traits(getMember, instance, member);
                 }else
                 static if(attrib.stringof[0 .. 14] == "CollisionEvent") {
-                    SRCollider temp;
-                    temp.ev = attrib;
-                    temp.fun = cast(FECollision) &__traits(getMember, instance, member);
-
-                    IColliderStructs[instance] ~= temp;
+                    IColliderStructs[instance] ~= SRCollider(attrib,
+                    cast(FECollision) &__traits(getMember, instance, member));
                 }
             }
         }
