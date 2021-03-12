@@ -190,7 +190,6 @@ class SymbolRender : IDrawable, IDrawableEx
     {
         import tida.angle;
         import std.math : isNaN;
-        debug import std.stdio;
 
         position.y += (symbols[0].size + (symbols[0].size / 2));
 

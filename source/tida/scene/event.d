@@ -24,6 +24,12 @@
         {
             ...
         }
+
+        @CollisionEvent("NameObject", "Tag")
+        void onCollision(Instance other) @safe
+        {
+
+        }
     }
     ---
 

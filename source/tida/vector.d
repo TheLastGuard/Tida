@@ -8,13 +8,32 @@ module tida.vector;
 
 import std.traits;
 
+/// Vector
 alias Vecf = Vector!float;
 
+/++
+    Returns an empty (non-zero) vector.
++/
 Vecf VecfNan() @safe nothrow pure
 {
     return Vecf(float.nan, float.nan);
 }
 
+/++
+    Check if the vector is empty (not in the sense that it is zero,
+    but in the sense that it really is not a vector).
+
+    Params:
+        vec = Vector.
+
+    Example:
+    ---
+    assert(VecfNan.isVecfNan);
+
+    // Keep in mind that a vector does not have a number in it.
+    assert(!Vecf(0, 0).isVecfNan);
+    ---
++/
 bool isVecfNan(Vecf vec) @safe nothrow pure
 {
     import std.math : isNaN;
@@ -218,22 +237,26 @@ struct Vector(T)
         assert(a == Vecf(32, 32));
     }
 
+    /// Returns the inverted vector.
     Vector!T negative() @safe nothrow pure
     {
         return Vector!T(-x, -y);
     }
 
+    /// Returns the normalized vector.
     Vector!T normalize() @safe nothrow pure
     {
         return Vector!T(x / length, y / length);
     }
 
+    /// Normalizes a vector
     void norm() @safe nothrow pure
     {
         x /= length;
         y /= length;
     }
 
+    /// Inverts the vector along the x-axis.
     auto invertX() @safe nothrow pure
     {
         x = -x;
@@ -241,6 +264,7 @@ struct Vector(T)
         return this;
     }
 
+    /// Inverts the vector along the y-axis.
     auto invertY() @safe nothrow pure
     {
         y = -y;
@@ -248,6 +272,7 @@ struct Vector(T)
         return this;
     }
 
+    /// Invert the vecotr.
     auto invert() @safe nothrow pure
     {
         x = -x;
@@ -288,18 +313,17 @@ struct Vector(T)
     }
 }
 
+/++
+    Construct the vector modulo.
+
+    Params:
+        vec = Vector.
++/
 Vecf abs(Vecf vec) @safe nothrow
 {
     import std.math : abs;
 
     return Vecf(abs(vec.x), abs(vec.y));
-}
-
-template Abs(Vecf vec)
-{
-    import std.math : abs;
-
-    enum Abs = Vecf(abs(vec.x), abs(vec.y));
 }
 
 /++
@@ -327,37 +351,12 @@ float distance(Vecf[2] vecs) @safe nothrow
     return vecs[0].distance(vecs[1]);
 }
 
-template Sqr(float a)
-{
-    enum Sqr = a * a;
-}
-
-template Distance(Vecf a,Vecf b)
-{
-    import std.math : sqrt;
-
-    enum Distance = sqrt(Sqr!(b.x - a.x)  + Sqr!(b.y - a.y));
-}
-
-template Distance(Vecf[2] vecs)
-{
-    import std.math : sqrt;
-
-    enum Distance = Distance!(vecs[0],vecs[1]);
-}
-
 /++
     Average distance between vectors.
 +/
 Vecf averateVectors(Vecf a,Vecf b) @safe nothrow
 {
     return ((b - a) / 2) + ((a > b) ? b : a);
-}
-
-/// ditto
-template AverateVectors(Vecf a,Vecf b)
-{
-    enum AverateVectors = ((b - a) / 2) + ((a > b) ? b : a);
 }
 
 /++
@@ -382,11 +381,37 @@ Vecf uniform(Vecf begin, Vecf end) @safe
 }
 
 /++
-    
+    Rounds the vector up.
+
+    Params:
+        vec = Rounded vector.
+
+    Example:
+    ---
+    assert(Vecf(32.5,32.5) == Vecf(33, 33));
+    ---
 +/
 Vecf round(Vecf vec) @safe
 {
     import std.math : round;
 
     return Vecf(round(vec.x), round(vec.y));
+}
+
+/++
+    Floors the vector down.
+
+    Params:
+        vec = Floored vector.
+
+    Example:
+    ---
+    assert(Vecf(32.5,32.5) == Vecf(32,32));
+    ---
++/
+Vecf floor(Vecf vec) @safe
+{
+    import std.math : floor;
+
+    return Vecf(floor(vec.x), floor(vec.y));
 }

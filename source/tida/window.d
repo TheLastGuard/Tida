@@ -292,8 +292,10 @@ interface IWindow
     /// Window height.
     uint height() @safe @property;
 
+    /// Destroys the window instance.
     void destroyWindow() @safe;
 
+    /// Manual call to resize the window.
     void eventResize(uint[2] size) @safe;
 }
 
@@ -481,7 +483,7 @@ class Window : IWindow
         static if(Type == ContextIn)
         {
             _context = new Context();
-            _context.attributeInitialize(GLAttributes());
+            _context.attributeInitialize(GLAttribAutoColorSize!8);
 
             scope Visual* visual = (cast(Context) _context).visualInfo.visual;
             int depth = (cast(Context) _context).visualInfo.depth;

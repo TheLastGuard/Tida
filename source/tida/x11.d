@@ -48,6 +48,7 @@ struct WMEvent
 
 	void send() @trusted
 	{
-		XChangeProperty(runtime.display, window, first, second, format, mode, data, cast(int) length);
+		XChangeProperty(runtime.display, window, first, second, format,
+                        mode, data, cast(int) length);
 	}
 }
