@@ -690,9 +690,7 @@ class Plane : IPlane
             int w = cast(int) _width / _pwidth + 1;
             int h = cast(int) _height / _pheight + 1;
 
-            import std.stdio;
-
-            position =  Vecf(position.x / scaleWidth, position.y / scaleHeight);
+            position = Vecf(position.x / scaleWidth, position.y / scaleHeight);
 
             Color!ubyte original = color;
 
@@ -753,12 +751,14 @@ class Plane : IPlane
 
     void recreateBitmap() @trusted
     {
+        import std.exception;
+
         if(wimage !is null) DeleteObject(wimage);
         if(hdc is null) hdc = GetDC((cast(Window) window).handle);
 
         wimage = CreateBitmap(_width, _height,1,32,cast(LPBYTE) buffer);
 
-        assert(wimage,"[WINAPI] Bitmap is not create!");
+        enforce(wimage,"[WINAPI] Bitmap is not create!");
 
         pdc = CreateCompatibleDC(hdc);
 
@@ -847,9 +847,7 @@ class Plane : IPlane
             int w = cast(int) _width / _pwidth + 1;
             int h = cast(int) _height / _pheight + 1;
 
-            import std.stdio;
-
-            position =  Vecf(position.x / scaleWidth, position.y / scaleHeight);
+            position = Vecf(position.x / scaleWidth, position.y / scaleHeight);
 
             foreach(ix, iy; Coord(position.x.to!int + w,position.y.to!int + h,
                                   position.x.to!int,position.y.to!int))
