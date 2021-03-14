@@ -689,7 +689,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
                                                     size.y / cast(float) height);
 
             model = translate(model, -center.x, -center.y, 0.0f);
-            model = rotateMat(model, angle, 0.0, 0.0, 1.0);
+            model = rotateMat(model, -angle, 0.0, 0.0, 1.0);
             model = translate(model, center.x, center.y, 0.0f);
 
             model = translate(model, position.x, position.y, 0.0f);
