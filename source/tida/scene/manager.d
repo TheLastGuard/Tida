@@ -239,7 +239,7 @@ class SceneManager
         _scenes[scene.name] = scene;
     }
 
-    private
+    protected
     {
         import std.container, std.range, std.traits;
 
@@ -291,6 +291,22 @@ class SceneManager
     Array!SRCollider[Instance] colliders() @safe @property
     {
         return IColliderStructs;
+    }
+
+    void RemoveHandle(Scene scene, Instance instance) @trusted
+    {
+        IInitFunctions.remove(instance);
+        IStepFunctions.remove(instance);
+        IEntryFunctions.remove(instance);
+        IRestartFunctions.remove(instance);
+        ILeaveFunctions.remove(instance);
+        IGameStartFunctions.remove(instance);
+        IGameExitFunctions.remove(instance);
+        IGameRestartFunctions.remove(instance);
+        IEventHandleFunctions.remove(instance);
+        IDrawFunctions.remove(instance);
+        IOnErrorFunctions.remove(instance);
+        IColliderStructs.remove(instance);
     }
 
     void InstanceHandle(T)(Scene scene, T instance) @trusted

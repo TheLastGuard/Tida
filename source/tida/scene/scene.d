@@ -121,7 +121,7 @@ class Scene
     in(instance,"Instance is not create!")
     body
     {  
-        if(threadID > bufferThread.length) threadID = 0;
+        if(threadID >= bufferThread.length) threadID = 0;
 
         this.instances ~= instance;
         instance.id = this.instances.length - 1;
@@ -313,6 +313,8 @@ class Scene
 
         instance.eventDestroy(type);
         this.eventDestroy(instance);
+
+        sceneManager.RemoveHandle(this, instance);
 
         static if(type == InMemory)
             destroy(instance);

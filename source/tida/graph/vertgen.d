@@ -191,7 +191,7 @@ body
     }
 }
 
-VertexInfo generateVertex(const(Shape) shape, Vecf position = Vecf(0, 0)) @safe nothrow
+VertexInfo generateVertex(const(Shape) shape, Vecf position = Vecf(0, 0)) @trusted
 {
     float[] buffer;
 
@@ -208,7 +208,11 @@ VertexInfo generateVertex(const(Shape) shape, Vecf position = Vecf(0, 0)) @safe 
                         ];
 
         info = new VertexInfo().generateFromElemBuff(buffer, elem);
+
+        destroy(elem);
     }
+
+    destroy(buffer);
 
     return info;
 }

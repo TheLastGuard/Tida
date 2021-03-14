@@ -299,7 +299,7 @@ class GLRender : IRenderer
         current = null;
     }
 
-    override void point(Vecf position, Color!ubyte color) @safe
+    override void point(Vecf position, Color!ubyte color) @trusted
     {
         if(currentShader is null) {
             currentShader = getShader("Default");
@@ -326,12 +326,12 @@ class GLRender : IRenderer
         GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
         GL3.bindVertexArray(0);
 
-        vid.deleting();
+        destroy(vid);
 
         resetShader();
     }
 
-    override void line(Vecf[2] points, Color!ubyte color) @safe
+    override void line(Vecf[2] points, Color!ubyte color) @trusted
     {
         if(currentShader is null) {
             currentShader = getShader("Default");
@@ -360,12 +360,12 @@ class GLRender : IRenderer
         GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
         GL3.bindVertexArray(0);
 
-        vid.deleting();
+        destroy(vid);
 
         resetShader();
     }
 
-    override void rectangle(Vecf position, int width, int height, Color!ubyte color, bool isFill) @safe
+    override void rectangle(Vecf position, int width, int height, Color!ubyte color, bool isFill) @trusted
     {
         if(currentShader is null) {
             currentShader = getShader("Default");
@@ -397,6 +397,8 @@ class GLRender : IRenderer
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
+
+            destroy(vid);
         } else {
             Shape shape = Shape.Multi(  [
                                             Shape.Line(position, position + Vecf(width, 0)),
@@ -426,12 +428,14 @@ class GLRender : IRenderer
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
+
+            destroy(vid);
         }
 
         resetShader();
     }
 
-    override void circle(Vecf position, float radius, Color!ubyte color, bool isFill) @safe
+    override void circle(Vecf position, float radius, Color!ubyte color, bool isFill) @trusted
     {
         if(currentShader is null) {
             currentShader = getShader("Default");
@@ -460,7 +464,7 @@ class GLRender : IRenderer
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
 
-            vid.deleting();
+            destroy(vid);
         } else {
             import std.math;
 
@@ -508,7 +512,7 @@ class GLRender : IRenderer
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
 
-            vid.deleting();
+            destroy(vid);
         }
 
         resetShader();
