@@ -10,9 +10,9 @@ auto Coord(int Type = DefaultOperation)(uint width,uint height,int beginX = 0,in
     static if(Type == NoParallel)
     {
         return (int delegate(ref int x,ref int y) @safe dg) @safe {
-            for(int ix = beginX; ix < width; ix++)
+            for(int ix = beginX; ix <= width; ix++)
             {
-                for(int iy = beginY; iy < height; iy++)
+                for(int iy = beginY; iy <= height; iy++)
                 {
                     dg(ix,iy);
                 }
