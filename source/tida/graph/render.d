@@ -736,6 +736,7 @@ class Plane : IPlane
         ubyte[] buffer;
         uint _width;
         uint _height;
+
         Color!ubyte _background;
         BlendMode bmode;
 

@@ -184,12 +184,30 @@ class SceneManager
         Params:
             name = Trigger name.
     +/
-    void trigger(string name) @safe
+    void trigger(string name) @trusted
     {
-        current.trigger(name);
+        auto scene = current is null ? initable : current;
 
-        foreach(instance; current.getList()) {
+        scene.trigger(name);
+
+        if(scene in OnTriggerFunctions) {
+            foreach(fun; OnTriggerFunctions[scene]) {
+                if(fun.ev.name == name) {
+                    fun.fun();
+                }
+            }
+        }
+
+        foreach(instance; scene.getList()) {
             instance.trigger(name);
+
+            if(instance in IOnTriggerFunctions) {
+                foreach(fun; IOnTriggerFunctions[instance]) {
+                    if(fun.ev.name == name) {
+                        fun.fun();
+                    }
+                }
+            }
         }
     }
 
@@ -255,11 +273,18 @@ class SceneManager
         alias FEDraw = void delegate(IRenderer) @safe;
         alias FEOnError = void delegate() @safe;
         alias FECollision = void delegate(Instance) @safe;
+        alias FETrigger = void delegate() @safe;
 
         struct SRCollider
         {
             CollisionEvent ev;
             FECollision fun;
+        }
+
+        struct SRTrigger
+        {
+            TriggerEvent ev;
+            FETrigger fun;
         }
 
         Array!FEInit[Scene] InitFunctions;
@@ -273,6 +298,7 @@ class SceneManager
         Array!FEEventHandle[Scene] EventHandleFunctions;
         Array!FEDraw[Scene] DrawFunctions;
         Array!FEOnError[Scene] OnErrorFunctions;
+        Array!SRTrigger[Scene] OnTriggerFunctions;
 
         Array!FEInit[Instance] IInitFunctions;
         Array!FEStep[Instance] IStepFunctions;
@@ -286,6 +312,7 @@ class SceneManager
         Array!FEDraw[Instance] IDrawFunctions;
         Array!FEOnError[Instance] IOnErrorFunctions;
         Array!SRCollider[Instance] IColliderStructs;
+        Array!SRTrigger[Instance] IOnTriggerFunctions;
     }
 
     Array!SRCollider[Instance] colliders() @safe @property
@@ -307,6 +334,7 @@ class SceneManager
         IDrawFunctions.remove(instance);
         IOnErrorFunctions.remove(instance);
         IColliderStructs.remove(instance);
+        IOnTriggerFunctions.remove(instance);
     }
 
     void InstanceHandle(T)(Scene scene, T instance) @trusted
@@ -323,6 +351,7 @@ class SceneManager
         IDrawFunctions[instance] = Array!FEDraw();
         IOnErrorFunctions[instance] = Array!FEOnError();
         IColliderStructs[instance] = Array!SRCollider();
+        IOnTriggerFunctions[instance] = Array!SRTrigger();
 
         static foreach(member; __traits(allMembers, T)) {
             static foreach(attrib; __traits(getAttributes, __traits(getMember, instance, member)))
@@ -363,6 +392,10 @@ class SceneManager
                 static if(attrib.stringof[0 .. 14] == "CollisionEvent") {
                     IColliderStructs[instance] ~= SRCollider(attrib,
                     cast(FECollision) &__traits(getMember, instance, member));
+                }else
+                static if(attrig.stringof[0 .. 12] == "TriggerEvent") {
+                    IOnTriggerFunctions[instance] ~= SRTrigger(attrib,
+                    cast(FETrigger) &__traits(getMember, instance, member));
                 }
             }
         }
@@ -401,6 +434,7 @@ class SceneManager
         EventHandleFunctions[scene] = Array!FEEventHandle();
         DrawFunctions[scene] = Array!FEDraw();
         OnErrorFunctions[scene] = Array!FEOnError();
+        OnTriggerFunctions[scene] = Array!SRTrigger();
 
         static foreach(member; __traits(allMembers, T)) {
             static foreach(attrib; __traits(getAttributes, __traits(getMember, scene, member)))
@@ -437,6 +471,10 @@ class SceneManager
                 }else
                 static if(is(attrib : FunEvent!OnError)) {
                     OnErrorFunctions[scene] ~= &__traits(getMember, scene, member);
+                }else
+                static if(attrib.stringof[0 .. 12] == "TriggerEvent") {
+                    OnTriggerFunctions[scene] ~= SRTrigger(attrib,
+                    cast(FETrigger) &__traits(getMember, scene, member));
                 }
             }
         }

@@ -207,7 +207,7 @@ class SymbolRender : IDrawable, IDrawableEx
 
                 Vecf tpos = position + s.position - Vecf(0, s.position.y);
 
-                tpos = tpos.rotate(angle.from!(Degrees, Radians), bpos + center);
+                tpos = tpos.rotate(angle, bpos + center);
 
                 render.drawEx(s.image, tpos, angle,
                     Vecf(s.image.width / 2, s.image.height / 2),

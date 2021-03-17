@@ -188,3 +188,29 @@ class Game
         }
     }
 }
+
+template WindowConfig(int w, int h, string caption)
+{
+    enum WindowConfig = GameConfig(w, h, caption);
+}
+
+template GameRun(GameConfig config, T...)
+{
+    import tida.runtime;
+
+    int main(string[] args) {
+        TidaRuntime.initialize(args);
+
+        Game game = new Game(config);
+
+        static foreach(scene; T) {
+            sceneManager.add!scene;
+        }
+
+        sceneManager.inbegin();
+
+        game.run();
+
+        return 0;
+    }
+}

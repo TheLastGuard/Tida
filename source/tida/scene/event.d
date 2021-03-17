@@ -68,3 +68,8 @@ struct CollisionEvent
     string name;
     string tag = "";
 }
+
+struct TriggerEvent
+{
+    string name;
+}

@@ -6,6 +6,8 @@
 +/
 module tida.graph.texture;
 
+import tida.graph.drawable;
+
 struct TextureInfo
 {
     public 
@@ -17,7 +19,7 @@ struct TextureInfo
     }
 }
 
-class Texture
+class Texture : IDrawable, IDrawableEx, IDrawableColor
 {
     import tida.graph.gl, tida.color, tida.graph.vertgen;
 
@@ -121,6 +123,203 @@ class Texture
             glDeleteTextures(1,&glTextureID);
             glTextureID = 0;
         }
+    }
+
+    Shader!Program initShader(IRenderer renderer) @safe
+    {
+        Shader!Program shader;
+
+        if(renderer.currentShader is null)
+        {
+            if((shader = renderer.getShader("DefaultImage")) is null) {
+                Shader!Vertex vertex = new Shader!Vertex()
+                    .bindSource(
+                    `
+                    #version 130
+                    in vec3 position;
+                    in vec2 aTexCoord;
+                    uniform mat4 projection;
+                    uniform mat4 model;
+
+                    out vec2 TexCoord;
+
+                    void main() {
+                        gl_Position = projection * model * vec4(position.xy, 0.0f, 1.0f);
+                        TexCoord = aTexCoord;
+                    }
+                    `);
+
+                Shader!Fragment fragment = new Shader!Fragment()
+                    .bindSource(
+                    `
+                    #version 130
+                    in vec2 TexCoord;
+                    uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+                    uniform sampler2D ourTexture;
+
+                    void main() {
+                        gl_FragColor = texture(ourTexture, TexCoord) * color;
+                    }
+                    `
+                    );
+
+                shader = new Shader!Program()
+                    .attach(vertex)
+                    .attach(fragment)
+                    .link();
+
+                renderer.setShader("DefaultImage", shader);
+            }
+        } else {
+            shader = renderer.currentShader;
+        }
+
+        return shader;
+    }
+
+    import tida.graph.render, tida.color, tida.graph.matrix, tida.vector, tida.graph.shader;
+
+    override void draw(IRenderer renderer,Vecf position) @trusted
+    {
+        Shader!Program shader = this.initShader(renderer);
+        VertexInfo vinfo = this.vertexInfo;
+
+        vinfo.bindVertexArray();
+        GL3.bindBuffer(GL_ARRAY_BUFFER, vinfo.idBufferArray);
+        GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, vinfo.idElementArray);
+
+        GL3.enableVertexAttribArray(shader.getAttribLocation("position"));
+        GL3.vertexAttribPointer(shader.getAttribLocation("position"), 3, GL_FLOAT, false, 5 * float.sizeof, null);
+
+        GL3.enableVertexAttribArray(shader.getAttribLocation("aTexCoord"));
+        GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 5 * float.sizeof,
+            cast(void*) (3 * float.sizeof));
+
+        float[4][4] proj = (cast(GLRender) renderer).projection();
+        float[4][4] model = identity();
+
+        model = translate(model, position.x, position.y, 0.0f);
+
+        shader.using();
+
+        GL3.activeTexture(GL_TEXTURE0);
+        bind();
+
+        if(shader.getUniformLocation("projection") != -1)
+        shader.setUniform("projection", proj);
+
+        if(shader.getUniformLocation("model") != -1)
+        shader.setUniform("model", model);
+
+        if(shader.getUniformLocation("color") != -1)
+        shader.setUniform("color", rgb(255, 255, 255));
+
+        GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
+
+        GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+        GL3.bindVertexArray(0);
+        GL.bindTexture(0);
+
+        renderer.resetShader();
+    }
+
+    override void drawEx(IRenderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha,Color!ubyte color) @trusted
+    {
+        Shader!Program shader = this.initShader(renderer);
+        VertexInfo vinfo = this.vertexInfo;
+
+        vinfo.bindVertexArray();
+        GL3.bindBuffer(GL_ARRAY_BUFFER, vinfo.idBufferArray);
+        GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, vinfo.idElementArray);
+
+        GL3.enableVertexAttribArray(shader.getAttribLocation("position"));
+        GL3.vertexAttribPointer(shader.getAttribLocation("position"), 3, GL_FLOAT, false, 5 * float.sizeof, null);
+
+        GL3.enableVertexAttribArray(shader.getAttribLocation("aTexCoord"));
+        GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 5 * float.sizeof,
+            cast(void*) (3 * float.sizeof));
+
+        float[4][4] proj = (cast(GLRender) renderer).projection();
+        float[4][4] model = identity();
+
+        model = tida.graph.matrix.scale(model,  size.x / cast(float) width,
+                                                size.y / cast(float) height);
+
+        model = translate(model, -center.x, -center.y, 0.0f);
+        model = rotateMat(model, -angle, 0.0, 0.0, 1.0);
+        model = translate(model, center.x, center.y, 0.0f);
+
+        model = translate(model, position.x, position.y, 0.0f);
+
+        shader.using();
+
+        GL3.activeTexture(GL_TEXTURE0);
+        bind();
+
+        if(shader.getUniformLocation("projection") != -1)
+        shader.setUniform("projection", proj);
+
+        if(shader.getUniformLocation("model") != -1)
+        shader.setUniform("model", model);
+
+        color.a = alpha;
+
+        if(shader.getUniformLocation("color") != -1)
+        shader.setUniform("color", color);
+
+        GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
+
+        GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+        GL3.bindVertexArray(0);
+        GL.bindTexture(0);
+
+        renderer.resetShader();
+    }
+
+    override void drawColor(IRenderer renderer,Vecf position,Color!ubyte color) @trusted
+    {
+        Shader!Program shader = this.initShader(renderer);
+        VertexInfo vinfo = this.vertexInfo;
+
+        vinfo.bindVertexArray();
+        GL3.bindBuffer(GL_ARRAY_BUFFER, vinfo.idBufferArray);
+        GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, vinfo.idElementArray);
+
+        GL3.enableVertexAttribArray(shader.getAttribLocation("position"));
+        GL3.vertexAttribPointer(shader.getAttribLocation("position"), 3, GL_FLOAT, false, 5 * float.sizeof, null);
+
+        GL3.enableVertexAttribArray(shader.getAttribLocation("aTexCoord"));
+        GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 5 * float.sizeof,
+            cast(void*) (3 * float.sizeof));
+
+        float[4][4] proj = (cast(GLRender) renderer).projection();
+        float[4][4] model = identity();
+
+        model = translate(model, position.x, position.y, 0.0f);
+
+        shader.using();
+
+        GL3.activeTexture(GL_TEXTURE0);
+        bind();
+
+        if(shader.getUniformLocation("projection") != -1)
+        shader.setUniform("projection", proj);
+
+        if(shader.getUniformLocation("model") != -1)
+        shader.setUniform("model", model);
+
+        if(shader.getUniformLocation("color") != -1)
+        shader.setUniform("color", color);
+
+        GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
+
+        GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+        GL3.bindVertexArray(0);
+        GL.bindTexture(0);
+
+        renderer.resetShader();
+
     }
 
     ~this() @safe
