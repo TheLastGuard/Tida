@@ -160,6 +160,8 @@ Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe
 			result.g = (hex & 0x00FF00) >> 8;
 			result.b = (hex & 0x0000FF);
 			result.a = 255;
+
+            return result;
 		}else
 		static if(format == PixelFormat.ARGB)
 		{
@@ -167,6 +169,8 @@ Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe
 			result.r = (hex & 0x00FF0000) >> 16;
 			result.g = (hex & 0x0000FF00) >> 8;
 			result.b = (hex & 0x000000FF);
+
+            return result;
 		}else
 		static if(format == PixelFormat.BGRA)
 		{
@@ -174,8 +178,13 @@ Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe
 			result.g = (hex & 0x00FF0000) >> 16;
 			result.r = (hex & 0x0000FF00) >> 8;
 			result.a = (hex & 0x000000FF);
+
+            return result;
 		}else
-			static assert(null, "Unknown pixel format!");
+        static if(format == PixelFormat.AUTO) {
+            return HEX!(PixelFormat.RGB, T)(hex);
+        }else
+            static assert(null, "Unknown pixel format!");
 	}else
 		static assert(null, "Unknown type hex!");
 }
@@ -399,7 +408,7 @@ struct Color(T)
     }
 
     ///
-    this(T red,T green,T blue,T alpha = T.max) @safe nothrow
+    this(T red,T green,T blue,T alpha = T.max) @safe
     {
         this.red = red;
         this.green = green;

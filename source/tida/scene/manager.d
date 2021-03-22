@@ -178,6 +178,11 @@ class SceneManager
         return _initable;
     }
 
+    Scene context() @safe @property
+    {
+        return current is null ? initable : current;
+    }
+
     /++
         Calls a trigger for the current scene, as well as its instances.
 
@@ -413,12 +418,43 @@ class SceneManager
         ---
     +/
     void add(T)() @trusted
-    in(isScene!T,"It's not scene!")
+    in(isScene!T,"It's not a scene!")
     body
     {
         auto scene = new T();       
 
         add!T(scene);
+    }
+
+    void remove(T)(T scene) @trusted
+    in(isScene!T,"It's not a scene!")
+    body
+    {
+        scenes.remove(scene.name);
+        destroy(scene);
+    }
+
+    void remove(T)() @trusted
+    in(isScene!T,"It's not a scene!")
+    body
+    {
+        foreach(scene; scenes)
+        {
+            if(scene.from!T !is null) {
+                remove(scene);
+                return;
+            }
+        }
+    }
+
+    void remove(string name) @trusted
+    {
+        foreach(scene; scenes) {
+            if(scene.name == name) {
+                remove(scene);
+                return;
+            }
+        }
     }
 
     private void uScene(T)(T scene) @trusted

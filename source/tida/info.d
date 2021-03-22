@@ -33,6 +33,7 @@ version(Posix)
 class Monitor : IMonitor
 {
     import tida.x11, tida.runtime;
+    import std.exception : enforce;
 
     override uint width(uint screenID = 0) @trusted @property
     {
@@ -40,7 +41,7 @@ class Monitor : IMonitor
             DefaultRootWindow(runtime.display));
         XRRCrtcInfo* info = null;
 
-        assert(screenID < screens.ncrtc);
+        enforce(screenID < screens.ncrtc);
 
         info = XRRGetCrtcInfo(runtime.display,screens,screens.crtcs[screenID]);
 
@@ -57,7 +58,7 @@ class Monitor : IMonitor
             DefaultRootWindow(runtime.display));
         XRRCrtcInfo* info = null;
 
-        assert(screenID < screens.ncrtc);
+        enforce(screenID < screens.ncrtc);
 
         info = XRRGetCrtcInfo(runtime.display,screens,screens.crtcs[screenID]);
 

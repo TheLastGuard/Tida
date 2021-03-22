@@ -304,6 +304,7 @@ class Loader
             return getFont(path,size);
 
         Font font = new Font();
+        
         synchronized {
             font.load(path,size);
 

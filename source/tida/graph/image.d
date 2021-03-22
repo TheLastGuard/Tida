@@ -188,27 +188,11 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     +/
     void blit(int Type = DefaultOperation)(Image otherImage,Vecf pos) @trusted
     {
-        static if(Type == NoParallel)
+        foreach(x,y; Coord!Type(pos.intX + otherImage.width,pos.intY + otherImage.height,pos.intX,pos.intY))
         {
-            foreach(x,y; Coord(pos.intX + otherImage.width,pos.intY + otherImage.height,pos.intX,pos.intY))
-            {
-                setPixel(x,y,otherImage.getPixel(x - pos.intX,y - pos.intY));
-            }
-        }else
-        static if(Type == Parallel)
-        {
-            import std.parallelism, std.range;
-
-            foreach(x; parallel(iota(pos.intX,pos.intX + otherImage.width)))
-            {
-                foreach(y; parallel(iota(pos.intY,pos.intY + otherImage.height)))
-                {
-                    setPixel(x,y,otherImage.getPixel(x - pos.intX,y - pos.intY));
-                }
-            }
+            setPixel(x,y,otherImage.getPixel(x - pos.intX,y - pos.intY));
         }
     }
-
 
     /++
         Redraws the part to a new picture.
@@ -225,30 +209,12 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
 
         image.create(cWidth,cHeight);
 
-        static if(Type == NoParallel)
+        foreach(ix,iy; Coord!Type(x + cWidth,y + cHeight,x,y))
         {
-            foreach(ix,iy; Coord(x + cWidth,y + cHeight,x,y))
-            {
-                image.setPixel(
-                    ix - x, iy - y,
-                    this.getPixel(ix,iy)
-                );
-            }
-        }else
-        static if(Type == Parallel)
-        {
-            import std.parallelism, std.range;
-
-            foreach(ix; parallel(iota(x,x + cWidth)))
-            {
-                foreach(iy; parallel(iota(y,y + cHeight)))
-                {
-                    image.setPixel(
-                        ix - x, iy - y,
-                        this.getPixel(ix,iy)
-                    );
-                }
-            }
+            image.setPixel(
+                ix - x, iy - y,
+                this.getPixel(ix,iy)
+            );
         }
 
         return image;
@@ -420,7 +386,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     {
         import std.algorithm : each;
 
-        _pixels.each!((ref e) => e.alpha = value);
+        _pixels.each!((ref e) => e.alpha = e.alpha > 0 ? value : e.alpha);
 
         return this;
     }

@@ -334,6 +334,7 @@ class Scene
     +/
     void instanceDestroy(ubyte type,Name)() @trusted
     in(isInstance!Name)
+    body
     {
         instanceDestroy!type(getInstanceByClass!Name);
     }
