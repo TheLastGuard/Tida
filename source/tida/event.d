@@ -76,7 +76,7 @@ interface IEventHandler
     /// Returns the released mouse button.
     final MouseButton mouseUpButton() @safe
     {
-        return isMouseDown ? mouseButton : MouseButton.unknown;
+        return isMouseUp ? mouseButton : MouseButton.unknown;
     }
 }
 

@@ -301,6 +301,8 @@ class GLRender : IRenderer
 
     override void point(Vecf position, Color!ubyte color) @trusted
     {
+        position -= camera.port.begin;
+
         if(currentShader is null) {
             currentShader = getShader("Default");
         }
@@ -337,7 +339,8 @@ class GLRender : IRenderer
             currentShader = getShader("Default");
         }
 
-        const shape = Shape.Line(points[0], points[1]);
+        const shape = Shape.Line(   points[0] - camera.port.begin, 
+                                    points[1] - camera.port.begin);
 
         auto vid = generateVertex(shape);
 
@@ -367,6 +370,8 @@ class GLRender : IRenderer
 
     override void rectangle(Vecf position, int width, int height, Color!ubyte color, bool isFill) @trusted
     {
+        position -= camera.port.begin;
+
         if(currentShader is null) {
             currentShader = getShader("Default");
         }
@@ -437,6 +442,8 @@ class GLRender : IRenderer
 
     override void circle(Vecf position, float radius, Color!ubyte color, bool isFill) @trusted
     {
+        position -= camera.port.begin;
+
         if(currentShader is null) {
             currentShader = getShader("Default");
         }

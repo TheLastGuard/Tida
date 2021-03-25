@@ -28,6 +28,11 @@ class Camera
         this._shape = dvShape;
     }
 
+    void move(Vecf direction) @safe
+    {
+        this._port = Shape.Rectangle(this._port.begin + direction, this._port.end);
+    }
+
     /// Port on the window.
     void shape(Shape dvShape) @safe @property
     in(dvShape.type == ShapeType.rectangle)
