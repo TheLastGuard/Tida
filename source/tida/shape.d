@@ -425,6 +425,7 @@ struct Shape
             _trType = value;
     }
 
+    /// Line length.
     float length() @safe @property nothrow
     in(type == ShapeType.line,"This is not a line!")
     body
@@ -437,6 +438,7 @@ struct Shape
         return sqrt((distX * distX) + (distY * distY));
     }
 
+    /// Line length.
     float length() @safe @property nothrow immutable
     in(type == ShapeType.line,"This is not a line!")
     body
@@ -449,6 +451,7 @@ struct Shape
         return sqrt((distX * distX) + (distY * distY));
     }
 
+    /// Line length.
     float length() @safe @property nothrow const
     in(type == ShapeType.line,"This is not a line!")
     body
@@ -461,6 +464,7 @@ struct Shape
         return sqrt((distX * distX) + (distY * distY));
     }
 
+    /// Line length.
     void length(float value) @safe @property
     in(type == ShapeType.line,"This is not a line!")
     body
@@ -489,6 +493,12 @@ struct Shape
         assert(round(line.end) == Vecf(128, 128));
     }
 
+    /++
+        Resizes as a percentage.
+
+        Params:
+            k = Percentage.
+    +/
     void scale(float k) @safe
     in(type != ShapeType.point)
     body

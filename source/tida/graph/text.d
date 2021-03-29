@@ -153,6 +153,17 @@ class SymbolRender : IDrawable, IDrawableEx
 
     override void draw(IRenderer render, Vecf position) @safe
     {
+        import tida.graph.shader;
+
+        Shader!Program currShader;
+
+        if(render.type != RenderType.Soft)
+        {
+            if(render.currentShader !is null) {
+                currShader = render.currentShader;
+            }
+        }
+
         position.y += (symbols[0].size + (symbols[0].size / 2));
 
         foreach(s; symbols)
@@ -162,11 +173,16 @@ class SymbolRender : IDrawable, IDrawableEx
                 if(!s.image.isTexture)
                     s.image.fromTexture();
 
+                if(render.type != RenderType.Soft)
+                    render.currentShader = currShader;
+
                 render.drawColor(s.image,position - Vecf(0, s.position.y),
                             s.color);
             }
 
             position.x += s.advance.intX >> 6;
+
+            if(s.image.texture !is null) s.image.texture.destroy();
         }
     }
 
@@ -174,7 +190,6 @@ class SymbolRender : IDrawable, IDrawableEx
     {
         import tida.angle;
         import std.math : isNaN;
-        debug import std.stdio;
 
         position.y += (symbols[0].size + (symbols[0].size / 2));
 
@@ -192,7 +207,7 @@ class SymbolRender : IDrawable, IDrawableEx
 
                 Vecf tpos = position + s.position - Vecf(0, s.position.y);
 
-                tpos = tpos.rotate(angle.from!(Degrees, Radians), bpos + center);
+                tpos = tpos.rotate(angle, bpos + center);
 
                 render.drawEx(s.image, tpos, angle,
                     Vecf(s.image.width / 2, s.image.height / 2),
@@ -200,6 +215,8 @@ class SymbolRender : IDrawable, IDrawableEx
             }
 
             position.x += s.advance.intX >> 6;
+
+            if(s.image.texture !is null) s.image.texture.destroy();
         }
     }
 }

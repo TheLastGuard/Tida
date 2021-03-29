@@ -19,16 +19,12 @@ class VertexInfo
         uint _idElemenArr;
 
         uint bufferLength;
-        float[] buffer;
-        uint[] elem;
     }
 
     auto generateFromBuffer(float[] buffer) @safe nothrow
     in(!buffer.empty, "Buffer is empty!")
     body
     {
-        this.buffer = buffer;
-
         GL3.genVertexArrays(_idVertexArr);
         GL3.genBuffers(_idBufferArr);
         GL3.bindVertexArray(_idVertexArr);
@@ -49,9 +45,6 @@ class VertexInfo
     in(!elem.empty, "Element array is empty!")
     body
     {
-        this.buffer = buffer;
-        this.elem = elem;
-
         GL3.genVertexArrays(_idVertexArr);
         GL3.genBuffers(_idBufferArr);
         GL3.bindVertexArray(_idVertexArr);
@@ -198,7 +191,7 @@ body
     }
 }
 
-VertexInfo generateVertex(const(Shape) shape, Vecf position = Vecf(0, 0)) @safe nothrow
+VertexInfo generateVertex(const(Shape) shape, Vecf position = Vecf(0, 0)) @trusted
 {
     float[] buffer;
 
@@ -215,7 +208,11 @@ VertexInfo generateVertex(const(Shape) shape, Vecf position = Vecf(0, 0)) @safe 
                         ];
 
         info = new VertexInfo().generateFromElemBuff(buffer, elem);
+
+        destroy(elem);
     }
+
+    destroy(buffer);
 
     return info;
 }

@@ -13,10 +13,6 @@ static immutable Red = 0; /// Red component
 static immutable Green = 1; /// Green component
 static immutable Blue = 2; /// Blue component
 
-static immutable Parallel = 0;
-static immutable NoParallel = 1;
-enum DefaultOperation = Parallel;
-
 template isCorrectComponent(int cmp)
 {
     enum isCorrectComponent = cmp == Red || cmp == Green || cmp == Blue;
@@ -192,27 +188,11 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     +/
     void blit(int Type = DefaultOperation)(Image otherImage,Vecf pos) @trusted
     {
-        static if(Type == NoParallel)
+        foreach(x,y; Coord!Type(pos.intX + otherImage.width,pos.intY + otherImage.height,pos.intX,pos.intY))
         {
-            foreach(x,y; Coord(pos.intX + otherImage.width,pos.intY + otherImage.height,pos.intX,pos.intY))
-            {
-                setPixel(x,y,otherImage.getPixel(x - pos.intX,y - pos.intY));
-            }
-        }else
-        static if(Type == Parallel)
-        {
-            import std.parallelism, std.range;
-
-            foreach(x; parallel(iota(pos.intX,pos.intX + otherImage.width)))
-            {
-                foreach(y; parallel(iota(pos.intY,pos.intY + otherImage.height)))
-                {
-                    setPixel(x,y,otherImage.getPixel(x - pos.intX,y - pos.intY));
-                }
-            }
+            setPixel(x,y,otherImage.getPixel(x - pos.intX,y - pos.intY));
         }
     }
-
 
     /++
         Redraws the part to a new picture.
@@ -229,30 +209,12 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
 
         image.create(cWidth,cHeight);
 
-        static if(Type == NoParallel)
+        foreach(ix,iy; Coord!Type(x + cWidth,y + cHeight,x,y))
         {
-            foreach(ix,iy; Coord(x + cWidth,y + cHeight,x,y))
-            {
-                image.setPixel(
-                    ix - x, iy - y,
-                    this.getPixel(ix,iy)
-                );
-            }
-        }else
-        static if(Type == Parallel)
-        {
-            import std.parallelism, std.range;
-
-            foreach(ix; parallel(iota(x,x + cWidth)))
-            {
-                foreach(iy; parallel(iota(y,y + cHeight)))
-                {
-                    image.setPixel(
-                        ix - x, iy - y,
-                        this.getPixel(ix,iy)
-                    );
-                }
-            }
+            image.setPixel(
+                ix - x, iy - y,
+                this.getPixel(ix,iy)
+            );
         }
 
         return image;
@@ -424,7 +386,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     {
         import std.algorithm : each;
 
-        _pixels.each!((ref e) => e.alpha = value);
+        _pixels.each!((ref e) => e.alpha = e.alpha > 0 ? value : e.alpha);
 
         return this;
     }
@@ -550,59 +512,6 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             fun(pixel);
     }
 
-    Shader!Program initShader(IRenderer renderer) @safe
-    {
-        Shader!Program shader;
-
-        if(renderer.currentShader is null)
-        {
-            if((shader = renderer.getShader("DefaultImage")) is null) {
-                Shader!Vertex vertex = new Shader!Vertex()
-                    .bindSource(
-                    `
-                    #version 130
-                    in vec3 position;
-                    in vec2 aTexCoord;
-                    uniform mat4 projection;
-                    uniform mat4 model;
-
-                    out vec2 TexCoord;
-
-                    void main() {
-                        gl_Position = projection * model * vec4(position.xy, 0.0f, 1.0f);
-                        TexCoord = aTexCoord;
-                    }
-                    `);
-
-                Shader!Fragment fragment = new Shader!Fragment()
-                    .bindSource(
-                    `
-                    #version 130
-                    in vec2 TexCoord;
-                    uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-                    uniform sampler2D ourTexture;
-
-                    void main() {
-                        gl_FragColor = texture(ourTexture, TexCoord) * color;
-                    }
-                    `
-                    );
-
-                shader = new Shader!Program()
-                    .attach(vertex)
-                    .attach(fragment)
-                    .link();
-
-                renderer.setShader("DefaultImage", shader);
-            }
-        } else {
-            shader = renderer.currentShader;
-        }
-
-        return shader;
-    }
-
     override string toString()
     {
         import std.conv : to;
@@ -612,86 +521,12 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
 
     override void draw(IRenderer renderer,Vecf position) @trusted
     {
+        import tida.graph.vertgen, tida.graph.matrix, std.exception;
+
         if(renderer.type == RenderType.OpenGL)
         {
-            GL.color = rgb(255,255,255);
-
-            GL.bindTexture(texture.glID);
-            GL.enable(GL_TEXTURE_2D);
-
-            GL.draw!Rectangle({
-                GL.texCoord2i(0,0); GL.vertex(position);
-                GL.texCoord2i(0,1); GL.vertex(position + Vecf(0,height));
-                GL.texCoord2i(1,1); GL.vertex(position + Vecf(width,height));
-                GL.texCoord2i(1,0); GL.vertex(position + Vecf(width,0));
-            });
-
-            GL.disable(GL_TEXTURE_2D);
-            GL.bindTexture(0);
-        }else
-        if(renderer.type == RenderType.ModernOpenGL)
-        {
-            import tida.graph.vertgen;
-            import tida.graph.matrix;
-            import tida.graph.shader;
-
-            auto shader = initShader(renderer);
-
-            Shape shape = Shape.Rectangle(position, position + Vecf(width, height));
-            
-            auto size = Vecf(width, height);
-
-            float[] buffer =    [
-                                    position.x + size.x, position.y,          0.0f,     1.0f, 0.0f,
-                                    position.x + size.x, position.y + size.y, 0.0f,     1.0f, 1.0f,
-                                    position.x, position.y + size.y,          0.0f,     0.0f, 1.0f,
-                                    position.x, position.y,                   0.0f,     0.0f, 0.0f        
-                                ];
-
-            uint[] elem =   [
-                0, 1, 3,
-                1, 2, 3
-            ];
-
-            auto vid = new VertexInfo().generateFromElemBuff(buffer, elem);
-
-            vid.bindVertexArray();
-            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
-            GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, vid.idElementArray);
-
-            GL3.enableVertexAttribArray(shader.getAttribLocation("position"));
-            GL3.vertexAttribPointer(shader.getAttribLocation("position"), 3, GL_FLOAT, false, 5 * float.sizeof, null);
-
-            GL3.enableVertexAttribArray(shader.getAttribLocation("aTexCoord"));
-            GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 5 * float.sizeof, 
-                cast(void*) (3 * float.sizeof));
-
-            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
-            GL3.bindVertexArray(0);
-
-            shader.using();
-            vid.bindVertexArray();
-
-            auto model = identity();
-
-            auto proj = (cast(GLRender) renderer).projection();
-
-            shader.setUniform("projection", proj);
-            shader.setUniform("model", model);
-            shader.setUniform("color", rgb(255, 255, 255));
-
-            GL3.activeTexture(_texture.glID);
-            _texture.bind();
-            
-            GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
-
-            GL.bindTexture(0);
-
-            GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
-            GL3.bindVertexArray(0);
-
-            vid.deleting();
+            enforce(texture, "Texture is not create!");
+            texture.draw(renderer, position);
         }else
         if(renderer.type == RenderType.Soft)
         {
@@ -702,102 +537,12 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
 
     override void drawEx(IRenderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha,Color!ubyte color) @trusted
     {
+        import std.exception, tida.graph.vertgen, tida.graph.matrix, tida.angle;
+
         if(renderer.type == RenderType.OpenGL)
         {
-            GL.color = rgba(color.r,color.g,color.b,alpha);
-
-            GL.bindTexture(texture.glID);
-            GL.enable(GL_TEXTURE_2D);
-
-            GL.loadIdentity();
-            GL.translate(position.x + center.x,position.y + center.y,0);
-            GL.rotate(angle,0f,0f,1f);
-            GL.translate(-(position.x + center.x),-(position.y + center.y),0);
-
-            GL.draw!Rectangle({
-                GL.texCoord2i(0,0); GL.vertex(position);
-                GL.texCoord2i(0,1); GL.vertex(position + Vecf(0,size.y));
-                GL.texCoord2i(1,1); GL.vertex(position + size);
-                GL.texCoord2i(1,0); GL.vertex(position + Vecf(size.x,0));
-            });
-
-            GL.color = rgba(255,255,255,255);
-
-            GL.disable(GL_TEXTURE_2D);
-            GL.bindTexture(0);
-
-            GL.loadIdentity();
-        }else
-        if(renderer.type == RenderType.ModernOpenGL)
-        {
-            import tida.graph.vertgen;
-            import tida.graph.shader;
-            import tida.graph.matrix;
-            import tida.angle;
-
-            auto shader = initShader(renderer);
-
-            Shape shape = Shape.Rectangle(position, position + Vecf(width, height));
-
-            float[] buffer =    [
-                                    position.x + size.x, position.y,          0.0f,     1.0f, 0.0f,
-                                    position.x + size.x, position.y + size.y, 0.0f,     1.0f, 1.0f,
-                                    position.x, position.y + size.y,          0.0f,     0.0f, 1.0f,
-                                    position.x, position.y,                   0.0f,     0.0f, 0.0f        
-                                ];
-
-            uint[] elem =   [
-                0, 1, 3,
-                1, 2, 3
-            ];
-
-            auto vid = new VertexInfo().generateFromElemBuff(buffer, elem);
-
-            vid.bindVertexArray();
-            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
-            GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, vid.idElementArray);
-
-            GL3.enableVertexAttribArray(shader.getAttribLocation("position"));
-            GL3.vertexAttribPointer(shader.getAttribLocation("position"), 3, GL_FLOAT, false, 5 * float.sizeof, null);
-
-            GL3.enableVertexAttribArray(shader.getAttribLocation("aTexCoord"));
-            GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 5 * float.sizeof, 
-                cast(void*) (3 * float.sizeof));
-
-            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
-            GL3.bindVertexArray(0);
-
-            shader.using();
-            vid.bindVertexArray();
-
-            auto proj = (cast(GLRender) renderer).projection();
-
-            auto projVec = Vecf(proj[0][0], proj[1][1]);
-
-            center += position;
-
-            float[4][4] model = identity();
-            
-            model = model.translate(-center.x, -center.y, 0.0f);
-            model = model.rotateMat(angle.from!(Degrees, Radians), 0.0f, 0.0f, 1.0f);
-            model = model.translate(center.x, center.y, 0.0f);
-
-            shader.setUniform("projection", proj);
-            shader.setUniform("model", model);
-            shader.setUniform("color", rgba(255, 255, 255, alpha));
-
-            GL3.activeTexture(_texture.glID);
-            _texture.bind();
-            
-            GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
-
-            GL.bindTexture(0);
-
-            GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
-            GL3.bindVertexArray(0);
-
-            vid.deleting();
+            enforce(texture, "Texture is not create!");
+            texture.drawEx(renderer, position, angle, center, size, alpha, color);
         }else
         if(renderer.type == RenderType.Soft)
         {
@@ -815,7 +560,10 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             {
                 foreach(x,y; Coord(_width,_height))
                 {
-                    renderer.point(Vecf(x,y) + position,getPixel(x,y));
+                    auto colorpos = getPixel(x,y);
+                    if(colorpos.a != 0) colorpos.a = alpha;
+
+                    renderer.point(Vecf(x,y) + position,colorpos);
                 }
             }else
             {
@@ -824,9 +572,12 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
                 foreach(x,y; Coord(_width,_height))
                 {
                     auto pos = Vecf(position.intX + x,position.intY + y)
-                        .rotate(angle.from!(Degrees,Radians), position + center);
+                        .rotate(angle, position + center);
 
-                    renderer.point(pos,getPixel(x,y));
+                    auto colorpos = getPixel(x,y);
+                    if(colorpos.a != 0) colorpos.a = alpha;
+
+                    renderer.point(pos,colorpos);
                 }
             }
         }
@@ -834,85 +585,12 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
 
     override void drawColor(IRenderer renderer,Vecf position,Color!ubyte color) @trusted
     {
+        import std.exception, tida.graph.vertgen, tida.graph.matrix, tida.angle;
+
         if(renderer.type == RenderType.OpenGL)
         {
-            GL.color = color;
-
-            GL.bindTexture(texture.glID);
-            GL.enable(GL_TEXTURE_2D);
-
-            GL.draw!Rectangle({
-                GL.texCoord2i(0,0); GL.vertex(position);
-                GL.texCoord2i(0,1); GL.vertex(position + Vecf(0,height));
-                GL.texCoord2i(1,1); GL.vertex(position + Vecf(width,height));
-                GL.texCoord2i(1,0); GL.vertex(position + Vecf(width,0));
-            });
-
-            GL.disable(GL_TEXTURE_2D);
-            GL.bindTexture(0);
-        }else
-        if(renderer.type == RenderType.ModernOpenGL)
-        {
-            import tida.graph.vertgen;
-            import tida.graph.matrix;
-            import tida.graph.shader;
-
-            auto shader = initShader(renderer);
-
-            
-            auto size = Vecf(width, height);
-
-            float[] buffer =    [
-                                    position.x + size.x, position.y,          0.0f,     1.0f, 0.0f,
-                                    position.x + size.x, position.y + size.y, 0.0f,     1.0f, 1.0f,
-                                    position.x, position.y + size.y,          0.0f,     0.0f, 1.0f,
-                                    position.x, position.y,                   0.0f,     0.0f, 0.0f        
-                                ];
-
-            uint[] elem =   [
-                0, 1, 3,
-                1, 2, 3
-            ];
-
-            auto vid = new VertexInfo().generateFromElemBuff(buffer, elem);
-
-            vid.bindVertexArray();
-            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
-            GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, vid.idElementArray);
-
-            GL3.enableVertexAttribArray(shader.getAttribLocation("position"));
-            GL3.vertexAttribPointer(shader.getAttribLocation("position"), 3, GL_FLOAT, false, 5 * float.sizeof, null);
-
-            GL3.enableVertexAttribArray(shader.getAttribLocation("aTexCoord"));
-            GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 5 * float.sizeof, 
-                cast(void*) (3 * float.sizeof));
-
-            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
-            GL3.bindVertexArray(0);
-
-            GL3.activeTexture(_texture.glID);
-            _texture.bind();
-
-            shader.using();
-            vid.bindVertexArray();
-
-            auto model = identity();
-
-            auto proj = (cast(GLRender) renderer).projection();
-
-            shader.setUniform("projection", proj);
-            shader.setUniform("model", model);
-            shader.setUniform("color", color);
-            
-            GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
-
-            GL.bindTexture(0);
-
-            GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
-            GL3.bindVertexArray(0);
-
-            vid.deleting();
+            enforce(texture, "Texture is not create!");
+            texture.drawColor(renderer, position, color);
         }else
         if(renderer.type == RenderType.Soft)
         {
@@ -1075,54 +753,8 @@ Image[] strip(Image image,int x,int y,int w,int h) @safe
 
 import tida.vector;
 
-/++
-    Combines two pictures, for example, if they are both of low transparency, you can create a single picture.
-
-    Params:
-        a = First image.
-        b = Second image.
-        posA = Position combines first image.
-        posB = Position combines second image.
-
-    Returns: Unites images
-+/
-Image uniteWP(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @safe
-{ 
-    import std.algorithm, std.conv;
-    import tida.color;
-
-    Image result = new Image();
-    
-    int width = int.init,
-        height = int.init;
-
-    width = (posA.x + a.width > posB.x + b.width) ? posA.x.to!int + a.width : posB.x.to!int + b.width;
-    height = (posA.y + a.height > posB.y + b.height) ? posA.y.to!int + a.height : posB.x.to!int + b.height;
-
-    result.create(width,height);
-    result.fill(rgba(0,0,0,0));
-
-    for(int x = posA.x.to!int; x < posA.x.to!int + a.width; x++) {
-        for(int y = posA.y.to!int; y < posA.y.to!int + a.height; y++) {
-            Color!ubyte color = a.getPixel(x - posA.x.to!int, y - posA.y.to!int);
-            result.setPixel(x,y,color);
-        }
-    }
-
-    for(int x = posB.x.to!int; x < posB.x.to!int + b.width; x++) {
-        for(int y = posB.y.to!int; y < posB.y.to!int + b.height; y++) {
-            Color!ubyte color = b.getPixel(x - posB.x.to!int, y - posB.y.to!int);
-            Color!ubyte backColor = result.getPixel(x,y);
-            color.colorize!Alpha(backColor);
-            result.setPixel(x,y,color);
-        }
-    }
-
-    return result;
-}
-
 /// ditto
-Image uniteParallel(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @trusted
+Image unite(int Type = DefaultOperation)(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @trusted
 {
     import std.algorithm, std.conv, std.range, std.parallelism;
     import tida.color;
@@ -1141,20 +773,20 @@ Image uniteParallel(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0))
     result.create(width,height);
     result.fill(rgba(0,0,0,0));
 
-    foreach(x; parallel(iota(posA.x.to!int, posA.x.to!int + a.width))) {
-        foreach(y; parallel(iota(posA.y.to!int, posA.y.to!int + a.height))) {
-            Color!ubyte color = a.getPixel(x - posA.x.to!int, y - posA.y.to!int);
-            result.setPixel(x,y,color);
-        }
+    foreach(x, y; Coord!Type(posA.x.to!int + a.width, posA.y.to!int + a.height,
+                             posA.x.to!int, posA.y.to!int))
+    {
+        Color!ubyte color = a.getPixel(x - posA.x.to!int, y - posA.y.to!int);
+        result.setPixel(x,y,color);
     }
 
-    foreach(x; parallel(iota(posB.x.to!int, posB.x.to!int + b.width))) {
-        foreach(y; parallel(iota(posB.y.to!int, posB.y.to!int + b.height))) {
-            Color!ubyte color = b.getPixel(x - posB.x.to!int, y - posB.y.to!int);
-            Color!ubyte backColor = result.getPixel(x,y);
-            color.colorize!Alpha(backColor);
-            result.setPixel(x,y,color);
-        }
+    foreach(x, y; Coord!Type(posB.x.to!int + b.width, posB.y.to!int + b.height,
+                             posB.x.to!int, posB.y.to!int))
+    {
+        Color!ubyte color = b.getPixel(x - posB.x.to!int, y - posB.y.to!int);
+        Color!ubyte backColor = result.getPixel(x,y);
+        color.colorize!Alpha(backColor);
+        result.setPixel(x,y,color);
     }
 
     return result;
@@ -1182,8 +814,8 @@ float[][] gausKernel(int width,int height,float sigma) @safe
     {
         foreach(j; 0 .. width)
         {
-            result[i][j] = exp(-(i * i + j * j) / (2 * sigma * sigma) / (2 * M_PI * sigma * sigma));
-            sum += result[i][j];
+            result[j][i] = exp(-(i * i + j * j) / (2 * sigma * sigma) / (2 * M_PI * sigma * sigma));
+            sum += result[j][i];
         }
     }
 
@@ -1191,7 +823,7 @@ float[][] gausKernel(int width,int height,float sigma) @safe
     {
         foreach(j; 0 .. width)
         {
-            result[i][j] /= sum;
+            result[j][i] /= sum;
         }
     }
 
@@ -1210,64 +842,42 @@ float[][] gausKernel(float r) @safe
 }
 
 /++
-    Blurs the picture by the specified factor.
+    Applies blur.
 
     Params:
-        image = Blurse image.
-        otherKernel = Matrix.
+        Type = Operation type.
+        image = Image.
+        r = radius gaus kernel.
 +/
-Image blurWP(Image image,float[][] otherKernel) @safe
+Image blur(int Type = DefaultOperation)(Image image,float r) @trusted
 {
-    import tida.color;
-    import tida.graph.each;
-
-    auto kernel = otherKernel; 
-    
-    int width = image.width;
-    int height = image.height;
-
-    int kernelWidth = cast(int) kernel.length;
-    int kernelHeight = cast(int) kernel[0].length;
-
-    Image result = new Image(width,height);
-    result.fill(rgba(0,0,0,0));
-
-    foreach(x,y; Coord(width, height))
-    {
-        Color!ubyte color = rgb(0,0,0);
-
-        foreach(ix,iy; Coord(kernelWidth, kernelHeight))
-        {
-            color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy) * kernel[ix][iy]);
-        }
-
-        color.a = image.getPixel(x,y).a;
-        result.setPixel(x,y,color);
-    }
-
-    return result;
+    return blur!Type(image, gausKernel(r));
 }
 
 /++
-    Blurs the picture by the specified factor.
+    Apolies blur.
 
     Params:
-        image = Blurse image.
-        k = Factor.
+        Type = Operation type.
+        image = Image.
+        width = gaus kernel width.
+        height = gaus kernel height.
+        r = radius gaus kernel.
 +/
-Image blurWP(Image image,float k) @safe
+Image blur(int Type = DefaultOperation)(Image image,int width,int height,float r) @trusted
 {
-    return blur(image, gausKernel(k));
+    return blur!Type(image,gausKernel(width,height,r));
 }
 
 /++
-    Applies blur using parallel computation.
+    Applies blur.
 
     Params:
+        Type = Operation type.
         image = Image.
         otherKernel = Filter kernel.
 +/
-Image blurParallel(Image image,float[][] otherKernel) @trusted
+Image blur(int Type = DefaultOperation)(Image image,float[][] otherKernel) @trusted
 {
     import tida.color;
     import tida.graph.each;
@@ -1284,63 +894,32 @@ Image blurParallel(Image image,float[][] otherKernel) @trusted
     Image result = new Image(width,height);
     result.fill(rgba(0,0,0,0));
 
-    foreach(x; parallel(iota(0,width)))
+    foreach(x, y; Coord!Type(width, height))
     {
-        foreach(y; parallel(iota(0,height)))
+        Color!ubyte color = rgb(0,0,0);
+
+        foreach(ix,iy; Coord(kernelWidth, kernelHeight))
         {
-            Color!ubyte color = rgb(0,0,0);
-
-            foreach(ix,iy; Coord(kernelWidth, kernelHeight))
-            {
-                color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy).mul(kernel[ix][iy]));
-            }
-
-            color.a = image.getPixel(x,y).a;
-            result.setPixel(x,y,color);
+            color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy).mul(kernel[ix][iy]));
         }
+
+        color.a = image.getPixel(x,y).a;
+        result.setPixel(x,y,color);
     }
 
     return result;
 }
 
-/++
-    Applies blur using parallel computation.
+import tida.color, tida.graph.each;
 
-    Params:
-        image = Image.
-        k = Factor.
-+/
-Image blurParallel(Image image,float k) @safe
+Image process(int Type = DefaultOperation)(Image image, void delegate(ref Color!ubyte,const Vecf) @safe func) @safe
 {
-    return blurParallel(image, gausKernel(k));
-}
+    foreach(x, y; Coord!Type(image.width, image.height)) 
+    {
+        Color!ubyte color = image.getPixel(x, y);
+        func(color, Vecf(x, y));
+        image.setPixel(x, y, color);
+    }
 
-/++
-    Applies blur in image.
-
-    Params:
-        Type = Is parallel operation? (Parallel/NoParallel)
-+/
-template blur(int Type = DefaultOperation)
-{
-    static if(Type == Parallel)
-        alias blur = blurParallel;
-    else
-    static if(Type == NoParallel)
-        alias blur = blurWP;
-}
-
-/++
-    Combines two pictures, for example, if they are both of low transparency, you can create a single picture.
-
-    Params:
-        Type = Is parallel operation? (Parallel/NoParallel)
-+/
-template unite(int Type = DefaultOperation)
-{
-    static if(Type == Parallel)
-        alias unite = uniteParallel;
-    else
-    static if(Type == NoParallel)
-        alias unite = uniteWP;
+    return image;
 }

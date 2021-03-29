@@ -17,6 +17,7 @@ class Sprite : IDrawable
     import tida.game.animation;
     import tida.graph.render;
     import tida.vector;
+    import tida.graph.shader;
 
     public
     {
@@ -49,6 +50,9 @@ class Sprite : IDrawable
 
         /// An array of other sprites to create a single picture.
         Sprite[] skelet;
+
+        /// Shader
+        Shader!Program shader;
     }
 
     override void draw(IRenderer renderer, Vecf otherPosition) @safe
@@ -57,6 +61,7 @@ class Sprite : IDrawable
 
         if(ofimage !is null)
         {
+            if(shader !is null) renderer.currentShader = shader;
             renderer.drawEx(ofimage,
             this.position + otherPosition,angle,center,Vecf(
                                         width == 0 ? ofimage.width : width, 

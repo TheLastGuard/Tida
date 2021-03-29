@@ -17,6 +17,23 @@ float[4][4] identity() @safe nothrow pure
             ];
 }
 
+float[4][4] scaleMat(float x, float y) @safe nothrow pure
+{
+    float[] v = [x, y, 1.0f, 1.0f];
+    float[4][4] mat = identity();
+
+    for (int i = 0; i < 4; ++i)
+        for (int j = 0; j + 1 < 4; ++j)
+            mat[i][j] *= v[j];
+
+    return mat;
+}
+
+float[4][4] scale(float[4][4] mat, float x, float y) @safe nothrow pure
+{
+    return mulmat(mat, scaleMat(x, y));
+}
+
 ///
 float[4][4] translation(float x, float y, float z) @safe nothrow pure
 {

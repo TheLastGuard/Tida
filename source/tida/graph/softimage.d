@@ -110,9 +110,7 @@ class SoftImage : IPlane
             int w = cast(int) _width / _pwidth + 1;
             int h = cast(int) _height / _pheight + 1;
 
-            import std.stdio;
-
-            position =  Vecf(position.x / scaleWidth, position.y / scaleHeight);
+            position = Vecf(position.x / scaleWidth, position.y / scaleHeight);
 
             Color!ubyte original = color;
 

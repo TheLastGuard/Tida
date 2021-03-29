@@ -263,6 +263,8 @@ class Shader(int Type)
 
     void destroy() @safe
     {
+        import std.stdio;
+
         static if(isProgram!Type)
         {
             GL3.deleteProgram(_id);

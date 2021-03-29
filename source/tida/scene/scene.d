@@ -116,17 +116,20 @@ class Scene
             instance = Instance.
             threadID = In which thread to add execution.
     +/
-    void add(Instance instance,size_t threadID = 0) @safe
+    void add(T)(T instance,size_t threadID = 0) @safe
+    in(isInstance!T,"This is not a instance!")
     in(instance,"Instance is not create!")
     body
     {  
-        if(threadID > bufferThread.length) threadID = 0;
+        if(threadID >= bufferThread.length) threadID = 0;
 
         this.instances ~= instance;
         instance.id = this.instances.length - 1;
         instance.threadID = threadID;
 
         bufferThread[threadID] ~= instance;
+
+        sceneManager.InstanceHandle!T(this, instance);
 
         this.sort();
     }
@@ -146,8 +149,6 @@ class Scene
     body
     {
         auto instance = new Name();
-
-        sceneManager.InstanceHandle!Name(this, instance);
 
         add(instance,threadID);
     }
@@ -205,7 +206,7 @@ class Scene
     }
 
     ///
-    void worldCollision() @safe 
+    void worldCollision() @trusted
     {
         import tida.game.collision;
 
@@ -214,6 +215,8 @@ class Scene
                 if(first !is second && first.solid && second.solid) {
                     if(first.active && second.active)
                     {
+                        import std.algorithm : canFind;
+
                         if(
                             isCollide(  first.mask,
                                         second.mask,
@@ -222,6 +225,48 @@ class Scene
                         ) {
                             first.collision(second);
                             second.collision(first);
+                            
+                            auto coll = sceneManager.colliders;
+                            
+                            if(first in coll) {
+                                foreach(cls; coll[first]) {
+                                    if(cls.ev.name != "") {
+                                        if(cls.ev.name == second.name) {
+                                            if(cls.ev.tag != "") {
+                                                if(second.tags.canFind(cls.ev.tag)) {
+                                                    cls.fun(second);
+                                                }
+                                            }else
+                                                cls.fun(second);
+                                        }
+                                    }else {
+                                        if(cls.ev.tag != "") {
+                                            if(second.tags.canFind(cls.ev.tag)) {
+                                                cls.fun(second);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(second in coll) {
+                                foreach(cls; coll[second]) {
+                                    if(cls.ev.name != "") {
+                                        if(cls.ev.name == first.name) {
+                                            if(cls.ev.tag != "") {
+                                                if(first.tags.canFind(cls.ev.tag)) {
+                                                    cls.fun(first);
+                                                }
+                                            }else
+                                                cls.fun(first);
+                                        }
+                                    }else {
+                                        if(first.tags.canFind(cls.ev.tag)) {
+                                            cls.fun(first);
+                                        }
+                                    }
+                                }
+                            }
                         } else {
                             first.collision(null);
                             second.collision(null);
@@ -269,6 +314,8 @@ class Scene
         instance.eventDestroy(type);
         this.eventDestroy(instance);
 
+        sceneManager.RemoveHandle(this, instance);
+
         static if(type == InMemory)
             destroy(instance);
     }
@@ -287,6 +334,7 @@ class Scene
     +/
     void instanceDestroy(ubyte type,Name)() @trusted
     in(isInstance!Name)
+    body
     {
         instanceDestroy!type(getInstanceByClass!Name);
     }

@@ -24,6 +24,12 @@
         {
             ...
         }
+
+        @CollisionEvent("NameObject", "Tag")
+        void onCollision(Instance other) @safe
+        {
+
+        }
     }
     ---
 
@@ -55,4 +61,15 @@ enum : int
 struct FunEvent(int Type)
 {
 
+}
+
+struct CollisionEvent
+{
+    string name;
+    string tag = "";
+}
+
+struct TriggerEvent
+{
+    string name;
 }

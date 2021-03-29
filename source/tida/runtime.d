@@ -138,9 +138,11 @@ class TidaRuntime : ITidaRuntime
 
     private void xDisplayOpen() @trusted
     {
+        import std.exception : enforce;
+
         xDisplay = XOpenDisplay(null);
 
-        assert(xDisplay,"Failed to connect to x11 server!");
+        enforce(xDisplay,"Failed to connect to x11 server!");
 
         xDisplayID = DefaultScreen(xDisplay);
     }
@@ -199,11 +201,11 @@ class TidaRuntime : ITidaRuntime
 
         if(libstr.freeType) FreeTypeLoad();
 
-            if(libstr.openAL) {
-                InitSoundLibrary();
-                device = new Device();
-                device.open();
-            }
+        if(libstr.openAL) {
+            InitSoundLibrary();
+            device = new Device();
+            device.open();
+        }
     }
 
     this(string[] mainArguments) @safe
@@ -218,9 +220,11 @@ class TidaRuntime : ITidaRuntime
 
     private void instanceOpen() @trusted
     {
+        import std.exception : enforce;
+
         hInstance = GetModuleHandle(null);
 
-        assert(hInstance, "hInstance is not open!");
+        enforce(hInstance, "hInstance is not open!");
     }
 
     HINSTANCE instance() @safe nothrow

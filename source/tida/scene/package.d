@@ -11,5 +11,6 @@ public
     import  tida.scene.component,
             tida.scene.instance,
             tida.scene.manager,
-            tida.scene.scene;
+            tida.scene.scene,
+            tida.scene.event;
 }

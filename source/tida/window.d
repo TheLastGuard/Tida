@@ -292,8 +292,10 @@ interface IWindow
     /// Window height.
     uint height() @safe @property;
 
+    /// Destroys the window instance.
     void destroyWindow() @safe;
 
+    /// Manual call to resize the window.
     void eventResize(uint[2] size) @safe;
 }
 
@@ -314,6 +316,7 @@ class Context : IContext
     in(glxIsLoad,"GLX libraries were not loaded!")
     {
         import std.conv : to;
+        import std.exception : enforce;
 
         int[] glxAttribs = 
             [
@@ -334,7 +337,7 @@ class Context : IContext
         int fbcount;
         auto fbc = glXChooseFBConfig(runtime.display,runtime.displayID,glxAttribs.ptr,&fbcount);
         
-        assert(fbc, "fbc was not found!");
+        enforce(fbc, "fbc was not found!");
 
         int bestFbc = -1, bestNum = -1;
         foreach(int i; 0 .. fbcount)
@@ -480,16 +483,12 @@ class Window : IWindow
         static if(Type == ContextIn)
         {
             _context = new Context();
-            _context.attributeInitialize(GLAttributes());
+            _context.attributeInitialize(GLAttribAutoColorSize!8);
 
             scope Visual* visual = (cast(Context) _context).visualInfo.visual;
             int depth = (cast(Context) _context).visualInfo.depth;
 
-            XVisualInfo* info = new XVisualInfo();
-            info.visual = visual;
-            info.depth = depth;
-
-            createFromXVisual(info);
+            createFromXVisual((cast(Context) _context).visualInfo);
 
             _context.initialize();
 
