@@ -592,9 +592,9 @@ class SceneManager
 
         foreach(s; scenes)
         {
-            if((scene = s.from!Name) !is null)
+            if(s.from!Name !is null)
             {
-                gotoin(scene);
+                gotoin(s);
 
                 break;
             }

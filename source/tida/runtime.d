@@ -17,8 +17,8 @@ struct LibraryLoader
     version(Posix) bool glx = true; /// GLX
 }
 
-enum NoLibrary = LibraryLoader(false,false);
-enum AllLibrary = LibraryLoader(true,true);
+enum NoLibrary = LibraryLoader(false,false); /// Without library
+enum AllLibrary = LibraryLoader(true,true); // With library
 
 version(Posix)
 {

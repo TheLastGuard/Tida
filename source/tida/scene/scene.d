@@ -129,7 +129,8 @@ class Scene
 
         bufferThread[threadID] ~= instance;
 
-        sceneManager.InstanceHandle!T(this, instance);
+        if(sceneManager !is null)
+            sceneManager.InstanceHandle!T(this, instance);
 
         this.sort();
     }
@@ -314,7 +315,8 @@ class Scene
         instance.eventDestroy(type);
         this.eventDestroy(instance);
 
-        sceneManager.RemoveHandle(this, instance);
+        if(sceneManager !is null)
+            sceneManager.RemoveHandle(this, instance);
 
         static if(type == InMemory)
             destroy(instance);
@@ -398,8 +400,8 @@ class Scene
 
     unittest
     {
-        class A : Instance {}
-        class B : Instance {}
+        class A : Instance { this() { name = "A"; tags = ["A"]; }}
+        class B : Instance { this() { name = "B"; tags = ["B"]; }}
     	
         Scene scene = new Scene();
     	
@@ -409,6 +411,12 @@ class Scene
     	
         assert(scene.getInstanceByClass!A == a);
         assert(scene.getInstanceByClass!B == b);
+
+        assert(scene.getInstanceByName("A") == a);
+        assert(scene.getInstanceByName("B") == b);
+
+        assert(scene.getInstanceByNameTag("A", "A") == a);
+        assert(scene.getInstanceByNameTag("B", "B") == b);
     }
 
     import tida.shape, tida.vector;
@@ -427,8 +435,22 @@ class Scene
         return null;
     }
 
+    unittest
+    {
+        Scene scene = new Scene();
+
+        Instance    a = new Instance();
+
+        a.mask = Shape.Rectangle(Vecf(0,0), Vecf(32,32));
+        a.solid = true;
+
+        scene.add(a);
+
+        assert(scene.getInstanceByMask(Shape.Line(Vecf(4,4), Vecf(24, 24)), Vecf(0, 0)) is a);
+    }
+
     ///
-    Instance[] getInstacesByMask(Shape shape,Vecf position) @safe
+    Instance[] getInstancesByMask(Shape shape,Vecf position) @safe
     {
         import tida.game.collision;
 

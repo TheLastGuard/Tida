@@ -336,17 +336,6 @@ class Wav
         
         data = dat[44 .. $];
     }
-
-    /// Free memory
-    void free() @trusted
-    {
-        destroy(data);
-    }
-
-    ~this() @trusted
-    {
-        free();
-    }
 }
 
 /++
@@ -371,10 +360,5 @@ class MP3 : Wav
 
         data = cast(ubyte[]) info.buffer[0 .. info.samples].dup;
         free(cast(void*) info.buffer);
-    }
-
-    ~this() @safe
-    {
-        free();
     }
 }

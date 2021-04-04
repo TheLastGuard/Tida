@@ -77,6 +77,8 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
 
     /// ditto
     void pixels(Color!ubyte[] otherPixels) @safe @property nothrow
+    in(otherPixels.length == _pixels.length)
+    body
     {
         _pixels = otherPixels;
     }
@@ -229,7 +231,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             newWidth = Image width.
             newHeight = Image height.
     +/
-    void create(uint newWidth,uint newHeight) @safe nothrow
+    auto create(uint newWidth,uint newHeight) @safe nothrow
     {
         _pixels = new Color!ubyte[](newWidth * newHeight);
 
@@ -237,6 +239,8 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
 
         _width = newWidth;
         _height = newHeight;
+
+        return this;
     }
 
     /++
@@ -345,18 +349,6 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /++
-        Invents the picture by color.
-    +/
-    auto invert() @safe nothrow
-    {
-        import std.algorithm : each;
-
-        _pixels.each!((ref e) => e.invert());
-
-        return this;
-    }
-
-    /++
         Clears the specified color component from the picture.
 
         Params:
@@ -430,42 +422,6 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
                     e.b = 255;
             });
         }
-
-        return this;
-    }
-
-    /++
-        Reverses the picture along the specified axis.
-
-        Params:
-            FlipType = Axis.
-
-        Example:
-        ---
-        image
-            .flip!XAxis
-            .flip!YAxis;
-        ---
-    +/
-    auto flip(int FlipType)() @safe
-    in(isCorrectAxis!FlipType)
-    body
-    {
-        Image image = this.dup();
-
-        static if(FlipType == XAxis) {
-            foreach(x,y; Coord(width,height)) {
-                setPixel(width - x,y, image.getPixel(x,y));
-            }
-        }else
-        static if(FlipType == YAxis)
-        {
-            foreach(x,y; Coord(width,height)) {
-                setPixel(x, height - y, image.getPixel(x,y));
-            }
-        }
-
-        image.freePixels();
 
         return this;
     }
@@ -622,6 +578,69 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 }
 
+Image rotateImage(Image image,float angle,Vecf center = VecfNan) @safe
+{
+    import tida.angle;
+
+    Image rotated = new Image(image.width, image.height).fill(rgba(0,0,0,0));
+
+    if(center.isVecfNan)
+        center = Vecf(image.width / 2, image.height / 2);
+
+    foreach(x,y; Coord(image.width,image.height))
+    {
+        auto pos = Vecf(x,y)
+            .rotate(angle, center);
+
+        auto colorpos = image.getPixel(x,y);
+
+        rotated.setPixel(pos.intX, pos.intY, colorpos);
+    }
+
+    return rotated;
+}
+
+Image invert(Image image) @safe nothrow
+{
+    image.each!((ref e) => e.invert());
+
+    return image;
+}
+
+/++
+    Reverses the picture along the specified axis.
+
+    Params:
+        FlipType = Axis.
+        img = Image.
+
+    Example:
+    ---
+    image
+        .flip!XAxis
+        .flip!YAxis;
+    ---
++/
+Image flip(int FlipType)(Image img) @safe
+in(isCorrectAxis!FlipType)
+body
+{
+    Image image = img.dup();
+
+    static if(FlipType == XAxis) {
+        foreach(x,y; Coord(img.width,img.height)) {
+            image.setPixel(img.width - x,y, img.getPixel(x,y));
+        }
+    }else
+    static if(FlipType == YAxis)
+    {
+        foreach(x,y; Coord(img.width,img.height)) {
+            image.setPixel(x, img.height - y, img.getPixel(x,y));
+        }
+    }
+
+    return image;
+}
 /++
     Save image in file.
 
@@ -649,7 +668,7 @@ import tida.shape;
 
     Returns: Cropped picture.
 +/
-Image shapeCopy(int Type = DefaultOperation)(Shape shape,Image image,Image outImage = null) @safe
+Image shapeCopy(int Type = DefaultOperation)(Image image,Shape shape,Image outImage = null) @safe
 in(shape.type != ShapeType.triangle)
 body
 {
@@ -726,7 +745,7 @@ body
 
         case ShapeType.multi:
             foreach(shapef; shape.shapes) {
-                shapeCopy!Type(shapef, image, copyImage);
+                shapeCopy!Type(image, shapef, copyImage);
             }
         break;
         

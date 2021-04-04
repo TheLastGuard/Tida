@@ -41,6 +41,11 @@ bool isVecfNan(Vecf vec) @safe nothrow pure
     return vec.x.isNaN && vec.y.isNaN;
 }
 
+unittest
+{
+    assert(VecfNan.isVecfNan);
+}
+
 ///
 T sqr(T)(T value) @safe nothrow pure @nogc
 {

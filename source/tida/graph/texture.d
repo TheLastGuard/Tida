@@ -28,7 +28,6 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         uint _width;
         uint _height;
         uint glTextureID;
-        ubyte[] data;
 
         VertexInfo vinfo;
     }
@@ -71,7 +70,6 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         _height = info.height;
 
         ubyte[] bytes = info.bytes.fromFormat!(format, PixelFormat.RGBA);
-        data = bytes;
 
         GL.genTextures(1, glTextureID);
         GL.bindTexture(glTextureID);
