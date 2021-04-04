@@ -899,13 +899,14 @@ class SceneManager
 
             foreach(instance; current.getErentInstances()) {
                 if(instance is null) continue;
-                render.draw(instance.spriteDraw(),instance.position);
+                
+                if(instance.visible) render.draw(instance.spriteDraw(),instance.position);
             }
 
             foreach(instance; current.getErentInstances()) {
                 if(instance is null) continue;
 
-                if(instance.active)
+                if(instance.active && instance.visible)
                 {
                     instance.draw(render);
 
@@ -929,7 +930,8 @@ class SceneManager
                 foreach(instance; current.getList())
                 {
                     if(instance is null) continue;
-                
+                    if(!instance.visible) continue;
+                    
                     instance.drawDebug(render);
                 }
             }
