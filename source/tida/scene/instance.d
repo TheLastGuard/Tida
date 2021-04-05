@@ -189,15 +189,20 @@ class Instance
         Params:
             cmp = Component.
     +/
-    void add(Component cmp) @safe
+    void add(T)(T cmp) @safe
     in
     {
+        assert(isComponent!T);
         assert(cmp,"Component is not create!");
         assert(cmp.getName != "","Give the component a name.");
     }body
     {
+        import tida.scene.manager : sceneManager, SceneManager;
+
         cmp.init(this);
         components ~= cmp;
+
+        sceneManager.ComponentHandle!T(this, cmp);
     }
 
     /++
@@ -210,7 +215,7 @@ class Instance
     in(isComponent!Name,"Its not component!")
     body
     {
-        add(new Name());
+        add!Name(new Name());
     }
 
     /++
@@ -290,12 +295,19 @@ class Instance
     do
     {
         import core.memory;
+        import tida.scene.manager;
 
         Component cmp;
 
         foreach(i; 0 .. components.length) {
             if(components[i].from!Name !is null) {
                 cmp = components[i];
+                cmp.leave();
+                
+                if(sceneManager !is null) {
+                    foreach(fun; sceneManager.leaveComponents[cmp]) fun();
+                }
+
                 components.remove(i);
                 break;
             }

@@ -265,6 +265,7 @@ class SceneManager
     protected
     {
         import std.container, std.range, std.traits;
+        import tida.scene.component : Component;
 
         alias FEInit = void delegate() @safe;
         alias FEStep = void delegate() @safe;
@@ -279,6 +280,8 @@ class SceneManager
         alias FEOnError = void delegate() @safe;
         alias FECollision = void delegate(Instance) @safe;
         alias FETrigger = void delegate() @safe;
+
+        alias FECInit = void delegate(Instance) @safe;
 
         struct SRCollider
         {
@@ -318,11 +321,64 @@ class SceneManager
         Array!FEOnError[Instance] IOnErrorFunctions;
         Array!SRCollider[Instance] IColliderStructs;
         Array!SRTrigger[Instance] IOnTriggerFunctions;
+
+        Array!FEStep[Component] CStepFunctions;
+        Array!FELeave[Component] CLeaveFunctions;
+        Array!FEEventHandle[Component] CEventHandleFunctions;
+        Array!FEDraw[Component] CDrawFunctions;
+        Array!FEOnError[Component] COnErrorFunctions;
+        Array!SRTrigger[Component] COnTriggerFunctions;
+    }
+
+    void ComponentHandle(T)(Instance instance, T component) @trusted
+    in(isComponent!T)
+    body
+    {
+        CStepFunctions[component] = Array!FEStep();
+        CLeaveFunctions[component] = Array!FELeave();
+        CEventHandleFunctions[component] = Array!FEEventHandle();
+        CDrawFunctions[component] = Array!FEDraw();
+        COnErrorFunctions[component] = Array!FEOnError();
+        COnTriggerFunctions[component] = Array!SRTrigger();
+
+        static foreach(member; __traits(allMembers, T)) {
+            static foreach(attrib; __traits(getAttributes, __traits(getMember, component, member)))
+            {
+                static if(is(attrib : FunEvent!Init)) {
+                    auto fun = cast(FECInit) &__traits(getMember, component, member);
+                    fun(instance);
+                } else
+                static if(is(attrib : FunEvent!Step)) {
+                    CStepFunctions[component] ~= &__traits(getMember, component, member);
+                } else
+                static if(is(attrib : FunEvent!Leave)) {
+                    CLeaveFunctions[component] ~= &__traits(getMember, component, member);
+                } else
+                static if(is(attrib : FunEvent!EventHandle)) {
+                    CEventHandleFunctions[component] ~= cast(FEEventHandle) &__traits(getMember, component, member);
+                } else
+                static if(is(attrib : FunEvent!Draw)) {
+                    CDrawFunctions[component] ~= cast(FEDraw) &__traits(getMember, component, member);
+                } else
+                static if(is(attrib : FunEvent!OnError)) {
+                    COnErrorFunctions[component] ~= &__traits(getMember, component, member);
+                } else
+                static if(attrig.stringof[0 .. 12] == "TriggerEvent") {
+                    COnTriggerFunctions[component] ~= SRTrigger(attrib,
+                    cast(FETrigger) &__traits(getMember, component, member));
+                }
+            }
+        }
     }
 
     Array!SRCollider[Instance] colliders() @safe @property
     {
         return IColliderStructs;
+    }
+
+    Array!FELeave[Component] leaveComponents() @safe @property
+    {
+        return CLeaveFunctions;
     }
 
     void RemoveHandle(Scene scene, Instance instance) @trusted
@@ -843,6 +899,12 @@ class SceneManager
                 foreach(component; instance.getComponents())
                 {
                     component.step();
+
+                    if(component in CStepFunctions) {
+                        foreach(fun; CStepFunctions[component]) {
+                            fun();
+                        }
+                    }
                 }
             }
         }
@@ -876,6 +938,12 @@ class SceneManager
                     foreach(component; instance.getComponents())
                     {
                         component.event(event);
+
+                        if(component in CEventHandleFunctions) {
+                            foreach(fun; CEventHandleFunctions[component]) {
+                                fun(event);
+                            }
+                        }
                     }
                 }
             }
@@ -919,6 +987,12 @@ class SceneManager
                     foreach(component; instance.getComponents())
                     {
                         component.draw(render);
+
+                        if(component in CDrawFunctions) {
+                            foreach(fun; CDrawFunctions[component]) {
+                                fun(render);
+                            }
+                        }
                     }
                 }
             }

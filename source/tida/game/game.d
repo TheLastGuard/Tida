@@ -154,6 +154,11 @@ class Game
                 if(listener !is null) listener.eventHandle(event);
             }
 
+            if(sceneManager.apiExit) {
+                exit();
+                return;
+            }
+
             if(listener !is null) listener.timerHandle();
 
             if(sceneManager.apiThreadCreate) {
@@ -165,11 +170,6 @@ class Game
                 }
 
                 sceneManager.apiThreadCreate = false;
-            }
-
-            if(sceneManager.apiExit) {
-                exit();
-                return;
             }
 
             sceneManager.callStep(0,renderer);
@@ -194,12 +194,12 @@ template WindowConfig(int w, int h, string caption)
     enum WindowConfig = GameConfig(w, h, caption);
 }
 
-template GameRun(GameConfig config, T...)
-{
-    import tida.runtime;
+import tida.runtime;
 
+template GameRun(GameConfig config, LibraryLoader ll, T...)
+{
     int main(string[] args) {
-        TidaRuntime.initialize(args);
+        TidaRuntime.initialize(args, ll);
 
         Game game = new Game(config);
 
@@ -213,4 +213,9 @@ template GameRun(GameConfig config, T...)
 
         return 0;
     }
+}
+
+template GameRun(GameConfig config, T...)
+{
+    mixin GameRun!(config, AllLibrary, T);
 }

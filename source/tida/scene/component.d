@@ -22,6 +22,7 @@ class Component
 	void event(IEventHandler event) @safe {}
 	void step() @safe {}
 	void draw(IRenderer render) @safe {}
+	void leave() @safe {}
 
 	final string getName() @safe {return name;}
 }

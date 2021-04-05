@@ -6,6 +6,8 @@
 +/
 module tida.event;
 
+struct Joystick; // TODO: POSIX{/dev/input}
+
 /// Mouse keys.
 enum MouseButton
 {
