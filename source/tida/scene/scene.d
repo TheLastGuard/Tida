@@ -245,6 +245,8 @@ class Scene
                                             if(second.tags.canFind(cls.ev.tag)) {
                                                 cls.fun(second);
                                             }
+                                        } else {
+                                            cls.fun(second);
                                         }
                                     }
                                 }

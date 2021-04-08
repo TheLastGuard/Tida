@@ -61,7 +61,7 @@ class SoftImage : IPlane
             buffer[i] = color.r;
             buffer[i+1] = color.g;
             buffer[i+2] = color.b;
-            buffer[i+3] = 255;
+            buffer[i+3] = color.a;
         }
     }
 

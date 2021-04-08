@@ -202,7 +202,8 @@ class Instance
         cmp.init(this);
         components ~= cmp;
 
-        sceneManager.ComponentHandle!T(this, cmp);
+        if(sceneManager !is null)
+            sceneManager.ComponentHandle!T(this, cmp);
     }
 
     /++

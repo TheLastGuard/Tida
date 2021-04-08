@@ -110,6 +110,11 @@ struct Vector(T)
         return [x, y];
     }
 
+    T[] array() @safe nothrow const pure
+    {
+        return [x, y];
+    }
+
     bool opEquals(Vector a, Vector b) @safe nothrow 
     {
         if (a is b)

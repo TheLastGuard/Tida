@@ -43,6 +43,7 @@ enum ShapeType
     rectangle, /// Rectangle
     circle, /// Circle
     triangle, /// Triangle
+    polygon, /// Polygon
     multi /// Several shapes in one.
 }
 
@@ -58,6 +59,7 @@ struct Shape
         ShapeType type; /// Shape type
         Shape[] shapes; /++ A set of figures. Needed for the type when you need 
                             to make one shape from several. +/
+        Vecf[] data; /// Polygon data
         bool isSolid = false; /// Is the polygon solid?
     }   
 
@@ -126,7 +128,8 @@ struct Shape
 
     /// The end of the figure.
     Vecf end() @safe @property nothrow
-    in(type != ShapeType.point && type != ShapeType.circle,"This shape does not support end coordinates!")
+    in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
+    "This shape does not support end coordinates!")
     body
     {
         return _end;
@@ -158,7 +161,8 @@ struct Shape
 
     /// The end of the figure.
     Vecf end() @safe @property nothrow immutable
-    in(type != ShapeType.point && type != ShapeType.circle,"This shape does not support end coordinates!")
+    in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
+    "This shape does not support end coordinates!")
     body
     {
         return _end;
@@ -166,7 +170,8 @@ struct Shape
 
     /// ditto
     Vecf end() @safe @property nothrow const
-    in(type!= ShapeType.point && type != ShapeType.circle,"This shape does not support end coordinates!")
+    in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
+    "This shape does not support end coordinates!")
     body
     {
         return _end;
@@ -180,7 +185,8 @@ struct Shape
 
     /// The end of the figure.
     void end(Vecf vec) @safe @property nothrow
-    in(type != ShapeType.point && type != ShapeType.circle,"This shape does not support end coordinates!")
+    in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
+        "This shape does not support end coordinates!")
     body
     {
         _end = vec;
@@ -503,7 +509,12 @@ struct Shape
     in(type != ShapeType.point)
     body
     {
-        end = end * k;
+        import std.algorithm : each;
+
+        if(type != ShapeType.polygon)
+            end = end * k;
+        else
+            data.each!((ref e) => e = e * k);
     }
 
     unittest
@@ -517,6 +528,7 @@ struct Shape
     string toString() @safe immutable
     {
         import std.conv : to;
+        import std.algorithm;
 
         if(type == ShapeType.point) {
             return "Shape.Point("~begin.to!string~")";
@@ -535,7 +547,21 @@ struct Shape
                 ", 2:"~vertexs[2].to!string~")";
         }else
         if(type == ShapeType.multi) {
-            return "Shape.Multi(position: "~begin.to!string~", shapesCount: "~shapes.length.to!string~")";
+            string strData;
+
+            foreach(e; shapes)
+                strData ~= e.toString ~ (e == shapes[$-1] ? "" : ",") ~"\n";
+
+            return "Shape.Multi(position: "~begin.to!string~", shapes: [\n" ~ strData ~ "])";
+
+        }else
+        if(type == ShapeType.polygon) {
+            string strData;
+
+            foreach(e; data)
+                strData ~= e.to!string ~ (e == data[$-1] ? "" : ",") ~ "\n";
+
+            return "Shape.Polygon(position: "~begin.to!string~", points: [\n" ~ strData ~ "])";
         }
 
         return "Shape.Unknown()";
@@ -545,6 +571,7 @@ struct Shape
     string toString() @safe 
     {
         import std.conv : to;
+        import std.algorithm;
 
         if(type == ShapeType.point) {
             return "Shape.Point("~begin.to!string~")";
@@ -559,13 +586,40 @@ struct Shape
             return "Shape.Circle(position: "~begin.to!string~", radius: "~radius.to!string~")";
         }else 
         if(type == ShapeType.triangle) {
-            return "Shape.Triangle(0: "~vertex!0.to!string~", 1:"~vertex!1.to!string~", 2:"~vertex!2.to!string~")";
+            return "Shape.Triangle(0: "~vertexs[0].to!string~", 1:"~vertexs[1].to!string~
+                ", 2:"~vertexs[2].to!string~")";
         }else
         if(type == ShapeType.multi) {
-            return "Shape.Multi(position: "~begin.to!string~", shapesCount: "~shapes.length.to!string~")";
+            string strData;
+
+            foreach(e; shapes)
+                strData ~= e.toString ~ (e == shapes[$-1] ? "" : ",") ~"\n";
+
+            return "Shape.Multi(position: "~begin.to!string~", shapes: [\n" ~ strData ~ "])";
+
+        }else
+        if(type == ShapeType.polygon) {
+            string strData;
+
+            foreach(e; data)
+                strData ~= e.toString ~ (e == data[$-1] ? "" : ",") ~ "\n";
+
+            return "Shape.Polygon(position: "~begin.to!string~", points: [\n" ~ strData ~ "])";
         }
 
         return "Shape.Unknown()";
+    }
+
+    // DOCME
+    static Shape Polygon(Vecf[] points,Vecf pos = Vecf(0,0)) @safe nothrow
+    {
+        Shape shape;
+
+        shape.type = ShapeType.polygon;
+        shape.data = points;
+        shape.begin = pos;
+
+        return shape;
     }
 
     /++

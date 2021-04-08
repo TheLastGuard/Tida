@@ -82,6 +82,10 @@ interface IRenderer
     +/
     void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe;
 
+    void triangle(Vecf[3] points,Color!ubyte color,bool isFill) @safe;
+
+    void polygon(Vecf position,Vecf[] points,Color!ubyte color,bool isFill) @safe;
+
     /// Cleans the surface by filling it with color.
     void clear() @safe;
 
@@ -515,6 +519,137 @@ class GLRender : IRenderer
             currentShader.setUniform("color", color);
 
             GL3.drawArrays(GL_LINES, 0, vid.length / 2);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            destroy(vid);
+        }
+
+        resetShader();
+    }
+
+    override void polygon(Vecf position,Vecf[] points,Color!ubyte color,bool isFill) @trusted
+    {
+        import std.algorithm : each;
+
+        points = points.dup;
+        points.each!((ref e) => e = e + position);
+
+        auto currentShader = getShader("Default");
+
+        if(isFill)
+        {
+            auto vid = generateVertex(Shape.Polygon(points));
+
+            vid.bindVertexArray();
+            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
+            GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 3, GL_FLOAT, false, 0, null);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            currentShader.using();
+            vid.bindVertexArray();
+
+            currentShader.setUniform("projection", projection);
+            currentShader.setUniform("color", color);
+
+            GL3.drawArrays(GL_TRIANGLE_FAN, 0, cast(uint) points.length);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            destroy(vid);
+        } else
+        {
+            Shape shape = Shape.Multi([]);
+
+            int next = 0;
+            for(int i = 0; i < points.length; i++)
+            {
+                next = (i + 1 == points.length) ? 0 : i + 1;
+                shape.shapes ~= Shape.Line(points[i], points[next]);
+            }
+
+            auto vid = generateVertex(shape);
+
+            vid.bindVertexArray();
+            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
+            GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 2, GL_FLOAT, false, 0, null);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            currentShader.using();
+            vid.bindVertexArray();
+
+            currentShader.setUniform("projection", projection);
+            currentShader.setUniform("color", color);
+
+            GL3.drawArrays(GL_LINES, 0, cast(uint) points.length * 2);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            destroy(vid);
+        }
+
+        resetShader();
+    }
+
+    override void triangle(Vecf[3] position,Color!ubyte color,bool isFill) @trusted
+    {
+        auto currentShader = getShader("Default");
+
+        if(isFill)
+        {
+            auto vid = generateVertex(Shape.Triangle(position));
+
+            vid.bindVertexArray();
+            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
+            GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 3, GL_FLOAT, false, 0, null);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            currentShader.using();
+            vid.bindVertexArray();
+
+            currentShader.setUniform("projection", projection);
+            currentShader.setUniform("color", color);
+
+            GL3.drawArrays(GL_TRIANGLES, 0, cast(uint) position.length);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            destroy(vid);
+        } else {
+            auto vid = generateVertex(Shape.Multi(  [
+                                                        Shape.Line(position[0], position[1]),
+                                                        Shape.Line(position[1], position[2]),
+                                                        Shape.Line(position[2], position[0])
+                                                    ]));
+
+            vid.bindVertexArray();
+            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
+            GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 3, GL_FLOAT, false, 0, null);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            currentShader.using();
+            vid.bindVertexArray();
+
+            currentShader.setUniform("projection", projection);
+            currentShader.setUniform("color", color);
+
+            GL3.drawArrays(GL_LINES, 0, cast(uint) position.length);
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
@@ -1032,6 +1167,96 @@ class Software : IRenderer
                 continue;
             }
             delta += 2 * (++x - --y);
+        }
+    }
+
+    override void triangle(Vecf[3] position,Color!ubyte color,bool isFill) @trusted
+    {
+        import tida.graph.each;
+
+        if(isFill)
+        {
+            foreach(x, y; Line(position[0], position[1])) {
+                auto p = Vecf(x,y);
+
+                line([p, position[2]], color);
+            }
+        } else
+        {
+            line([position[0], position[1]], color);
+            line([position[1], position[2]], color);
+            line([position[2], position[0]], color);
+        }
+    }
+
+    Vecf lineLineTouch(Vecf[] first, Vecf[] second) @safe
+    {
+        /+
+            float intersectionX = x1 + (uA * (x2-x1));
+            float intersectionY = y1 + (uA * (y2-y1));
+        +/
+
+        const a = first[0];
+        const b = first[1];
+        const c = second[0];
+        const d = second[1];
+
+        const denominator = ((b.X - a.X) * (d.Y - c.Y)) - ((b.Y - a.Y) * (d.X - c.X));
+
+        const numerator1  = ((a.Y - c.Y) * (d.X - c.X)) - ((a.X - c.X) * (d.Y - c.Y));
+        const numerator2  = ((a.Y - c.Y) * (b.X - a.X)) - ((a.X - c.X) * (b.Y - a.Y));
+
+        const r = numerator1 / denominator;
+        const s = numerator2 / denominator;
+
+        if((r >= 0 && r <= 1) && (s >= 0 && s <= 1))
+            return first[0] - ((first[1] - first[0]) * r);
+        else
+            return VecfNan;
+    }
+
+    override void polygon(Vecf position,Vecf[] points,Color!ubyte color,bool isFill) @trusted
+    {
+        import std.algorithm : each;
+        points = points.dup;
+        points.each!((ref e) => e = e + position);
+
+        if(!isFill)
+        {
+            int next = 0;
+            for(int i = 0; i < points.length; i++) {
+                next = (i + 1 == points.length) ? 0 : i + 1;
+                line([points[i],points[next]], color);
+            }
+        } else {
+            import std.algorithm;
+
+            float maxX = points.maxElement!"a.x".x;
+            float minY = points.minElement!"a.y".y;
+            float maxY = points.maxElement!"a.y".y;
+            float minX = points.minElement!"a.x".x;
+
+            Vecf[] drowning;
+
+            foreach(i; minY .. maxY)
+            {
+                int next = 0;
+                for(int j = 0; j < points.length; j++) 
+                {
+                    next = (j + 1 == points.length) ? 0 : j + 1;
+                    auto iteract = lineLineTouch(   [Vecf(minX,i), Vecf(maxX,i)], 
+                                                    [points[j], points[next]]);
+
+                    if(!iteract.isVecfNan) {
+                        drowning ~= [iteract];
+                    }
+                }
+            }
+
+            for(int j = 0; j < drowning.length; j += 2)
+            {
+                line([drowning[j], drowning[j + 1]], color);
+            }
         }
     }
 

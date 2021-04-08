@@ -80,6 +80,9 @@ body
                 case ShapeType.circle:
                     return first.begin.distance(second.begin) <= second.radius;
 
+                case ShapeType.polygon:
+                    return isPolygonAndPoint(second.data, first.begin);
+
                 case ShapeType.multi:
                     foreach(shape; second.shapes) {
                         if(isCollide(first, shape,Vecf(0,0), second.begin))
@@ -176,6 +179,9 @@ body
 
                     return (len <= second.radius);
 
+                case ShapeType.polygon:
+                    return isPolygonAndLine(second.data, first.to!(Vecf[]));
+
                 case ShapeType.multi:
                     foreach(shape; second.shapes) {
                         if(isCollide(first,shape,Vecf(0,0),second.begin))
@@ -248,6 +254,9 @@ body
 
                     return len <= second.radius;
 
+                case ShapeType.polygon:
+                    return isPolygonAndRect(second.data, first.to!(Vecf[]));
+
                 case ShapeType.multi:
                     foreach(shape; second.shapes) {
                         if(isCollide(first, shape,Vecf(0,0),second.begin))
@@ -308,9 +317,42 @@ body
 
                     return dist.length <= first.radius + second.radius;
 
+                case ShapeType.polygon:
+                    return isPolygonAndCircle(second.data, first.begin, first.radius);
+
                 case ShapeType.multi:
                     foreach(shape; second.shapes) {
                         if(isCollide(first,shape,Vecf(0,0),second.begin))
+                            return true;
+                    }
+
+                    return false;
+
+                default:
+                    return false;
+            }
+
+        case ShapeType.polygon:
+            switch(second.type)
+            {
+                case ShapeType.point:
+                    return isPolygonAndPoint(first.data, second.begin);
+
+                case ShapeType.line:
+                    return isPolygonAndLine(first.data, second.to!(Vecf[]));
+
+                case ShapeType.rectangle:
+                    return isPolygonAndRect(first.data, second.to!(Vecf[]));
+
+                case ShapeType.circle:
+                    return isPolygonAndCircle(first.data, second.begin, second.radius);
+
+                case ShapeType.polygon:
+                    return isPolygonsCollision(first.data, second.data);
+
+                case ShapeType.multi:
+                    foreach(shape; second.shapes) {
+                        if(isCollide(shape, first, second.begin, Vecf(0,0)))
                             return true;
                     }
 
@@ -355,4 +397,132 @@ unittest
             Shape.Line(Vecf(64,32),Vecf(32,64))
         )
     );
+}
+
+bool isPolygonAndPoint(Vecf[] first, Vecf second) @safe
+{
+    bool collision = false;
+
+    int next = 0;
+    for(int current = 0; current < first.length; current++)
+    {
+        next = current + 1;
+
+        if(next == first.length) next = 0;
+
+        Vecf vc = first[current];
+        Vecf vn = first[next];
+
+
+        if(((vc.y >= second.y && vn.y <= second.y) || (vc.y <= second.y && vn.y >= second.y)) &&
+            (second.x < (vn.x - vc.x) * (second.y - vc.y) / (vn.y - vc.y) + vc.x)) {
+            collision = !collision;
+        }
+    }
+
+    return collision;
+}
+
+bool isPolygonAndLine(Vecf[] first, Vecf[] second) @safe
+{
+    int next = 0;
+    for(int current = 0; current < first.length; current++)
+    {
+        next = current + 1;
+
+        if(next == first.length) next = 0;
+
+        Vecf vc = first[current];
+        Vecf vn = first[next];
+
+        bool hit = isCollide(Shape.Line(second[0], second[1]), Shape.Line(vc, vn));
+
+        if(hit) return true;
+    }
+
+    return false;
+}
+
+bool isPolygonAndRect(Vecf[] first, Vecf[] second) @safe
+{
+    int next = 0;
+    for(int current = 0; current < first.length; current++)
+    {
+        next = current + 1;
+
+        if(next == first.length) next = 0;
+
+        Vecf vc = first[current];
+        Vecf vn = first[next];
+
+        bool hit = isCollide(Shape.Rectangle(second[0], second[1]), Shape.Line(vc, vn));
+
+        if(hit) return true;
+    }
+
+    return false;
+}
+
+bool isPolygonAndCircle(Vecf[] first, Vecf second, float r) @safe
+{
+    int next = 0;
+    for(int current = 0; current < first.length; current++)
+    {
+        next = current + 1;
+
+        if(next == first.length) next = 0;
+
+        Vecf vc = first[current];
+        Vecf vn = first[next];
+
+        bool hit = isCollide(Shape.Circle(second, r), Shape.Line(vc, vn));
+
+        if(hit) return true;
+    }
+
+    return false;
+}
+
+bool isPolygonsCollision(Vecf[] first, Vecf[] second) @safe
+{
+    int next = 0;
+    for(int current = 0; current < first.length; current++)
+    {
+        next = current + 1;
+
+        if(next == first.length) next = 0;
+
+        Vecf vc = first[current];
+        Vecf vn = first[next];
+
+        bool hit = isPolygonAndLine(second, [vc, vn]);
+        if(hit) return true;
+
+        hit = isPolygonAndPoint(first, second[0]);
+        if(hit) return true;
+    }
+
+    return false;
+}
+
+unittest
+{
+    Vecf[]  first = [
+                        Vecf(32, 32),
+                        Vecf(64, 48),
+                        Vecf(64, 128),
+                        Vecf(32, 112)
+                    ];
+
+    assert(isPolygonAndPoint(first, Vecf(33, 33)));
+    assert(isPolygonAndLine(first, [Vecf(16, 16), Vecf(48, 48)]));
+    assert(isPolygonAndRect(first, [Vecf(16, 16), Vecf(128, 128)]));
+    assert(isPolygonAndCircle(first, Vecf(128, 128), 64));
+    assert(isPolygonsCollision(first,   [
+                                            Vecf(48, 48),
+                                            Vecf(64, 64),
+                                            Vecf(32, 64),
+                                            Vecf(32, 32),
+                                            Vecf(32, 48)
+                                        ]));
 }

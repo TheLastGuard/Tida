@@ -178,6 +178,20 @@ body
 
             return buffer;
 
+        case ShapeType.triangle:
+            return  shape.vertexs[0].array ~
+                    shape.vertexs[1].array ~
+                    shape.vertexs[2].array;
+
+        case ShapeType.polygon:
+            float[] buffer;
+
+            foreach(cs; shape.data) {
+                buffer ~= cs.array ~ [0.0f];
+            }
+
+            return buffer;
+
         case ShapeType.multi:
             float[] buffer;
 
