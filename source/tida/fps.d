@@ -23,7 +23,7 @@ class FPSManager
 
     public
     {
-        long maxFPS = 60;
+        long maxFPS = 60; /// The maximum number of frames per second allowed.
     }
 
     /// Gives the number of frames.

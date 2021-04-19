@@ -29,6 +29,9 @@ interface IMonitor
     }
 }
 
+/++
+    Information about the dimensions of the screen.
++/
 version(Posix)
 class Monitor : IMonitor
 {
@@ -68,6 +71,9 @@ class Monitor : IMonitor
     }
 }
 
+/++
+    Information about the dimensions of the screen.
++/
 version(Windows)
 class Monitor : IMonitor
 {

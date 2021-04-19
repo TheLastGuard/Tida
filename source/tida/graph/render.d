@@ -193,7 +193,7 @@ class GLRender : IRenderer
     }
 
     this(IWindow window) @safe
-    {
+    {  
         this.window = window;
 
         _camera = new Camera();
@@ -1328,6 +1328,14 @@ IRenderer CreateRenderer(IWindow window) @safe
     try
     {
         GL.initialize();
+
+        if( glSupport == GLSupport.gl11 ||
+            glSupport == GLSupport.gl12 ||
+            glSupport == GLSupport.gl13 ||
+            glSupport == GLSupport.gl14 ||
+            glSupport == GLSupport.gl15) {
+            throw new Exception("The version of the open library must be equal to or greater than 2.");
+        }
 
         render = new GLRender(window);
     }catch(Exception e)

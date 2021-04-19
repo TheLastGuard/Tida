@@ -462,12 +462,6 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
 
     import tida.graph.shader;
 
-    void each(alias fun)() @safe
-    {
-        foreach(ref pixel; pixels)
-            fun(pixel);
-    }
-
     override string toString()
     {
         import std.conv : to;
@@ -602,7 +596,9 @@ Image rotateImage(Image image,float angle,Vecf center = VecfNan) @safe
 
 Image invert(Image image) @safe nothrow
 {
-    image.each!((ref e) => e.invert());
+    import std.algorithm : each;
+
+    image.pixels.each!((ref e) => e.invert());
 
     return image;
 }

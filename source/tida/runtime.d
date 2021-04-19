@@ -18,7 +18,7 @@ struct LibraryLoader
 }
 
 enum NoLibrary = LibraryLoader(false,false); /// Without library
-enum AllLibrary = LibraryLoader(true,true); // With library
+enum AllLibrary = LibraryLoader(true,true); /// With all library
 
 version(Posix)
 {
@@ -66,6 +66,22 @@ interface ITidaRuntime
     string[] args() @safe;
 }
 
+version(Posix)
+{
+    enum XDGSession
+    {
+        Undefined,
+        X11,
+        Wayland
+    }
+
+    __gshared XDGSession _sessionType = XDGSession.Undefined;
+
+    XDGSession sessionType() @trusted
+    {
+        return _sessionType;
+    }
+}
 /++
     Runtime on Linux. Used to connect to the x11 server and initialize the runtime, load libraries and its components.
 +/
@@ -75,10 +91,12 @@ class TidaRuntime : ITidaRuntime
     import tida.x11;
     import dglx.glx;
     import tida.sound.al;
+    import std.process;
 
     private
     {
         Display* xDisplay;
+
         int xDisplayID;
 
         string[] mainArguments;
@@ -96,8 +114,26 @@ class TidaRuntime : ITidaRuntime
     {
         _runtime = new TidaRuntime(args);
         
+        import std.stdio;
+
+        if(sessionType == XDGSession.Undefined)
+        {
+            auto env = environment.get("XDG_SESSION_TYPE");
+            if(env == "wayland") {
+                _sessionType = XDGSession.Wayland;
+            } else {
+                _sessionType = XDGSession.X11;
+            }
+        }
+
         runtime.loadLibraries(libstr);
-        if(libstr.glx) runtime.xDisplayOpen();
+
+        if(sessionType == XDGSession.X11)
+        {
+            if(libstr.glx) runtime.xDisplayOpen();
+        } else {
+            
+        }
     }
 
     override void loadLibraries(LibraryLoader libstr) @trusted
@@ -126,6 +162,12 @@ class TidaRuntime : ITidaRuntime
         }
     }
 
+    /++
+        Writes program arguments to global memory for later use.
+
+        Params:
+            mainArguments = Program arguments.
+    +/
     this(string[] mainArguments) @safe
     {
         this.mainArguments = mainArguments;
@@ -172,6 +214,9 @@ class TidaRuntime : ITidaRuntime
     }
 }
 
+/++
+    Runtime for working with WinAPI. Also, downloads the required libraries.
++/
 version(Windows)
 class TidaRuntime : ITidaRuntime
 {
@@ -187,6 +232,13 @@ class TidaRuntime : ITidaRuntime
         Device device;
     }
 
+    /++
+        Initializes a runtime by connecting to the windowing server and opening libraries.
+
+        Params:
+            args = Program arguments.
+            libstr = Library struct.
+    +/
     static void initialize(string[] args,LibraryLoader libstr = AllLibrary) @trusted
     {
         _runtime = new TidaRuntime(args);
@@ -208,6 +260,12 @@ class TidaRuntime : ITidaRuntime
         }
     }
 
+    /++
+        Writes program arguments to global memory for later use.
+
+        Params:
+            mainArguments = Program arguments.
+    +/
     this(string[] mainArguments) @safe
     {
         this.mainArguments = mainArguments;
@@ -227,6 +285,7 @@ class TidaRuntime : ITidaRuntime
         enforce(hInstance, "hInstance is not open!");
     }
 
+    /// Returns an instance for working with WinAPI functions.
     HINSTANCE instance() @safe nothrow
     {
         return hInstance;

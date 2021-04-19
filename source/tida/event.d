@@ -36,6 +36,8 @@ interface IEventHandler
     /// Shows the key pressed or released in the current event.
     int key() @safe @property;
 
+    char keyChar() @safe @property;
+
     /// Whether any mouse button is pressed.
     bool isMouseDown() @safe;
 
@@ -92,13 +94,17 @@ class EventHandler : IEventHandler
         tida.window.Window window;
         Atom destroyWindowEvent;
         XEvent event;
+        _XIC* ic;
     }
 
-    this(tida.window.Window window) @safe
+    this(tida.window.Window window) @trusted
     {
         this.window = window;
 
         destroyWindowEvent = GetAtom!"WM_DELETE_WINDOW";
+
+        ic = XCreateIC(XOpenIM(runtime.display, null, null, null), 
+            XNInputStyle, XIMPreeditNothing | XIMStatusNothing, XNClientWindow, window.handle, null);
     }
 
     override bool update() @trusted
@@ -125,6 +131,18 @@ class EventHandler : IEventHandler
     override int key() @trusted
     {
         return event.xkey.keycode;
+    }
+
+    char keyChar() @trusted
+    {
+        import std.conv : to;
+
+        char[255] text;
+        KeySym key;
+
+        Xutf8LookupString(ic, &event.xkey,cast(char*) text.ptr,255,&key,null);
+
+        return text[0];
     }
 
     override bool isMouseDown() @safe
@@ -208,6 +226,11 @@ class EventHandler : IEventHandler
     override int key() @safe
     {
         return cast(int) msg.wParam;
+    }
+
+    override char keyChar() @safe 
+    {
+        return '0';
     }
 
     override bool isMouseDown() @safe

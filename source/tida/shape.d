@@ -610,7 +610,25 @@ struct Shape
         return "Shape.Unknown()";
     }
 
-    // DOCME
+    /++
+        Returns the shape as a polygon.
+
+        Params:
+            points = An array of polygon vertices.
+            pos = Polygon position.
+
+        Returns:
+            Polygon.
+
+        Example:
+        ---
+        auto triangle = Shape.Polygon([
+            Vecf(64, 32),
+            Vecf(32, 64),
+            Vecf(96, 64)
+        ]);
+        ---
+    +/
     static Shape Polygon(Vecf[] points,Vecf pos = Vecf(0,0)) @safe nothrow
     {
         Shape shape;
@@ -631,6 +649,15 @@ struct Shape
 
         Returns:
             A shapes assembled from many shapes.
+
+        Example:
+        ---
+        auto multi = Shape.Mutli([
+            Shape.Line(Vecf(0,0), Vecf(32,32)),
+            Shape.Rectangle(Vecf(32,0), Vecf(64, 32)),
+            ...
+        ]);
+        ---
     +/
     static Shape Multi(Shape[] shapes,Vecf pos = Vecf(0,0)) @safe nothrow
     {

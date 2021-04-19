@@ -10,11 +10,17 @@ public import bindbc.opengl;
 import tida.templates;
 
 __gshared bool _glIsInitialize;
+__gshared GLSupport _glSupport;
 
 /// Is OpenGL loaded state.
 bool glIsInitialize() @trusted
 {
     return _glIsInitialize;
+}
+
+GLSupport glSupport() @trusted
+{
+    return _glSupport;
 }
 
 enum 
@@ -44,6 +50,7 @@ struct GL
            throw new Exception("Context is not create!");
 
        _glIsInitialize = true;
+       _glSupport = retValue;
     }
 
     static void alphaFunc(int mode,float alpha) @trusted nothrow

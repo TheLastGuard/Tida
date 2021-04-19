@@ -105,11 +105,13 @@ struct Vector(T)
         return cast(int) this.y;
     }
 
+    /// Returns the coordinates as an array.
     T[] array() @safe nothrow pure
     {
         return [x, y];
     }
 
+    /// ditto
     T[] array() @safe nothrow const pure
     {
         return [x, y];

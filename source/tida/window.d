@@ -471,7 +471,7 @@ class Window : IWindow
     {
         static if(Type == Simple)
         {
-            Visual* visual = XDefaultVisual(runtime.display, runtime.displayID);
+            scope Visual* visual = XDefaultVisual(runtime.display, runtime.displayID);
             int depth = XDefaultDepth(runtime.display, runtime.displayID);
 
             XVisualInfo* info = new XVisualInfo();
