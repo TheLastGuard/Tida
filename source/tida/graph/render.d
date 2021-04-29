@@ -536,7 +536,9 @@ class GLRender : IRenderer
         points = points.dup;
         points.each!((ref e) => e = e + position);
 
-        auto currentShader = getShader("Default");
+        if(currentShader is null) {
+            currentShader = getShader("Default");
+        }
 
         if(isFill)
         {
@@ -602,7 +604,9 @@ class GLRender : IRenderer
 
     override void triangle(Vecf[3] position,Color!ubyte color,bool isFill) @trusted
     {
-        auto currentShader = getShader("Default");
+        if(currentShader is null) {
+            currentShader = getShader("Default");
+        }
 
         if(isFill)
         {

@@ -63,6 +63,10 @@ class Animation
         return _current;
     }
 
+    void reset() @safe {
+        _current = 0.0f;
+    }
+
     /// Step animation
     Image step() @safe
     {

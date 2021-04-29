@@ -30,7 +30,7 @@ enum
 
 template GLTypeShader(int Type)
 {
-    static assert(Type != Program, "Program is not shader!");
+    static assert(Type != Program, "Program is not a shader!");
 
     static if(Type == Vertex)
         enum GLTypeShader = GL_VERTEX_SHADER;
