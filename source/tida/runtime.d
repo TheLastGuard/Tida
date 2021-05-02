@@ -89,7 +89,6 @@ version(Posix)
 class TidaRuntime : ITidaRuntime
 {
     import tida.x11;
-    import dglx.glx;
     import tida.sound.al;
     import std.process;
 
@@ -113,8 +112,6 @@ class TidaRuntime : ITidaRuntime
     static void initialize(string[] args,LibraryLoader libstr = AllLibrary) @trusted
     {
         _runtime = new TidaRuntime(args);
-        
-        import std.stdio;
 
         if(sessionType == XDGSession.Undefined)
         {
@@ -142,10 +139,13 @@ class TidaRuntime : ITidaRuntime
 
         try
         {
-            if(libstr.glx) {
-                GLXLoadLibrary();
+            version(Dynamic_GLX)
+            {
+                if(libstr.glx) {
+                    GLXLoadLibrary();
 
-                _glxIsLoad = true;
+                    _glxIsLoad = true;
+                }
             }
         }catch(Exception e)
         {
@@ -184,7 +184,7 @@ class TidaRuntime : ITidaRuntime
 
         xDisplay = XOpenDisplay(null);
 
-        enforce(xDisplay,"Failed to connect to x11 server!");
+        enforce(xDisplay, "Failed to connect to x11 server!");
 
         xDisplayID = DefaultScreen(xDisplay);
     }
@@ -212,6 +212,16 @@ class TidaRuntime : ITidaRuntime
     {
         return xDisplayID;
     }
+
+    void closeDisplay() @trusted @property nothrow
+    {
+        if(xDisplay !is null) XCloseDisplay(xDisplay);
+    }
+
+    ~this() 
+    {
+        this.closeDisplay();
+    } 
 }
 
 /++

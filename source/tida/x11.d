@@ -16,6 +16,11 @@ public
     import x11.X;
     import x11.extensions.Xrandr;
     import x11.Xutil;
+
+    version(Dynamic_GLX) 
+    	import dglx.glx;
+    else
+    	import glx.glx;
 }
 
 /++

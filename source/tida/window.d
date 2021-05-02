@@ -302,7 +302,6 @@ interface IWindow
 version(Posix)
 class Context : IContext
 {
-    import dglx.glx;
     import tida.x11, tida.runtime;
 
     private
@@ -334,9 +333,9 @@ class Context : IContext
                 None
             ];
 
-        int fbcount;
+        int fbcount = 0;
         auto fbc = glXChooseFBConfig(runtime.display,runtime.displayID,glxAttribs.ptr,&fbcount);
-        
+
         enforce(fbc, "fbc was not found!");
 
         int bestFbc = -1, bestNum = -1;
@@ -352,9 +351,13 @@ class Context : IContext
             }
         }
 
-        bestFbcs = fbc[bestNum];
+        bestFbcs = fbc[bestFbc];
+
+        enforce(bestFbcs, "best FBS is a nil!");
 
         visual = glXGetVisualFromFBConfig(runtime.display, bestFbcs);
+
+        enforce(visual, "Visual is a nil!");
 
         XFree(fbc);
     }
@@ -367,8 +370,7 @@ class Context : IContext
     override void destroy() @trusted
     {
         glXDestroyContext(runtime.display, context);
-        XFree(visual);
-        XFree(bestFbcs);
+        if(visual) XFree(visual);
     }
 
     XVisualInfo* visualInfo() @safe @property
