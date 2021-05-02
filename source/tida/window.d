@@ -394,7 +394,6 @@ version(Posix)
 class Window : IWindow
 {
     import tida.x11, tida.runtime, tida.graph.image;
-    import dglx.glx;
     import std.utf;
 
     private

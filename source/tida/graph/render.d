@@ -847,6 +847,9 @@ class Plane : IPlane
             foreach(ix, iy; Coord(position.x.to!int + w,position.y.to!int + h,
                                   position.x.to!int,position.y.to!int))
             {
+                if(ix > _width || iy > _height || ix < 0 || iy < 0)
+                    continue;
+                
                 auto pos = (iy * _width) + ix;
                 pos *= 4;
 
@@ -1003,6 +1006,9 @@ class Plane : IPlane
             foreach(ix, iy; Coord(position.x.to!int + w,position.y.to!int + h,
                                   position.x.to!int,position.y.to!int))
             {
+                if(ix > _width || iy > _height || ix < 0 || iy < 0)
+                    continue;
+
                 auto pos = (iy * _width) + ix;
                 pos *= 4;
 
