@@ -82,7 +82,7 @@ class Shader(int Type)
     }
 
     static if(isShader!Type)
-    auto bindSource(string source) @safe
+    Shader!Type bindSource(string source) @safe
     {
         GL3.shaderSource(_id, 1, source);
         GL3.compileShader(_id);
@@ -103,7 +103,7 @@ class Shader(int Type)
     }
 
     static if(isProgram!Type)
-    auto attach(Shader!Vertex v) @safe
+    Shader!Type attach(Shader!Vertex v) @safe
     {
         vertex = v;
 
@@ -111,7 +111,7 @@ class Shader(int Type)
     }
 
     static if(isProgram!Type)
-    auto attach(Shader!Fragment f) @safe
+    Shader!Type attach(Shader!Fragment f) @safe
     {
         fragment = f;
 
@@ -119,7 +119,7 @@ class Shader(int Type)
     }
 
     static if(isShader!Type)
-    auto fromFile(string path) @safe
+    Shader!Type fromFile(string path) @safe
     {
         import std.file : exists, readText;
 
@@ -130,7 +130,7 @@ class Shader(int Type)
     }
 
     static if(isProgram!Type)
-    auto link() @safe
+    Shader!Type link() @safe
     {
         GL3.attachShader(_id, vertex.id);
         GL3.attachShader(_id, fragment.id);
@@ -204,7 +204,7 @@ class Shader(int Type)
     }
 
     static if(isProgram!Type)
-    auto getUniformLocation(string name) @safe
+    int getUniformLocation(string name) @safe
     {
         return GL3.getUniformLocation(_id, name);
     }
@@ -263,16 +263,19 @@ class Shader(int Type)
 
     void destroy() @safe
     {
-        import std.stdio;
-
-        static if(isProgram!Type)
+        if(_id != 0)
         {
-            GL3.deleteProgram(_id);
-        }
+            static if(isProgram!Type)
+            {
+                GL3.deleteProgram(_id);
+            }
 
-        static if(isShader!Type)
-        {
-            GL3.deleteShader(_id);
+            static if(isShader!Type)
+            {
+                GL3.deleteShader(_id);
+            }
+
+            _id = 0;
         }
     }
 

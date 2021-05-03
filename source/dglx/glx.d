@@ -1,6 +1,7 @@
 module dglx.glx;
 
 version(Posix):
+version(Dynamic_GLX):
 
 import bindbc.loader;
 import x11.X, x11.Xlib, x11.Xutil;
@@ -71,25 +72,67 @@ __gshared
     FglXIsDirect glXIsDirect;
 }
 
+struct LibraryResult {
+    public
+    {
+        string path;
+        bool isSucces;
+    }
+}
+
 /++
     Load GLX library, which should open context in x11 environment.
 
     Throws: `Exception` if library is not load.
 +/
-public void GLXLoadLibrary() @trusted
+LibraryResult[] GLXLoadLibrary() @trusted
 {
-    import std.file : exists;
+    import std.file : exists, dirEntries, SpanMode, DirEntry, isDir, isFile;
     import std.string : toStringz;
-    import std.algorithm : reverse;
+    import std.algorithm : reverse, canFind;
+    import std.parallelism : parallel;
 
-    string[] paths =    [
-                            "/usr/lib/libGLX.so.0.0.0",
-                            "/lib/libGLX.so.0.0.0"
-                        ];
+    string[] pathes;
 
-    paths.reverse;
+    string[] recurseFindGLX(string path)
+    {
+        string[] locateds;
+
+        try
+        {
+            auto dirs = dirEntries(path, SpanMode.depth);
+
+            foreach(DirEntry e; parallel(dirs, 1))
+            {
+                if(e.name.isDir) {
+                    if(!pathes.canFind(e.name)) {
+                        locateds ~= recurseFindGLX(e.name ~ "/");
+                        pathes ~= e.name;
+                    }
+                }
+
+                if(e.name.isFile)
+                {
+                    if(e.name.canFind("libglx.so")) {
+                        locateds ~= e.name;
+                    }
+
+                    if(e.name.canFind("libGL.so")) {
+                        locateds ~= e.name;
+                    }
+                }
+            }
+        }catch(Exception e) {}
+
+        return locateds;
+    }
+
+    string[] paths = recurseFindGLX("/usr/lib/");
+
+    LibraryResult[] results;
 
     bool isSucces = false;
+    bool ErrorFind = false;
 
     void bindOrError(void** ptr,string name) @trusted
     {
@@ -98,11 +141,17 @@ public void GLXLoadLibrary() @trusted
         if(*ptr is null) throw new Exception("Not load library!");
     }
 
+    import std.stdio, std.conv;
+
     foreach(path; paths)
     {
         if(path.exists)
         {
             glxLib = load(path.toStringz);
+            if(glxLib == invalidHandle) {
+                results ~= LibraryResult(path, false);
+                continue;
+            }
 
             try
             {
@@ -126,10 +175,13 @@ public void GLXLoadLibrary() @trusted
                 continue;
             }
 
+            results ~= LibraryResult(path, true);
             break;
         }
     }
 
     if(!isSucces)
         throw new Exception("Library `glx` is not load!");
+
+    return results;
 }
