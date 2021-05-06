@@ -429,6 +429,7 @@ class Scene
 
         foreach(instance; getList)
         {
+            if(instance.solid)
             if(isCollide(shape,instance.mask,position,instance.position)) {
                 return instance;
             }
@@ -460,6 +461,7 @@ class Scene
 
         foreach(instance; getList)
         {
+            if(instance.solid)
             if(isCollide(shape,instance.mask,position,instance.position)) {
                 result ~= instance;
                 continue;
