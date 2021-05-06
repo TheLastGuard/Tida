@@ -712,7 +712,7 @@ class SceneManager
             foreach(e; persistents)
             {
                 auto threadID = e.threadID;
-                current.instanceDestroy!InScene(e);
+                current.instanceDestroy!InScene(e, false);
 
                 if(scene.isThreadExists(threadID))
                     scene.add(e,threadID);

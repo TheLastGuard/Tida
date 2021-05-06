@@ -293,7 +293,7 @@ class Scene
             `InMemory` - Removes permanently, from the scene and from memory 
                          (by the garbage collector).
     +/
-    void instanceDestroy(ubyte type)(Instance instance) @trusted 
+    void instanceDestroy(ubyte type)(Instance instance, bool isRemoveHandle = true) @trusted 
     in(hasInstance(instance))
     body
     {
@@ -317,7 +317,7 @@ class Scene
         instance.eventDestroy(type);
         this.eventDestroy(instance);
 
-        if(sceneManager !is null)
+        if(sceneManager !is null && isRemoveHandle)
             sceneManager.RemoveHandle(this, instance);
 
         static if(type == InMemory)
