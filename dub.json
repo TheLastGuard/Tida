@@ -10,6 +10,7 @@
 			"dependencies": {
 				"x11": "~>1.0.21",
 				"glx-d": "~>1.0.0",
+				"opengl:gl2-static" : "~>1.0.0"
 			},
 			"libs": [
 				"Xrandr"
@@ -30,7 +31,8 @@
 		{
 			"dependencies": {
 				"x11": "~>1.0.21",
-				"glx-d": "~>1.0.0"
+				"glx-d": "~>1.0.0",
+				"opengl:gl2-static" : "~>1.0.0"
 			},
 			"libs": [
 				"Xrandr"

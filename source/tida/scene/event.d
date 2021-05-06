@@ -69,6 +69,11 @@ struct CollisionEvent
     string tag = "";
 }
 
+template CollisionTagEvent(string tag)
+{
+    enum CollisionTagEvent = CollisionEvent("", tag);
+}
+
 struct TriggerEvent
 {
     string name;

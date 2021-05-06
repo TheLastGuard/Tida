@@ -400,6 +400,8 @@ class SceneManager
 
     void InstanceHandle(T)(Scene scene, T instance) @trusted
     {
+        if(instance in IInitFunctions) return;
+
         IInitFunctions[instance] = Array!FEInit();
         IStepFunctions[instance] = Array!FEStep();
         IEntryFunctions[instance] = Array!FEEntry();
