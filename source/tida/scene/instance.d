@@ -317,8 +317,10 @@ class Instance
 
     void dissconnectAll() @trusted
     {
+        import tida.scene.manager;
+
         foreach(i; 0 .. components.length) {
-            cmp.leave();
+            components[i].leave();
 
             if(sceneManager !is null) {
                 foreach(fun; sceneManager.leaveComponents[components[i]]) fun();
