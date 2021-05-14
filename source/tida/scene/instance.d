@@ -315,6 +315,19 @@ class Instance
         }
     }
 
+    void dissconnectAll() @trusted
+    {
+        foreach(i; 0 .. components.length) {
+            cmp.leave();
+
+            if(sceneManager !is null) {
+                foreach(fun; sceneManager.leaveComponents[components[i]]) fun();
+            }
+
+            components.remove(i);
+        }
+    }
+
     /++
         Dissconnect component
 

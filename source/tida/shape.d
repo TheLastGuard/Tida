@@ -130,7 +130,7 @@ struct Shape
     Vecf end() @safe @property nothrow
     in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
     "This shape does not support end coordinates!")
-    body
+    do
     {
         return _end;
     }

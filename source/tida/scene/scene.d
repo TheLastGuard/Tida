@@ -314,6 +314,8 @@ class Scene
             this.instances[instance.id .. $].each!((ref e) => e.id--);
         }
 
+        instance.dissconnectAll();
+
         instance.eventDestroy(type);
         this.eventDestroy(instance);
 
