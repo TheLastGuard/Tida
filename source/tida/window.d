@@ -312,7 +312,6 @@ class Context : IContext
     }
 
     override void attributeInitialize(GLAttributes attributes = GLAttribAutoColorSize!8) @trusted
-    in(glxIsLoad,"GLX libraries were not loaded!")
     {
         import std.conv : to;
         import std.exception : enforce;

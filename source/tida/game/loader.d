@@ -153,7 +153,7 @@ class Loader
         ]);
         ---
     +/
-    T load(T)(immutable string[string] paths) @safe
+    void load(T)(immutable string[string] paths) @safe
     {
         foreach(key; paths.keys) {
             this.load!T(paths[key],key);

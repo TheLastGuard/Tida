@@ -149,6 +149,24 @@ class SceneManager
         return _previous;
     }
 
+    void gameRestart() @trusted
+    {
+        foreach(scene; scenes)
+        {
+            if(!scene.isInit) continue;
+
+            scene.gameRestart();
+
+            foreach(fun; GameRestartFunctions[scene]) fun();
+            foreach(instance; scene.getList())
+                foreach(fun; IGameRestartFunctions[instance]) fun();
+
+            scene.isInit = false;
+        }
+
+        gotoin(ofbegin);
+    }
+
     /++
         Link to the currently active scene. With the help of it, 
         it will be convenient for the instances to communicate 

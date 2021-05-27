@@ -302,6 +302,16 @@ class Symbol
     }
 }
 
+alias FormatText = int;
+
+enum TextFormat : int {
+    Unknown = 0,
+    Bold = 1,
+    Italics = 2,
+    Underlined = 3,
+    Strikethrough = 4  
+}
+
 /// Object for rendering text. Use the `renderSymbol` function to render symbols.
 class Text
 {
@@ -330,12 +340,12 @@ class Text
             symbols = Text for rendering.
             color = Text color.
     +/
-    Symbol[] fromSymbols(T)(T symbols,Color!ubyte color = rgba(255,255,255,255)) @trusted
+    Symbol[] fromSymbols(T)(T symbols,Color!ubyte color = rgba(255,255,255,255), FormatText format = 0) @trusted
     in(isText!T)
     body
     {
         Symbol[] chars;
-
+        
         for(size_t j = 0; j < symbols.length; ++j)
         {
             TypeChar!T s = symbols[j];
@@ -350,7 +360,7 @@ class Text
 
             image = new Image();
 
-            FT_Load_Char(_font.face, s, FT_LOAD_RENDER);
+            FT_Load_Char(_font.face, s, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
             const glyphIndex = FT_Get_Char_Index(_font.face, s);
 
             FT_Load_Glyph(_font.face, glyphIndex, FT_LOAD_DEFAULT);
@@ -375,12 +385,14 @@ class Text
                 color);
         }
 
+        _font.face.style_flags = 0;
+
         return chars;
     }
 
-    SymbolRender renderSymbols(T)(T symbols,Color!ubyte color = rgba(255,255,255,255)) @trusted
+    SymbolRender renderSymbols(T)(T symbols,Color!ubyte color = rgba(255,255,255,255), FormatText format = 0) @trusted
     {
-        return new SymbolRender(fromSymbols!T(symbols, color));
+        return new SymbolRender(fromSymbols!T(symbols, color, format));
     }
 
     /++
