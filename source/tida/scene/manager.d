@@ -109,6 +109,7 @@ class SceneManager
         Scene _ofbegin;
         Scene _ofend;
         Scene _initable;
+        Scene _restarted;
     }
 
     /// List scenes
@@ -149,11 +150,18 @@ class SceneManager
         return _previous;
     }
 
+    Scene restarted() @safe @property
+    {
+        return _restarted;
+    }
+
     void gameRestart() @trusted
     {
         foreach(scene; scenes)
         {
             if(!scene.isInit) continue;
+
+            _restarted = scene;
 
             scene.gameRestart();
 
@@ -162,6 +170,8 @@ class SceneManager
                 foreach(fun; IGameRestartFunctions[instance]) fun();
 
             scene.isInit = false;
+
+            _restarted = null;
         }
 
         gotoin(ofbegin);
