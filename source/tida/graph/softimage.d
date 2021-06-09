@@ -100,6 +100,7 @@ class SoftImage : IPlane
             buffer[pos] = color.r;
             buffer[pos+1] = color.g;
             buffer[pos+2] = color.b;
+            buffer[pos+3] = color.a;
         }else
         {
             import tida.graph.each;
@@ -129,6 +130,7 @@ class SoftImage : IPlane
                     buffer[pos] = color.r;
                     buffer[pos+1] = color.g;
                     buffer[pos+2] = color.b;
+                    buffer[pos+3] = color.a;
                 }
             }
         }

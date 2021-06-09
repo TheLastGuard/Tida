@@ -317,7 +317,6 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         GL.bindTexture(0);
 
         renderer.resetShader();
-
     }
 
     ~this() @safe

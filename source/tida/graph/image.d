@@ -63,7 +63,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     {
         _pixels = new Color!ubyte[](newWidth * newHeight);
 
-        _pixels.fill(rgb(0,0,0));
+        _pixels.fill(rgba(0,0,0,0));
 
         _width = newWidth;
         _height = newHeight;
@@ -356,7 +356,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     +/
     auto clearComponent(ubyte Component)() @safe nothrow
     in(isCorrectComponent!Component)
-    body
+    do
     {
         import std.algorithm : each;
 
@@ -392,7 +392,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     +/
     auto addComponent(ubyte Component)(ubyte value) @safe nothrow
     in(isCorrectComponent!Component)
-    body
+    do
     {
         import std.algorithm : each;
 
@@ -619,7 +619,7 @@ Image invert(Image image) @safe nothrow
 +/
 Image flip(int FlipType)(Image img) @safe
 in(isCorrectAxis!FlipType)
-body
+do
 {
     Image image = img.dup();
 
@@ -666,7 +666,7 @@ import tida.shape;
 +/
 Image shapeCopy(int Type = DefaultOperation)(Image image,Shape shape,Image outImage = null) @safe
 in(shape.type != ShapeType.triangle)
-body
+do
 {
     import tida.graph.each;
     import tida.color, std.conv : to;

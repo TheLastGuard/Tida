@@ -6,7 +6,6 @@
     other window parameters, which are inherent in both the x11 environment and the Windows window manager 
     in both ways. However, there are features of the implementations, for example, so far only x11 can be 
     used to set the transparency of the window.
-
     # 1. Create window components.
     ## 1.1 Creating a simple window.
     A window is created by calling the window manager server, and for this, you first need to connect to it 
@@ -17,7 +16,6 @@
     ---
     TidaRuntime.initialize(args, NoLibrary);
     ---
-
     (You can download individual components as needed, see: 
     [tida.runtime](https://github.com/TodNaz/Tida/blob/master/source/tida/runtime.d))
     In this case, the library will connect to the window manager, and then it will be possible to work with windows.
@@ -26,7 +24,6 @@
     ---
     auto window = new Window(640, 480, "Title!");
     ---
-
     The random step is to create the window itself. The easiest way is through the `initialize` function. 
     The template parameter includes the window type.
     * `Simple` - Options for creating a window in which the graphics pipeline will not be created.
@@ -35,9 +32,7 @@
     ---
     window.initialize!Simple;
     ---
-
     When creating a window, it will automatically show the window, and now you can handle the event, or draw in it.
-
     ## 1.2 Creating a graphics pipeline and using it.
     Once hardware acceleration is required, you can create a window with a graphics pipeline that you can interact 
     with through the Open Graphics Library. Unfortunately, the rendering engine uses the capabilities of the first 
@@ -46,7 +41,6 @@
     ---
     window.initialize!ContextIn;
     ---
-
     And in this case, the window itself will create a graphic pipeline and determine the creation parameters. 
     However, you can create a manual context, regardless of the platform through the `IContext` interface, 
     by setting the necessary context parameters. The following example will show you how this can be done. 
@@ -54,34 +48,28 @@
     ---
     window.initialize!Simple;
     ---
-
     The next step is to allocate memory for the context:
     ---
     auto context = new Context();
     ---
-
     Now, we can define the attributes of the graphics pipeline:
     ---
     context.attributeInitialize(GLAttributes(...));
     ---
-
     After, when the attributes are initialized, you need to create the context itself:
     ---
     context.initialize()
     ---
-
     The pipeline properties are defined in the GLAttributes structure, create a pipeline from its properties.
     Now this context can be assigned to a window:
     ---
     window.context = context;
     ---
-
     Unfortunately, in the Windows environment, before creating, you need to declare a window for the context, 
     from where the parameters will be displayed:
     ---
     context.deviceMake(window.handle);
     ---
-
     # 2. Window control.
     ## 2.1 Window size.
     The size of the window is set using the constructor, however, if you need to dynamically resize, 
@@ -91,21 +79,17 @@
     the handler:
     ---
     IEventHandler event = new EventHandler(window);
-
     ...
     if(event.isResize) {
         window.eventResize(event.newSizeWindow);
     }
     ---
-
     In this situation, you yourself keep track of the size of the window. If not tracked, the size will visually change, 
     however, the properties of the window will not be changed, and when using it, there may be unexpected behavior. 
     This is due to the fact that automatic markup is impossible due to a bug in x11, when the event is set to be tracked, 
     he graphic pipeline does not change size along with the window, from where there are gaps with scaling.
-
     If you don't want the user to be able to resize, set such a property to `resizable`. 
     If you want, this can also be canceled. Not only the user, but also the program cannot change the size.
-
     It is also available to switch the window to full screen mode through the 'fullscreen' property. 
     Both translation and translation into windowed mode are available:
     ---
@@ -113,24 +97,19 @@
     ...
     window.fullscreen = false; // Window mode
     ---
-
     ## 2.2 External component.
     The window represents the icon, title, icon and frame for the window. All such properties can be set through 
     the corresponding functions.
-
     `window.icon` - 
     The parameters indicate the structure of the picture, where the sequence is taken from, covented the icon, 
     and send the data to the server. An example of how to set an icon from a file:
     ---
     window.icon = new Image().load("icon.png");
     ---
-
     `window.border` -
     Determines whether the window will have frames.
-
     `window.title` - 
     Sets the title of the window.
-
     ## 2.3 Features with platform.
     There may be a case when you need to work with a window directly through its native API, 
     for this there is a `handle` method. It gives a pointer to a window in its plafform, and based on it, 
@@ -140,15 +119,12 @@
     Here's an example of interaction:
     ---
     auto winPtr = window.handle();
-
     // Fixes the title bar in X11 environment.
     XStoreName(runtime.display, winPtr, newTitle.toUTFz!(char*));
     ---
-
     This example shows a bad attitude of work outside the stratum, since now the object, when we request a title, 
     will return the old title because it did not remember the old one. Therefore, be extremely careful when working 
     outside the interlayer.
-
     Authors: $(HTTP https://github.com/TodNaz, TodNaz)
     License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
@@ -176,7 +152,6 @@ struct GLAttributes
 
 /++
     Automatically resizes all colors when creating context.
-
     sizeAll = Color component size.
 +/
 template GLAttribAutoColorSize(ubyte sizeAll)
@@ -186,7 +161,6 @@ template GLAttribAutoColorSize(ubyte sizeAll)
 
 /++
     The context interface that describes how to interact with the context.
-
     See_Also:
             $(HTTP https://dri.freedesktop.org/wiki/GLX/, GLX)
             $(HTTP https://docs.microsoft.com/en-us/windows/win32/opengl/wgl-functions, WGL)
@@ -198,6 +172,10 @@ interface IContext
         
         Params:
             attributes = Attributes for creating context.
+
+
+        Throws: `Exception` If the context in the process was not created 
+        under the influence of input parameters.
     +/
     void attributeInitialize(GLAttributes attributes) @safe;
 
@@ -206,7 +184,7 @@ interface IContext
     +/
     void initialize() @safe;
 
-    /// 
+    /// Context destory
     void destroy() @safe;
 }
 
@@ -223,15 +201,19 @@ interface IWindow
     /// Hides a window.
     void hide() @safe;
 
-    /// Shows a window.
+    /++
+        Sets the context to the window. When creating the context manually, 
+        keep in mind that this function will not help.
+
+        Throws: `Exception` if the context is damaged or does not match the parameters.
+    +/
     void context(IContext context) @safe @property;
 
-    /// ditto
+    /// The currently supplied context to the window.
     IContext context() @safe @property;
 
     /++
         Swaps buffers.
-
         Throws: `Exception` If there is no graphics pipeline.
     +/
     void swapBuffers() @safe;
@@ -244,7 +226,6 @@ interface IWindow
 
     /++
         Resizes the window.
-
         Params:
             newWidth = Window width.
             newHeight = Window height.
@@ -253,7 +234,6 @@ interface IWindow
 
     /++
         Changes the position of the window.
-
         Params:
             posX = Window x-axis position.
             posY = Window y-axis position.
@@ -295,7 +275,10 @@ interface IWindow
     /// Destroys the window instance.
     void destroyWindow() @safe;
 
-    /// Manual call to resize the window.
+    /++
+        Changes only the window size values without changing the window itself. 
+        (This is needed for events when the window is resized).
+    +/ 
     void eventResize(uint[2] size) @safe;
 }
 
@@ -455,12 +438,10 @@ class Window : IWindow
 
     /++
         Window initialization. In the class, it must be executed as a template to generate the appropriate context.
-
         You can initialize the window of the following types:
         * Simple    -   Generates a window without a graphics pipeline. Those. a simple window will be created, 
                         if you need a context, you have to make it yourself and send it to the window.
         * ContextIn -   Generates a window with a graphics pipeline for OpenGL.
-
         Params:
             Type = The type initial window.
             posX = The initial x position of the window.
@@ -716,7 +697,6 @@ class Window : IWindow
 
     /++
         Sets the alpha value to the window. Only applicable to x11 windows.
-
         Params:
             alpha = Alpha value.
     +/
@@ -746,6 +726,7 @@ class Context : IContext
     {
         HDC deviceHandle;
         HGLRC _context;
+        PIXELFORMATDESCRIPTOR pfd;
     }
 
     void deviceMake(HWND window) @trusted
@@ -755,8 +736,6 @@ class Context : IContext
 
     override void attributeInitialize(GLAttributes attributes = GLAttribAutoColorSize!8) @trusted
     {
-        PIXELFORMATDESCRIPTOR pfd;
-
         const flags = (attributes.doubleBuffer ? 
             PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL : PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL);
 
@@ -770,9 +749,22 @@ class Context : IContext
         pfd.cAlphaBits = cast(ubyte) attributes.alphaSize;
         pfd.cDepthBits = cast(ubyte) attributes.depthSize;
         pfd.cStencilBits = cast(ubyte) attributes.stencilSize;
+        pfd.iLayerType = PFD_MAIN_PLANE;
 
         auto chsPixel = ChoosePixelFormat(deviceHandle, &pfd);
+
+        if(chsPixel == 0)
+            throw new Exception("Not found pixel format!");
+
         SetPixelFormat(deviceHandle, chsPixel, &pfd);
+    }
+
+    PIXELFORMATDESCRIPTOR* pixelformat() @safe {
+        return &pfd;
+    }
+
+    auto device() @safe {
+        return deviceHandle;
     }
 
     override void initialize() @trusted
@@ -793,6 +785,51 @@ class Context : IContext
     ~this() @safe
     {
         destroy();
+    }
+}
+
+version(Windows)
+{
+    import tida.winapi;
+
+    alias FwglChoosePixelFormatARB = extern(C) bool function( HDC hdc,
+                                                    int *piAttribIList,
+                                                    float *pfAttribFList,
+                                                    uint nMaxFormats,
+                                                    int *piFormats,
+                                                    uint *nNumFormats);
+
+    alias FwglGetExtensionsStringARB = extern(C) char* function(HDC hdc);
+
+    alias FwglCreateContextAttribsARB = extern(C) HGLRC function(HDC, HGLRC, int*);
+
+    __gshared FwglChoosePixelFormatARB wglChoosePixelFormatARB; 
+    __gshared FwglGetExtensionsStringARB wglGetExtensionsStringARB;
+    __gshared FwglCreateContextAttribsARB wglCreateContextAttribsARB;
+
+    enum
+    {
+        WGL_DRAW_TO_WINDOW_ARB = 0x2001,
+        WGL_RED_BITS_ARB = 0x2015,
+        WGL_GREEN_BITS_ARB = 0x2017,
+        WGL_BLUE_BITS_ARB = 0x2019,
+        WGL_ALPHA_BITS_ARB = 0x201B,
+        WGL_DOUBLE_BUFFER_ARB = 0x2011,
+        WGL_DEPTH_BITS_ARB = 0x2022,
+        WGL_CONTEXT_MAJOR_VERSION_ARB = 0x2091,
+        WGL_CONTEXT_MINOR_VERSION_ARB = 0x2092,
+        WGL_CONTEXT_FLAGS_ARB = 0x2094,
+        WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB = 0x0002,
+        WGL_SUPPORT_OPENGL_ARB = 0x2010,
+        WGL_COLOR_BITS_ARB = 0x2014,
+        WGL_STENCIL_BITS_ARB = 0x2023,
+        WGL_ACCELERATION_ARB = 0x2003,
+        WGL_FULL_ACCELERATION_ARB = 0x2027,
+        WGL_PIXEL_TYPE_ARB = 0x2013,
+        WGL_TYPE_RGBA_ARB = 0x202B,
+        WGL_CONTEXT_PROFILE_MASK_ARB = 0x9126,
+        WGL_CONTEXT_CORE_PROFILE_BIT_ARB = 0x00000001
+
     }
 }
 
@@ -861,14 +898,85 @@ class Window : IWindow
         }else
         static if(Type == ContextIn)
         {
+            import std.exception;
+
             initialize!Simple(posX,posY,false);
+
+            auto attributes = GLAttributes();
 
             _context = new Context();
             (cast(Context) _context).deviceMake(window);
-            _context.attributeInitialize(GLAttributes());
+            _context.attributeInitialize(attributes);
             _context.initialize();
 
+            auto oldctx = (cast(Context) _context).context;
+            auto deviceHandle = (cast(Context) _context).device;
+
             context = _context;
+
+            void* data = wglGetProcAddress("wglGetExtensionsStringARB");
+            wglGetExtensionsStringARB = cast(FwglGetExtensionsStringARB) data;
+            data = null;
+
+            char* cexts = wglGetExtensionsStringARB(deviceHandle);
+            size_t len = 0;
+            while(cexts[len] != '\0') {
+                len++;
+            }
+            string ext = cast(string) cexts[0 .. len];
+
+            data = wglGetProcAddress("wglChoosePixelFormatARB");
+            wglChoosePixelFormatARB = cast(FwglChoosePixelFormatARB) data;
+            data = null;
+
+            data = wglGetProcAddress("wglCreateContextAttribsARB");
+            wglCreateContextAttribsARB = cast(FwglCreateContextAttribsARB) data;
+            data = null;
+
+            int[] iattrib =  [
+                                WGL_SUPPORT_OPENGL_ARB, true,
+                                WGL_DRAW_TO_WINDOW_ARB, true,
+                                WGL_DOUBLE_BUFFER_ARB, attributes.doubleBuffer,
+                                //WGL_RED_BITS_ARB, attributes.redSize,
+                                //WGL_GREEN_BITS_ARB, attributes.greenSize,
+                                //WGL_BLUE_BITS_ARB, attributes.blueSize,
+                                //WGL_ALPHA_BITS_ARB, attributes.alphaSize,
+                                WGL_DEPTH_BITS_ARB, attributes.depthSize,
+                                WGL_COLOR_BITS_ARB, attributes.colorDepth,
+                                WGL_STENCIL_BITS_ARB, attributes.stencilSize,
+                                WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+                                WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
+                                0
+                            ];
+
+            uint nNumFormats;
+            int nPixelFormat;
+
+            wglChoosePixelFormatARB(deviceHandle,   iattrib.ptr, 
+                                                    null,
+                                                    1, &nPixelFormat,
+                                                    &nNumFormats);
+
+            enforce(nPixelFormat, "nNumFormats error!");
+
+            PIXELFORMATDESCRIPTOR pfd;
+            DescribePixelFormat(deviceHandle, nPixelFormat, pfd.sizeof, &pfd);
+            SetPixelFormat(deviceHandle, nPixelFormat, &pfd);
+
+            int[] attributess =  [
+                                    WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+                                    WGL_CONTEXT_MINOR_VERSION_ARB, 0,
+                                    WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+                                    WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+                                    0
+                                ];
+
+            auto ctx = wglCreateContextAttribsARB(deviceHandle, null, attributess.ptr);
+            enforce(ctx, "ContextARB is not a create!");
+
+            wglMakeCurrent(null, null);
+            wglDeleteContext((cast(Context) _context).context);
+            wglMakeCurrent(deviceHandle, ctx);
         }
 
         if(isShow) show();

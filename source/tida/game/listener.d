@@ -104,6 +104,10 @@ class Listener
         Timer[] timers;
     }
 
+    void clearTimers() @trusted {
+        timers = [];
+    }
+
     /++
         Stop the timer if there is such an instance.
 

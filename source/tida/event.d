@@ -6,7 +6,19 @@
 +/
 module tida.event;
 
-struct Joystick; // TODO: POSIX{/dev/input}
+enum JS
+{
+    EVENT_BUTTON = 1,
+    EVENT_AXIS = 2
+}
+
+version(Posix)
+struct JEvent {
+    uint time;
+    short value;
+    ubyte type;
+    ubyte number;
+}
 
 /// Mouse keys.
 enum MouseButton
@@ -15,6 +27,93 @@ enum MouseButton
     left = 1,
     right = 3,
     middle = 2
+}
+
+interface IJoystick
+{
+    bool isButtonPressed() @safe;
+    bool isAxisPressed() @safe;
+    short buttonID() @safe @property;
+    ubyte axis() @safe @property;
+    short axisForce() @safe @property;
+}
+
+version(Posix)
+class Joystick : IJoystick
+{
+    import core.stdc.stdio;
+
+    FILE* descriptor;
+    JEvent event;
+
+    override
+    {
+        bool isButtonPressed() @safe
+        {
+            return event.type == JS.EVENT_BUTTON;
+        }
+
+        bool isAxisPressed() @safe
+        {
+            return event.type == JS.EVENT_AXIS;
+        }
+
+        short buttonID() @safe @property
+        {
+            return event.value;
+        }
+
+        ubyte axis() @safe @property
+        {
+            return event.number;
+        }
+
+        short axisForce() @safe @property
+        {
+            return event.value;
+        }
+    }
+}
+
+version(Windows)
+class Joystick : IJoystick
+{
+    import tida.winapi;
+
+    JOYINFO* info;
+    uint deviceID;
+    MSG* msg;
+
+    override
+    {
+        bool isButtonPressed() @safe
+        {
+            return msg.message == MM_JOY1BUTTONDOWN;
+        }
+
+        bool isAxisPressed() @safe
+        {
+            return msg.message == MM_JOY1MOVE;
+        }
+
+        short buttonID() @safe @property
+        {
+            return cast(short) msg.wParam;
+        }
+
+        ubyte axis() @trusted @property
+        {
+            if(LOWORD(msg.lParam) != 0) 
+                return 0;
+            else 
+                return 1;
+        }
+
+        short axisForce() @safe @property
+        {
+            return cast(short) msg.lParam;
+        }
+    }
 }
 
 ///
@@ -82,6 +181,16 @@ interface IEventHandler
     {
         return isMouseUp ? mouseButton : MouseButton.unknown;
     }
+
+    IJoystick initJoystick(ubyte number) @safe;
+
+    void closeJoystick(ubyte number) @safe;
+
+    void closeJoystick(IJoystick joystick) @safe;
+
+    void autodetectJoysticks() @safe;
+
+    size_t countJoysticks() @safe;
 }
 
 version(Posix)
@@ -114,6 +223,8 @@ class EventHandler : IEventHandler
         if(pen != 0) {
             XNextEvent(runtime.display, &event);
         }
+
+        pen += handleJoysitcks();
 
         return pen != 0;
     }
@@ -187,17 +298,100 @@ class EventHandler : IEventHandler
     {
         return event.xclient.data.l[0] == destroyWindowEvent;
     }
+
+    public
+    {
+        Joystick[] joysticks;
+    }
+
+    override IJoystick initJoystick(ubyte number) @trusted
+    {
+        import core.stdc.stdio, std.conv;
+
+        Joystick joystick = new Joystick();
+        joystick.descriptor = fopen(("/dev/input/js" ~ number.to!string).ptr, "r");
+
+        if(joystick.descriptor is null) throw new Exception("Not open device!");
+
+        joysticks ~= joystick;
+
+        return joystick;
+    }
+
+    override void closeJoystick(ubyte number) @trusted
+    {
+        import std.algorithm;
+
+        auto joystick = joysticks[number];
+
+        joysticks.remove(number);
+
+        destroy(joystick);
+    }
+
+    override void closeJoystick(IJoystick joystick) @trusted
+    {
+        import std.algorithm;
+
+        for(size_t i = 0; i < joysticks.length; i++) {
+            if(joysticks[i] is joystick) {
+                joysticks.remove(i);
+                destroy(joystick);
+            }
+        }
+    }
+
+    bool handleJoysitcks() @trusted
+    {
+        import core.stdc.stdio;
+
+        bool isEvent = false;
+
+        foreach(joy; joysticks)
+        {
+            fread(&joy.event, byte.sizeof, JEvent.sizeof, joy.descriptor);
+
+            isEvent = joy.event.type != 0;
+        }
+
+        return isEvent;
+    }
+
+    override size_t countJoysticks() @safe {
+        import std.file, std.conv;
+
+        size_t count = 0;
+
+        foreach(i; 0 .. 16) {
+            if(exists("/dev/input/js" ~ i.to!string))
+                count++;
+            else
+                break;
+        }
+
+        return count;
+    }
+
+    override void autodetectJoysticks() @safe {
+        foreach(ubyte i; 0 .. cast(ubyte) this.countJoysticks()) {
+            this.initJoystick(i);
+        }
+    }
 }
 
 version(Windows)
 class EventHandler : IEventHandler
 {
     import tida.winapi, tida.window;
+    import core.sys.windows.mmsystem;
+
+    pragma(lib, "winmm");
 
     private
     {
         MSG msg;
         tida.window.Window window;
+        JOYINFO joyInfo;
     }
 
     this(tida.window.Window window)
@@ -290,6 +484,73 @@ class EventHandler : IEventHandler
     {
         return msg.message == WM_QUIT || msg.message == WM_CLOSE || 
                (msg.message == WM_SYSCOMMAND && msg.wParam == SC_CLOSE);
+    }
+
+    private
+    {
+        Joystick[] joysticks;
+    }
+
+    override IJoystick initJoystick(ubyte number) @trusted
+    {
+        Joystick joystick = new Joystick();
+        joystick.info = &joyInfo;
+        uint numDevs = 0;
+
+        if((numDevs = joyGetNumDevs()) == 0)
+            throw new Exception("Not device found!");
+
+        uint id;
+        switch(number) {
+            case 0: id = JOYSTICKID1; break;
+            case 1: id = JOYSTICKID2; break;
+            default: throw new Exception("Not device found!");
+        }
+
+        if(joyGetPos(id, joystick.info) == JOYERR_UNPLUGGED)
+            throw new Exception("Not device found!");
+
+        joystick.deviceID = id;
+        joystick.msg = &msg;
+
+        joysticks ~= joystick;
+
+        return joystick;
+    }
+
+    override void closeJoystick(ubyte number) @trusted
+    {
+        import std.algorithm;
+
+        auto joystick = joysticks[number];
+
+        joysticks.remove(number);
+        destroy(joystick);
+    }
+
+    override void closeJoystick(IJoystick joystick) @trusted
+    {
+        import std.algorithm;
+
+        for(size_t i = 0; i < joysticks.length; i++) {
+            if(joysticks[i] is joystick) {
+                joysticks.remove(i);
+                destroy(joystick);
+            }
+        }
+    }
+
+    override void autodetectJoysticks() @trusted
+    {
+        foreach(i; 0 .. countJoysticks)
+        {
+            initJoystick(cast(ubyte) i);
+        }
+    }
+
+    override size_t countJoysticks() @trusted
+    {
+        return joyGetNumDevs();
     }
 }
 

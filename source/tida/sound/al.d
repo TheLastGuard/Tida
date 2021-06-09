@@ -336,6 +336,19 @@ class Wav
         
         data = dat[44 .. $];
     }
+
+    Wav dup() @safe {
+        Wav dupped = new Wav();
+        dupped.audioFormat = audioFormat;
+        dupped.numChannels = numChannels;
+        dupped.sampleRate = sampleRate;
+        dupped.byteRate = byteRate;
+        dupped.blockAlign = blockAlign;
+        dupped.bitsPerSample = bitsPerSample;
+        dupped.data = data.dup;
+
+        return dupped;
+    }
 }
 
 /++

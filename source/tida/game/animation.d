@@ -63,6 +63,7 @@ class Animation
         return _current;
     }
 
+    /// Resets the animation to the beginning.
     void reset() @safe {
         _current = 0.0f;
     }

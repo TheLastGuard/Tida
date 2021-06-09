@@ -1142,27 +1142,39 @@ class Software : IRenderer
 
     override void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe
     {
-        int x = 0;
-        int y = cast(int) radious;
+        import tida.graph.image, tida.graph.each;
 
-        int X1 = position.intX();
-        int Y1 = position.intY();
+        int rad = cast(int) radious;
+        Image buffer = new Image(rad * 2, rad * 2);
+        buffer.fill(rgba(255,255,255,0));
+
+        int x = 0;
+        int y = rad;
+
+        int X1 = rad;
+        int Y1 = rad;
 
         int delta = 1 - 2 * cast(int) radious;
         int error = 0;
+
+        void bufferLine(Vecf[2] points, Color!ubyte color) @safe {
+            foreach(ix, iy; Line(points[0], points[1])) {
+                buffer.setPixel(ix, iy, color);
+            }
+        }
 
         while (y >= 0)
         {
             if(isFill)
             {
-                line([Vecf(X1 + x, Y1 + y),Vecf(X1 + x, Y1 - y)],color);
-                line([Vecf(X1 - x, Y1 + y),Vecf(X1 - x, Y1 - y)],color);
+                bufferLine([Vecf(X1 + x, Y1 + y),Vecf(X1 + x, Y1 - y)],color);
+                bufferLine([Vecf(X1 - x, Y1 + y),Vecf(X1 - x, Y1 - y)],color);
             }else
             {
-                point(Vecf(X1 + x, Y1 + y),color);
-                point(Vecf(X1 + x, Y1 - y),color);
-                point(Vecf(X1 - x, Y1 + y),color);
-                point(Vecf(X1 - x, Y1 - y),color);
+                buffer.setPixel(X1 + x, Y1 + y,color);
+                buffer.setPixel(X1 + x, Y1 - y,color);
+                buffer.setPixel(X1 - x, Y1 + y,color);
+                buffer.setPixel(X1 - x, Y1 - y,color);
             }
 
             error = 2 * (delta + y) - 1;
@@ -1171,12 +1183,22 @@ class Software : IRenderer
                 delta += 2 * ++x + 1;
                 continue;
             }
+
             if ((delta > 0) && (error > 0))
             {
                 delta -= 2 * --y + 1;
                 continue;
             }
             delta += 2 * (++x - --y);
+        }
+
+        foreach(ix, iy; Coord(buffer.width, buffer.height)) {
+            Color!ubyte pixel;
+
+            if( (pixel = buffer.getPixel(ix,iy)).a != 0)
+            {
+                point(position + Vecf(ix, iy), pixel);
+            }
         }
     }
 
@@ -1201,11 +1223,6 @@ class Software : IRenderer
 
     Vecf lineLineTouch(Vecf[] first, Vecf[] second) @safe
     {
-        /+
-            float intersectionX = x1 + (uA * (x2-x1));
-            float intersectionY = y1 + (uA * (y2-y1));
-        +/
-
         const a = first[0];
         const b = first[1];
         const c = second[0];
@@ -1246,26 +1263,41 @@ class Software : IRenderer
             float maxY = points.maxElement!"a.y".y;
             float minX = points.minElement!"a.x".x;
 
-            Vecf[] drowning;
+            alias LineIter = Vecf[2];
 
-            foreach(i; minY .. maxY)
+            LineIter[] drowning;
+
+            for(float i = minY; i <= maxY; i += 1.0f)
             {
-                int next = 0;
-                for(int j = 0; j < points.length; j++) 
-                {
-                    next = (j + 1 == points.length) ? 0 : j + 1;
-                    auto iteract = lineLineTouch(   [Vecf(minX,i), Vecf(maxX,i)], 
-                                                    [points[j], points[next]]);
+                Vecf firstPoint = VecfNan;
+                float lastX = minX > position.x ? position.x : minX;
 
-                    if(!iteract.isVecfNan) {
-                        drowning ~= [iteract];
-                    }
+                for(float j = lastX; j <= maxX; j += 1.0f)
+                {
+                    size_t next = 0;
+                    for(size_t currPointI = 0; currPointI < points.length; currPointI++)
+                    {
+                        next = (currPointI + 1 == points.length) ? 0 : currPointI + 1;
+
+                        auto iter = lineLineTouch(  [Vecf(lastX, i), Vecf(j, i)],
+                                                    [points[currPointI], points[next]]);
+                        if(!iter.isVecfNan) {
+                            if(firstPoint.isVecfNan) {
+                                firstPoint = Vecf(j, i);
+                            } else {
+                                drowning ~= [firstPoint, Vecf(j, i)];
+                                firstPoint = VecfNan;
+                            }
+
+                            lastX = j;
+                        }
+                    }             
                 }
             }
 
-            for(int j = 0; j < drowning.length; j += 2)
+            foreach(e; drowning)
             {
-                line([drowning[j], drowning[j + 1]], color);
+                line(e, color);
             }
         }
     }

@@ -399,6 +399,13 @@ unittest
     );
 }
 
+/++
+    Checks collision between polygon and point.
+
+    Params:
+        first = Polygon vertices.
+        second = Point position.
++/
 bool isPolygonAndPoint(Vecf[] first, Vecf second) @safe
 {
     bool collision = false;
@@ -413,7 +420,6 @@ bool isPolygonAndPoint(Vecf[] first, Vecf second) @safe
         Vecf vc = first[current];
         Vecf vn = first[next];
 
-
         if(((vc.y >= second.y && vn.y <= second.y) || (vc.y <= second.y && vn.y >= second.y)) &&
             (second.x < (vn.x - vc.x) * (second.y - vc.y) / (vn.y - vc.y) + vc.x)) {
             collision = !collision;
@@ -423,6 +429,13 @@ bool isPolygonAndPoint(Vecf[] first, Vecf second) @safe
     return collision;
 }
 
+/++
+    Checks collision between polygon and line.
+
+    Params:
+        first = Polygon vertices.
+        second = Line vertices.
++/
 bool isPolygonAndLine(Vecf[] first, Vecf[] second) @safe
 {
     int next = 0;
@@ -443,6 +456,13 @@ bool isPolygonAndLine(Vecf[] first, Vecf[] second) @safe
     return false;
 }
 
+/++
+    Check collision between polygon and rectangle.
+
+    Params:
+        first = Polygon vertices.
+        second = Rectangle vertices.
++/
 bool isPolygonAndRect(Vecf[] first, Vecf[] second) @safe
 {
     int next = 0;
@@ -463,6 +483,14 @@ bool isPolygonAndRect(Vecf[] first, Vecf[] second) @safe
     return false;
 }
 
+/++
+    Check collision between polygon and circle.
+
+    Params:
+        first = Polygon vertices.
+        second = The position of the center of the circle.
+        r = Circle radius.
++/
 bool isPolygonAndCircle(Vecf[] first, Vecf second, float r) @safe
 {
     int next = 0;
@@ -483,6 +511,13 @@ bool isPolygonAndCircle(Vecf[] first, Vecf second, float r) @safe
     return false;
 }
 
+/++
+    Checking the collision of two polygons.
+
+    Params:
+        first = First polygon vertices.
+        second = Second polygon vertices.
++/
 bool isPolygonsCollision(Vecf[] first, Vecf[] second) @safe
 {
     int next = 0;
