@@ -205,7 +205,7 @@ class GLRender : IRenderer
         Shader!Program defaultShader = new Shader!Program();
         Shader!Vertex vertex = new Shader!Vertex().bindSource(
         `
-        #version 130
+        #version 120
         in vec3 position;
         uniform mat4 projection;
 
@@ -216,7 +216,7 @@ class GLRender : IRenderer
 
         Shader!Fragment fragment = new Shader!Fragment().bindSource(
         `
-        #version 130
+        #version 120
         uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
         void main() {

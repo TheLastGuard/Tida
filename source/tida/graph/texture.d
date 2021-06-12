@@ -175,13 +175,13 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
                 Shader!Vertex vertex = new Shader!Vertex()
                     .bindSource(
                     `
-                    #version 130
+                    #version 120
                     in vec3 position;
                     in vec2 aTexCoord;
                     uniform mat4 projection;
                     uniform mat4 model;
 
-                    out vec2 TexCoord;
+                    varying vec2 TexCoord;
 
                     void main() {
                         gl_Position = projection * model * vec4(position.xy, 0.0f, 1.0f);
@@ -192,14 +192,14 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
                 Shader!Fragment fragment = new Shader!Fragment()
                     .bindSource(
                     `
-                    #version 130
-                    in vec2 TexCoord;
+                    #version 120
+                    varying vec2 TexCoord;
                     uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
                     uniform sampler2D ourTexture;
 
                     void main() {
-                        gl_FragColor = texture(ourTexture, TexCoord) * color;
+                        gl_FragColor = texture2D(ourTexture, TexCoord) * color;
                     }
                     `
                     );
