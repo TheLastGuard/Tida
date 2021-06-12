@@ -174,6 +174,7 @@ float[4][4] ortho(float left, float right, float bottom, float top, float zNear 
                 ];
 }
 
+/// A renderer for rendering to a window with hardware acceleration.
 class GLRender : IRenderer
 {
     import tida.window, tida.color, tida.vector, tida.graph.camera, tida.shape, tida.graph.gl;
@@ -690,19 +691,222 @@ class GLRender : IRenderer
     }
 }
 
+alias ICanvas = IPlane; /// Inteface Canvas
+alias Canvas = Plane; /// Canvas
+
+/++
+    An interface for implementing canvas rendering via Software-renderer.
++/
 interface IPlane
 {
     import tida.color, tida.window, tida.vector;
 
+    /++
+        Allocate memory for the canvas at the specified size.
+
+        Params:
+            width = Canvas width.
+            height = Canvas height.
+    +/
     void alloc(uint width,uint height) @safe;
+
+    /++
+        Clear the canvas with the specified color.
+
+        Params:
+            color = Cleared color.
+    +/
     void clearPlane(Color!ubyte color) @safe;
+
+    /++
+        Draw the buffer to the canvas.
+
+        Params:
+            window = Window.
+    +/
     void putToWindow(IWindow window) @safe;
+
+    /++
+        Set the color mixing mode.
+    +/
     void blendMode(BlendMode mode) @safe @property;
+
+    /++
+        Draw a point on the canvas.
+        Draw only a point, the rest of the shapes are rendered.
+
+        Params:
+            position = Point position.
+            color = Point color.
+    +/
     void pointTo(Vecf position,Color!ubyte color) @safe;
+
+    /++
+        Set port of visibility.
+
+        Params:
+            w = Port width.
+            h = Port height.
+    +/
     void viewport(int w,int h) @safe;
+
+    /++
+        Move the visibility port to the specified coordinates.
+
+        Params:
+            x = Port x-axis position.
+            y = Port y-axis position.
+    +/
     void move(int x,int y) @safe;
 
+    /++
+        Canvas data.
+    +/
     ubyte[] data() @safe @property;
+}
+
+/++
+    Implementing the rendering of a point in the canvas.
+
+    Params:
+        pixelformat = Pixel Format.
++/
+template PointToImpl(int pixelformat)
+{
+    override void pointTo(Vecf position, Color!ubyte color) @trusted
+    {
+        import std.conv : to;
+
+        position = position - Vecf(xput,yput);
+
+        if(position.x.to!int >= _width || position.y.to!int >= _height ||
+           position.x.to!int < 0 || position.y.to!int < 0)
+            return;
+
+        if(_pwidth == _width && _pheight == _height)
+        {
+            auto pos = ((_width * position.y.to!int) + position.x.to!int) * 4;
+
+            if(bmode == BlendMode.Blend) {
+                static if(pixelformat == PixelFormat.BGRA)
+                {
+                    color.colorize!Alpha(rgba(buffer[pos+3],buffer[pos+2],buffer[pos+1],buffer[pos]));
+                }else
+                static if(pixelformat == PixelFormat.BGR)
+                {
+                    color.colorize!Alpha(rgba(buffer[pos+2],buffer[pos+1],buffer[pos],255));
+                }else
+                static if(pixelformat == PixelFormat.RGBA)
+                {
+                    color.colorize!Alpha(rgba(buffer[pos], buffer[pos+1],buffer[pos+2],buffer[pos+3]));
+                }else
+                static if(pixelformat == PixelFormat.RGB)
+                {
+                    color.colorize!Alpha(rgba(buffer[pos],buffer[pos+1],buffer[pos+2],255));
+                }
+            }
+
+            static if(pixelformat == PixelFormat.BGRA)
+            {
+                buffer[pos] = color.b;
+                buffer[pos+1] = color.g;
+                buffer[pos+2] = color.r;
+                buffer[pos+3] = color.a;
+            }else
+            static if(pixelformat == PixelFormat.BGR)
+            {
+                buffer[pos] = color.b;
+                buffer[pos+1] = color.g;
+                buffer[pos+2] = color.r;
+            }else
+            static if(pixelformat == PixelFormat.RGBA)
+            {
+                buffer[pos] = color.r;
+                buffer[pos+1] = color.g;
+                buffer[pos+2] = color.b;
+                buffer[pos+3] = color.a;
+            }else
+            static if(pixelformat == PixelFormat.RGB)
+            {
+                buffer[pos] = color.r;
+                buffer[pos+1] = color.g;
+                buffer[pos+2] = color.b;
+            }
+        }else
+        {
+            import tida.graph.each;
+
+            auto scaleWidth = cast(double) _pwidth / cast(double) _width;
+            auto scaleHeight = cast(double) _pheight / cast(double) _height;
+
+            int w = cast(int) _width / _pwidth + 1;
+            int h = cast(int) _height / _pheight + 1;
+
+            position = Vecf(position.x / scaleWidth, position.y / scaleHeight);
+
+            Color!ubyte original = color;
+
+            foreach(ix, iy; Coord(position.x.to!int + w,position.y.to!int + h,
+                                  position.x.to!int,position.y.to!int))
+            {
+                if(ix > _width || iy > _height || ix < 0 || iy < 0)
+                    continue;
+
+                auto pos = (iy * _width) + ix;
+                pos *= 4;
+
+                color = original;
+                if(bmode == BlendMode.Blend) {
+                    static if(pixelformat == PixelFormat.BGRA)
+                    {
+                        color.colorize!Alpha(rgba(buffer[pos+3],buffer[pos+2],buffer[pos+1],buffer[pos]));
+                    }else
+                    static if(pixelformat == PixelFormat.BGR)
+                    {
+                        color.colorize!Alpha(rgba(buffer[pos+2],buffer[pos+1],buffer[pos],255));
+                    }else
+                    static if(pixelformat == PixelFormat.RGBA)
+                    {
+                        color.colorize!Alpha(rgba(buffer[pos],buffer[pos+1],buffer[pos+2],buffer[pos+3]));
+                    }else
+                    static if(pixelformat == PixelFormat.RGB)
+                    {
+                        color.colorize!Alpha(rgba(buffer[pos],buffer[pos+1],buffer[pos+2],255));
+                    }
+                }
+
+                if(pos < buffer.length)
+                {
+                    static if(pixelformat == PixelFormat.BGRA)
+                    {
+                        buffer[pos] = color.b;
+                        buffer[pos+1] = color.g;
+                        buffer[pos+2] = color.r;
+                        buffer[pos+3] = color.a;
+                    }else
+                    static if(pixelformat == PixelFormat.BGR)
+                    {
+                        buffer[pos] = color.b;
+                        buffer[pos+1] = color.g;
+                        buffer[pos+2] = color.r;
+                    }else
+                    static if(pixelformat == PixelFormat.RGBA)
+                    {
+                        buffer[pos] = color.r;
+                        buffer[pos+1] = color.g;
+                        buffer[pos+2] = color.b;
+                        buffer[pos+3] = color.a;
+                    }else
+                    static if(pixelformat == PixelFormat.RGB)
+                    {
+                        buffer[pos] = color.r;
+                        buffer[pos+1] = color.g;
+                        buffer[pos+2] = color.b;
+                    }
+                }
+            }
+        }
+    }
 }
 
 version(Posix)
@@ -810,62 +1014,7 @@ class Plane : IPlane
         bmode = mode;
     }
 
-    override void pointTo(Vecf position,Color!ubyte color) @safe @property
-    {
-        import std.conv : to;
-
-        position = position - Vecf(xput,yput);
-
-        if(position.x.to!int >= _width || position.y.to!int >= _height || 
-           position.x.to!int < 0 || position.y.to!int < 0)
-            return;
-
-        if(_pwidth == _width && _pheight == _height)
-        {
-            auto pos = ((_width * position.y.to!int) + position.x.to!int) * 4;
-
-            if(bmode == BlendMode.Blend) 
-                color.colorize!Alpha(rgba(buffer[pos+2],buffer[pos+1],buffer[pos],255));
-
-            buffer[pos] = color.b;
-            buffer[pos+1] = color.g;
-            buffer[pos+2] = color.r;
-        }else
-        {
-            import tida.graph.each;
-
-            auto scaleWidth = cast(double) _pwidth / cast(double) _width;
-            auto scaleHeight = cast(double) _pheight / cast(double) _height;
-
-            int w = cast(int) _width / _pwidth + 1;
-            int h = cast(int) _height / _pheight + 1;
-
-            position = Vecf(position.x / scaleWidth, position.y / scaleHeight);
-
-            Color!ubyte original = color;
-
-            foreach(ix, iy; Coord(position.x.to!int + w,position.y.to!int + h,
-                                  position.x.to!int,position.y.to!int))
-            {
-                if(ix > _width || iy > _height || ix < 0 || iy < 0)
-                    continue;
-                
-                auto pos = (iy * _width) + ix;
-                pos *= 4;
-
-                color = original;
-                if(bmode == BlendMode.Blend)
-                    color.colorize!Alpha(rgba(buffer[pos+2],buffer[pos+1],buffer[pos],255));
-
-                if(pos < buffer.length)
-                {
-                    buffer[pos] = color.b;
-                    buffer[pos+1] = color.g;
-                    buffer[pos+2] = color.r;
-                }
-            }
-        }
-    }
+    mixin PointToImpl!(PixelFormat.BGR);
 }
 
 version(Windows)
@@ -971,58 +1120,23 @@ class Plane : IPlane
         bmode = mode;
     }
 
-    override void pointTo(Vecf position,Color!ubyte color) @safe @property
-    {
-        import std.conv : to;
-
-        position = position - Vecf(xput,yput);
-
-        if(position.x.to!int >= _width || position.y.to!int >= _height || 
-           position.x.to!int < 0 || position.y.to!int < 0)
-            return;
-
-        if(_pwidth == _width && _pheight == _height)
-        {
-            auto pos = ((_width * position.y.to!int) + position.x.to!int) * 4;
-
-            if(bmode == BlendMode.Blend) 
-                color.colorize!Alpha(rgba(buffer[pos+2],buffer[pos+1],buffer[pos],255));
-
-            buffer[pos] = color.b;
-            buffer[pos+1] = color.g;
-            buffer[pos+2] = color.r;
-        }else
-        {
-            import tida.graph.each;
-
-            auto scaleWidth = cast(double) _pwidth / cast(double) _width;
-            auto scaleHeight = cast(double) _pheight / cast(double) _height;
-
-            int w = cast(int) _width / _pwidth + 1;
-            int h = cast(int) _height / _pheight + 1;
-
-            position = Vecf(position.x / scaleWidth, position.y / scaleHeight);
-
-            foreach(ix, iy; Coord(position.x.to!int + w,position.y.to!int + h,
-                                  position.x.to!int,position.y.to!int))
-            {
-                if(ix > _width || iy > _height || ix < 0 || iy < 0)
-                    continue;
-
-                auto pos = (iy * _width) + ix;
-                pos *= 4;
-
-                if(pos < buffer.length)
-                {
-                    buffer[pos] = color.b;
-                    buffer[pos+1] = color.g;
-                    buffer[pos+2] = color.r;
-                }
-            }
-        }
-    }
+    mixin PointToImpl!(PixelFormat.BGR);
 }
 
+/++
+    Render without hardware acceleration.
+    It is aggregated with either a window or canvases (IPlane).
+
+    Example:
+    ---
+    // Render for the window.
+    Software soft = new Software(myWindow);
+    ...
+
+    // Render for another object like a picture, or another object.
+    Software soft = new Software(new MyCanvas());
+    ---
++/
 class Software : IRenderer
 {
     import tida.window, tida.color, tida.vector, tida.graph.camera, tida.shape;

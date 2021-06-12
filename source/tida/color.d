@@ -15,7 +15,8 @@ enum PixelFormat : int
     RGB, /// 
     RGBA, ///
     ARGB, ///
-    BGRA ///
+    BGRA, ///
+    BGR ///
 }
 
 enum Alpha = 0;
@@ -83,8 +84,8 @@ Color!ubyte rgba(ubyte red,ubyte green,ubyte blue,ubyte alpha) @safe nothrow
 +/
 Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe
 {
-	static if(is(T : string) || is(T : wstring) || is(T : dstring))
-	{
+    static if(is(T : string) || is(T : wstring) || is(T : dstring))
+    {
         import std.conv : to;
         import std.bigint;
 
@@ -139,54 +140,54 @@ Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe
                 BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte
             );
         }else
-    	  static assert(null,"Unknown pixel format");
-	}else
-	static if(is(T : int) || is(T : long) || is(T : uint) || is(T : ulong))
-	{
-		Color!ubyte result;
+          static assert(null,"Unknown pixel format");
+    }else
+    static if(is(T : int) || is(T : long) || is(T : uint) || is(T : ulong))
+    {
+        Color!ubyte result;
 	
-		static if(format == PixelFormat.RGBA)
-		{
-			result.r = (hex & 0xFF000000) >> 24;
-			result.g = (hex & 0x00FF0000) >> 16;
-			result.b = (hex & 0x0000FF00) >> 8;
-			result.a = (hex & 0x000000FF);
-			
-			return result;
-		}else
-		static if(format == PixelFormat.RGB)
-		{
-			result.r = (hex & 0xFF0000) >> 16;
-			result.g = (hex & 0x00FF00) >> 8;
-			result.b = (hex & 0x0000FF);
-			result.a = 255;
+        static if(format == PixelFormat.RGBA)
+        {
+            result.r = (hex & 0xFF000000) >> 24;
+            result.g = (hex & 0x00FF0000) >> 16;
+            result.b = (hex & 0x0000FF00) >> 8;
+            result.a = (hex & 0x000000FF);
+        	
+            return result;
+        }else
+        static if(format == PixelFormat.RGB)
+        {
+            result.r = (hex & 0xFF0000) >> 16;
+            result.g = (hex & 0x00FF00) >> 8;
+            result.b = (hex & 0x0000FF);
+            result.a = 255;
 
             return result;
-		}else
-		static if(format == PixelFormat.ARGB)
-		{
-			result.a = (hex & 0xFF000000) >> 24;
-			result.r = (hex & 0x00FF0000) >> 16;
-			result.g = (hex & 0x0000FF00) >> 8;
-			result.b = (hex & 0x000000FF);
+        }else
+        static if(format == PixelFormat.ARGB)
+        {
+            result.a = (hex & 0xFF000000) >> 24;
+            result.r = (hex & 0x00FF0000) >> 16;
+            result.g = (hex & 0x0000FF00) >> 8;
+            result.b = (hex & 0x000000FF);
 
             return result;
-		}else
-		static if(format == PixelFormat.BGRA)
-		{
-			result.b = (hex & 0xFF000000) >> 24;
-			result.g = (hex & 0x00FF0000) >> 16;
-			result.r = (hex & 0x0000FF00) >> 8;
-			result.a = (hex & 0x000000FF);
+        }else
+        static if(format == PixelFormat.BGRA)
+        {
+            result.b = (hex & 0xFF000000) >> 24;
+            result.g = (hex & 0x00FF0000) >> 16;
+            result.r = (hex & 0x0000FF00) >> 8;
+            result.a = (hex & 0x000000FF);
 
             return result;
-		}else
+        }else
         static if(format == PixelFormat.AUTO) {
             return HEX!(PixelFormat.RGB, T)(hex);
         }else
             static assert(null, "Unknown pixel format!");
-	}else
-		static assert(null, "Unknown type hex!");
+    }else
+        static assert(null, "Unknown type hex!");
 }
 
 /// HSL color structure
@@ -563,7 +564,7 @@ struct Color(T)
         }
     }
 
-	///
+    ///
     string stringComponents() @safe
     {
         import std.conv : to;
@@ -585,7 +586,7 @@ struct Color(T)
         return this.conv!string;
     }
 
-	///
+    ///
     T[] fromBytes(R,int format)() @safe nothrow
     {
         static if(format == PixelFormat.RGBA)
@@ -603,7 +604,7 @@ struct Color(T)
             return [];
     }
 
-	///
+    ///
     T[] fromBytes(R,int format)() @safe immutable nothrow
     {
         static if(format == PixelFormat.RGBA)
@@ -803,12 +804,12 @@ template isCorrectFormat(int format)
 }
 
 /++
-	Converts the format of a sequence of color bytes.
+    Converts the format of a sequence of color bytes.
 	
-	Params:
-		format1 = What is the original format.
-		format2 = What format should be converted.
-		pixels = Sequence of color bytes.
+    Params:
+        format1 = What is the original format.
+        format2 = What format should be converted.
+        pixels = Sequence of color bytes.
 +/
 ubyte[] fromFormat(int format1,int format2)(ubyte[] pixels) @safe nothrow
 {

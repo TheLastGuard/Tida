@@ -1,5 +1,5 @@
 /++
-    
+    A module for working with vertices.
     
     Authors: $(HTTP https://github.com/TodNaz, TodNaz)
     License: $(HTTP https://opensource.org/licenses/MIT, MIT)
@@ -10,6 +10,7 @@ import tida.graph.gl;
 import tida.shape, tida.vector, tida.color;
 import std.range;
 
+/// Vertex description class.
 class VertexInfo
 {
     private
@@ -21,6 +22,12 @@ class VertexInfo
         uint bufferLength;
     }
 
+    /++
+        Generates vertices from a buffer.
+
+        Params:
+            buffer = Buffer.
+    +/
     auto generateFromBuffer(float[] buffer) @safe nothrow
     in(!buffer.empty, "Buffer is empty!")
     do
@@ -40,6 +47,13 @@ class VertexInfo
         return this;
     }
 
+    /++
+        Generates vertices from a buffer and elements.
+
+        Params:
+            buffer = Buffer.
+            elem = Elements.
+    +/
     auto generateFromElemBuff(float[] buffer,uint[] elem) @safe nothrow
     in(!buffer.empty, "Buffer is empty!")
     in(!elem.empty, "Element array is empty!")
@@ -66,31 +80,37 @@ class VertexInfo
         return this;
     }
 
+    /// Binds an array of vertices to the current render cycle.
     void bindVertexArray() @safe nothrow
     {
         GL3.bindVertexArray(idVertexArray);
     }
 
+    /// ID of the generated vertex array.
     uint idVertexArray() @safe nothrow @property
     {
         return _idVertexArr;
     }
 
+    /// The identifier of the buffer in memory.
     uint idBufferArray() @safe nothrow @property
     {
         return _idBufferArr;
     }
 
+    /// The identifier of the elements in memory.
     uint idElementArray() @safe nothrow @property
     {
         return _idElemenArr;
     }
 
+    /// Buffer length.
     uint length() @safe nothrow @property
     {
         return bufferLength;
     }
 
+    ///
     void draw(ShapeType type, uint count = 1) @safe nothrow
     {
         switch(type)
@@ -112,6 +132,7 @@ class VertexInfo
         }
     }
 
+    /// Destroys vertex information.
     void deleting() @safe nothrow
     {
         if(idBufferArray != 0) GL3.deleteBuffer(_idBufferArr);
@@ -129,6 +150,18 @@ class VertexInfo
     }
 }
 
+/++
+    Generates a buffer from the shape description structure.
+
+    Params:
+        shape = Shape structure.
+        position = Shape position.
+
+    Example:
+    ---
+    auto buffer = generateBuffer(Shape.Line(Vecf(32, 48), Vecf(64, 96)));
+    ---
++/
 float[] generateBuffer(const(Shape) shape, Vecf position = Vecf(0, 0)) @safe nothrow
 in(shape.type != ShapeType.unknown, "Shape is unknown!")
 out(r; !r.empty, "Buffer is empty!")
@@ -205,6 +238,18 @@ do
     }
 }
 
+/++
+    Generates information about vertices from the shape description structure.
+
+    Params:
+        shape = Shape structure.
+        position = Shape position.
+
+    Example:
+    ---
+    auto info = generateVertex(Shape.Rectangle(Vecf(0,0), Vecf(32, 32)), Vecf(32, 32));
+    ---
++/
 VertexInfo generateVertex(const(Shape) shape, Vecf position = Vecf(0, 0)) @trusted
 {
     float[] buffer;

@@ -1,5 +1,5 @@
 /++
-    
+    The module for describing the work with texture.
 
     Authors: $(HTTP https://github.com/TodNaz, TodNaz)
     License: $(HTTP https://opensource.org/licenses/MIT, MIT)
@@ -8,17 +8,34 @@ module tida.graph.texture;
 
 import tida.graph.drawable;
 
+/++
+    Description structure for creating texture.
++/
 struct TextureInfo
 {
     public 
     {
+        /++
+            Texture parameters when creating.
+
+            Example:
+            ---
+            TextureInfo info.
+            info.params =   [
+                                GL_TEXTURE_MIN_FILTER, GL_LINEAR,
+                                GL_TEXTURE_MAG_FILTER, GL_LINEAR
+                            ];
+            ...
+            ---
+        +/
         int[] params;
-        int width;
-        int height;
-        ubyte[] bytes;
+        int width; /// Texture width.
+        int height; /// Texture height
+        ubyte[] bytes; /// Sequence of colors in RGBA format.
     }
 }
 
+/// Texture description class.
 class Texture : IDrawable, IDrawableEx, IDrawableColor
 {
     import tida.graph.gl, tida.color, tida.graph.vertgen;
@@ -32,26 +49,37 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         VertexInfo vinfo;
     }
 
+    /// The width of the texture.
     void width(uint newWidth) @safe @property nothrow
     {
         _width = newWidth;
     }
 
+    /// ditto
     uint width() @safe @property nothrow
     {
         return _width;
     }
 
+    /// The height of the texture.
     void height(uint newHeight) @safe @property nothrow
     {
         _height = newHeight;
     }
 
+    /// ditto
     uint height() @safe @property nothrow
     {
         return _height;
     }
 
+    /++
+
+
+        Params:
+            format = The pixel format that you put into the argument.
+            bytes = An array of pixels.
+    +/
     void initFromBytes(int format)(ubyte[] bytes) @safe @property
     {
         TextureInfo info;
@@ -64,6 +92,13 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         initFromInfo!format(info);
     }
 
+    /++
+        Initializes the texture using an initialization structure.
+
+        Params:
+            format = The pixel format that you put into the structure.
+            info = Texture initialization structure.
+    +/
     void initFromInfo(int format)(TextureInfo info) @safe @property
     {
         _width = info.width;
@@ -99,21 +134,27 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         vinfo = new VertexInfo().generateFromElemBuff(buffer, elem);
     }
 
+    /// Information about the vertices of the texture.
     VertexInfo vertexInfo() @safe @property
     {
         return vinfo;
     }
 
+    /// Texture identifier.
     uint glID() @safe @property nothrow
     {
         return glTextureID;
     }
 
+    /++
+        Bind the texture to the current render cycle.
+    +/
     void bind() @safe nothrow
     {
         GL.bindTexture(glID);
     }
 
+    /// Destroys a texture from memory.
     void destroy() @trusted @property 
     {
         if(glTextureID != 0)
@@ -123,6 +164,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         }
     }
 
+    ///
     Shader!Program initShader(IRenderer renderer) @safe
     {
         Shader!Program shader;

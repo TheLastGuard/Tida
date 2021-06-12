@@ -224,7 +224,7 @@ class SymbolRender : IDrawable, IDrawableEx
 ///
 T cutFormat(T)(T symbols) @safe
 in(isText!T)
-body
+do
 {
     for(int i = 0; i < symbols.length; i++)
     {
@@ -256,7 +256,7 @@ body
 +/
 int widthText(T)(T text,Font font) @safe
 in(isText!T)
-body
+do
 {
     import std.algorithm : reduce;
     text = cutFormat!T(text);

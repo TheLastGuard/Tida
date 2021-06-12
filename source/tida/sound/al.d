@@ -31,6 +31,16 @@ class Device
         ALCcontext* context;
     }
 
+    ALCdevice* alDevice() @safe @property
+    {
+        return device;
+    }
+
+    ALCcontext* alContext() @safe @property
+    {
+        return context;
+    }
+
     /// ditto
     void open() @trusted
     {
