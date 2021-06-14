@@ -294,6 +294,11 @@ class Context : IContext
         GLXFBConfig bestFbcs;   
     }
 
+    void bindContext(GLXContext ctx) @safe
+    {
+        this._context = ctx;
+    }
+
     override void attributeInitialize(GLAttributes attributes = GLAttribAutoColorSize!8) @trusted
     {
         import std.conv : to;
@@ -395,6 +400,28 @@ class Window : IWindow
 
         Visual* _visual;
         int _depth;
+    }
+
+    void bindWindow(tida.x11.Window window) @trusted
+    {
+        this.window = window;
+        XWindowAttributes attrib;
+
+        XGetWindowAttributes(runtime.display, window, &attrib);
+        _width = attrib.width;
+        _height = attrib.height;
+
+        scope XSizeHints* sh = XAllocSizeHints();
+        scope(exit) XFree(sh);
+
+        long flags;
+
+        XGetWMNormalHints(runtime.display, window, sh, &flags);
+
+        _resizable = (sh.flags & PMinSize) == PMinSize;
+
+        this._visual = attrib.visual;
+        this._depth = attrib.depth;
     }
 
     this(uint newWidth,uint newHeight,string newTitle) @safe
@@ -915,21 +942,17 @@ class Window : IWindow
             context = _context;
 
             void* data = wglGetProcAddress("wglGetExtensionsStringARB");
+            enforce(data,"wglGetExtensionsStringARB pointer is null");
             wglGetExtensionsStringARB = cast(FwglGetExtensionsStringARB) data;
             data = null;
 
-            char* cexts = wglGetExtensionsStringARB(deviceHandle);
-            size_t len = 0;
-            while(cexts[len] != '\0') {
-                len++;
-            }
-            string ext = cast(string) cexts[0 .. len];
-
             data = wglGetProcAddress("wglChoosePixelFormatARB");
+            enforce(data,"wglChoosePixelFormatARB pointer is null");
             wglChoosePixelFormatARB = cast(FwglChoosePixelFormatARB) data;
             data = null;
 
             data = wglGetProcAddress("wglCreateContextAttribsARB");
+            enforce(data,"wglCreateContextAttribsARB pointer is null");
             wglCreateContextAttribsARB = cast(FwglCreateContextAttribsARB) data;
             data = null;
 

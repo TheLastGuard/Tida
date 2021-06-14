@@ -272,6 +272,15 @@ class SceneManager
         return false;
     }
 
+    bool hasScene(string name) @safe
+    {
+        foreach(scene; scenes) {
+            if(scene.name == name) return true;
+        }
+
+        return false;
+    }
+
     /++
         Adds a scene to the list.
 
@@ -623,7 +632,7 @@ class SceneManager
     void initThread(size_t count = 1) @safe
     {
         apiThreadCreate = true;
-        apiThreadValue = count; 
+        apiThreadValue += count; 
     }
 
     ///

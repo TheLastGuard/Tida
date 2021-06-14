@@ -18,42 +18,42 @@ public
     import x11.Xutil;
 
     version(Dynamic_GLX) 
-    	import dglx.glx;
+        import dglx.glx;
     else
-    	import glx.glx;
+        import glx.glx;
 }
 
 /++
-	Returns an atom for handling events.
+    Returns an atom for handling events.
 
-	Params:
-		name = Atom name.
+    Params:
+        name = Atom name.
 +/
 Atom GetAtom(string name)() @trusted
 {
-	import tida.runtime;
+    import tida.runtime;
 
-	return XInternAtom(runtime.display, name, 0);
+    return XInternAtom(runtime.display, name, 0);
 }
 
 struct WMEvent
 {
-	import tida.runtime;
+    import tida.runtime;
 
-	public
-	{
-		Atom first;
-		Atom second;
-		int format;
-		int mode;
-		ubyte* data;
-		size_t length;
-		Window window;
-	}
+    public
+    {
+        Atom first;
+        Atom second;
+        int format;
+        int mode;
+        ubyte* data;
+        size_t length;
+        Window window;
+    }
 
-	void send() @trusted
-	{
-		XChangeProperty(runtime.display, window, first, second, format,
+    void send() @trusted
+    {
+        XChangeProperty(runtime.display, window, first, second, format,
                         mode, data, cast(int) length);
-	}
+    }
 }

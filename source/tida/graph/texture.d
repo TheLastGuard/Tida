@@ -7,6 +7,20 @@
 module tida.graph.texture;
 
 import tida.graph.drawable;
+import tida.graph.gl;
+
+enum TextureFilter
+{
+    Nearest = GL_NEAREST,
+    Linear = GL_LINEAR
+}
+
+enum TextureWrap
+{
+    ClampToEdge = GL_CLAMP_TO_EDGE,
+    Repeat = GL_REPEAT,
+    MirroredRepeat = GL_MIRRORED_REPEAT
+}
 
 /++
     Description structure for creating texture.
@@ -86,10 +100,29 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         info.width = _width;
         info.height = _height;
         info.bytes = bytes;
-        info.params = [ GL_TEXTURE_MIN_FILTER, GL_LINEAR,
-                        GL_TEXTURE_MAG_FILTER, GL_LINEAR];
+        info.params = [ GL_TEXTURE_MIN_FILTER, TextureFilter.Nearest,
+                        GL_TEXTURE_MAG_FILTER, TextureFilter.Nearest];
 
         initFromInfo!format(info);
+    }
+
+    void initFromBytesAndParams(int format)(ubyte[] bytes,int[] params) @safe 
+    {
+        TextureInfo info;
+        info.width = _width;
+        info.height = _height;
+        info.bytes = bytes;
+        info.params = params;
+
+        initFromInfo!format(info);
+    }
+
+    void editParams(int[] params) @safe
+    {
+        for(int i = 0; i < params.length; i += 2)
+        {
+            GL.texParameteri(params[i], params[i + 1]);
+        }
     }
 
     /++
@@ -109,13 +142,9 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         GL.genTextures(1, glTextureID);
         GL.bindTexture(glTextureID);
 
-        for(int i = 0; i < info.params.length; i += 2)
-        {
-            GL.texParameteri(info.params[i], info.params[i + 1]);
-        }
+        editParams(info.params);
 
         GL.texImage2D(_width, _height, bytes);
-        //GL.generateMipmap(GL_TEXTURE_2D);
 
         GL.bindTexture(0);
 
@@ -175,13 +204,13 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
                 Shader!Vertex vertex = new Shader!Vertex()
                     .bindSource(
                     `
-                    #version 120
+                    #version 130
                     in vec3 position;
                     in vec2 aTexCoord;
                     uniform mat4 projection;
                     uniform mat4 model;
 
-                    varying vec2 TexCoord;
+                    out vec2 TexCoord;
 
                     void main() {
                         gl_Position = projection * model * vec4(position.xy, 0.0f, 1.0f);
@@ -192,8 +221,8 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
                 Shader!Fragment fragment = new Shader!Fragment()
                     .bindSource(
                     `
-                    #version 120
-                    varying vec2 TexCoord;
+                    #version 130
+                    in vec2 TexCoord;
                     uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
                     uniform sampler2D ourTexture;

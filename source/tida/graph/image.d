@@ -78,7 +78,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     /// ditto
     void pixels(Color!ubyte[] otherPixels) @safe @property nothrow
     in(otherPixels.length == _pixels.length)
-    body
+    do
     {
         _pixels = otherPixels;
     }
@@ -91,7 +91,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     +/
     ubyte[] bytes(int format = PixelFormat.RGBA)() @safe nothrow
     in(isCorrectFormat!format)
-    body
+    do
     {
         ubyte[] tryBytes;
 
@@ -572,7 +572,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 }
 
-Image rotateImage(Image image,float angle,Vecf center = VecfNan) @safe
+Image rotateImage(int Type = DefaultOperation)(Image image,float angle,Vecf center = VecfNan) @safe
 {
     import tida.angle;
 
@@ -581,7 +581,7 @@ Image rotateImage(Image image,float angle,Vecf center = VecfNan) @safe
     if(center.isVecfNan)
         center = Vecf(image.width / 2, image.height / 2);
 
-    foreach(x,y; Coord(image.width,image.height))
+    foreach(x,y; Coord!Type(image.width,image.height))
     {
         auto pos = Vecf(x,y)
             .rotate(angle, center);
