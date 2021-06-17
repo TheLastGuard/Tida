@@ -46,6 +46,7 @@ enum : int
     Init, ///
     Restart, ///
     Entry, ///
+    TriggerAll, ///
     GameStart, ///
     GameExit, ///
     GameRestart, ///
@@ -54,7 +55,8 @@ enum : int
     Step, ///
     Draw, ///
     OnError, ///
-    Collision ///
+    Collision, ///
+    Destroy
 }
 
 /// Example: FunEvent!Step
@@ -63,6 +65,7 @@ struct FunEvent(int Type)
 
 }
 
+///
 struct CollisionEvent
 {
     string name;

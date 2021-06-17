@@ -542,6 +542,9 @@ class Scene
 
         * Needed if you need to initialize something,
           when the scene becomes active.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Init`
     +/
     void init() @safe {}
 
@@ -550,6 +553,9 @@ class Scene
 
         * If the scene was previously initialized,
           then this method is called.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Restart`
     +/
     void restart() @safe {}
 
@@ -559,6 +565,9 @@ class Scene
         * Only active when the scene
           becomes active
         * It does not require implementation.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Step`
     +/
     void step() @safe {}
 
@@ -568,6 +577,9 @@ class Scene
         * Valid only when the scene
           becomes active.
         * It does not require implementation.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!EventHandle`
     +/
     void event(EventHandler event) @safe {}
 
@@ -576,6 +588,10 @@ class Scene
 
         Params:
             oftrigger = Trigger name.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!TriggerAll`
+                    or `@TriggerEvent("Trigger")`
     +/
     void trigger(string oftrigger) @safe {}
 
@@ -585,32 +601,50 @@ class Scene
         * Valid only when the scene
           becomes active
         * It does not require implementation.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Draw`
     +/
     void draw(IRenderer graph) @safe {}
 
     /++
         Event leave scene
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Leave`
     +/
     void leave() @safe {}
 
     /++
         Event entry
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Entry`
     +/
     void entry() @safe {}
 
     /++
         It runs regardless of which scene is active.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!GameExit`
     +/
     void gameExit() @safe {}
 
     /++
         If game restart - call self
         It runs regardless of which scene is active.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!GameRestart`
     +/
     void gameRestart() @safe {}
 
     /++
         It runs regardless of which scene is active.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!GameStart`
     +/
     void gameStart() @safe {}
 
@@ -619,11 +653,17 @@ class Scene
         when an object requires it to be deleted. The scene will do it
         but you can do something with her before that.
         (how bawdy, yomayo).
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Destroy`
     ++/
     void eventDestroy(Instance instance) @safe {}
 
     /++
         Will be called when an exception occurs.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!OnError`
     +/
     void onError() @safe {}
 
@@ -632,6 +672,9 @@ class Scene
 
         Params:
             graph = Instance to render.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `debug @Event!Draw`
     +/
     debug void drawDebug(IRenderer graph) @safe {}
 }

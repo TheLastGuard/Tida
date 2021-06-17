@@ -52,13 +52,13 @@ class Animation
     }
 
     /// Return current frame
-    Image currentFrame() @safe
+    Image currentFrame() @safe @property
     {
         return _frames[cast(size_t) _current > $ - 1 ? $ - 1 : cast(size_t) _current];
     }
 
     /// Return position current frame
-    float numFrame() @safe 
+    float numFrame() @safe @property
     {
         return _current;
     }

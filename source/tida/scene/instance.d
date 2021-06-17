@@ -194,10 +194,13 @@ class Instance
     {
         assert(isComponent!T);
         assert(cmp,"Component is not create!");
-        assert(cmp.getName != "","Give the component a name.");
-    }body
+    }do
     {
         import tida.scene.manager : sceneManager, SceneManager;
+
+        if(cmp.name == "") {
+            cmp.name = T.stringof;
+        }
 
         cmp.init(this);
         components ~= cmp;
@@ -214,7 +217,7 @@ class Instance
     +/
     void add(Name)() @safe
     in(isComponent!Name,"Its not component!")
-    body
+    do
     {
         add!Name(new Name());
     }
@@ -233,7 +236,7 @@ class Instance
     +/
     T of(T)() @safe
     in(isComponent!T,"It not component!")
-    body
+    do
     {
         T obj;
 
@@ -353,6 +356,9 @@ class Instance
             It's useless to use `sceneManager.current` to grab the current 
             instance, since this link will enter into the previous scene. 
             For real it is better to use `sceneManager.initable`.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Init`
     +/
     void init() @safe {}
     
@@ -364,6 +370,9 @@ class Instance
             It's useless to use `sceneManager.current` to grab the current 
             instance, since this link will enter into the previous scene. 
             For real it is better to use `sceneManager.initable`.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Restart`
     +/
     void restart() @safe {}
 
@@ -373,14 +382,24 @@ class Instance
             It's useless to use `sceneManager.current` to grab the current 
             instance, since this link will enter into the previous scene. 
             For real it is better to use `sceneManager.initable`.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Entry`
     +/
     void entry() @safe {}
 
+    /++
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Leave`
+    +/
     void leave() @safe {}
 
     /++
         This event will be triggered when the user enters something. 
         This does not mean that it is equivalent to `step`.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Leave`
     +/
     void event(EventHandler event) @safe {}
 
@@ -388,6 +407,9 @@ class Instance
         This event is called always and constantly at the rate of the specified 
         frame counter. Also, when new threads are declared and the instance is 
         redefined in a different thread, this event will run on a different thread.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Step`
     +/
     void step() @safe {}
 
@@ -395,6 +417,9 @@ class Instance
         This event is for drawing something on the screen.
         Params:
             graph = Instance to render.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Draw`
     +/
     void draw(IRenderer graph) @safe {}
 
@@ -402,22 +427,34 @@ class Instance
         This event is intended for rendering in debug mode.
         Params:
             graph = Instance to render.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `debug @Event!Draw`
     +/
     debug void drawDebug(IRenderer graph) @safe {}
 
     /++
         This event will be triggered when the game is closed by the user or 
         the program.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!GameExit`
     +/
     void gameExit() @safe {}
 
     /++
         This event will be triggered when the game is restarted by the program.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!GameRestart`
     +/
     void gameRestart() @safe {}
 
     /++
         This event will be triggered when the game is launched with `game.run`.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!GameStart`
     +/
     void gameStart() @safe {}
 
@@ -425,21 +462,36 @@ class Instance
         This event is fired when someone has thrown a trigger.
         Params:
             oftrigger = Trigger name.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!TriggerAll`
+                    or `@TriggerEvent("Trigger")`
     +/
     void trigger(string oftrigger) @safe {}
 
     /++
         This event will be thrown when any exception is thrown.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!OnError`
     +/
     void onError() @safe {}
 
     /++
         This event will be triggered when the instance is destroyed.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!OnDestroy`
     +/
     void eventDestroy(ubyte type) @safe {}
 
     /++
         This event will be triggered when this instance collides with someone.
+
+        Deprecated: Since version 0.1.2, such functions will be replaced
+                    with a uniform event: `@Event!Collision`
+                    or `@CollisionEvent("NameCollider", "TagCollider")`
+                    or `@CollisionTagEvent("TagCollider")`
     +/
     void collision(Instance other) @safe {}
 

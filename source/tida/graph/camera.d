@@ -23,7 +23,7 @@ class Camera
 
     this(Shape dvShape)
     in(dvShape.type == ShapeType.rectangle)
-    body
+    do
     {
         this._shape = dvShape;
     }
@@ -36,7 +36,7 @@ class Camera
     /// Port on the window.
     void shape(Shape dvShape) @safe @property
     in(dvShape.type == ShapeType.rectangle)
-    body
+    do
     {
         this._shape = dvShape;
     }
@@ -50,7 +50,7 @@ class Camera
     /// Port in the plane.
     void port(Shape dvPort) @safe @property
     in(dvPort.type == ShapeType.rectangle)
-    body
+    do
     {
         _port = dvPort;
     }

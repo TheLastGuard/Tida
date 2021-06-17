@@ -9,6 +9,9 @@ module tida.graph.texture;
 import tida.graph.drawable;
 import tida.graph.gl;
 
+enum MinFilter = GL_TEXTURE_MIN_FILTER;
+enum MagFilter = GL_TEXTURE_MAG_FILTER;
+
 enum TextureFilter
 {
     Nearest = GL_NEAREST,
@@ -88,7 +91,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /++
-
+        Initialize texture from bytes.
 
         Params:
             format = The pixel format that you put into the argument.

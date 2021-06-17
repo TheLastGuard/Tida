@@ -175,7 +175,51 @@ struct Vector(T)
         }
     }
 
+    Vector!T opBinary(string op)(Vector rhs) @safe nothrow const
+    {
+        static if(op == "+")
+        {
+            return Vector!T(this.x + rhs.x, this.y + rhs.y);
+        }
+        else 
+        static if(op == "-")
+        {
+            return Vector!T(this.x - rhs.x, this.y - rhs.y);
+        }
+        else 
+        static if(op == "*")
+        {
+            return Vector!T(this.x * rhs.x, this.y * rhs.y);
+        }else
+        static if(op == "/")
+        {
+            return Vector!T(this.x / rhs.x, this.y / rhs.y);
+        }
+    }
+
     Vector!T opBinary(string op)(T num) @safe nothrow 
+    {
+        static if(op == "+")
+        {
+            return Vector!T(this.x + num, this.y + num);
+        }else
+        static if(op == "-")
+        {
+            return Vector!T(this.x - num, this.y - num);
+        }else
+        static if(op == "*")
+        {
+            return Vector!T(this.x * num, this.y * num);
+        }
+        else 
+        static if(op == "/")
+        {
+            return Vector!T(this.x / num, this.y / num);
+        }else
+            static assert(null, "Unknown operator");
+    }
+
+    Vector!T opBinary(string op)(T num) @safe nothrow const
     {
         static if(op == "+")
         {
@@ -222,7 +266,7 @@ struct Vector(T)
             this.y = y - rhs.y;
         }
     }
-
+    
     void opOpAssign(string op)(T num) @safe nothrow 
     {
         static if (op == "*")

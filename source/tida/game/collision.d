@@ -8,6 +8,127 @@ module tida.game.collision;
 
 import tida.shape, tida.vector;
 
+bool lineLineImpl(const Vecf[] first, const Vecf[] second) @safe
+{
+    const a = first[0];
+    const b = first[1];
+    const c = second[0];
+    const d = second[1];
+
+    const denominator = ((b.X - a.X) * (d.Y - c.Y)) - ((b.Y - a.Y) * (d.X - c.X));
+
+    const numerator1  = ((a.Y - c.Y) * (d.X - c.X)) - ((a.X - c.X) * (d.Y - c.Y));
+    const numerator2  = ((a.Y - c.Y) * (b.X - a.X)) - ((a.X - c.X) * (b.Y - a.Y));
+
+    if(denominator == 0) return numerator1 == 0 && numerator2 == 0;
+
+    const r = numerator1 / denominator;
+    const s = numerator2 / denominator;
+
+    return (r >= 0 && r <= 1) && (s >= 0 && s <= 1);
+}
+
+bool pointLineImpl(const Vecf point, const Vecf[] line) @safe
+{
+    import tida.graph.each;
+
+    if(point == line[0] ||
+       point == line[1])
+      return true;
+
+    bool result = false;
+
+    foreach(x,y; Line(line[0], line[1])) {
+        if(cast(int) point.x == x &&
+           cast(int) point.y == y) {
+            result = true;
+            break;
+        }
+    }
+
+    return result;
+}
+
+bool pointRectImpl(const Vecf a, const Vecf[] b) @safe
+{
+    return a.x > b[0].x &&
+           a.y > b[0].y &&
+           a.x < b[1].x &&
+           a.y < b[1].y;
+}
+
+bool lineRectImpl(const Vecf[] a, const Vecf[] b) @safe
+{
+    import tida.graph.each;
+
+    if(b[0] == a[0] ||
+      b[0] == a[1] ||
+      b[1] == a[0] ||
+      b[1] == a[1])
+      return true;
+
+    bool result = false;
+
+    foreach(x,y; Line(a[0], a[1])) {
+        if(x > b[0].x &&
+           x < b[1].x   &&
+           y > b[0].y &&
+           y < b[1].y) 
+        {
+           result = true;
+           break;
+        }
+    }
+
+    return result;
+}
+
+bool pointCircleImpl(const Vecf a, const Vecf circlePos, const float circleRadius) @safe
+{
+    return a.distance(circlePos) <= circleRadius;
+}
+
+bool lineCircleImpl(const Vecf[] a, const Vecf circlePos, const float circleRadius) @safe
+{
+    bool inside1 = pointCircleImpl(a[0], circlePos, circleRadius);
+    bool inside2 = pointCircleImpl(a[1], circlePos, circleRadius);
+    if(inside1 || inside2) return true;
+
+    float len = a.length;
+
+    float dot = (   (circlePos.x - a[0].x) * (a[1].x - a[0].x)) +
+                (   (circlePos.y - a[0].y) * (a[1].y - a[0].y)) / (len * len);
+
+    float closestX = a[0].x + (dot * (a[1].x - a[0].y));
+    float closestY = a[0].y + (dot * (a[1].y - a[0].y));
+
+    bool onSegment = pointLineImpl(Vecf(closestX,closestY), a);
+    if(onSegment) return true;
+
+    float distX = closestX - circlePos.x;
+    float distY = closestY - circlePos.y;
+
+    len = Vecf(distX,distY).length;
+
+    return (len <= circleRadius);
+}
+
+bool rectCircleImpl(const Vecf[] a, const Vecf circlePos, const float circleRadius) @safe
+{
+    Vecf temp = circlePos;
+
+    if(circlePos.x < a[0].x) temp.x = a[0].x; else
+    if(circlePos.x > a[1].x) temp.y = a[1].y;
+
+    if(circlePos.y < a[0].y) temp.y = a[0].y; else
+    if(circlePos.y > a[1].y) temp.y = a[1].y;
+
+    immutable dist = circlePos - temp;
+    immutable len = dist.length;
+
+    return len <= circleRadius;
+}
+
 /++
     A function to check the intersection of two shapes. It does not give an intersection point, 
     it gives a state that informs if there is an intersection.
@@ -30,7 +151,7 @@ import tida.shape, tida.vector;
 bool isCollide(Shape first,Shape second,Vecf firstPos = Vecf(0,0),Vecf secondPos = Vecf(0,0)) @safe
 in(first.type != ShapeType.unknown  && second.type != ShapeType.unknown)
 in(first.type != ShapeType.triangle && second.type != ShapeType.triangle)
-body
+do
 {
     import std.conv : to;
     import std.math : abs, sqrt;
@@ -55,30 +176,13 @@ body
                     return first.begin == second.begin;
 
                 case ShapeType.line: 
-                    if(first.begin == second.begin ||
-                       first.begin == second.end)
-                      return true;
-
-                    bool result = false;
-
-                    foreach(x,y; Line(second.begin, second.end)) {
-                        if(cast(int) first.begin.x == x &&
-                           cast(int) first.begin.y == y) {
-                            result = true;
-                            break;
-                        }
-                    }
-
-                    return result;
+                    return pointLineImpl(first.begin, second.to!(Vecf[]));
 
                 case ShapeType.rectangle:
-                    return first.begin.x > second.begin.x &&
-                           first.begin.y > second.begin.y &&
-                           first.begin.x < second.end.x &&
-                           first.begin.y < second.end.y;
+                    return pointRectImpl(first.begin, second.to!(Vecf[]));
 
                 case ShapeType.circle:
-                    return first.begin.distance(second.begin) <= second.radius;
+                    return pointCircleImpl(first.begin, second.begin, second.radius);
 
                 case ShapeType.polygon:
                     return isPolygonAndPoint(second.data, first.begin);
@@ -100,84 +204,16 @@ body
             switch(second.type)
             {
                 case ShapeType.point:
-                    if(second.begin == first.begin ||
-                      second.begin == first.end)
-                      return true;
-
-                    bool result = false;
-
-                    foreach(x, y; Line(first.begin, first.end)) {
-                        if(cast(int) second.begin.x == x &&
-                           cast(int) second.begin.y == y) {
-                            result = true;
-                            break;
-                        }
-                    }
-
-                    return result;
+                    return pointLineImpl(second.begin, first.to!(Vecf[]));
 
                 case ShapeType.line:
-                    const a = first.begin;
-                    const b = first.end;
-                    const c = second.begin;
-                    const d = second.end;
-
-                    const denominator = ((b.X - a.X) * (d.Y - c.Y)) - ((b.Y - a.Y) * (d.X - c.X));
-
-                    const numerator1  = ((a.Y - c.Y) * (d.X - c.X)) - ((a.X - c.X) * (d.Y - c.Y));
-                    const numerator2  = ((a.Y - c.Y) * (b.X - a.X)) - ((a.X - c.X) * (b.Y - a.Y));
-
-                    if(denominator == 0) return numerator1 == 0 && numerator2 == 0;
-
-                    const r = numerator1 / denominator;
-                    const s = numerator2 / denominator;
-
-                    return (r >= 0 && r <= 1) && (s >= 0 && s <= 1);
+                    return lineLineImpl(first.to!(Vecf[]), second.to!(Vecf[]));
 
                 case ShapeType.rectangle:
-                    if(second.begin == first.begin ||
-                      second.begin == first.end ||
-                      second.end == first.begin ||
-                      second.end == first.end)
-                      return true;
-
-                    bool result = false;
-
-                    foreach(x,y; Line(first.begin, first.end)) {
-                        if(x > second.begin.x &&
-                           x < second.end.x   &&
-                           y > second.begin.y &&
-                           y < second.end.y) 
-                        {
-                           result = true;
-                           break;
-                        }
-                    }
-
-                    return result;
+                    return lineRectImpl(first.to!(Vecf[]), second.to!(Vecf[]));
 
                 case ShapeType.circle:
-                    bool inside1 = isCollide(second, Shape.Point(first.begin));
-                    bool inside2 = isCollide(second, Shape.Point(first.end));
-                    if(inside1 || inside2) return true;
-
-                    float len = first.length;
-
-                    float dot = (   (second.x - first.x) * (first.end.x - first.begin.x)) +
-                                (   (second.y - first.y) * (first.end.y - first.begin.y)) / (len * len);
-
-                    float closestX = first.x + (dot * (first.end.x - first.begin.y));
-                    float closestY = first.y + (dot * (first.end.y - first.begin.y));
-
-                    bool onSegment = isCollide(first, Shape.Point(Vecf(closestX,closestY)));
-                    if(onSegment) return true;
-
-                    float distX = closestX - second.x;
-                    float distY = closestY - second.y;
-
-                    len = Vecf(distX,distY).length;
-
-                    return (len <= second.radius);
+                    return lineCircleImpl(first.to!(Vecf[]), second.begin, second.radius);
 
                 case ShapeType.polygon:
                     return isPolygonAndLine(second.data, first.to!(Vecf[]));
@@ -199,32 +235,10 @@ body
             switch(second.type)
             {
                 case ShapeType.point:
-                    return second.begin.x > first.begin.x &&
-                           second.begin.y > first.begin.y &&
-                           second.begin.x < first.end.x &&
-                           second.begin.y < first.end.y;
+                    return pointRectImpl(second.begin, first.to!(Vecf[]));
 
                 case ShapeType.line:
-                    if(second.begin == first.begin ||
-                       second.begin == first.end ||
-                       second.end == first.begin ||
-                       second.end == first.end)
-                      return true;
-
-                    bool result = false;
-
-                    foreach(x,y; Line(second.begin, second.end)) {
-                        if(x > first.begin.x &&
-                           x < first.end.x   &&
-                           y > first.begin.y &&
-                           y < first.end.y) 
-                        {
-                           result = true;
-                           break;
-                        }
-                    }
-
-                    return result;
+                    return lineRectImpl(second.to!(Vecf[]), first.to!(Vecf[]));
 
                 case ShapeType.rectangle:
                     const a = first.begin;
@@ -241,18 +255,7 @@ body
                     );
 
                 case ShapeType.circle:
-                    Vecf temp = second.begin;
-
-                    if(second.x < first.left) temp.x = first.left; else
-                    if(second.x > first.right) temp.y = first.right;
-
-                    if(second.y < first.top) temp.y = first.top; else
-                    if(second.y > first.bottom) temp.y = first.bottom;
-
-                    immutable dist = second.begin - temp;
-                    immutable len = dist.length;
-
-                    return len <= second.radius;
+                    return rectCircleImpl(first.to!(Vecf[]), second.begin, second.radius);
 
                 case ShapeType.polygon:
                     return isPolygonAndRect(second.data, first.to!(Vecf[]));
@@ -273,44 +276,13 @@ body
             switch(second.type)
             {
                 case ShapeType.point:
-                    return second.begin.distance(first.begin) <= first.radius;
+                    return pointCircleImpl(second.begin, first.begin, first.radius);
 
                 case ShapeType.line:
-                    bool inside1 = isCollide(first, Shape.Point(second.begin));
-                    bool inside2 = isCollide(first, Shape.Point(second.end));
-                    if(inside1 || inside2) return true;
-
-                    float len = second.length;
-
-                    float dot = (   (first.x - second.x) * (second.end.x - second.begin.x)) +
-                                (   (first.y - second.y) * (second.end.y - second.begin.y)) / (len * len);
-
-                    float closestX = second.x + (dot * (second.end.x - second.begin.y));
-                    float closestY = second.y + (dot * (second.end.y - second.begin.y));
-
-                    bool onSegment = isCollide(second, Shape.Point(Vecf(closestX,closestY)));
-                    if(onSegment) return true;
-
-                    float distX = closestX - first.x;
-                    float distY = closestY - first.y;
-
-                    len = Vecf(distX,distY).length;
-
-                    return (len <= first.radius);
+                    return lineCircleImpl(second.to!(Vecf[]), first.begin, first.radius);
 
                 case ShapeType.rectangle:
-                    Vecf temp = first.begin;
-
-                    if(first.x < second.left) temp.x = second.left; else
-                    if(first.x > second.right) temp.y = second.right;
-
-                    if(first.y < second.top) temp.y = second.top; else
-                    if(first.y > second.bottom) temp.y = second.bottom;
-
-                    immutable dist = first.begin - temp;
-                    immutable len = dist.length;
-
-                    return len <= first.radius;
+                    return rectCircleImpl(second.to!(Vecf[]), first.begin, first.radius);
 
                 case ShapeType.circle:
                     immutable dist = first.begin - second.begin;
@@ -448,7 +420,7 @@ bool isPolygonAndLine(Vecf[] first, Vecf[] second) @safe
         Vecf vc = first[current];
         Vecf vn = first[next];
 
-        bool hit = isCollide(Shape.Line(second[0], second[1]), Shape.Line(vc, vn));
+        bool hit = lineLineImpl(second, [vc, vn]);
 
         if(hit) return true;
     }
@@ -475,7 +447,7 @@ bool isPolygonAndRect(Vecf[] first, Vecf[] second) @safe
         Vecf vc = first[current];
         Vecf vn = first[next];
 
-        bool hit = isCollide(Shape.Rectangle(second[0], second[1]), Shape.Line(vc, vn));
+        bool hit = lineRectImpl([vc, vn], second);
 
         if(hit) return true;
     }
@@ -503,7 +475,7 @@ bool isPolygonAndCircle(Vecf[] first, Vecf second, float r) @safe
         Vecf vc = first[current];
         Vecf vn = first[next];
 
-        bool hit = isCollide(Shape.Circle(second, r), Shape.Line(vc, vn));
+        bool hit = lineCircleImpl([vc, vn], second, r);
 
         if(hit) return true;
     }
