@@ -64,11 +64,21 @@ class Sprite : IDrawable
         return img;
     }
 
+    Image image() @safe @property
+    {
+        return cast(Image) draws;
+    }
+
     deprecated Animation animation(Animation anim) @safe @property
     {
         draws = anim;
 
         return anim;
+    }
+
+    Animation animation() @safe @property
+    {
+        return cast(Animation) draws;
     }
 
     /// No effect
