@@ -193,7 +193,7 @@ float from(ubyte What,ubyte In)(float value) @safe
     assert(375.minimize!Degrees == 15);
     ---
 +/
-float minimize(ubyte Type)(float angle) @safe
+float minimize(ubyte Type)(float angle) @safe nothrow pure
 {
     int k = cast(int) (angle / max!Type);
     float sign = angle >= 0 ? 1 : -1;
@@ -210,7 +210,7 @@ float minimize(ubyte Type)(float angle) @safe
         
     Returns: Angle between two angel's.
 +/
-float betweenAngle(float a,float b) @safe nothrow
+float betweenAngle(float a,float b) @safe nothrow pure
 {
     return (a + b) / 2;
 }
@@ -241,7 +241,7 @@ import tida.vector;
     pointDirection(...).from!(Radians,Degrees);
     ---
 +/
-float pointDirection(Vecf a,Vecf b) @safe nothrow
+float pointDirection(Vecf a,Vecf b) @safe nothrow pure
 {
     import std.math;
 
@@ -257,7 +257,7 @@ float pointDirection(Vecf a,Vecf b) @safe nothrow
         angle = Angle of rotation.
         center = Center of rotation.
 +/
-Vecf rotate(Vecf vec,float angle,Vecf center) @safe
+Vecf rotate(Vecf vec,float angle,Vecf center) @safe nothrow pure
 {
     import std.math : sin, cos;
 
@@ -286,7 +286,7 @@ Vecf rotate(Vecf vec,float angle,Vecf center) @safe
     position += vecd * 5; // Move the object 45 degrees at a given speed.
     ---
 +/
-Vecf vectorDirection(float angle) @safe
+Vecf vectorDirection(float angle) @safe nothrow pure
 {
     import std.math : cos, sin;
 

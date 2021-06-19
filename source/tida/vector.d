@@ -8,8 +8,9 @@ module tida.vector;
 
 import std.traits;
 
-/// Vector
-alias Vecf = Vector!float;
+alias Vecf = Vector!float; /// Two-decimal vector
+alias vecf = Vector!float; /// ditto
+alias vec2f = vecf; /// ditto
 
 /++
     Returns an empty (non-zero) vector.
@@ -69,14 +70,14 @@ struct Vector(T)
     /++
         Vector init.
     +/
-    this(T _x,T _y) @safe nothrow
+    this(T _x,T _y) @safe nothrow pure
     {
         this.x = _x;
         this.y = _y;
     }
 
     ///
-    this(T[2] vec) @safe nothrow
+    this(T[2] vec) @safe nothrow pure
     {
         this.x = vec[0];
         this.y = vec[1];
@@ -90,7 +91,7 @@ struct Vector(T)
         Returns:
             int
     ++/
-    int intX() @safe nothrow
+    int intX() @safe nothrow pure
     {
         return cast(int) this.x;
     }
@@ -100,7 +101,7 @@ struct Vector(T)
         Returns:
             int
     ++/
-    int intY() @safe nothrow
+    int intY() @safe nothrow pure
     {
         return cast(int) this.y;
     }
@@ -117,7 +118,7 @@ struct Vector(T)
         return [x, y];
     }
 
-    bool opEquals(Vector a, Vector b) @safe nothrow 
+    bool opEquals(Vector a, Vector b) @safe nothrow pure
     {
         if (a is b)
             return true;
@@ -125,7 +126,7 @@ struct Vector(T)
         return a.x == b.x && a.y == b.y;
     }
 
-    bool opEquals(Vector!T rhs) @safe nothrow const
+    bool opEquals(Vector!T rhs) @safe nothrow const pure
     {
         if (this is rhs)
             return true;
@@ -133,12 +134,12 @@ struct Vector(T)
         return this.x == rhs.x && this.y == rhs.y;
     }
 
-    int opCmp(Vector!T rhs) @safe nothrow
+    int opCmp(Vector!T rhs) @safe nothrow pure
     {
         return (x > rhs.x && y > rhs.y) ? 1 : -1;
     }
 
-    int opCmp(Vector!T rhs) @safe nothrow const
+    int opCmp(Vector!T rhs) @safe nothrow const pure
     {
         return (x > rhs.x && y > rhs.y) ? 1 : -1;
     }
@@ -153,7 +154,7 @@ struct Vector(T)
         assert(a != b);
     }
 
-    Vector!T opBinary(string op)(Vector rhs) @safe nothrow 
+    Vector!T opBinary(string op)(Vector rhs) @safe nothrow pure
     {
         static if(op == "+")
         {
@@ -175,7 +176,7 @@ struct Vector(T)
         }
     }
 
-    Vector!T opBinary(string op)(Vector rhs) @safe nothrow const
+    Vector!T opBinary(string op)(Vector rhs) @safe nothrow const pure
     {
         static if(op == "+")
         {
@@ -197,7 +198,7 @@ struct Vector(T)
         }
     }
 
-    Vector!T opBinary(string op)(T num) @safe nothrow 
+    Vector!T opBinary(string op)(T num) @safe nothrow pure
     {
         static if(op == "+")
         {
@@ -219,7 +220,7 @@ struct Vector(T)
             static assert(null, "Unknown operator");
     }
 
-    Vector!T opBinary(string op)(T num) @safe nothrow const
+    Vector!T opBinary(string op)(T num) @safe nothrow const pure
     {
         static if(op == "+")
         {
@@ -389,7 +390,7 @@ Vecf abs(Vecf vec) @safe nothrow
         a = First point.
         b = Second point.
 +/
-float distance(Vecf a,Vecf b) @safe nothrow
+float distance(Vecf a,Vecf b) @safe nothrow pure
 {
     import std.math : sqrt;
 
@@ -402,7 +403,7 @@ float distance(Vecf a,Vecf b) @safe nothrow
     Params:
         vecs = Two points.
 +/
-float distance(Vecf[2] vecs) @safe nothrow
+float distance(Vecf[2] vecs) @safe nothrow pure
 {
     return vecs[0].distance(vecs[1]);
 }
@@ -410,7 +411,7 @@ float distance(Vecf[2] vecs) @safe nothrow
 /++
     Average distance between vectors.
 +/
-Vecf averateVectors(Vecf a,Vecf b) @safe nothrow
+Vecf averateVectors(Vecf a,Vecf b) @safe nothrow pure
 {
     return ((b - a) / 2) + ((a > b) ? b : a);
 }
@@ -447,7 +448,7 @@ Vecf uniform(Vecf begin, Vecf end) @safe
     assert(Vecf(32.5,32.5) == Vecf(33, 33));
     ---
 +/
-Vecf round(Vecf vec) @safe
+Vecf round(Vecf vec) @safe nothrow pure
 {
     import std.math : round;
 
@@ -465,7 +466,7 @@ Vecf round(Vecf vec) @safe
     assert(Vecf(32.5,32.5) == Vecf(32,32));
     ---
 +/
-Vecf floor(Vecf vec) @safe
+Vecf floor(Vecf vec) @safe nothrow pure
 {
     import std.math : floor;
 

@@ -6,10 +6,12 @@
 +/
 module tida.game.animation;
 
+import tida.graph.drawable;
+
 /++
     Object for describin animation. 
 +/
-class Animation
+class Animation : IDrawable, IDrawableEx
 {
     import tida.graph.image;
 
@@ -80,5 +82,19 @@ class Animation
         }
 
         return currentFrame();
+    }
+
+    import tida.graph.render;
+    import tida.vector;
+    import tida.color;
+
+    override void draw(IRenderer render, Vecf position) @safe
+    {
+        render.draw(this.step(), position);
+    }
+
+    override void drawEx(IRenderer render, Vecf position, float angle, Vecf center, Vecf size, ubyte alpha, Color!ubyte color) @safe
+    {
+        render.drawEx(this.step(), position, angle, center, size, alpha, color);
     }
 }

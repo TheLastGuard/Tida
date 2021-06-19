@@ -121,13 +121,13 @@ struct Shape
     }
 
     /// The beginning of the figure.
-    Vecf begin() @safe @property nothrow
+    Vecf begin() @safe @property nothrow pure
     {
         return _begin;
     }
 
     /// The end of the figure.
-    Vecf end() @safe @property nothrow
+    Vecf end() @safe @property nothrow pure
     in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
     "This shape does not support end coordinates!")
     do
@@ -138,7 +138,7 @@ struct Shape
     /++
         Move shape
     +/
-    void move(Vecf pos) @safe nothrow
+    void move(Vecf pos) @safe nothrow pure
     {
         _begin = _begin + pos;
 
@@ -148,130 +148,130 @@ struct Shape
     }
 
     /// The beginning of the figure.
-    Vecf begin() @safe @property nothrow immutable
+    Vecf begin() @safe @property nothrow immutable pure
     {
         return _begin;
     }
 
     /// ditto
-    Vecf begin() @safe @property nothrow const
+    Vecf begin() @safe @property nothrow const pure
     {
         return _begin;
     }
 
     /// The end of the figure.
-    Vecf end() @safe @property nothrow immutable
+    Vecf end() @safe @property nothrow immutable pure
     in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
     "This shape does not support end coordinates!")
-    body
+    do
     {
         return _end;
     }
 
     /// ditto
-    Vecf end() @safe @property nothrow const
+    Vecf end() @safe @property nothrow const pure
     in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
     "This shape does not support end coordinates!")
-    body
+    do
     {
         return _end;
     }
 
     /// The beginning of the figure.
-    void begin(Vecf vec) @safe @property nothrow
+    void begin(Vecf vec) @safe @property nothrow pure
     {
         _begin = vec;
     }
 
     /// The end of the figure.
-    void end(Vecf vec) @safe @property nothrow
+    void end(Vecf vec) @safe @property nothrow pure
     in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
         "This shape does not support end coordinates!")
-    body
+    do
     {
         _end = vec;
     }
 
     /// The beginning of the figure along the x-axis.
-    float x() @safe @property nothrow
+    float x() @safe @property nothrow pure
     {
         return begin.x;
     }
 
     /// The beginning of the figure along the y-axis.
-    float y() @safe @property nothrow
+    float y() @safe @property nothrow pure
     {
         return begin.y;
     }
 
     /// The beginning of the figure along the x-axis.
-    void x(float value) @safe @property nothrow
+    void x(float value) @safe @property nothrow pure
     {
         begin.x = value;
     }
 
     /// The beginning of the figure along the y-axis.
-    void y(float value) @safe @property nothrow
+    void y(float value) @safe @property nothrow pure
     {
         begin.x = value;
     }
 
     /// The beginning of the figure along the x-axis.
-    float x() @safe @property nothrow immutable
+    float x() @safe @property nothrow immutable pure
     {
         return begin.x;
     }
 
     /// ditto
-    float x() @safe @property nothrow const
+    float x() @safe @property nothrow const pure
     {
         return begin.x;
     }
 
     /// The beginning of the figure along the y-axis.
-    float y() @safe @property nothrow immutable
+    float y() @safe @property nothrow immutable pure
     {
         return begin.y;
     }
 
     ///ditto
-    float y() @safe @property nothrow const
+    float y() @safe @property nothrow const pure
     {
         return begin.y;
     }
     
     /// The end of the figure along the x-axis.
-    float endX() @safe @property nothrow
+    float endX() @safe @property nothrow pure
     {
         return end.x;
     }
 
     /// The end of the figure along the y-axis.
-    float endY() @safe @property nothrow
+    float endY() @safe @property nothrow pure
     {
         return end.y;
     }
 
     /// The end of the figure along the x-axis.
-    float endX() @safe @property nothrow immutable
+    float endX() @safe @property nothrow immutable pure
     {
         return end.x;
     }
 
     /// ditto
-    float endX() @safe @property nothrow const
+    float endX() @safe @property nothrow const pure
     {
         return end.x;
     }
 
     /// The end of the figure along the y-axis.
-    float endY() @safe @property nothrow immutable
+    float endY() @safe @property nothrow immutable pure
     {
         return end.y;
     }
 
     /// ditto
-    float endY() @safe @property nothrow const
+    float endY() @safe @property nothrow const pure
     {
         return end.y;
     }
@@ -282,44 +282,44 @@ struct Shape
     alias bottom = endY; /// Rectange bottom
 
     /// The radius the figure.
-    float radius() @safe @property nothrow
+    float radius() @safe @property nothrow pure
     in(type == ShapeType.circle,"This is not a circle!")
-    body
+    do
     {
         return _radius;
     }
 
     /// The radius the figure.
-    float radius() @safe @property nothrow immutable
+    float radius() @safe @property nothrow immutable pure
     in(type == ShapeType.circle,"This is not a circle!")
-    body
+    do
     {
         return _radius;
     }
 
     /// ditto
-    float radius() @safe @property nothrow const
+    float radius() @safe @property nothrow const pure
     in(type == ShapeType.circle,"THis is not a circle!")
-    body
+    do
     {
         return _radius;
     }
 
     /// ditto
-    void radius(float value) @safe @property nothrow
+    void radius(float value) @safe @property nothrow pure
     in(type == ShapeType.circle,"This is not a circle!")
-    body
+    do
     {
         _radius = value;
     }
 
     /// The top of the triangle.
-    Vecf vertex(uint num)() @safe @property nothrow
+    Vecf vertex(uint num)() @safe @property nothrow pure
     in
     {
         static assert(num < 3,"The triangle has only three vertices! (0 .. 2)");
         assert(type == ShapeType.triangle,"This is not a triangle!");
-    }body
+    }do
     {
         static if(num == 0)
             return begin;
@@ -332,7 +332,7 @@ struct Shape
     }
 
     /// Shape width
-    float width() @safe @property nothrow
+    float width() @safe @property nothrow pure
     in(type == ShapeType.rectangle,"This is not a rectangle!")
     do
     {
@@ -340,7 +340,7 @@ struct Shape
     }
 
     /// ditto
-    float width() @safe @property nothrow immutable
+    float width() @safe @property nothrow immutable pure
     in(type == ShapeType.rectangle,"This is not a rectangle!")
     do
     {
@@ -348,7 +348,7 @@ struct Shape
     }
 
     /// ditto
-    float width() @safe @property nothrow const
+    float width() @safe @property nothrow const pure
     in(type == ShapeType.rectangle,"This is not a rectangle!")
     do
     {
@@ -356,7 +356,7 @@ struct Shape
     }
 
     /// Shape height
-    float height() @safe @property nothrow
+    float height() @safe @property nothrow pure
     in(type == ShapeType.rectangle,"This is not a rectangle!")
     do
     {
@@ -364,7 +364,7 @@ struct Shape
     }
 
     /// Shape height
-    float height() @safe @property nothrow immutable
+    float height() @safe @property nothrow immutable pure
     in(type == ShapeType.rectangle,"This is not a rectangle!")
     do
     {
@@ -372,7 +372,7 @@ struct Shape
     }
 
     /// Shape height
-    float height() @safe @property nothrow const
+    float height() @safe @property nothrow const pure
     in(type == ShapeType.rectangle,"This is not a rectangle!")
     do
     {
@@ -380,7 +380,7 @@ struct Shape
     }
 
     /// Shape width
-    void width(float value) @safe @property
+    void width(float value) @safe @property nothrow pure
     in(type == ShapeType.rectangle,"This is not a rectangle!")
     do
     {
@@ -388,7 +388,7 @@ struct Shape
     }
 
     /// Shape height
-    void height(float value) @safe @property
+    void height(float value) @safe @property nothrow pure
     in(type == ShapeType.rectangle,"This is not a rectangle!")
     do
     {
@@ -396,30 +396,30 @@ struct Shape
     }
 
     /// The top of the triangle.
-    Vecf[] vertexs() @safe @property nothrow
+    Vecf[] vertexs() @safe @property nothrow pure
     {
         return [begin,end,_trType];
     }
 
     /// ditto
-    Vecf[] vertexs() @safe @property nothrow immutable
+    Vecf[] vertexs() @safe @property nothrow immutable pure
     {
         return [begin,end,_trType];
     }
 
     /// ditto
-    Vecf[] vertexs() @safe @property nothrow const
+    Vecf[] vertexs() @safe @property nothrow const pure
     {
         return [begin,end,_trType];
     }
 
     /// ditto
-    void vertex(uint num)(Vecf value) @safe @property nothrow
+    void vertex(uint num)(Vecf value) @safe @property nothrow pure
     in
     {
         static assert(num < 3,"The triangle has only three vertices! (0 .. 2)");
         assert(type == ShapeType.triangle,"This is not a triangle!");
-    }body
+    }do
     {
         static if(num == 0)
             begin = value;
@@ -432,9 +432,9 @@ struct Shape
     }
 
     /// Line length.
-    float length() @safe @property nothrow
+    float length() @safe @property nothrow pure
     in(type == ShapeType.line,"This is not a line!")
-    body
+    do
     {
         import std.math : sqrt;
 
@@ -445,9 +445,9 @@ struct Shape
     }
 
     /// Line length.
-    float length() @safe @property nothrow immutable
+    float length() @safe @property nothrow immutable pure
     in(type == ShapeType.line,"This is not a line!")
-    body
+    do
     {
         import std.math : sqrt;
 
@@ -458,9 +458,9 @@ struct Shape
     }
 
     /// Line length.
-    float length() @safe @property nothrow const
+    float length() @safe @property nothrow const pure
     in(type == ShapeType.line,"This is not a line!")
-    body
+    do
     {
         import std.math : sqrt;
 
@@ -471,9 +471,9 @@ struct Shape
     }
 
     /// Line length.
-    void length(float value) @safe @property
+    void length(float value) @safe @property nothrow pure
     in(type == ShapeType.line,"This is not a line!")
-    body
+    do
     {
         import tida.angle;
 
@@ -505,9 +505,9 @@ struct Shape
         Params:
             k = Percentage.
     +/
-    void scale(float k) @safe
+    void scale(float k) @safe nothrow pure
     in(type != ShapeType.point)
-    body
+    do
     {
         import std.algorithm : each;
 
@@ -629,7 +629,7 @@ struct Shape
         ]);
         ---
     +/
-    static Shape Polygon(Vecf[] points,Vecf pos = Vecf(0,0)) @safe nothrow
+    static Shape Polygon(Vecf[] points,Vecf pos = Vecf(0,0)) @safe nothrow pure
     {
         Shape shape;
 
@@ -659,7 +659,7 @@ struct Shape
         ]);
         ---
     +/
-    static Shape Multi(Shape[] shapes,Vecf pos = Vecf(0,0)) @safe nothrow
+    static Shape Multi(Shape[] shapes,Vecf pos = Vecf(0,0)) @safe nothrow pure
     {
         Shape shape;
 
@@ -679,7 +679,7 @@ struct Shape
         Returns:
             Point.
     +/
-    static Shape Point(Vecf point) @safe nothrow
+    static Shape Point(Vecf point) @safe nothrow pure
     {
         Shape shape;
 
@@ -699,7 +699,7 @@ struct Shape
         Returns:
             Line.
     +/ 
-    static Shape Line(Vecf begin,Vecf end) @safe nothrow
+    static Shape Line(Vecf begin,Vecf end) @safe nothrow pure
     {
         Shape shape;
 
@@ -720,7 +720,7 @@ struct Shape
         Returns:
             Rectangle. 
     +/
-    static Shape Rectangle(Vecf begin, Vecf end) @safe nothrow
+    static Shape Rectangle(Vecf begin, Vecf end) @safe nothrow pure
     {
         Shape shape;
 
@@ -741,7 +741,7 @@ struct Shape
         Returns:
             Non-solid rectangle
     +/
-    static Shape RectangleLine(Vecf begin,Vecf end) @safe nothrow
+    static Shape RectangleLine(Vecf begin,Vecf end) @safe nothrow pure
     {
         return Shape.Multi([
             Shape.Line(begin,begin + Vecf(end.x,0)),
@@ -761,7 +761,7 @@ struct Shape
         Returns:
             Circle. 
     +/
-    static Shape Circle(Vecf pos,float r) @safe nothrow
+    static Shape Circle(Vecf pos,float r) @safe nothrow pure
     {
         Shape shape;
 
@@ -781,7 +781,7 @@ struct Shape
         Returns:
             Tringle. 
     +/
-    static Shape Triangle(Vecf[3] vertexs) @safe nothrow
+    static Shape Triangle(Vecf[3] vertexs) @safe nothrow pure
     {
         Shape shape;
 
@@ -803,7 +803,7 @@ struct Shape
         Returns:
             Square (ShapeType: Rectangle).
     +/
-    static Shape Square(Vecf pos,float len) @safe nothrow
+    static Shape Square(Vecf pos,float len) @safe nothrow pure
     {
         return Shape.Rectangle(pos,pos + Vecf(len,len));
     }

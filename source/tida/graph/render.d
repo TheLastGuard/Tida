@@ -1335,27 +1335,6 @@ class Software : IRenderer
         }
     }
 
-    Vecf lineLineTouch(Vecf[] first, Vecf[] second) @safe
-    {
-        const a = first[0];
-        const b = first[1];
-        const c = second[0];
-        const d = second[1];
-
-        const denominator = ((b.X - a.X) * (d.Y - c.Y)) - ((b.Y - a.Y) * (d.X - c.X));
-
-        const numerator1  = ((a.Y - c.Y) * (d.X - c.X)) - ((a.X - c.X) * (d.Y - c.Y));
-        const numerator2  = ((a.Y - c.Y) * (b.X - a.X)) - ((a.X - c.X) * (b.Y - a.Y));
-
-        const r = numerator1 / denominator;
-        const s = numerator2 / denominator;
-
-        if((r >= 0 && r <= 1) && (s >= 0 && s <= 1))
-            return first[0] - ((first[1] - first[0]) * r);
-        else
-            return VecfNan;
-    }
-
     override void polygon(Vecf position,Vecf[] points,Color!ubyte color,bool isFill) @trusted
     {
         import std.algorithm : each;
@@ -1371,6 +1350,7 @@ class Software : IRenderer
             }
         } else {
             import std.algorithm;
+            import tida.game.collision : placeLineLineImpl;
 
             float maxX = points.maxElement!"a.x".x;
             float minY = points.minElement!"a.y".y;
@@ -1393,8 +1373,8 @@ class Software : IRenderer
                     {
                         next = (currPointI + 1 == points.length) ? 0 : currPointI + 1;
 
-                        auto iter = lineLineTouch(  [Vecf(lastX, i), Vecf(j, i)],
-                                                    [points[currPointI], points[next]]);
+                        auto iter = placeLineLineImpl(  [Vecf(lastX, i), Vecf(j, i)],
+                                                        [points[currPointI], points[next]]);
                         if(!iter.isVecfNan) {
                             if(firstPoint.isVecfNan) {
                                 firstPoint = Vecf(j, i);

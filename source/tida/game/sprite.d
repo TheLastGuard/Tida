@@ -21,14 +21,16 @@ class Sprite : IDrawable
 
     public
     {
-        /// Image
-        Image image;
+        // Image
+        //deprecated Image image;
 
-        /// Animation
-        Animation animation;
+        // Animation
+        //Animation animation;
 
-        /// Whether it is necessary to display animation, or a static picture.
-        bool isAnimation = false;
+        // Whether it is necessary to display animation, or a static picture.
+        //bool isAnimation = false;
+
+        IDrawableEx draws = null;
 
         /// The rotation angle of the sprite.
         float angle = 0.0f;
@@ -55,18 +57,42 @@ class Sprite : IDrawable
         Shader!Program shader;
     }
 
+    deprecated Image image(Image img) @safe @property
+    {
+        draws = img;
+
+        return img;
+    }
+
+    deprecated Animation animation(Animation anim) @safe @property
+    {
+        draws = anim;
+
+        return anim;
+    }
+
+    /// No effect
+    deprecated bool isAnimation(bool isanim) @safe @property { return isanim; }
+
     override void draw(IRenderer renderer, Vecf otherPosition) @safe
     {
-        Image ofimage = isAnimation ? (!(animation is null) ? animation.step() : null) : image;
+        //Image ofimage = isAnimation ? (!(animation is null) ? animation.step() : null) : image;
 
-        if(ofimage !is null)
+        //if(ofimage !is null)
+        //{
+        //    if(shader !is null) renderer.currentShader = shader;
+        //    renderer.drawEx(ofimage,
+        //    this.position + otherPosition,angle,center,Vecf(
+        //                                width == 0 ? ofimage.width : width, 
+        //                                height == 0 ? ofimage.height : height
+        //                                ),alpha);
+        //}
+
+        if(draws !is null)
         {
             if(shader !is null) renderer.currentShader = shader;
-            renderer.drawEx(ofimage,
-            this.position + otherPosition,angle,center,Vecf(
-                                        width == 0 ? ofimage.width : width, 
-                                        height == 0 ? ofimage.height : height
-                                        ),alpha);
+            renderer.drawEx(draws, this.position + otherPosition, angle, center,
+                            Vecf(width, height), alpha);
         }
 
         if(skelet.length != 0) {

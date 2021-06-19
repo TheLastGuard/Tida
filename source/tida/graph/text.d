@@ -98,6 +98,14 @@ class Font
         return this;
     }
 
+    void resize(size_t newSize) @trusted
+    {
+        this._size = newSize;
+
+        FT_Set_Char_Size(_face, 0, cast(int) _size*32, 300, 300);
+        FT_Set_Pixel_Sizes(_face, 0, cast(int) size*2);
+    }
+
     /// Free memory
     void free() @trusted
     {
@@ -405,7 +413,7 @@ class Text
     +/
     SymbolRender renderSymbolsFormat(T)(T symbols,Color!ubyte defaultColor = rgba(255,255,255,255)) @safe
     in(isText!T)
-    body
+    do
     {
         Symbol[] result;
         int previous = 0;
