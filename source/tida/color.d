@@ -617,15 +617,15 @@ struct Color(T)
     Color!T opBinary(string op)(Color!ubyte color) @safe nothrow pure inout
     {
         static if(op == "+") {
-            return Color!T( r + color.r,
-                            g + color.g,
-                            b + color.b);
+            return Color!T( cast(T) (r + color.r),
+                            cast(T) (g + color.g),
+                            cast(T) (b + color.b));
         }
         else
         static if(op == "-")
-            return Color!T( r - color.r,
-                            g - color.g,
-                            b - color.b);
+            return Color!T( cast(T) (r - color.r),
+                            cast(T) (g - color.g),
+                            cast(T) (b - color.b));
         else
         static if(op == "*")
             return color.colorize!NoAlpha(this);
