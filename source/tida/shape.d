@@ -121,13 +121,13 @@ struct Shape
     }
 
     /// The beginning of the figure.
-    Vecf begin() @safe @property nothrow pure
+    Vecf begin() @safe @property nothrow pure inout
     {
         return _begin;
     }
 
     /// The end of the figure.
-    Vecf end() @safe @property nothrow pure
+    Vecf end() @safe @property nothrow pure inout
     in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
     "This shape does not support end coordinates!")
     do
@@ -148,36 +148,6 @@ struct Shape
     }
 
     /// The beginning of the figure.
-    Vecf begin() @safe @property nothrow immutable pure
-    {
-        return _begin;
-    }
-
-    /// ditto
-    Vecf begin() @safe @property nothrow const pure
-    {
-        return _begin;
-    }
-
-    /// The end of the figure.
-    Vecf end() @safe @property nothrow immutable pure
-    in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
-    "This shape does not support end coordinates!")
-    do
-    {
-        return _end;
-    }
-
-    /// ditto
-    Vecf end() @safe @property nothrow const pure
-    in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
-    "This shape does not support end coordinates!")
-    do
-    {
-        return _end;
-    }
-
-    /// The beginning of the figure.
     void begin(Vecf vec) @safe @property nothrow pure
     {
         _begin = vec;
@@ -193,13 +163,13 @@ struct Shape
     }
 
     /// The beginning of the figure along the x-axis.
-    float x() @safe @property nothrow pure
+    float x() @safe @property nothrow pure inout
     {
         return begin.x;
     }
 
     /// The beginning of the figure along the y-axis.
-    float y() @safe @property nothrow pure
+    float y() @safe @property nothrow pure inout
     {
         return begin.y;
     }
@@ -215,63 +185,15 @@ struct Shape
     {
         begin.x = value;
     }
-
-    /// The beginning of the figure along the x-axis.
-    float x() @safe @property nothrow immutable pure
-    {
-        return begin.x;
-    }
-
-    /// ditto
-    float x() @safe @property nothrow const pure
-    {
-        return begin.x;
-    }
-
-    /// The beginning of the figure along the y-axis.
-    float y() @safe @property nothrow immutable pure
-    {
-        return begin.y;
-    }
-
-    ///ditto
-    float y() @safe @property nothrow const pure
-    {
-        return begin.y;
-    }
     
     /// The end of the figure along the x-axis.
-    float endX() @safe @property nothrow pure
+    float endX() @safe @property nothrow pure inout
     {
         return end.x;
     }
 
     /// The end of the figure along the y-axis.
-    float endY() @safe @property nothrow pure
-    {
-        return end.y;
-    }
-
-    /// The end of the figure along the x-axis.
-    float endX() @safe @property nothrow immutable pure
-    {
-        return end.x;
-    }
-
-    /// ditto
-    float endX() @safe @property nothrow const pure
-    {
-        return end.x;
-    }
-
-    /// The end of the figure along the y-axis.
-    float endY() @safe @property nothrow immutable pure
-    {
-        return end.y;
-    }
-
-    /// ditto
-    float endY() @safe @property nothrow const pure
+    float endY() @safe @property nothrow pure inout
     {
         return end.y;
     }
@@ -282,24 +204,8 @@ struct Shape
     alias bottom = endY; /// Rectange bottom
 
     /// The radius the figure.
-    float radius() @safe @property nothrow pure
+    float radius() @safe @property nothrow pure inout
     in(type == ShapeType.circle,"This is not a circle!")
-    do
-    {
-        return _radius;
-    }
-
-    /// The radius the figure.
-    float radius() @safe @property nothrow immutable pure
-    in(type == ShapeType.circle,"This is not a circle!")
-    do
-    {
-        return _radius;
-    }
-
-    /// ditto
-    float radius() @safe @property nothrow const pure
-    in(type == ShapeType.circle,"THis is not a circle!")
     do
     {
         return _radius;
@@ -332,23 +238,7 @@ struct Shape
     }
 
     /// Shape width
-    float width() @safe @property nothrow pure
-    in(type == ShapeType.rectangle,"This is not a rectangle!")
-    do
-    {
-        return end.x - begin.x;
-    }
-
-    /// ditto
-    float width() @safe @property nothrow immutable pure
-    in(type == ShapeType.rectangle,"This is not a rectangle!")
-    do
-    {
-        return end.x - begin.x;
-    }
-
-    /// ditto
-    float width() @safe @property nothrow const pure
+    float width() @safe @property nothrow pure inout
     in(type == ShapeType.rectangle,"This is not a rectangle!")
     do
     {
@@ -356,23 +246,7 @@ struct Shape
     }
 
     /// Shape height
-    float height() @safe @property nothrow pure
-    in(type == ShapeType.rectangle,"This is not a rectangle!")
-    do
-    {
-        return end.y - begin.y;
-    }
-
-    /// Shape height
-    float height() @safe @property nothrow immutable pure
-    in(type == ShapeType.rectangle,"This is not a rectangle!")
-    do
-    {
-        return end.y - begin.y;
-    }
-
-    /// Shape height
-    float height() @safe @property nothrow const pure
+    float height() @safe @property nothrow pure inout
     in(type == ShapeType.rectangle,"This is not a rectangle!")
     do
     {
@@ -396,19 +270,7 @@ struct Shape
     }
 
     /// The top of the triangle.
-    Vecf[] vertexs() @safe @property nothrow pure
-    {
-        return [begin,end,_trType];
-    }
-
-    /// ditto
-    Vecf[] vertexs() @safe @property nothrow immutable pure
-    {
-        return [begin,end,_trType];
-    }
-
-    /// ditto
-    Vecf[] vertexs() @safe @property nothrow const pure
+    Vecf[] vertexs() @safe @property nothrow pure inout
     {
         return [begin,end,_trType];
     }
@@ -432,33 +294,7 @@ struct Shape
     }
 
     /// Line length.
-    float length() @safe @property nothrow pure
-    in(type == ShapeType.line,"This is not a line!")
-    do
-    {
-        import std.math : sqrt;
-
-        auto distX = begin.x - end.x;
-        auto distY = begin.y - end.y;
-
-        return sqrt((distX * distX) + (distY * distY));
-    }
-
-    /// Line length.
-    float length() @safe @property nothrow immutable pure
-    in(type == ShapeType.line,"This is not a line!")
-    do
-    {
-        import std.math : sqrt;
-
-        auto distX = begin.x - end.x;
-        auto distY = begin.y - end.y;
-
-        return sqrt((distX * distX) + (distY * distY));
-    }
-
-    /// Line length.
-    float length() @safe @property nothrow const pure
+    float length() @safe @property nothrow pure inout
     in(type == ShapeType.line,"This is not a line!")
     do
     {

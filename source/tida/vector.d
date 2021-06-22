@@ -107,18 +107,12 @@ struct Vector(T)
     }
 
     /// Returns the coordinates as an array.
-    T[] array() @safe nothrow pure
+    T[] array() @safe nothrow pure inout
     {
         return [x, y];
     }
 
-    /// ditto
-    T[] array() @safe nothrow const pure
-    {
-        return [x, y];
-    }
-
-    bool opEquals(Vector a, Vector b) @safe nothrow pure
+    bool opEquals(Vector a, Vector b) @safe nothrow pure inout
     {
         if (a is b)
             return true;
@@ -126,20 +120,15 @@ struct Vector(T)
         return a.x == b.x && a.y == b.y;
     }
 
-    bool opEquals(Vector!T rhs) @safe nothrow const pure
+    bool opEquals(Vector other) @safe nothrow pure inout
     {
-        if (this is rhs)
+        if(this is other)
             return true;
 
-        return this.x == rhs.x && this.y == rhs.y;
+        return this.x == other.x && this.y == other.y;
     }
 
-    int opCmp(Vector!T rhs) @safe nothrow pure
-    {
-        return (x > rhs.x && y > rhs.y) ? 1 : -1;
-    }
-
-    int opCmp(Vector!T rhs) @safe nothrow const pure
+    int opCmp(Vector!T rhs) @safe nothrow pure inout
     {
         return (x > rhs.x && y > rhs.y) ? 1 : -1;
     }
@@ -154,7 +143,7 @@ struct Vector(T)
         assert(a != b);
     }
 
-    Vector!T opBinary(string op)(Vector rhs) @safe nothrow pure
+    Vector!T opBinary(string op)(Vector rhs) @safe nothrow pure inout
     {
         static if(op == "+")
         {
@@ -176,51 +165,7 @@ struct Vector(T)
         }
     }
 
-    Vector!T opBinary(string op)(Vector rhs) @safe nothrow const pure
-    {
-        static if(op == "+")
-        {
-            return Vector!T(this.x + rhs.x, this.y + rhs.y);
-        }
-        else 
-        static if(op == "-")
-        {
-            return Vector!T(this.x - rhs.x, this.y - rhs.y);
-        }
-        else 
-        static if(op == "*")
-        {
-            return Vector!T(this.x * rhs.x, this.y * rhs.y);
-        }else
-        static if(op == "/")
-        {
-            return Vector!T(this.x / rhs.x, this.y / rhs.y);
-        }
-    }
-
-    Vector!T opBinary(string op)(T num) @safe nothrow pure
-    {
-        static if(op == "+")
-        {
-            return Vector!T(this.x + num, this.y + num);
-        }else
-        static if(op == "-")
-        {
-            return Vector!T(this.x - num, this.y - num);
-        }else
-        static if(op == "*")
-        {
-            return Vector!T(this.x * num, this.y * num);
-        }
-        else 
-        static if(op == "/")
-        {
-            return Vector!T(this.x / num, this.y / num);
-        }else
-            static assert(null, "Unknown operator");
-    }
-
-    Vector!T opBinary(string op)(T num) @safe nothrow const pure
+    Vector!T opBinary(string op)(T num) @safe nothrow pure inout
     {
         static if(op == "+")
         {
@@ -294,54 +239,10 @@ struct Vector(T)
         assert(a == Vecf(32, 32));
     }
 
-    /// Returns the inverted vector.
-    Vector!T negative() @safe nothrow pure
-    {
-        return Vector!T(-x, -y);
-    }
-
-    /// Returns the normalized vector.
-    Vector!T normalize() @safe nothrow pure
-    {
-        return Vector!T(x / length, y / length);
-    }
-
-    /// Normalizes a vector
-    void norm() @safe nothrow pure
-    {
-        x /= length;
-        y /= length;
-    }
-
-    /// Inverts the vector along the x-axis.
-    auto invertX() @safe nothrow pure
-    {
-        x = -x;
-
-        return this;
-    }
-
-    /// Inverts the vector along the y-axis.
-    auto invertY() @safe nothrow pure
-    {
-        y = -y;
-
-        return this;
-    }
-
-    /// Invert the vecotr.
-    auto invert() @safe nothrow pure
-    {
-        x = -x;
-        y = -y;
-
-        return this;
-    }
-
     /++
         Return length Vector.
     +/
-    T length() @safe nothrow
+    T length() @safe nothrow inout
     {
         static if(is(T : int))
         {   
@@ -351,18 +252,26 @@ struct Vector(T)
             return sqrt(sqr(this.x) + sqr(this.y));
     }
 
-    /// ditto
-    T length() @safe immutable nothrow
+    /// Normalized vector.
+    Vector!T normalized() @safe nothrow pure inout
     {
-        static if(is(T : int))
-        {   
-            return sqrt(cast(float) (sqr(this.x) + sqr(this.y)));
-        }
-        else
-            return sqrt(sqr(this.x) + sqr(this.y));
+        immutable d = 1.0f / this.length();
+
+        return Vector!T(this.x * d, this.y * d);
+    }
+
+    /// Normalize vector.
+    auto normalize() @safe nothrow pure
+    {
+        immutable d = 1.0f / this.length;
+
+        this.x *= d;
+        this.y *= d;
+
+        return this;
     }
     
-    string toString() @trusted
+    debug string toString() @trusted
     {
         import std.conv : to;
 
@@ -376,7 +285,7 @@ struct Vector(T)
     Params:
         vec = Vector.
 +/
-Vecf abs(Vecf vec) @safe nothrow
+Vecf abs(Vecf vec) @safe nothrow pure
 {
     import std.math : abs;
 

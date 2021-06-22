@@ -598,7 +598,7 @@ Image invert(Image image) @safe nothrow
 {
     import std.algorithm : each;
 
-    image.pixels.each!((ref e) => e.invert());
+    image.pixels.each!((ref e) => e = e.inverted());
 
     return image;
 }

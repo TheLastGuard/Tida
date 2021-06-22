@@ -350,7 +350,7 @@ class Text
     +/
     Symbol[] fromSymbols(T)(T symbols,Color!ubyte color = rgba(255,255,255,255), FormatText format = 0) @trusted
     in(isText!T)
-    body
+    do
     {
         Symbol[] chars;
         

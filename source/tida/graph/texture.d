@@ -316,9 +316,8 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         float[4][4] model = identity();
 
         import std.math : isNaN;
-
-        size.x = size.x.isNaN ? size.x : width;
-        size.y = size.y.isNaN ? size.y : height;
+        if(size.x == 0 || size.x.isNaN) size.x = width;
+        if(size.y == 0 || size.y.isNaN) size.y = height;
 
         model = tida.graph.matrix.scale(model,  size.x / cast(float) width,
                                                 size.y / cast(float) height);

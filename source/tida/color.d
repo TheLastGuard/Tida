@@ -424,7 +424,7 @@ struct Color(T)
             T = Type.
             format = Pixel format.
     +/
-    T conv(T,int format = PixelFormat.RGBA)() @safe nothrow pure
+    T conv(T,int format = PixelFormat.RGBA)() @safe nothrow pure inout
     {
         static if(is(T : ulong) || is(T : uint))
         {
@@ -494,76 +494,6 @@ struct Color(T)
         }
     }
 
-    T conv(T,int format = PixelFormat.RGBA)() @safe immutable nothrow pure
-    {
-        static if(is(T : ulong) || is(T : uint))
-        {
-            static if(format == PixelFormat.RGBA)
-                return ((r & 0xff) << 24) + ((g & 0xff) << 16) + ((b & 0xff) << 8) + (a & 0xff);
-            else
-            static if(format == PixelFormat.RGB)
-                return ((r & 0xff) << 16) + ((g & 0xff) << 8) + ((b & 0xff));
-            else
-            static if(format == PixelFormat.ARGB)
-                return ((a & 0xff) << 24) + ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
-            else
-            static if(format == PixelFormat.BGRA)
-                return ((b & 0xff) << 24) + ((g & 0xff) << 16) + ((r & 0xff) << 8) + (a & 0xff);
-            else
-                return 0;
-        }else
-        static if(is(T : string))
-        {
-            import std.conv : to;
-            import std.digest : toHexString;
-            
-            return this.fromBytes!ubyte(format).toHexString;
-        }else
-        static if(is(T : HSL))
-        {
-            import std.algorithm : max, min;
-            import std.math : abs;
-
-            HSL hsl;
-
-            float rd = rf();
-            float gd = gf();
-            float bd = bf();
-
-            float fmax = max(rd, gd, bd);
-            float fmin = min(rd, gd, bd);
-
-            hsl.l = abs(50 * (fmin - fmax));
-
-            if(fmin == fmax) {
-                hsl.s = 0;
-                hsl.h = 0;
-            }else
-            if(hsl.l < 50) {
-                hsl.s = 100 * (fmax - fmin) / (fmax + fmin);
-            }else
-            {
-                hsl.s = 100 * (fmax - fmin) / (2.0 - fmax - fmin);
-            }
-
-            if(fmax == rd) {
-                hsl.h = 60 * (gd - bd) / (fmax - fmin);
-            }
-            if(fmax == gd) {
-                hsl.h = 60 * (gd - rd) / (fmax - fmin) + 120;
-            }
-            if(fmax == bd) {
-                hsl.h = 60 * (rd - gd) / (fmax - fmin) + 240;
-            }
-
-            if(hsl.h < 0) {
-                hsl.h = hsl.h + 360;
-            }
-
-            return hsl;
-        }
-    }
-
     ///
     string stringComponents() @safe
     {
@@ -587,7 +517,7 @@ struct Color(T)
     }
 
     ///
-    T[] fromBytes(R,int format)() @safe nothrow pure
+    T[] fromBytes(R,int format)() @safe nothrow pure inout
     {
         static if(format == PixelFormat.RGBA)
             return [r,g,b,a];
@@ -602,39 +532,6 @@ struct Color(T)
             return [b,g,r,a];
         else
             return [];
-    }
-
-    ///
-    T[] fromBytes(R,int format)() @safe immutable nothrow pure
-    {
-        static if(format == PixelFormat.RGBA)
-            return [r,g,b,a];
-        else
-        static if(format == PixelFormat.RGB)
-            return [r,g,b];
-        else
-        static if(format == PixelFormat.ARGB)
-            return [a,r,g,b];
-        else
-        static if(format == PixelFormat.BGRA)
-            return [b,g,r,a];
-        else
-            return [];
-    }
-
-    T[] rg() @safe nothrow pure
-    {
-        return [r, g];
-    }
-
-    T[] rb() @safe nothrow pure
-    {
-        return [r, b];
-    }
-
-    T[] rgb() @safe nothrow pure
-    {
-        return fromBytes!(ubyte, PixelFormat.RGB);
     }
 
     /++
@@ -666,6 +563,12 @@ struct Color(T)
         return this;
     }
 
+    /// ditto
+    Color!T colorized(ubyte blending)(Color!T color) @safe nothrow pure inout
+    {
+        return dup.colorize!blending(color);
+    }
+
     auto mulf(float koe) @safe nothrow pure
     {
         r = cast(T) ((rf * koe) * T.max);
@@ -686,7 +589,13 @@ struct Color(T)
         return this;
     }
 
-    Color!T opBinary(string op)(float koe) @safe nothrow pure
+    /// Clone structure
+    Color!T dup() @safe nothrow pure inout
+    {
+        return Color!T(r, g, b, a);
+    }
+
+    Color!T opBinary(string op)(float koe) @safe nothrow pure inout
     {
         import std.conv : to;
 
@@ -705,7 +614,7 @@ struct Color(T)
             static assert(0, "Operator `" ~ op ~ "` not implemented.");
     }
 
-    Color!T opBinary(string op)(Color!ubyte color) @safe nothrow pure
+    Color!T opBinary(string op)(Color!ubyte color) @safe nothrow pure inout
     {
         static if(op == "+") {
             return Color!T( r + color.r,
@@ -729,73 +638,34 @@ struct Color(T)
             static assert(0, "Operator `" ~ op ~ "` not implemented.");
     }
 
-    auto add(Color!T other) @safe nothrow pure
+    Color!T inverted() @safe nothrow pure inout
     {
-        r += other.r;
-        g += other.g;
-        b += other.b;
-
-        return this;
-    }
-
-    /// Inverts the color.
-    auto invert() @safe nothrow pure
-    {
-        r = r ^ T.max;
-        g = g ^ T.max;
-        b = b ^ T.max;
-
-        return this;
+        return Color!T(r ^ T.max, g ^ T.max, b ^ T.max, a);
     }
 
     ///
-    auto clearRed() @safe nothrow pure
-    {
-        r = 0;
-
-        return this;
-    }
-
-    ///
-    auto clearGreen() @safe nothrow pure
-    {
-        g = 0;
-
-        return this;
-    }
-
-    ///
-    auto clearBlue() @safe nothrow pure
-    {
-        b = 0;
-
-        return this;
-    }
-
-    ///
-    float rf() @safe nothrow pure
+    float rf() @safe nothrow pure inout
     {
         return cast(float) r / cast(float) T.max;
     }
 
     ///
-    float gf() @safe nothrow pure
+    float gf() @safe nothrow pure inout
     {
         return cast(float) g / cast(float) T.max;
     }
 
     ///
-    float bf() @safe nothrow pure
+    float bf() @safe nothrow pure inout
     {
         return cast(float) b / cast(float) T.max;
     }
 
     ///
-    float af() @safe nothrow pure
+    float af() @safe nothrow pure inout
     {
         return cast(float) a / cast(float) T.max;
     }
-
 }
 
 template isCorrectFormat(int format)
