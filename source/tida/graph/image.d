@@ -915,7 +915,7 @@ Image blur(int Type = DefaultOperation)(Image image,float[][] otherKernel) @trus
 
         foreach(ix,iy; Coord(kernelWidth, kernelHeight))
         {
-            color.add(image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy).mul(kernel[ix][iy]));
+            color = color + (image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy).mul(kernel[ix][iy]));
         }
 
         color.a = image.getPixel(x,y).a;
