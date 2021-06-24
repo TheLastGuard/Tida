@@ -79,10 +79,10 @@ class Font
         foreach(i; 0 .. _face.num_charmaps)
         {
             FT_CharMap charmap = _face.charmaps[i];
-            if ((charmap.platform_id == 3 && charmap.encoding_id == 1) /* Windows Unicode */
-             || (charmap.platform_id == 3 && charmap.encoding_id == 0) /* Windows Symbol */
-             || (charmap.platform_id == 2 && charmap.encoding_id == 1) /* ISO Unicode */
-             || (charmap.platform_id == 0)) { /* Apple Unicode */
+            if ((charmap.platform_id == 3 && charmap.encoding_id == 1)
+             || (charmap.platform_id == 3 && charmap.encoding_id == 0)
+             || (charmap.platform_id == 2 && charmap.encoding_id == 1)
+             || (charmap.platform_id == 0)) {
                 found = charmap;
                 break;
             }

@@ -344,7 +344,7 @@ class GLRender : IRenderer
             currentShader = getShader("Default");
         }
 
-        const shape = Shape.Line(   points[0] - camera.port.begin, 
+        auto shape = Shape.Line(   points[0] - camera.port.begin, 
                                     points[1] - camera.port.begin);
 
         auto vid = generateVertex(shape);

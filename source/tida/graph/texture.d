@@ -196,6 +196,11 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         }
     }
 
+    void bindVertexs(VertexInfo vinfo) @safe nothrow
+    {
+        this.vinfo = vinfo;
+    }
+
     ///
     Shader!Program initShader(IRenderer renderer) @safe
     {

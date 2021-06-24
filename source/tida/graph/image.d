@@ -96,7 +96,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         ubyte[] tryBytes;
 
         foreach(pixel; _pixels) {
-            tryBytes ~= pixel.fromBytes!(ubyte,format);
+            tryBytes ~= pixel.fromBytes!format;
         }
 
         return tryBytes;

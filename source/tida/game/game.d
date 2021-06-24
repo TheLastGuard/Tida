@@ -119,6 +119,15 @@ class Game
         this(config);
     }
 
+    void threadClose(uint value) @safe
+    {
+        import std.algorithm : remove;
+
+        threads[value].exit();
+        foreach(i; value .. threads.length) threads[i].rebindThreadID(i - 1);
+        threads.remove(value);
+    }
+
     private void exit() @safe
     {
         import std.algorithm : each;
@@ -154,23 +163,59 @@ class Game
                 if(listener !is null) listener.eventHandle(event);
             }
 
-            if(sceneManager.apiExit) {
-                exit();
-                return;
-            }
-
             if(listener !is null) listener.timerHandle();
 
-            if(sceneManager.apiThreadCreate) {
-                foreach(_; 0 .. sceneManager.apiThreadValue) {
+            //if(sceneManager.apiThreadCreate) {
+            //    foreach(_; 0 .. sceneManager.apiThreadValue) {
+            //        auto thread = new InstanceThread(threads.length,renderer);
+            //        threads ~= thread;
+
+            //        thread.start();
+            //    }
+
+            //    sceneManager.apiThreadCreate = false;
+            //}
+
+            foreach(response; sceneManager.api)
+            {
+                if(response.code == APIType.ThreadClose) {
+                    if(response.value == 0) {
+                        exit();
+                        return;
+                    } else {
+                        if(response.value >= threads.length) {
+                            sceneManager.apiError[response.code] = APIError.ThreadIsNotExists;
+                            continue;
+                        } else {
+                            threadClose(response.value);
+                        }
+                    }
+                }else
+                if(response.code == APIType.ThreadPause) {
+                    if(response.value >= threads.length) {
+                        sceneManager.apiError[response.code] = APIError.ThreadIsNotExists;
+                        continue;
+                    } else {
+                        threads[response.value].pause();
+                    }
+                }else
+                if(response.code == APIType.ThreadResume) {
+                    if(response.value >= threads.length) {
+                        sceneManager.apiError[response.code] = APIError.ThreadIsNotExists;
+                        continue;
+                    } else {
+                        threads[response.value].resume();
+                    }
+                }else
+                if(response.code == APIType.ThreadCreate) {
                     auto thread = new InstanceThread(threads.length,renderer);
                     threads ~= thread;
 
                     thread.start();
                 }
-
-                sceneManager.apiThreadCreate = false;
             }
+
+            sceneManager.api = []; // GC, please
 
             sceneManager.callStep(0,renderer);
 

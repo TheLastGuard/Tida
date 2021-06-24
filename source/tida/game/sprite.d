@@ -21,15 +21,7 @@ class Sprite : IDrawable
 
     public
     {
-        // Image
-        //deprecated Image image;
-
-        // Animation
-        //Animation animation;
-
-        // Whether it is necessary to display animation, or a static picture.
-        //bool isAnimation = false;
-
+        /// Render object.
         IDrawableEx draws = null;
 
         /// The rotation angle of the sprite.
@@ -41,7 +33,7 @@ class Sprite : IDrawable
         /// The height of the sprite. If zero, the value is taken from the rendered image.
         uint height = 0;
 
-        /// 
+        /// Center rotate point
         Vecf center = Vecf(0,0);
 
         /// The pivot point of the sprite.
@@ -57,47 +49,39 @@ class Sprite : IDrawable
         Shader!Program shader;
     }
 
-    deprecated Image image(Image img) @safe @property
+    deprecated("With the release of 0.1.2, the setters will be removed. Use `draws`.")  
+    Image image(Image img) @safe @property
     {
         draws = img;
 
         return img;
     }
 
+    deprecated("With the release of 0.1.2, the setters will be removed. Use `sprite.draws.from!Image`.")  
     Image image() @safe @property
     {
         return cast(Image) draws;
     }
 
-    deprecated Animation animation(Animation anim) @safe @property
+    deprecated("With the release of 0.1.2, the setters will be removed. Use `draws`.") 
+    Animation animation(Animation anim) @safe @property
     {
         draws = anim;
 
         return anim;
     }
 
+    deprecated("With the release of 0.1.2, the setters will be removed. Use `sprite.draws.from!Animation`.")
     Animation animation() @safe @property
     {
         return cast(Animation) draws;
     }
 
-    /// No effect
-    deprecated bool isAnimation(bool isanim) @safe @property { return isanim; }
+    deprecated("With the release of 0.1.2, the setters will be removed.") 
+    bool isAnimation(bool isanim) @safe @property { return isanim; }
 
     override void draw(IRenderer renderer, Vecf otherPosition) @safe
     {
-        //Image ofimage = isAnimation ? (!(animation is null) ? animation.step() : null) : image;
-
-        //if(ofimage !is null)
-        //{
-        //    if(shader !is null) renderer.currentShader = shader;
-        //    renderer.drawEx(ofimage,
-        //    this.position + otherPosition,angle,center,Vecf(
-        //                                width == 0 ? ofimage.width : width, 
-        //                                height == 0 ? ofimage.height : height
-        //                                ),alpha);
-        //}
-
         if(draws !is null)
         {
             if(shader !is null) renderer.currentShader = shader;

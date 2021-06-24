@@ -22,6 +22,11 @@ class VertexInfo
         uint bufferLength;
     }
 
+    public
+    {
+        Shape shapeinfo;
+    }
+
     /++
         Generates vertices from a buffer.
 
@@ -124,7 +129,7 @@ class VertexInfo
             break;
 
             case ShapeType.circle:
-                GL3.drawArrays(GL_TRIANGLES, 0, cast(uint) bufferLength / 2 * count);
+                GL3.drawArrays(GL_TRIANGLE_FAN, 0, cast(uint) bufferLength / 2 * count);
             break;
 
             default:
@@ -162,7 +167,7 @@ class VertexInfo
     auto buffer = generateBuffer(Shape.Line(Vecf(32, 48), Vecf(64, 96)));
     ---
 +/
-float[] generateBuffer(const(Shape) shape, Vecf position = Vecf(0, 0)) @safe nothrow
+float[] generateBuffer(Shape shape, Vecf position = Vecf(0, 0)) @safe nothrow
 in(shape.type != ShapeType.unknown, "Shape is unknown!")
 out(r; !r.empty, "Buffer is empty!")
 do
@@ -250,7 +255,7 @@ do
     auto info = generateVertex(Shape.Rectangle(Vecf(0,0), Vecf(32, 32)), Vecf(32, 32));
     ---
 +/
-VertexInfo generateVertex(const(Shape) shape, Vecf position = Vecf(0, 0)) @trusted
+VertexInfo generateVertex(Shape shape, Vecf position = Vecf(0, 0)) @trusted
 {
     float[] buffer;
 
@@ -270,6 +275,8 @@ VertexInfo generateVertex(const(Shape) shape, Vecf position = Vecf(0, 0)) @trust
 
         destroy(elem);
     }
+
+    info.shapeinfo = shape;
 
     destroy(buffer);
 

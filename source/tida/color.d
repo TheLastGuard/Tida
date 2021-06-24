@@ -447,7 +447,7 @@ struct Color(T)
             import std.conv : to;
             import std.digest : toHexString;
             
-            return this.fromBytes!(ubyte,format).toHexString;
+            return this.fromBytes!format.toHexString;
         }else
         static if(is(T : HSL))
         {
@@ -494,7 +494,10 @@ struct Color(T)
         }
     }
 
-    ///
+    /++
+        Returns a string with color components as:
+        `rgba(%r,%g,%b,%a)`
+    +/
     string stringComponents() @safe
     {
         import std.conv : to;
@@ -502,7 +505,11 @@ struct Color(T)
         return "rgba("~r.to!string~","~g.to!string~","~b.to!string~","~a.to!string~")";
     }
 
-    ///
+    /++
+        Returns a string with color components as:
+        `rgba(%r,%g,%b,%a)`, 
+        but with coloring in the appropriate text color.
+    +/
     string formatString() @safe
     {
         import std.conv : to;
@@ -517,7 +524,7 @@ struct Color(T)
     }
 
     ///
-    T[] fromBytes(R,int format)() @safe nothrow pure inout
+    T[] fromBytes(int format)() @safe nothrow pure inout
     {
         static if(format == PixelFormat.RGBA)
             return [r,g,b,a];

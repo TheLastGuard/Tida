@@ -10,11 +10,25 @@ import tida.scene.instance;
 import tida.scene.scene;
 import tida.scene.event;
 
-static enum APIError : ubyte
+enum APIError : uint
 {
-    succes = 0,
-    unknownThread = 1,
-    noCreateThread = 2
+    succes,
+    ThreadIsNotExists
+}
+
+enum APIType : uint
+{
+    None,
+    ThreadCreate,
+    ThreadPause,
+    ThreadResume,
+    ThreadClose,
+}
+
+struct APIResponse
+{
+    uint code;
+    uint value;
 }
 
 T from(T)(Object obj) @trusted
@@ -60,6 +74,10 @@ class InstanceThread : Thread
         super(&run);
     }
 
+    void rebindThreadID(size_t newID) @safe {
+        thread = newID;
+    }
+
     private void run() @trusted
     {
         while(isJob) {
@@ -71,6 +89,16 @@ class InstanceThread : Thread
 
             fps.rate();
         }
+    }
+
+    void pause() @safe
+    {
+        isPause = true;
+    }
+
+    void resume() @safe
+    {
+        isPause = false;
     }
 
     void exit() @safe
@@ -163,7 +191,7 @@ class SceneManager
 
             _restarted = scene;
 
-            scene.gameRestart();
+            scene.gameRestart(); // TODO: delete this
 
             foreach(fun; GameRestartFunctions[scene]) fun();
             foreach(instance; scene.getList())
@@ -369,7 +397,7 @@ class SceneManager
 
     void ComponentHandle(T)(Instance instance, T component) @trusted
     in(isComponent!T)
-    body
+    do
     {
         CStepFunctions[component] = Array!FEStep();
         CLeaveFunctions[component] = Array!FELeave();
@@ -514,7 +542,7 @@ class SceneManager
     +/
     void add(T)() @trusted
     in(isScene!T,"It's not a scene!")
-    body
+    do
     {
         auto scene = new T();       
 
@@ -523,7 +551,7 @@ class SceneManager
 
     void remove(T)(T scene) @trusted
     in(isScene!T,"It's not a scene!")
-    body
+    do
     {
         scenes.remove(scene.name);
         destroy(scene);
@@ -531,7 +559,7 @@ class SceneManager
 
     void remove(T)() @trusted
     in(isScene!T,"It's not a scene!")
-    body
+    do
     {
         foreach(scene; scenes)
         {
@@ -613,39 +641,36 @@ class SceneManager
 
     public
     {
-        bool apiThreadCreate = false;
-        bool apiThreadPause = false;
-        bool apiThreadResume = false;
-        size_t apiThreadValue = 0;
-        size_t apiError = 0;
-
-        bool apiExit = false;
+        APIResponse[] api;
+        uint[uint] apiError;
     }
 
     ///
     void close() @safe
     {
-        apiExit = true;
+        api ~= APIResponse(APIType.ThreadClose, 0);
     }
 
     ///
-    void initThread(size_t count = 1) @safe
+    void initThread(uint count = 1) @safe
     {
-        apiThreadCreate = true;
-        apiThreadValue += count; 
+        api ~= APIResponse(APIType.ThreadCreate, count);
     }
 
     ///
-   void pauseThread(size_t value) @safe
+    void pauseThread(uint value) @safe
     {
-        apiThreadPause = true;
-        apiThreadValue = value;
+        api ~= APIResponse(APIType.ThreadPause, value);
     }
 
-    void resumeThread(size_t value) @safe
+    void resumeThread(uint value) @safe
     {
-        apiThreadResume = true;
-        apiThreadValue = value;
+        api ~= APIResponse(APIType.ThreadResume, value);
+    }
+
+    void stopThread(uint value) @safe
+    {
+        api ~= APIResponse(APIType.ThreadClose, value);
     }
 
     /++
@@ -681,7 +706,7 @@ class SceneManager
     void gotoin(Name)() @safe
     in(isScene!Name)
     in(hasScene!Name)
-    body
+    do
     {
         Scene scene;
 
@@ -711,13 +736,13 @@ class SceneManager
     +/
     void gotoin(Scene scene) @trusted
     in(hasScene(scene))
-    body
+    do
     {
         _previous = current;
 
         if(current !is null)
         {
-            current.leave();
+            current.leave(); // TODO: delete this
 
             if(current in LeaveFunctions) {
                 foreach(fun; LeaveFunctions[current]) {
@@ -726,7 +751,7 @@ class SceneManager
             }
         
             foreach(instance; current.getList()) {
-                instance.leave();
+                instance.leave(); // TODO: delete this
 
                 if(instance in ILeaveFunctions) {
                     foreach(fun; ILeaveFunctions[instance]) {
@@ -762,7 +787,7 @@ class SceneManager
 
         if(!scene.isInit)
         {
-            scene.init();
+            scene.init(); // TODO: delete this
 
             if(scene in InitFunctions)
             {
@@ -772,8 +797,8 @@ class SceneManager
             }
 
             foreach(instance; scene.getList()) {
-                instance.init();
-
+                instance.init(); // TODO: delete this
+ 
                 if(instance in IInitFunctions) {
                     foreach(fun; IInitFunctions[instance]) {
                         fun();
@@ -784,7 +809,7 @@ class SceneManager
             scene.isInit = true;
         }else
         {
-            scene.restart();
+            scene.restart(); // TODO: delete this
 
             if(scene in RestartFunctions)
             {
@@ -794,7 +819,7 @@ class SceneManager
             }
 
             foreach(instance; scene.getList()) {
-                instance.restart();
+                instance.restart(); // TODO: delete this
 
                 if(instance in IRestartFunctions) {
                     foreach(fun; IRestartFunctions[instance]) {
@@ -804,7 +829,7 @@ class SceneManager
             }
         }
 
-        scene.entry();
+        scene.entry(); // TODO: delete this
 
         if(scene in EntryFunctions) {
             foreach(fun; EntryFunctions[scene]) {
@@ -813,7 +838,7 @@ class SceneManager
         }
 
         foreach(instance; scene.getList()) {
-            instance.entry();
+            instance.entry(); // TODO: delete this
 
             if(instance in IEntryFunctions) {
                 foreach(fun; IEntryFunctions[instance]) {
@@ -831,7 +856,7 @@ class SceneManager
     void callGameStart() @trusted
     {
         foreach(scene; scenes) {
-            scene.gameStart();
+            scene.gameStart(); // TODO: delete this
 
             if(scene in GameStartFunctions) {
                 foreach(fun; GameStartFunctions[scene]) {
@@ -841,7 +866,7 @@ class SceneManager
 
             foreach(instance; scene.getList()) {
                 if(instance.active && !instance.withDraw) {
-                    instance.gameStart();
+                    instance.gameStart(); // TODO: delete this
 
                     if(instance in IGameStartFunctions) {
                         foreach(fun; IGameStartFunctions[instance]) {
@@ -857,7 +882,7 @@ class SceneManager
     void callGameExit() @trusted
     {
         foreach(scene; scenes) {
-            scene.gameExit();
+            scene.gameExit(); // TODO: delete this
 
             if(scene in GameExitFunctions) {
                 foreach(fun; GameExitFunctions[scene]) {
@@ -867,7 +892,7 @@ class SceneManager
 
             foreach(instance; scene.getList()) {
                 if(instance.active && !instance.withDraw) {
-                    instance.gameExit();
+                    instance.gameExit(); // TODO: delete this
 
                     if(instance in IGameExitFunctions) {
                         foreach(fun; IGameExitFunctions[instance]) {
@@ -884,7 +909,7 @@ class SceneManager
     {
         if(current !is null)
         {
-            current.onError();
+            current.onError(); // TODO: delete this
             if(current in OnErrorFunctions) {
                 foreach(fun; OnErrorFunctions[current]) {
                     fun();
@@ -893,7 +918,7 @@ class SceneManager
 
             foreach(instance; current.getList()) {
                 if(instance.active && !instance.withDraw) {
-                    instance.onError();
+                    instance.onError(); // TODO: delete this
 
                     if(instance in IOnErrorFunctions) {
                         foreach(fun; IOnErrorFunctions[instance]) {
@@ -911,7 +936,7 @@ class SceneManager
         if(current !is null)
         {
             current.worldCollision();
-            current.step();
+            current.step(); // TODO: delete this
 
             if(current in StepFunctions)
             {
@@ -927,7 +952,7 @@ class SceneManager
                     continue;
                 }
             
-                instance.step();
+                instance.step(); // TODO: delete this
 
                 if(instance in IStepFunctions) {
                     foreach(fun; IStepFunctions[instance]) {
@@ -937,7 +962,7 @@ class SceneManager
 
                 foreach(component; instance.getComponents())
                 {
-                    component.step();
+                    component.step(); // TODO: delete this
 
                     if(component in CStepFunctions) {
                         foreach(fun; CStepFunctions[component]) {
@@ -954,7 +979,7 @@ class SceneManager
     {
         if(current !is null)
         {
-            current.event(event);
+            current.event(event); // TODO: delete this
 
             if(current in EventHandleFunctions) {
                 foreach(fun; EventHandleFunctions[current]) {
@@ -966,7 +991,7 @@ class SceneManager
             {
                 if(instance.active && !instance.withDraw)
                 {
-                    instance.event(event);
+                    instance.event(event); // TODO: delete this
 
                     if(instance in IEventHandleFunctions) {
                         foreach(fun; IEventHandleFunctions[instance]) {
@@ -976,7 +1001,7 @@ class SceneManager
 
                     foreach(component; instance.getComponents())
                     {
-                        component.event(event);
+                        component.event(event); // TODO: delete this
 
                         if(component in CEventHandleFunctions) {
                             foreach(fun; CEventHandleFunctions[component]) {
@@ -996,7 +1021,7 @@ class SceneManager
 
         if(current !is null)
         {
-            current.draw(render);
+            current.draw(render); // TODO: delete this
 
             if(current in DrawFunctions) {
                 foreach(fun; DrawFunctions[current]) {
@@ -1015,7 +1040,7 @@ class SceneManager
 
                 if(instance.active && instance.visible)
                 {
-                    instance.draw(render);
+                    instance.draw(render); // TODO: delete this
 
                     if(instance in IDrawFunctions) {
                         foreach(fun; IDrawFunctions[instance]) {
@@ -1025,7 +1050,7 @@ class SceneManager
 
                     foreach(component; instance.getComponents())
                     {
-                        component.draw(render);
+                        component.draw(render); // TODO: delete this
 
                         if(component in CDrawFunctions) {
                             foreach(fun; CDrawFunctions[component]) {
@@ -1036,6 +1061,7 @@ class SceneManager
                 }
             }
 
+            // TODO: delete this
             debug
             {
                 current.drawDebug(render);

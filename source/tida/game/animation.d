@@ -48,7 +48,7 @@ class Animation : IDrawable, IDrawableEx
     /// Animation speed
     void speed(float value) @safe @property
     in(value != float.nan)
-    body
+    do
     {
         _speed = value;
     }
@@ -59,10 +59,16 @@ class Animation : IDrawable, IDrawableEx
         return _frames[cast(size_t) _current > $ - 1 ? $ - 1 : cast(size_t) _current];
     }
 
-    /// Return position current frame
+    /// Position current frame
     float numFrame() @safe @property
     {
         return _current;
+    }
+
+    /// ditto
+    void numFrame(float currFrame) @safe @property
+    {
+        _current = currFrame;
     }
 
     /// Resets the animation to the beginning.

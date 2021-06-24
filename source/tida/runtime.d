@@ -292,6 +292,8 @@ class TidaRuntime : ITidaRuntime
 
         hInstance = GetModuleHandle(null);
 
+        ShowWindow(GetConsoleWindow(), SW_HIDE);
+
         enforce(hInstance, "hInstance is not open!");
     }
 
