@@ -19,6 +19,21 @@ enum PixelFormat : int
     BGR ///
 }
 
+template isCorrectFormat(int format)
+{
+    enum isCorrectFormat = format != PixelFormat.AUTO;
+}
+
+template BytesPerColor(int format)
+{
+    static assert(isCorrectFormat!format);
+
+    static if(format == PixelFormat.RGB || format == PixelFormat.BGR)
+        enum BytesPerColor = 3;
+    else
+        enum BytesPerColor = 4;
+}
+
 enum Alpha = 0;
 enum NoAlpha = 1;
 
@@ -140,7 +155,13 @@ Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe
                 BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte
             );
         }else
-          static assert(null,"Unknown pixel format");
+        static if(format == PixelFormat.BGR) {
+            return rgb(
+                BigInt("0x"~hex[cv + 6 .. cv + 8]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv + 2 .. cv + 4]).toInt().to!ubyte,
+                BigInt("0x"~hex[cv .. cv + 2]).toInt().to!ubyte);
+        }else
+            static assert(null,"Unknown pixel format");
     }else
     static if(is(T : int) || is(T : long) || is(T : uint) || is(T : ulong))
     {
@@ -182,12 +203,24 @@ Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe
 
             return result;
         }else
+        static if(format == PixelFormat.BGR)
+        {
+            result.b = (hex & 0XFF0000) >> 16;
+            result.g = (hex & 0x00FF00) >> 8;
+            result.r = (hex & 0x0000FF);
+        }else
         static if(format == PixelFormat.AUTO) {
             return HEX!(PixelFormat.RGB, T)(hex);
         }else
             static assert(null, "Unknown pixel format!");
     }else
         static assert(null, "Unknown type hex!");
+}
+
+unittest
+{
+    assert(HEX(0xFFFFFF) == rgb(255, 255, 255));
+    assert(HEX("#f9004c") == rgb(249, 0, 76));
 }
 
 /// HSL color structure
@@ -204,7 +237,7 @@ struct HSL
         alias l = lightness;
     }
 
-    T conv(T)() @safe nothrow pure
+    T to(T)() @safe nothrow pure
     {
         static if(is(T : Color!ubyte))
         {
@@ -277,7 +310,7 @@ struct HSB
         alias v = value;
     }
 
-    T conv(T)() @safe nothrow pure
+    T to(T)() @safe nothrow pure
     {
         static if(is(T : Color!ubyte))
         {
@@ -285,9 +318,9 @@ struct HSB
 
             double r = 0, g = 0, b = 0;
 
-            double hue = str.h;
-            immutable saturation = str.saturation / 100;
-            immutable value = str.v / 100;
+            double hue = h;
+            immutable saturation = saturation / 100;
+            immutable value = v / 100;
 
             if (saturation == 0)
             {
@@ -384,12 +417,24 @@ Color!ubyte[] fromColors(int format)(ubyte[] bytes) @safe nothrow pure
 {
     Color!ubyte[] result;
 
-    for(size_t i = 0; i < bytes.length; i += 4)
+    for(size_t i = 0; i < bytes.length; i += BytesPerColor!format)
     {
-        result ~= bytes[i .. i + 4].fromColor!(format);
+        result ~= bytes[i .. i + BytesPerColor!format].fromColor!(format);
     }
 
     return result;
+}
+
+unittest
+{
+    assert([130, 20, 65, 255].fromColor!(PixelFormat.RGBA) == rgba(130, 20, 65, 255));
+
+    auto result = [130, 20, 65, 255, 45, 50].fromColors!(PixelFormat.RGB);
+
+    assert(result[0] == rgb(130, 20, 65));
+    assert(result[1] == rgb(255, 45, 50));
+
+    assert([65, 20, 130, 255].fromColor!(PixelFormat.BGRA) == rgba(130, 20, 65, 255));
 }
 
 /// Color description structure.
@@ -424,7 +469,7 @@ struct Color(T)
             T = Type.
             format = Pixel format.
     +/
-    T conv(T,int format = PixelFormat.RGBA)() @safe nothrow pure inout
+    T to(T,int format = PixelFormat.RGBA)() @safe nothrow pure inout
     {
         static if(is(T : ulong) || is(T : uint))
         {
@@ -439,6 +484,9 @@ struct Color(T)
             else
             static if(format == PixelFormat.BGRA)
                 return ((b & 0xff) << 24) + ((g & 0xff) << 16) + ((r & 0xff) << 8) + (a & 0xff);
+            else
+            static if(format == PixelFormat.BGR)
+                return ((b & 0xff) << 16) + ((g & 0xff) << 8) + ((r & 0xff));
             else
                 return 0;
         }else
@@ -494,6 +542,21 @@ struct Color(T)
         }
     }
 
+    T toGrayscale() @safe nothrow pure inout
+    {
+        return cast(T) (this.toGrayscalef() * T.max);
+    }
+
+    float toGrayscalef() @safe nothrow pure inout
+    {
+        return (rf * 0.299 + gf * 0.587 + bf * 0.144);
+    }
+
+    bool isDark() @safe nothrow pure inout
+    {
+        return (toGrayscalef < 0.5f);
+    }
+
     /++
         Returns a string with color components as:
         `rgba(%r,%g,%b,%a)`
@@ -514,13 +577,13 @@ struct Color(T)
     {
         import std.conv : to;
     
-        return "\x1b[38;2;"~red.to!string~";"~green.to!string~";"~blue.to!string~"m" ~ this.conv!string ~ "\u001b[0m";
+        return "\x1b[38;2;"~red.to!string~";"~green.to!string~";"~blue.to!string~"m" ~ this.to!string ~ "\u001b[0m";
     }
     
     ///
     string toString() @safe nothrow
     {
-        return this.conv!string;
+        return this.to!string;
     }
 
     ///
@@ -537,6 +600,9 @@ struct Color(T)
         else
         static if(format == PixelFormat.BGRA)
             return [b,g,r,a];
+        else
+        static if(format == PixelFormat.BGR)
+            return [b,g,r];
         else
             return [];
     }
@@ -675,9 +741,9 @@ struct Color(T)
     }
 }
 
-template isCorrectFormat(int format)
+unittest
 {
-    enum isCorrectFormat = format != PixelFormat.AUTO;
+    assert(rgb(255, 0, 0).to!int == 0xFF0000FF);
 }
 
 /++

@@ -672,7 +672,7 @@ class Window : IWindow
         ulong[] pixels = [cast(ulong) image.width,cast(ulong) image.height];
 
         foreach(pixel; image.pixels)
-            pixels ~= pixel.conv!(ulong,PixelFormat.ARGB);
+            pixels ~= pixel.to!(ulong,PixelFormat.ARGB);
 
         auto event = WMEvent();
         event.first = GetAtom!"_NET_WM_ICON";

@@ -361,7 +361,7 @@ struct Shape
         assert(round(rec.end) == Vecf(128, 128));
     }
 
-    string toString() @safe immutable
+    string toString() @safe inout
     {
         import std.conv : to;
         import std.algorithm;
@@ -373,7 +373,7 @@ struct Shape
             return "Shape.Line(begin: "~begin.to!string~", end: "~end.to!string~")";
         }else
         if(type == ShapeType.rectangle) {
-            return "Shape.Line(begin: "~begin.to!string~", end: "~end.to!string~")";
+            return "Shape.Rectangle(begin: "~begin.to!string~", end: "~end.to!string~")";
         }else
         if(type == ShapeType.circle) {
             return "Shape.Circle(position: "~begin.to!string~", radius: "~radius.to!string~")";
@@ -396,49 +396,6 @@ struct Shape
 
             foreach(e; data)
                 strData ~= e.to!string ~ (e == data[$-1] ? "" : ",") ~ "\n";
-
-            return "Shape.Polygon(position: "~begin.to!string~", points: [\n" ~ strData ~ "])";
-        }
-
-        return "Shape.Unknown()";
-    }
-
-    ///
-    string toString() @safe 
-    {
-        import std.conv : to;
-        import std.algorithm;
-
-        if(type == ShapeType.point) {
-            return "Shape.Point("~begin.to!string~")";
-        }else
-        if(type == ShapeType.line) {
-            return "Shape.Line(begin: "~begin.to!string~", end: "~end.to!string~")";
-        }else
-        if(type == ShapeType.rectangle) {
-            return "Shape.Line(begin: "~begin.to!string~", end: "~end.to!string~")";
-        }else
-        if(type == ShapeType.circle) {
-            return "Shape.Circle(position: "~begin.to!string~", radius: "~radius.to!string~")";
-        }else 
-        if(type == ShapeType.triangle) {
-            return "Shape.Triangle(0: "~vertexs[0].to!string~", 1:"~vertexs[1].to!string~
-                ", 2:"~vertexs[2].to!string~")";
-        }else
-        if(type == ShapeType.multi) {
-            string strData;
-
-            foreach(e; shapes)
-                strData ~= e.toString ~ (e == shapes[$-1] ? "" : ",") ~"\n";
-
-            return "Shape.Multi(position: "~begin.to!string~", shapes: [\n" ~ strData ~ "])";
-
-        }else
-        if(type == ShapeType.polygon) {
-            string strData;
-
-            foreach(e; data)
-                strData ~= e.toString ~ (e == data[$-1] ? "" : ",") ~ "\n";
 
             return "Shape.Polygon(position: "~begin.to!string~", points: [\n" ~ strData ~ "])";
         }
@@ -643,4 +600,20 @@ struct Shape
     {
         return Shape.Rectangle(pos,pos + Vecf(len,len));
     }
+}
+
+import tida.vector;
+
+Shape rectVertexs(Vecf[] vertexArray) @safe nothrow pure
+{
+    import std.algorithm : maxElement, minElement;
+
+    Shape shape = Shape.Rectangle(VecfNan, VecfNan);
+
+    shape.begin = Vecf(vertexArray.minElement!"a.x".x, shape.begin.y);
+    shape.end = Vecf(vertexArray.maxElement!"a.x".x, shape.end.y);
+    shape.begin = Vecf(shape.begin.x, vertexArray.minElement!"a.y".y);
+    shape.end = Vecf(shape.end.x, vertexArray.maxElement!"a.y".y);
+
+    return shape;
 }

@@ -125,11 +125,15 @@ class VertexInfo
             break;
 
             case ShapeType.rectangle:
-                GL3.drawElements(GL_TRIANGLES, 6 * count, GL_UNSIGNED_INT, null);
+                GL3.drawArrays(GL_QUADS, 0, cast(uint) bufferLength * count);
             break;
 
             case ShapeType.circle:
-                GL3.drawArrays(GL_TRIANGLE_FAN, 0, cast(uint) bufferLength / 2 * count);
+                GL3.drawArrays(GL_TRIANGLE_FAN, 0, cast(uint) (bufferLength / 3) * count);
+            break;
+
+            case ShapeType.triangle:
+                GL3.drawArrays(GL_TRIANGLES, 0, cast(uint) bufferLength);
             break;
 
             default:
@@ -167,80 +171,76 @@ class VertexInfo
     auto buffer = generateBuffer(Shape.Line(Vecf(32, 48), Vecf(64, 96)));
     ---
 +/
-float[] generateBuffer(Shape shape, Vecf position = Vecf(0, 0)) @safe nothrow
+Vecf[] generateBuffer(Shape shape, Vecf textSize = VecfNan) @safe nothrow
 in(shape.type != ShapeType.unknown, "Shape is unknown!")
 out(r; !r.empty, "Buffer is empty!")
 do
 {
     import std.math : cos, sin;
 
+    Vecf[] vertexs;
+
     switch(shape.type)
     {
         case ShapeType.point:
-            return shape.begin.array;
+            vertexs = [shape.begin];
 
         case ShapeType.line:
-            return  (shape.begin + position).array ~
-                    (shape.end + position).array;
+            vertexs =   [(shape.begin),
+                         (shape.end)];
+        break;
 
         case ShapeType.rectangle:
-            return  (position + Vecf(shape.end.x, shape.begin.y)).array ~   [0.0f] ~
-                    (position + shape.end).array ~                          [0.0f] ~
-                    (position + Vecf(shape.begin.x, shape.end.y)).array ~   [0.0f] ~
-                    (position + shape.begin).array ~                        [0.0f];
+            vertexs =   [Vecf(shape.end.x, shape.begin.y),
+                         shape.end,
+                         Vecf(shape.begin.x, shape.end.y),
+                         shape.begin];
+        break;
 
         case ShapeType.circle:
-            position = position + shape.begin;
-
-            float[] buffer;
-
-            float x = 0.0f;
-            float y = 0.0f;
-
             for(float i = 0; i <= 360;)
             {
-                x = shape.radius * cos(i);
-                y = shape.radius * sin(i);
-
-                buffer ~= [position.x + x,position.y + y];
+                vertexs ~= shape.begin + Vecf(cos(i), sin(i)) * shape.radius;
 
                 i += 0.5;
-                x = shape.radius * cos(i);
-                y = shape.radius * sin(i);
-
-                buffer ~= [position.x + x,position.y + y];
-                buffer ~= position.array;
+                vertexs ~= shape.begin + Vecf(cos(i), sin(i)) * shape.radius;
+                vertexs ~= shape.begin;
 
                 i += 0.5;
             }
-
-            return buffer;
+        break;
 
         case ShapeType.triangle:
-            return  shape.vertexs[0].array ~
-                    shape.vertexs[1].array ~
-                    shape.vertexs[2].array;
+            vertexs = shape.vertexs;
+        break;
 
         case ShapeType.polygon:
-            float[] buffer;
-
-            foreach(cs; shape.data) {
-                buffer ~= cs.array ~ [0.0f];
-            }
-
-            return buffer;
+            vertexs = shape.data;
+        break;
 
         case ShapeType.multi:
-            float[] buffer;
-
             foreach(cs; shape.shapes)
-                buffer ~= generateBuffer(cs);
-
-            return buffer;
+                vertexs ~= generateBuffer(cs);
+        break;
 
         default:
             return null;
     }
+
+    if(!textSize.isVecfNan) {
+        auto vertDump = vertexs.dup;
+        vertexs.length = 0;
+
+        const clip = rectVertexs(vertDump);
+
+        foreach(e; vertDump) {
+            vertexs ~= [e,
+                        Vecf((e.x - clip.x) / clip.width,
+                             (e.y - clip.y) / clip.height)];
+        }
+    }
+
+    return vertexs;
 }
 
 /++
@@ -255,27 +255,15 @@ do
     auto info = generateVertex(Shape.Rectangle(Vecf(0,0), Vecf(32, 32)), Vecf(32, 32));
     ---
 +/
-VertexInfo generateVertex(Shape shape, Vecf position = Vecf(0, 0)) @trusted
+VertexInfo generateVertex(Shape shape, Vecf textSize = VecfNan) @trusted
 {
     float[] buffer;
 
-    buffer = generateBuffer(shape, position);
+    buffer = generateBuffer(shape, textSize).generateArray;
 
     VertexInfo info;
 
-    if(shape.type != ShapeType.rectangle) {
-        info = new VertexInfo().generateFromBuffer(buffer);
-    } else {
-        uint[] elem =   [
-                            0, 1, 3,
-                            1, 2, 3
-                        ];
-
-        info = new VertexInfo().generateFromElemBuff(buffer, elem);
-
-        destroy(elem);
-    }
-
+    info = new VertexInfo().generateFromBuffer(buffer);
     info.shapeinfo = shape;
 
     destroy(buffer);

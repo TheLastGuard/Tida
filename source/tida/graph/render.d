@@ -254,7 +254,7 @@ class GLRender : IRenderer
 
     override void camera(Camera otherCamera) @safe @property
     in(camera,"Camera is not allocated!")
-    body
+    do
     {
         this._camera = otherCamera;
     }
@@ -392,7 +392,7 @@ class GLRender : IRenderer
             GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, vid.idElementArray);
 
             GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
-            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 3, GL_FLOAT, false, 3 * float.sizeof, null);
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 2, GL_FLOAT, false, 2 * float.sizeof, null);
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
@@ -403,7 +403,7 @@ class GLRender : IRenderer
             currentShader.setUniform("projection", _projection);
             currentShader.setUniform("color", color);
 
-            GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
+            vid.draw(vid.shapeinfo.type);
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
@@ -471,7 +471,7 @@ class GLRender : IRenderer
             currentShader.setUniform("projection", _projection);
             currentShader.setUniform("color", color);
 
-            GL3.drawArrays(GL_TRIANGLES, 0, cast(uint) vid.length / 3);
+            vid.draw(vid.shapeinfo.type);
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
@@ -616,7 +616,7 @@ class GLRender : IRenderer
             vid.bindVertexArray();
             GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
             GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
-            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 3, GL_FLOAT, false, 0, null);
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 2, GL_FLOAT, false, 0, null);
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
@@ -627,7 +627,7 @@ class GLRender : IRenderer
             currentShader.setUniform("projection", projection);
             currentShader.setUniform("color", color);
 
-            GL3.drawArrays(GL_TRIANGLES, 0, cast(uint) position.length);
+            vid.draw(vid.shapeinfo.type);
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
@@ -643,7 +643,7 @@ class GLRender : IRenderer
             vid.bindVertexArray();
             GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
             GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
-            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 3, GL_FLOAT, false, 0, null);
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 2, GL_FLOAT, false, 0, null);
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
@@ -654,7 +654,7 @@ class GLRender : IRenderer
             currentShader.setUniform("projection", projection);
             currentShader.setUniform("color", color);
 
-            GL3.drawArrays(GL_LINES, 0, cast(uint) position.length);
+            GL3.drawArrays(GL_LINES, 0, cast(uint) vid.length);
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);

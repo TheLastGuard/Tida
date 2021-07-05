@@ -282,12 +282,17 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     {
         if(GL.isInitialize)
         {
+            import tida.graph.vertgen;
+
             _texture = new Texture();
 
             _texture.width = _width;
             _texture.height = _height;
 
             _texture.initFromBytes!(PixelFormat.RGBA)(bytes!(PixelFormat.RGBA));
+
+            _texture.vertexInfo = generateVertex(Shape.Rectangle(Vecf(0,0), Vecf(_width, _height)),
+                                                 Vecf(_width, _height));
         }
 
         return this;

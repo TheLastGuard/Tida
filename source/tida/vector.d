@@ -20,6 +20,14 @@ Vecf VecfNan() @safe nothrow pure
     return Vecf(float.nan, float.nan);
 }
 
+T[] generateArray(T)(Vector!T[] array) @safe nothrow pure
+{
+    T[] result;
+    foreach(e; array) result ~= e.array;
+
+    return result;
+}
+
 /++
     Check if the vector is empty (not in the sense that it is zero,
     but in the sense that it really is not a vector).
@@ -246,7 +254,7 @@ struct Vector(T)
     {
         static if(is(T : int))
         {   
-            return sqrt(cast(float) (sqr(this.x) + sqr(this.y)));
+            return cast(T) (sqrt(cast(float) (sqr(this.x) + sqr(this.y))));
         }
         else
             return sqrt(sqr(this.x) + sqr(this.y));
@@ -255,7 +263,7 @@ struct Vector(T)
     /// Normalized vector.
     Vector!T normalized() @safe nothrow pure inout
     {
-        immutable d = 1.0f / this.length();
+        immutable d = 1 / this.length();
 
         return Vector!T(this.x * d, this.y * d);
     }
@@ -263,7 +271,7 @@ struct Vector(T)
     /// Normalize vector.
     auto normalize() @safe nothrow pure
     {
-        immutable d = 1.0f / this.length;
+        immutable d = 1 / this.length;
 
         this.x *= d;
         this.y *= d;
@@ -271,7 +279,7 @@ struct Vector(T)
         return this;
     }
     
-    debug string toString() @trusted
+    string toString() @trusted
     {
         import std.conv : to;
 

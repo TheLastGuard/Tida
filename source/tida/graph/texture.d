@@ -150,26 +150,18 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         GL.texImage2D(_width, _height, bytes);
 
         GL.bindTexture(0);
-
-        float[] buffer =    [
-                                _width, 0,        0.0f,     1.0f, 0.0f,
-                                _width, _height,  0.0f,     1.0f, 1.0f,
-                                0,      _height,  0.0f,     0.0f, 1.0f,
-                                0,      0,        0.0f,     0.0f, 0.0f
-                            ];
-
-        uint[] elem =   [
-            0, 1, 3,
-            1, 2, 3
-        ];
-
-        vinfo = new VertexInfo().generateFromElemBuff(buffer, elem);
     }
 
     /// Information about the vertices of the texture.
     VertexInfo vertexInfo() @safe @property
     {
         return vinfo;
+    }
+
+    /// ditto
+    void vertexInfo(VertexInfo info) @safe @property
+    {
+        this.vinfo = info;
     }
 
     /// Texture identifier.
@@ -267,11 +259,11 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, vinfo.idElementArray);
 
         GL3.enableVertexAttribArray(shader.getAttribLocation("position"));
-        GL3.vertexAttribPointer(shader.getAttribLocation("position"), 3, GL_FLOAT, false, 5 * float.sizeof, null);
+        GL3.vertexAttribPointer(shader.getAttribLocation("position"), 2, GL_FLOAT, false, 4 * float.sizeof, null);
 
         GL3.enableVertexAttribArray(shader.getAttribLocation("aTexCoord"));
-        GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 5 * float.sizeof,
-            cast(void*) (3 * float.sizeof));
+        GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 4 * float.sizeof,
+            cast(void*) (2 * float.sizeof));
 
         float[4][4] proj = (cast(GLRender) renderer).projection();
         float[4][4] model = identity();
@@ -292,7 +284,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         if(shader.getUniformLocation("color") != -1)
         shader.setUniform("color", rgb(255, 255, 255));
 
-        GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
+        vinfo.draw(vinfo.shapeinfo.type);
 
         GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
         GL3.bindVertexArray(0);
@@ -311,11 +303,11 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, vinfo.idElementArray);
 
         GL3.enableVertexAttribArray(shader.getAttribLocation("position"));
-        GL3.vertexAttribPointer(shader.getAttribLocation("position"), 3, GL_FLOAT, false, 5 * float.sizeof, null);
+        GL3.vertexAttribPointer(shader.getAttribLocation("position"), 2, GL_FLOAT, false, 4 * float.sizeof, null);
 
         GL3.enableVertexAttribArray(shader.getAttribLocation("aTexCoord"));
-        GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 5 * float.sizeof,
-            cast(void*) (3 * float.sizeof));
+        GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 4 * float.sizeof,
+            cast(void*) (2 * float.sizeof));
 
         float[4][4] proj = (cast(GLRender) renderer).projection();
         float[4][4] model = identity();
@@ -349,7 +341,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         if(shader.getUniformLocation("color") != -1)
         shader.setUniform("color", color);
 
-        GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
+        vinfo.draw(vinfo.shapeinfo.type);
 
         GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
         GL3.bindVertexArray(0);
@@ -368,11 +360,11 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, vinfo.idElementArray);
 
         GL3.enableVertexAttribArray(shader.getAttribLocation("position"));
-        GL3.vertexAttribPointer(shader.getAttribLocation("position"), 3, GL_FLOAT, false, 5 * float.sizeof, null);
+        GL3.vertexAttribPointer(shader.getAttribLocation("position"), 2, GL_FLOAT, false, 4 * float.sizeof, null);
 
         GL3.enableVertexAttribArray(shader.getAttribLocation("aTexCoord"));
-        GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 5 * float.sizeof,
-            cast(void*) (3 * float.sizeof));
+        GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 4 * float.sizeof,
+            cast(void*) (2 * float.sizeof));
 
         float[4][4] proj = (cast(GLRender) renderer).projection();
         float[4][4] model = identity();
@@ -393,7 +385,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         if(shader.getUniformLocation("color") != -1)
         shader.setUniform("color", color);
 
-        GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
+        vinfo.draw(vinfo.shapeinfo.type);
 
         GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
         GL3.bindVertexArray(0);
