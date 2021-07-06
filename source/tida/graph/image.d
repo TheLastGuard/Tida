@@ -298,9 +298,31 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         return this;
     }
 
+    auto fromTextureWithoutShape() @safe
+    {
+        if(GL.isInitialize)
+        {
+            import tida.graph.vertgen;
+
+            _texture = new Texture();
+
+            _texture.width = _width;
+            _texture.height = _height;
+
+            _texture.initFromBytes!(PixelFormat.RGBA)(bytes!(PixelFormat.RGBA));
+        }
+
+        return this;
+    }
+
     Texture texture() @safe @property nothrow
     {
         return _texture;
+    }
+
+    void texture(Texture tex) @safe @property nothrow
+    {
+        this._texture = tex;
     }
 
     /++
@@ -351,84 +373,6 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         uint newHeight = cast(uint) ((cast(float) _height) * k);
 
         return resize(newWidth,newHeight);
-    }
-
-    /++
-        Clears the specified color component from the picture.
-
-        Params:
-            Component = Component color.
-    +/
-    auto clearComponent(ubyte Component)() @safe nothrow
-    in(isCorrectComponent!Component)
-    do
-    {
-        import std.algorithm : each;
-
-        static if(Component == Red) _pixels.each!((ref e) => e.clearRed());
-        static if(Component == Green) _pixels.each!((ref e) => e.clearGreen());
-        static if(Component == Blue) _pixels.each!((ref e) => e.clearBlue());
-
-        return this;
-    }
-
-    /++
-        Applies alpha blending. Works only when drawing on other surfaces, 
-        because this function edits the alpha channel of colors.
-
-        Params:
-            value = Alpha-channel.
-    +/
-    auto alpha(ubyte value) @safe nothrow
-    {
-        import std.algorithm : each;
-
-        _pixels.each!((ref e) => e.alpha = e.alpha > 0 ? value : e.alpha);
-
-        return this;
-    }
-
-    /++
-        Adds a component to all colors in the picture.
-
-        Params:
-            Component = Component color.
-            value = How much to increase.
-    +/
-    auto addComponent(ubyte Component)(ubyte value) @safe nothrow
-    in(isCorrectComponent!Component)
-    do
-    {
-        import std.algorithm : each;
-
-        static if(Component == Red) {
-            _pixels.each!((ref e) {
-                if(cast(int) e.r + cast(int) value < 255)
-                    e.r += value;
-                else
-                    e.r = 255;
-            });
-        }
-
-        static if(Component == Green) { 
-            _pixels.each!((ref e) { 
-                if(cast(int) e.g + cast(int) value < 255)
-                    e.g += value;
-                else
-                    e.g = 255;
-            });
-        }
-
-        static if(Component == Blue) {
-            _pixels.each!((ref e) { 
-                if(cast(int) e.b + cast(int) value < 255)
-                    e.b += value;
-                else
-                    e.b = 255;
-            });
-        }
-
-        return this;
     }
 
     /// The widht of the picture.
@@ -599,6 +543,12 @@ Image rotateImage(int Type = DefaultOperation)(Image image,float angle,Vecf cent
     return rotated;
 }
 
+/++
+    Inverts the image.
+
+    Params:
+        image = Image.
++/ 
 Image invert(Image image) @safe nothrow
 {
     import std.algorithm : each;

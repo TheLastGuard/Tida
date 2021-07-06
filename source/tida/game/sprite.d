@@ -49,37 +49,6 @@ class Sprite : IDrawable
         Shader!Program shader;
     }
 
-    deprecated("With the release of 0.1.2, the setters will be removed. Use `draws`.")  
-    Image image(Image img) @safe @property
-    {
-        draws = img;
-
-        return img;
-    }
-
-    deprecated("With the release of 0.1.2, the setters will be removed. Use `sprite.draws.from!Image`.")  
-    Image image() @safe @property
-    {
-        return cast(Image) draws;
-    }
-
-    deprecated("With the release of 0.1.2, the setters will be removed. Use `draws`.") 
-    Animation animation(Animation anim) @safe @property
-    {
-        draws = anim;
-
-        return anim;
-    }
-
-    deprecated("With the release of 0.1.2, the setters will be removed. Use `sprite.draws.from!Animation`.")
-    Animation animation() @safe @property
-    {
-        return cast(Animation) draws;
-    }
-
-    deprecated("With the release of 0.1.2, the setters will be removed.") 
-    bool isAnimation(bool isanim) @safe @property { return isanim; }
-
     override void draw(IRenderer renderer, Vecf otherPosition) @safe
     {
         if(draws !is null)

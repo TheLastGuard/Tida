@@ -9,7 +9,6 @@ module tida.game.game;
 import tida.window;
 import tida.graph.render;
 import tida.fps;
-import tida.templates;
 
 __gshared IWindow _window;
 __gshared IRenderer _renderer;
@@ -165,17 +164,6 @@ class Game
 
             if(listener !is null) listener.timerHandle();
 
-            //if(sceneManager.apiThreadCreate) {
-            //    foreach(_; 0 .. sceneManager.apiThreadValue) {
-            //        auto thread = new InstanceThread(threads.length,renderer);
-            //        threads ~= thread;
-
-            //        thread.start();
-            //    }
-
-            //    sceneManager.apiThreadCreate = false;
-            //}
-
             foreach(response; sceneManager.api)
             {
                 if(response.code == APIType.ThreadClose) {
@@ -215,7 +203,7 @@ class Game
                 }
             }
 
-            sceneManager.api = []; // GC, please
+            sceneManager.api = []; // GC, please, clear this
 
             sceneManager.callStep(0,renderer);
 
@@ -234,6 +222,9 @@ class Game
     }
 }
 
+/++
+    Configuration for creating a window.
++/
 template WindowConfig(int w, int h, string caption)
 {
     enum WindowConfig = GameConfig(w, h, caption);
@@ -241,6 +232,9 @@ template WindowConfig(int w, int h, string caption)
 
 import tida.runtime;
 
+/++
+    Creates a program life cycle and also adds scenes to the list.
++/
 template GameRun(GameConfig config, LibraryLoader ll, T...)
 {
     int main(string[] args) {
@@ -260,6 +254,7 @@ template GameRun(GameConfig config, LibraryLoader ll, T...)
     }
 }
 
+// ditto
 template GameRun(GameConfig config, T...)
 {
     mixin GameRun!(config, AllLibrary, T);

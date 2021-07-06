@@ -119,7 +119,7 @@ class Scene
     void add(T)(T instance,size_t threadID = 0) @safe
     in(isInstance!T,"This is not a instance!")
     in(instance,"Instance is not create!")
-    body
+    do
     {  
         if(threadID >= bufferThread.length) threadID = 0;
 
@@ -147,7 +147,7 @@ class Scene
     +/
     void add(Name)(size_t threadID = 0) @safe
     in(isInstance!Name,"It's not instance!")
-    body
+    do
     {
         auto instance = new Name();
 
@@ -211,12 +211,15 @@ class Scene
     {
         import tida.game.collision;
 
+        auto collstragt = sceneManager.collisionFunctions;
+        auto coll = sceneManager.colliders;
+
         foreach(first; getList()) {
             foreach(second; getList()) {
                 if(first !is second && first.solid && second.solid) {
                     if(first.active && second.active)
                     {
-                        import std.algorithm : canFind;
+                        import std.algorithm : canFind, each;
 
                         if(
                             isCollide(  first.mask,
@@ -224,10 +227,8 @@ class Scene
                                         first.position,
                                         second.position)
                         ) {
-                            first.collision(second);
-                            second.collision(first);
-                            
-                            auto coll = sceneManager.colliders;
+                            if(first in collstragt) collstragt[first].each!(fun => fun(second));
+                            if(second in collstragt) collstragt[second].each!(fun => fun(first));
                             
                             if(first in coll) {
                                 foreach(cls; coll[first]) {
@@ -271,8 +272,8 @@ class Scene
                                 }
                             }
                         } else {
-                            first.collision(null);
-                            second.collision(null);
+                            if(first in collstragt) collstragt[first].each!(fun => fun(null));
+                            if(second in collstragt) collstragt[second].each!(fun => fun(null));
                         }
                     }
                 }
@@ -295,7 +296,7 @@ class Scene
     +/
     void instanceDestroy(ubyte type)(Instance instance, bool isRemoveHandle = true) @trusted 
     in(hasInstance(instance))
-    body
+    do
     {
         import std.algorithm : each;
 
@@ -314,16 +315,16 @@ class Scene
             this.instances[instance.id .. $].each!((ref e) => e.id--);
         }
 
-        instance.dissconnectAll();
-
-        instance.eventDestroy(type);
-        this.eventDestroy(instance);
+        //instance.eventDestroy(type);
+        //this.eventDestroy(instance);
 
         if(sceneManager !is null && isRemoveHandle)
             sceneManager.RemoveHandle(this, instance);
 
-        static if(type == InMemory)
+        static if(type == InMemory) {
+            instance.dissconnectAll();
             destroy(instance);
+        }
     }
 
     /++
@@ -340,7 +341,7 @@ class Scene
     +/
     void instanceDestroy(ubyte type,Name)() @trusted
     in(isInstance!Name)
-    body
+    do
     {
         instanceDestroy!type(getInstanceByClass!Name);
     }
@@ -391,7 +392,7 @@ class Scene
     +/
     T getInstanceByClass(T)() @safe nothrow
     in(isInstance!T)
-    body
+    do
     {
         foreach(instance; getList)
         {
@@ -536,145 +537,4 @@ class Scene
 
         assert(scene.getErentInstances == [b,a]);
     }
-
-    /++
-        Scene initialization
-
-        * Needed if you need to initialize something,
-          when the scene becomes active.
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!Init`
-    +/
-    void init() @safe {}
-
-    /++
-        Reinitialization.
-
-        * If the scene was previously initialized,
-          then this method is called.
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!Restart`
-    +/
-    void restart() @safe {}
-
-    /++
-        Scene step
-
-        * Only active when the scene
-          becomes active
-        * It does not require implementation.
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!Step`
-    +/
-    void step() @safe {}
-
-    /++
-        Event handling
-
-        * Valid only when the scene
-          becomes active.
-        * It does not require implementation.
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!EventHandle`
-    +/
-    void event(EventHandler event) @safe {}
-
-    /++
-        Called when a trigger is activated.
-
-        Params:
-            oftrigger = Trigger name.
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!TriggerAll`
-                    or `@TriggerEvent("Trigger")`
-    +/
-    void trigger(string oftrigger) @safe {}
-
-    /++
-        Drawing on the surface.
-
-        * Valid only when the scene
-          becomes active
-        * It does not require implementation.
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!Draw`
-    +/
-    void draw(IRenderer graph) @safe {}
-
-    /++
-        Event leave scene
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!Leave`
-    +/
-    void leave() @safe {}
-
-    /++
-        Event entry
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!Entry`
-    +/
-    void entry() @safe {}
-
-    /++
-        It runs regardless of which scene is active.
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!GameExit`
-    +/
-    void gameExit() @safe {}
-
-    /++
-        If game restart - call self
-        It runs regardless of which scene is active.
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!GameRestart`
-    +/
-    void gameRestart() @safe {}
-
-    /++
-        It runs regardless of which scene is active.
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!GameStart`
-    +/
-    void gameStart() @safe {}
-
-    /++
-        Object destruction event. Called then
-        when an object requires it to be deleted. The scene will do it
-        but you can do something with her before that.
-        (how bawdy, yomayo).
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!Destroy`
-    ++/
-    void eventDestroy(Instance instance) @safe {}
-
-    /++
-        Will be called when an exception occurs.
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `@Event!OnError`
-    +/
-    void onError() @safe {}
-
-    /++
-        This event is intended for rendering in debug mode.
-
-        Params:
-            graph = Instance to render.
-
-        Deprecated: Since version 0.1.2, such functions will be replaced
-                    with a uniform event: `debug @Event!Draw`
-    +/
-    debug void drawDebug(IRenderer graph) @safe {}
 }

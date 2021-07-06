@@ -7,7 +7,6 @@
 module tida.graph.gl;
 
 public import bindbc.opengl;
-import tida.templates;
 
 __gshared bool _glIsInitialize;
 __gshared GLSupport _glSupport;

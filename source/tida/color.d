@@ -125,7 +125,7 @@ Color!ubyte HEX(int format = PixelFormat.AUTO,T)(T hex) @safe
                 BigInt("0x"~hex[cv + 4 .. cv + 6]).toInt().to!ubyte
             );
         }else
-       static if(format == PixelFormat.RGBA) {
+        static if(format == PixelFormat.RGBA) {
             assert(hex[cv .. $].length > 6,"This is not alpha-channel hex color!");
 
             return rgba(

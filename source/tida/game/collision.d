@@ -772,6 +772,9 @@ do
                 case ShapeType.circle:
                     return placePointCircleImpl(first.begin, second.begin, second.radius);
 
+                case ShapeType.polygon:
+                    return placePolygonAndPoint(second.data, first.begin);
+
                 case ShapeType.multi:
                     Vecf place = VecfNan;
 
@@ -800,6 +803,9 @@ do
 
                 case ShapeType.circle:
                     return placeLineCircleImpl(first.to!(Vecf[]), second.begin, second.radius);
+
+                case ShapeType.polygon:
+                    return placePolygonAndLine(second.data, first.to!(Vecf[]));
 
                 case ShapeType.multi:
                     Vecf place = VecfNan;
@@ -830,6 +836,9 @@ do
                 case ShapeType.circle:
                     return placeRectCircleImpl(first.to!(Vecf[]), second.begin, second.radius);
 
+                case ShapeType.polygon:
+                    return placePolygonAndRect(second.data, first.to!(Vecf[]));
+
                 case ShapeType.multi:
                     Vecf place = VecfNan;
 
@@ -859,6 +868,9 @@ do
                 case ShapeType.circle:
                     return placeCircleCircleImpl(first.begin, first.radius, second.begin, second.radius);
 
+                case ShapeType.polygon:
+                    return placePolygonAndCircle(second.data, first.begin, first.radius);
+
                 case ShapeType.multi:
                     Vecf place = VecfNan;
 
@@ -873,7 +885,149 @@ do
                     return VecfNan;
             }
 
+        case ShapeType.polygon:
+            switch(second.type)
+            {
+                case ShapeType.point:
+                    return placePolygonAndPoint(first.data, second.begin);
+
+                case ShapeType.line:
+                    return placePolygonAndLine(first.data, second.to!(Vecf[]));
+
+                case ShapeType.rectangle:
+                    return placePolygonAndRect(first.data, second.to!(Vecf[]));
+
+                case ShapeType.circle:
+                    return placePolygonAndCircle(first.data, second.begin, second.radius);
+
+                case ShapeType.polygon:
+                    return placePolygonsCollision(first.data, second.data);
+
+                case ShapeType.multi:
+                    Vecf place = VecfNan;
+
+                    foreach(shape; second.shapes) {
+                        if(!((place = placeofTangents(first, shape,Vecf(0,0), second.begin)).isVecfNan))
+                            return place;
+                    }
+
+                    return VecfNan;
+
+                default:
+                    return VecfNan;
+            }
+
+        case ShapeType.multi:
+            Vecf place = VecfNan;
+
+            foreach(shape; first.shapes) {
+                if(!((place = placeofTangents(shape, second, first.begin, Vecf(0, 0))).isVecfNan))
+                    return place;
+            }
+
+            return VecfNan;
+
         default:
             return VecfNan;
     }
+}
+
+Vecf placePolygonAndPoint(Vecf[] first, Vecf second) @safe nothrow pure
+{
+    int next = 0;
+    for(int current = 0; current < first.length; current++)
+    {
+        next = current + 1;
+
+        if(next == first.length) next = 0;
+
+        Vecf vc = first[current];
+        Vecf vn = first[next];
+
+        if(((vc.y >= second.y && vn.y <= second.y) || (vc.y <= second.y && vn.y >= second.y)) &&
+            (second.x < (vn.x - vc.x) * (second.y - vc.y) / (vn.y - vc.y) + vc.x)) {
+            return second;
+        }
+    }
+
+    return VecfNan;
+}
+
+Vecf placePolygonAndLine(Vecf[] first, Vecf[] second) @safe nothrow pure
+{
+    int next = 0;
+    for(int current = 0; current < first.length; current++)
+    {
+        next = current + 1;
+
+        if(next == first.length) next = 0;
+
+        Vecf vc = first[current];
+        Vecf vn = first[next];
+
+        Vecf place = placeLineLineImpl(second, [vc, vn]);
+        if(!place.isVecfNan) return place;
+    }
+
+    return VecfNan;
+}
+
+Vecf placePolygonAndRect(Vecf[] first, Vecf[] second) @safe nothrow pure
+{
+    int next = 0;
+    for(int current = 0; current < first.length; current++)
+    {
+        next = current + 1;
+
+        if(next == first.length) next = 0;
+
+        Vecf vc = first[current];
+        Vecf vn = first[next];
+
+        Vecf place = placeLineRectImpl([vc, vn], second);
+        if(!place.isVecfNan) return place;
+    }
+
+    return VecfNan;
+}
+
+Vecf placePolygonAndCircle(Vecf[] first, Vecf second, float r) @safe nothrow pure
+{
+    int next = 0;
+    for(int current = 0; current < first.length; current++)
+    {
+        next = current + 1;
+
+        if(next == first.length) next = 0;
+
+        Vecf vc = first[current];
+        Vecf vn = first[next];
+
+        Vecf place = placeLineCircleImpl([vc, vn], second, r);
+        if(!place.isVecfNan) return place;
+    }
+
+    return VecfNan;
+}
+
+Vecf placePolygonsCollision(Vecf[] first, Vecf[] second) @safe nothrow pure
+{
+    int next = 0;
+    for(int current = 0; current < first.length; current++)
+    {
+        next = current + 1;
+
+        if(next == first.length) next = 0;
+
+        Vecf vc = first[current];
+        Vecf vn = first[next];
+
+        Vecf place = placePolygonAndLine(second, [vc, vn]);
+        if(!place.isVecfNan) return place;
+
+        place = placePolygonAndPoint(first, second[0]);
+        if(!place.isVecfNan) return place;
+    }
+
+    return VecfNan;
 }

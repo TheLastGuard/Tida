@@ -7,8 +7,6 @@
 +/
 module tida.runtime;
 
-import tida.templates;
-
 /// Struct library loader
 struct LibraryLoader
 {

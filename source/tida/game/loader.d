@@ -16,7 +16,6 @@ module tida.game.loader;
 
 import std.path : baseName, stripExtension;
 import std.file : exists,mkdir;
-import tida.templates;
 
 __gshared Loader _loader;
 
@@ -45,7 +44,7 @@ struct Resource
 
     T get(T)() @trusted
     in(typeid(T).toString == type)
-    body
+    do
     {
         return cast(T) object;
     }

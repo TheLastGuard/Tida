@@ -73,6 +73,13 @@ class Joystick : IJoystick
             return event.value;
         }
     }
+
+    ~this() @trusted
+    {
+        import core.stdc.stdio;
+
+        if(descriptor !is null) fclose(descriptor); 
+    }
 }
 
 version(Windows)

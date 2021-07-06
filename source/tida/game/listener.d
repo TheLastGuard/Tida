@@ -7,7 +7,6 @@
 module tida.game.listener;
 
 public import std.datetime;
-import tida.templates;
 
 __gshared Listener _listener;
 

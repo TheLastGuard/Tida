@@ -60,7 +60,7 @@ Vector!int[] findPath(bool[][] grid, Vector!int begin, Vector!int from)
                         ];
 
     size_t currIter = 0;
-    const maxIter = (grid.length * grid[0].length) * 2;
+    const maxIter = (grid.length * grid[0].length) ^^ 2;
     const cost = 1;
     while(yetVisitList.length > 0) {
         currIter++;

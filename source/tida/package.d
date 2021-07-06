@@ -156,3 +156,5 @@ public
     import tida.scene;
     import tida.game;
 }
+
+static immutable string TidaVersion = "1.2";

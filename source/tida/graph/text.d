@@ -7,7 +7,6 @@
 module tida.graph.text;
 
 import bindbc.freetype;
-import tida.templates;
 import std.exception;
 
 __gshared FT_Library _FTLibrary;

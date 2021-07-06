@@ -35,7 +35,7 @@ void main(string[] args)
             if(event.isQuit)
                 isGame = false;
 
-            if(event.getKeyDown == Key.Escape)
+            if(event.keyDown == Key.Escape)
                 isGame = false;
         }
     }

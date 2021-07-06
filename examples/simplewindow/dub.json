@@ -2,6 +2,7 @@
     "name" : "simplewindow",
     "targetType": "executable",
     "dependencies" : {
-    	"tida" : "*"
+    	"tida" : "*",
+        "opengl:gl2-static" : "~>1.0.0"
     }
 }

@@ -321,7 +321,7 @@ class Context : IContext
             ];
 
         int fbcount = 0;
-        auto fbc = glXChooseFBConfig(runtime.display,runtime.displayID,glxAttribs.ptr,&fbcount);
+        auto fbc = glXChooseFBConfig(runtime.display, runtime.displayID, glxAttribs.ptr, &fbcount);
 
         enforce(fbc, "fbc was not found!");
 

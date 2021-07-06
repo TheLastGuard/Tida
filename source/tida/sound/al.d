@@ -185,8 +185,8 @@ class Sound
     }
 
     void volume(uint volume) @trusted
-    in(volume < 100 && volume > 0)
-    body
+    in(volume < 100)
+    do
     {
         alSourcef(_source,AL_GAIN,cast(float) volume / 100);
     }

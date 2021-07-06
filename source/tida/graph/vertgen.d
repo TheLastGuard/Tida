@@ -24,7 +24,7 @@ class VertexInfo
 
     public
     {
-        Shape shapeinfo;
+        Shape shapeinfo; // Shape information
     }
 
     /++
@@ -129,7 +129,7 @@ class VertexInfo
             break;
 
             case ShapeType.circle:
-                GL3.drawArrays(GL_TRIANGLE_FAN, 0, cast(uint) (bufferLength / 3) * count);
+                GL3.drawArrays(GL_TRIANGLE_FAN, 0, cast(uint) (bufferLength / 4 * count));
             break;
 
             case ShapeType.triangle:
@@ -184,6 +184,7 @@ do
     {
         case ShapeType.point:
             vertexs = [shape.begin];
+        break;
 
         case ShapeType.line:
             vertexs =   [(shape.begin),
