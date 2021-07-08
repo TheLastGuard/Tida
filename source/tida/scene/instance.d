@@ -306,7 +306,6 @@ class Instance
         foreach(i; 0 .. components.length) {
             if(components[i].from!Name !is null) {
                 cmp = components[i];
-                cmp.leave();
                 
                 if(sceneManager !is null) {
                     foreach(fun; sceneManager.leaveComponents[cmp]) fun();

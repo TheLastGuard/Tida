@@ -144,7 +144,8 @@ class TidaRuntime : ITidaRuntime
 
                     _glxIsLoad = true;
                 }
-            }
+            }else
+                _glxIsLoad = true;
         }catch(Exception e)
         {
             _glxIsLoad = false;

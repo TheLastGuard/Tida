@@ -38,17 +38,14 @@ class SoftImage : IPlane
         image = img;
 
         alloc(img.width,img.height);
-        viewport(img.width,img.height);    
+        viewport(img.width,img.height);
 
         bmode = BlendMode.Blend;
     }
 
     override void alloc(uint width,uint height) @safe
     {
-        if(image.pixels.length == 0)
-            buffer = new ubyte[](width * height * 4);
-        else
-            buffer = image.bytes!(PixelFormat.RGBA);
+        buffer = new ubyte[](width * height * 4);
 
         _width = width;
         _height = height;
