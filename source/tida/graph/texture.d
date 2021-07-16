@@ -97,7 +97,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
             format = The pixel format that you put into the argument.
             bytes = An array of pixels.
     +/
-    void initFromBytes(int format)(ubyte[] bytes) @safe @property
+    void initFromBytes(int format)(ubyte[] bytes) @safe
     {
         TextureInfo info;
         info.width = _width;
@@ -135,7 +135,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
             format = The pixel format that you put into the structure.
             info = Texture initialization structure.
     +/
-    void initFromInfo(int format)(TextureInfo info) @safe @property
+    void initFromInfo(int format)(TextureInfo info) @safe
     {
         _width = info.width;
         _height = info.height;
@@ -186,11 +186,6 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
             glDeleteTextures(1,&glTextureID);
             glTextureID = 0;
         }
-    }
-
-    void bindVertexs(VertexInfo vinfo) @safe nothrow
-    {
-        this.vinfo = vinfo;
     }
 
     ///

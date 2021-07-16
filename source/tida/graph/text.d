@@ -177,9 +177,6 @@ class SymbolRender : IDrawable, IDrawableEx
         {
             if(s.image !is null)
             {
-                if(!s.image.isTexture)
-                    s.image.fromTexture();
-
                 if(render.type != RenderType.Soft)
                     render.currentShader = currShader;
 
@@ -188,8 +185,6 @@ class SymbolRender : IDrawable, IDrawableEx
             }
 
             position.x += s.advance.intX >> 6;
-
-            if(s.image.texture !is null) s.image.texture.destroy();
         }
     }
 
@@ -209,9 +204,6 @@ class SymbolRender : IDrawable, IDrawableEx
         {
             if(s.image !is null)
             {
-                if(!s.image.isTexture)
-                    s.image.fromTexture();
-
                 Vecf tpos = position + s.position - Vecf(0, s.position.y);
 
                 tpos = tpos.rotate(angle, bpos + center);
@@ -222,8 +214,6 @@ class SymbolRender : IDrawable, IDrawableEx
             }
 
             position.x += s.advance.intX >> 6;
-
-            if(s.image.texture !is null) s.image.texture.destroy();
         }
     }
 }
@@ -301,11 +291,14 @@ class Symbol
     ///
     this(Image img,Vecf pos,Vecf rel,size_t size,Color!ubyte color = rgb(255,255,255)) @safe
     {
-        image = img;
-        position = pos;
+        this.image = img;
+        this.position = pos;
         this.color = color;
         this.size = size;
         this.advance = rel;
+
+        if(image !is null)
+            if(!image.isTexture) image.fromTexture();
     }
 }
 
@@ -356,17 +349,9 @@ class Text
         for(size_t j = 0; j < symbols.length; ++j)
         {
             TypeChar!T s = symbols[j];
-
-            TypeChar!T ns;
-            if(j != symbols.length-1) 
-                ns = symbols[j+1];
-
             Image image;
-
             FT_GlyphSlot glyph;
-
-            image = new Image();
-
+                
             FT_Load_Char(_font.face, s, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
             const glyphIndex = FT_Get_Char_Index(_font.face, s);
 
@@ -374,15 +359,20 @@ class Text
             FT_Render_Glyph(_font.face.glyph, FT_RENDER_MODE_NORMAL);
 
             glyph = _font.face.glyph;
-            auto bitmap = glyph.bitmap;
 
-            image.create(bitmap.width,bitmap.rows);
-
-            auto pixels = image.pixels;
-
-            foreach(i; 0 .. bitmap.width * bitmap.rows)
+            if(s != ' ' && glyph.bitmap.width > 0 && glyph.bitmap.rows > 0)
             {
-                pixels[i] = rgba(255, 255, 255, bitmap.buffer[i]);
+                auto bitmap = glyph.bitmap;
+
+                image = new Image();
+                image.create(bitmap.width,bitmap.rows);
+
+                auto pixels = image.pixels;
+
+                foreach(i; 0 .. bitmap.width * bitmap.rows)
+                {
+                    pixels[i] = rgba(255, 255, 255, bitmap.buffer[i]);
+                }
             }
 
             chars ~= new Symbol(image,
@@ -411,8 +401,6 @@ class Text
             defaultColor = Default color.
     +/
     SymbolRender renderSymbolsFormat(T)(T symbols,Color!ubyte defaultColor = rgba(255,255,255,255)) @safe
-    in(isText!T)
-    do
     {
         Symbol[] result;
         int previous = 0;

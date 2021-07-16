@@ -125,7 +125,8 @@ class VertexInfo
             break;
 
             case ShapeType.rectangle:
-                GL3.drawArrays(GL_QUADS, 0, cast(uint) bufferLength * count);
+                //GL3.drawArrays(GL_QUADS, 0, cast(uint) bufferLength * count);
+                GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
             break;
 
             case ShapeType.circle:
@@ -264,7 +265,16 @@ VertexInfo generateVertex(Shape shape, Vecf textSize = VecfNan) @trusted
 
     VertexInfo info;
 
-    info = new VertexInfo().generateFromBuffer(buffer);
+    if(shape.type == ShapeType.rectangle)
+    {
+        uint[] elements = [0 ,1, 2, 2, 3 ,0];
+
+        info = new VertexInfo().generateFromElemBuff(buffer, elements);
+    }else
+    {
+        info = new VertexInfo().generateFromBuffer(buffer);
+    }
+
     info.shapeinfo = shape;
 
     destroy(buffer);
