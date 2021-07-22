@@ -19,11 +19,23 @@ enum PixelFormat : int
     BGR ///
 }
 
+/++
+    Is the pixel format correct? That is, it excludes automatic detection.
+
+    Params:
+        format = Pixel format.
++/
 template isCorrectFormat(int format)
 {
-    enum isCorrectFormat = format != PixelFormat.AUTO;
+    enum isCorrectFormat = format != PixelFormat.AUTO && format < PixelFormat.max;
 }
 
+/++
+    Returns the number of bits per color unit.
+
+    Params:
+        format = Pixel format.
++/
 template BytesPerColor(int format)
 {
     static assert(isCorrectFormat!format);
@@ -34,8 +46,8 @@ template BytesPerColor(int format)
         enum BytesPerColor = 4;
 }
 
-enum Alpha = 0;
-enum NoAlpha = 1;
+enum Alpha = 0; /// With alpha blending applied.
+enum NoAlpha = 1; /// No alpha blending applied.
 
 /++
     Converts grayscale to the library's standard color scheme.
@@ -299,7 +311,7 @@ struct HSB
 {
     public
     {
-        float hue; ///
+        float hue; /// 
         float saturation; ///
         float brightness; ///
         alias value = brightness;
@@ -542,19 +554,28 @@ struct Color(T)
         }
     }
 
+    /// Converts color to monochrome. In particular, it will return the luminance number.
     T toGrayscale() @safe nothrow pure inout
     {
         return cast(T) (this.toGrayscalef() * T.max);
     }
 
+    ///Converts color to monochrome. In particular, it will return a luminance number between 0 and 1.
     float toGrayscalef() @safe nothrow pure inout
     {
         return (rf * 0.299 + gf * 0.587 + bf * 0.144);
     }
 
+    /// Whether the color is dark.
     bool isDark() @safe nothrow pure inout
     {
         return (toGrayscalef < 0.5f);
+    }
+
+    /// Whether the color is light.
+    bool isLight() @safe nothrow pure inout
+    {
+        return (toGrayscalef > 0.5f);
     }
 
     /++
@@ -711,30 +732,31 @@ struct Color(T)
             static assert(0, "Operator `" ~ op ~ "` not implemented.");
     }
 
+    /// Will return the color opposite to itself.
     Color!T inverted() @safe nothrow pure inout
     {
         return Color!T(r ^ T.max, g ^ T.max, b ^ T.max, a);
     }
 
-    ///
+    /// Returns a red value in the form of a range from 0 to 1.
     float rf() @safe nothrow pure inout
     {
         return cast(float) r / cast(float) T.max;
     }
 
-    ///
+    /// Returns a green value in the form of a range from 0 to 1.
     float gf() @safe nothrow pure inout
     {
         return cast(float) g / cast(float) T.max;
     }
 
-    ///
+    /// Returns a alpha value in the form of a range from 0 to 1.
     float bf() @safe nothrow pure inout
     {
         return cast(float) b / cast(float) T.max;
     }
 
-    ///
+    /// Returns a alpha value in the form of a range from 0 to 1.
     float af() @safe nothrow pure inout
     {
         return cast(float) a / cast(float) T.max;

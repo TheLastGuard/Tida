@@ -7,6 +7,7 @@
 module tida.game.listener;
 
 public import std.datetime;
+import std.algorithm : remove;
 
 __gshared Listener _listener;
 
@@ -69,24 +70,6 @@ struct Timer
     {
         return MonoTime.currTime - startTimer;
     }
-}
-
-private void remove(T)(ref T[] obj,size_t index) @trusted nothrow
-{
-    auto dump = obj.dup;
-    foreach (i; index .. dump.length)
-    {
-        import core.exception : RangeError;
-        try
-        {
-            dump[i] = dump[i + 1];
-        }
-        catch (RangeError e)
-        {
-            continue;
-        }
-    }
-    obj = dump[0 .. $-1];
 }
 
 /++

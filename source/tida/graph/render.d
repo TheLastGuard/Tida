@@ -82,8 +82,25 @@ interface IRenderer
     +/
     void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe;
 
+    /++
+        Drawing a triangle by its three vertices.
+
+        Params:
+            points = Triangle vertices
+            color = Triangle color.
+            isFill = Whether it is necessary to fill the triangle with color.
+    +/
     void triangle(Vecf[3] points,Color!ubyte color,bool isFill) @safe;
 
+    /++
+        Drawing a polygon from an array of vertices.
+
+        Params:
+            position = Polygon position.
+            points = Polygon vertices/
+            color = Polygon color.
+            isFill = Whether it is necessary to fill the polygon with color.
+    +/
     void polygon(Vecf position,Vecf[] points,Color!ubyte color,bool isFill) @safe;
 
     /// Cleans the surface by filling it with color.
@@ -104,19 +121,30 @@ interface IRenderer
     /// ditto
     Color!ubyte background() @safe @property;
 
-    ///
+    /++
+        Memorize the shader for future reference.
+
+        Params:
+            name = The name of the shader by which it will be possible to pick up the shader in the future.
+            program = Shader program.
+    +/
     void setShader(string name, Shader!Program program) @safe;
 
-    ///
+    /++
+        Pulls a shader from memory, getting it by name. Returns a null pointer if no shader is found.
+
+        Params:
+            name = Shader name.
+    +/
     Shader!Program getShader(string name) @safe;
 
-    ///
+    /// The current shader for the next object rendering.
     void currentShader(Shader!Program program) @safe @property; 
 
-    ///
+    /// The current shader for the next object rendering.
     Shader!Program currentShader() @safe @property;
 
-    ///
+    /// Reset the shader to main.
     void resetShader() @safe;
 
     /++
@@ -143,14 +171,6 @@ interface IRenderer
         position -= camera.port.begin;
         drawable.drawColor(this, position, color);
     }
-
-    /++
-        Renders symbols.
-
-        Params:
-            symbols = Symbol's.
-            position = Symbols renders position.
-    +/
 }
 
 float[4][4] ortho(float left, float right, float bottom, float top, float zNear = -1.0f, float zFar = 0.0f) 
@@ -238,9 +258,15 @@ class GLRender : IRenderer
     }
 
     ///
-    float[4][4] projection() @safe
-    {
+    float[4][4] projection() @safe @property
+    { 
         return _projection;
+    }
+
+    ///
+    void projection(float[4][4] mat) @safe @property
+    {
+        this._projection = mat;
     }
 
     override void reshape() @safe

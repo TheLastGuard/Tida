@@ -156,6 +156,8 @@ interface IEventHandler
     /// The current position of the cursor.
     int[2] mousePosition() @safe @property;
 
+    int mouseWheel() @safe @property;
+
     /// Whether the window is resized.
     bool isResize() @safe;
 
@@ -284,6 +286,11 @@ class EventHandler : IEventHandler
         int y = event.xmotion.y;
 
         return [x,y];
+    }
+
+    override int mouseWheel() @safe @property
+    {
+        return isMouseDown ? (mouseButton == 4 ? -1 : (mouseButton == 5 ? 1 : 0)) : 0;
     }
 
     override bool isResize() @trusted

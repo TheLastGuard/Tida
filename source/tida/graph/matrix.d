@@ -17,6 +17,7 @@ float[4][4] identity() @safe nothrow pure
             ];
 }
 
+///
 float[4][4] scaleMat(float x, float y) @safe nothrow pure
 {
     float[] v = [x, y, 1.0f, 1.0f];
@@ -29,6 +30,7 @@ float[4][4] scaleMat(float x, float y) @safe nothrow pure
     return mat;
 }
 
+///
 float[4][4] scale(float[4][4] mat, float x, float y) @safe nothrow pure
 {
     return mulmat(mat, scaleMat(x, y));

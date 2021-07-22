@@ -74,7 +74,7 @@ template max(ubyte Type)
     }
 }
 
-alias perigon = max;
+alias perigon = max; /// perigon
 
 /++
     Returns the right angle.
@@ -145,7 +145,7 @@ template straight(ubyte Type)
     from(Degrees,Radians)(45);
     ---
 +/
-float from(ubyte What,ubyte In)(float value) @safe
+float conv(ubyte What,ubyte In)(float value) @safe nothrow pure
 {
     import std.math;
     
@@ -180,6 +180,8 @@ float from(ubyte What,ubyte In)(float value) @safe
         }
     }
 }
+
+alias from = conv; // old name saved.
 
 /++
     Brings the angle back to normal.

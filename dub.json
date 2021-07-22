@@ -49,16 +49,6 @@
 				"windows"
 			],
 			"targetType": "library"
-		},
-		{
-			"buildOptions": [
-				"betterC"
-			],
-			"name": "Web",
-			"platforms": [
-				"wasm"
-			],
-			"targetType": "executable"
 		}
 	],
 	"copyright": "Copyright © 2020, TodNaz",
@@ -73,9 +63,11 @@
 	"license": "MIT",
 	"name": "tida",
 	"subPackages": [
+		"./addons/puppet",
 		"./examples/simplewindow",
 		"./examples/simplerender",
-		"./examples/simplegame"
+		"./examples/simplegame",
+		"./examples/simplepuppet"
 	],
 	"versions": [
 		"FT_210",

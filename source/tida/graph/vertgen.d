@@ -20,6 +20,7 @@ class VertexInfo
         uint _idElemenArr;
 
         uint bufferLength;
+        uint elementLength;
     }
 
     public
@@ -81,6 +82,7 @@ class VertexInfo
         GL3.bindVertexArray(0);
 
         bufferLength = cast(uint) buffer.length;
+        elementLength = cast(uint) elem.length;
 
         return this;
     }
@@ -115,6 +117,11 @@ class VertexInfo
         return bufferLength;
     }
 
+    uint elemLength() @safe nothrow @property
+    {
+        return elementLength;
+    }
+
     ///
     void draw(ShapeType type, uint count = 1) @safe nothrow
     {
@@ -125,7 +132,6 @@ class VertexInfo
             break;
 
             case ShapeType.rectangle:
-                //GL3.drawArrays(GL_QUADS, 0, cast(uint) bufferLength * count);
                 GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
             break;
 
