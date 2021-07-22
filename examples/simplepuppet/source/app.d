@@ -10,8 +10,6 @@ class Main : Scene
 
     this() @safe
     {
-        Image image = new Image().load("test.png").fromTextureWithoutShape();
-
         puppet = new Puppet();
 
         puppet.load("data.inp");

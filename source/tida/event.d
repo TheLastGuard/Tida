@@ -480,6 +480,13 @@ class EventHandler : IEventHandler
         return [p.x,p.y];
     }
 
+    override int mouseWheel() @safe @property
+    {
+        if(msg.message != WM_MOUSEWHEEL) return 0;
+
+        return (cast(int) msg.wParam) > 0 ? -1 : 1;
+    }
+
     override bool isResize() @safe
     {
         return msg.message == WM_SIZE;
