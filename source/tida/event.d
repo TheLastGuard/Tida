@@ -142,7 +142,7 @@ interface IEventHandler
     /// Shows the key pressed or released in the current event.
     int key() @safe @property;
 
-    char keyChar() @safe @property;
+    //char keyChar() @safe @property;
 
     /// Whether any mouse button is pressed.
     bool isMouseDown() @safe;
@@ -191,6 +191,10 @@ interface IEventHandler
         return isMouseUp ? mouseButton : MouseButton.unknown;
     }
 
+    bool isInputText() @safe @property;
+
+    string inputChar() @safe @property;
+
     IJoystick initJoystick(ubyte number) @safe;
 
     void closeJoystick(ubyte number) @safe;
@@ -223,6 +227,8 @@ class EventHandler : IEventHandler
 
         ic = XCreateIC(XOpenIM(runtime.display, null, null, null), 
             XNInputStyle, XIMPreeditNothing | XIMStatusNothing, XNClientWindow, window.handle, null);
+        XSetICFocus(ic);
+        XSetLocaleModifiers("@im=none");
     }
 
     override bool update() @trusted
@@ -251,18 +257,6 @@ class EventHandler : IEventHandler
     override int key() @trusted
     {
         return event.xkey.keycode;
-    }
-
-    char keyChar() @trusted
-    {
-        import std.conv : to;
-
-        char[255] text;
-        KeySym key;
-
-        Xutf8LookupString(ic, &event.xkey,cast(char*) text.ptr,255,&key,null);
-
-        return text[0];
     }
 
     override bool isMouseDown() @safe
@@ -311,6 +305,24 @@ class EventHandler : IEventHandler
     override bool isQuit() @trusted
     {
         return event.xclient.data.l[0] == destroyWindowEvent;
+    }
+
+    override bool isInputText() @safe @property
+    {
+        return this.isKeyDown();
+    }
+
+    override string inputChar() @trusted @property
+    {
+        int count;
+        string buf = new string(20);
+        KeySym ks;
+        Status status = 0;
+
+        count = Xutf8LookupString(  ic, cast(XKeyPressedEvent*) &event.xkey, cast(char*) buf.ptr, 20,
+                                    &ks, &status);
+
+        return buf[0 .. count];
     }
 
     public
@@ -436,9 +448,21 @@ class EventHandler : IEventHandler
         return cast(int) msg.wParam;
     }
 
-    override char keyChar() @safe 
+    override bool isInputText() @safe @property
     {
-        return '0';
+        return msg.message == WM_CHAR;
+    }
+
+    override string inputChar() @trusted @property
+    {
+        import std.utf;
+
+        wstring text = [];
+        text = [cast(wchar) msg.wParam];
+
+        string utftext = text.toUTF8;
+
+        return [utftext[0]];
     }
 
     override bool isMouseDown() @safe
