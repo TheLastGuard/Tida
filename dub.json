@@ -8,9 +8,9 @@
 	"configurations": [
 		{
 			"dependencies": {
-				"x11": "~>1.0.21",
 				"glx-d": "~>1.0.0",
-				"opengl:gl2-static" : "~>1.0.0"
+				"opengl:gl2-static": "~>1.0.0",
+				"x11": "~>1.0.21"
 			},
 			"libs": [
 				"Xrandr"
@@ -30,9 +30,9 @@
 		},
 		{
 			"dependencies": {
-				"x11": "~>1.0.21",
 				"glx-d": "~>1.0.0",
-				"opengl:gl2-static" : "~>1.0.0"
+				"opengl:gl2-static": "~>1.0.0",
+				"x11": "~>1.0.21"
 			},
 			"libs": [
 				"Xrandr"
@@ -63,11 +63,13 @@
 	"license": "MIT",
 	"name": "tida",
 	"subPackages": [
+		"./addons/tiled",
 		"./addons/puppet",
 		"./examples/simplewindow",
 		"./examples/simplerender",
 		"./examples/simplegame",
-		"./examples/simplepuppet"
+		"./examples/simplepuppet",
+		"./examples/simpletilemap"
 	],
 	"versions": [
 		"FT_210",

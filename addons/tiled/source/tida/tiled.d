@@ -1,88 +1,124 @@
+/++
+    Module for loading maps in TMX format.
+
+    > TMX and TSX are Tiled’s own formats for storing tile maps and tilesets, based on XML. 
+    > TMX provides a flexible way to describe a tile based map. It can describe maps with any tile size, 
+    > any amount of layers, any number of tile sets and it allows custom properties to be set on most elements. 
+    > Beside tile layers, it can also contain groups of objects that can be placed freely.
+
+    To load and render tile maps, use the following:
+    ---
+    TimeMap tilemap = new TileMap();
+    tilemap.load("map.tmx");
+    ...
+    render.draw(tilemap, Vecf(32, 32)); // Draws the layers at the specified location 
+                                        // (including offset, of course).
+    ---
+
+    $(HTTP https://doc.mapeditor.org/en/stable/reference/tmx-map-format/, TMX format documentation).
+
+    Authors implemetation: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
++/
 module tida.tiled;
 
 import dxml.parser;
 import std.file : read;
-import std.conv;
+import std.conv : to;
 import std.base64;
 
-import tida;
+import tida.graph.drawable;
+import tida.graph.render;
+import tida.graph.image;
+import tida.color;
+import tida.vector;
+import tida.game.sprite;
 
 private T byteTo(T)(ubyte[] bytes) @trusted
 {
     T data = T.init;
-    foreach(i; 0 .. bytes.length) data = cast(T) (((data & 0xFF) << 8) + bytes[i]);
+    foreach(i; 0 .. bytes.length) data |= bytes[i] << (8 * i);
 
     return data;
 }
 
+/// Property included in layers.
 struct Property
 {
-    string name;
-    string type;
-    string value;
-
-    T get(T)() @safe
-    {
-        return value.to!T;
-    }
+    string name; /// Property name.
+    string type; /// The data type in the layer property.
+    string value; /// Property value.
 }
 
+/// Object in ObjectGroup.
 struct Object
 {
-    int id;
-    int gid;
-    int x, y;
-    int width, height;
+    int id; /// Unique idencificator
+    int gid; /// The identifier to the picture in the tile.
+    int x, y; /// Coordinates
+    int width, height; /// Size object.
 }
 
+/// A group of objects.
 class ObjectGroup
 {
-    string name;
-    int id;
-    Color!ubyte color;
-    Property[] properties;
-    Object[] objects;
+    string name; /// Name objects group.
+    int id; /// Unique udencificator.
+    Color!ubyte color; /// Color.
+    Property[] properties; /// Object group properties.
+    Object[] objects; /// Objects.
 }
 
+/// Map information structure
 struct MapMeta
 {
-    string ver;
-    string tiledver;
-    string orientation;
-    string renderorder;
-    int compressionlevel;
-    int width, height;
-    int tilewidth, tileheight;
-    int hexsidelength;
-    int staggeraxis;
-    Color!ubyte backgroundColor;
-    int nexlayerid;
-    int nextobjectid;
-    bool infinite;
+    string ver; /// The version of the program in which the tile map was exported.
+    string tiledver; /// The version of the standard format for describing tile maps.
+    string orientation; /++ Tile map orientation (can be orthogonal, isometric 
+                            (the latter is not supported at the moment)) +/
+    string renderorder; /// Rendering method (right-to-left, etc.)
+    int compressionlevel; /// Compression level of these layers.
+    int width, height; /// Map size.
+    int tilewidth, tileheight; /// Tile unit size.
+    int hexsidelength; /++  Only for hexagonal maps. Determines the width or height 
+                            (depending on the staggered axis) of the tile’s edge, in pixels. +/
+    int staggeraxis; /// For staggered and hexagonal maps, determines which axis (“x” or “y”) is staggered.
+    Color!ubyte backgroundColor; /// The background color of the map
+    int nexlayerid; /// Stores the next available ID for new layers.
+    int nextobjectid; /// Stores the next available ID for new objects.
+    bool infinite; /// Whether this map is infinite.
 }
 
+/// Tileset information.
 struct TilesetMeta
 {
-    string ver;
-    string tiledver;
-    string name;
-    int tilewidth, tileheight;
-    int tilecount;
-    int columns;
-    string imgsource;
+    string ver; /// The version of the program in which the tile map was exported.
+    string tiledver; /// The version of the standard format for describing tile maps.
+    string name; /// Name tileset.
+    int tilewidth, tileheight; /// Tile unit size.
+    int tilecount; /// Tile count.
+    int columns; /// How many lines the map for tiles is split into.
+    int spacing; /// 
+    string objectalignment; ///
+    string imgsource; /// The path to the file image.
 }
 
+/// 
 class Tileset
 {
-    int firstgid;
-    string source;
+    public 
+    {
+        int firstgid; /// First identificator.
+        string source; /// Path to the tileset description file.
 
-    TilesetMeta meta;
-    string imagesource;
+        TilesetMeta meta; /// Tileset information.
+        string imagesource; /// Path to the image file.
 
-    Image image;
-    Image[] data;
+        Image image; /// Atlas.
+        Image[] data; /// Tiles.
+    }
 
+    /// Prepares the atlas for a group of tiles.
     void setup() @safe {
         image = new Image().load(imagesource);
         foreach(i; 0 .. meta.columns)
@@ -93,6 +129,7 @@ class Tileset
         foreach(e; data) e.fromTexture();
     }
 
+    /// Loading tileset information from a file.
     void load() @trusted {
         auto xml = parseXML(cast(string) read(source));
 
@@ -124,15 +161,17 @@ class Tileset
     }
 }
 
+/// The data of the tiles in the layer.
 struct LayerData
 {
     import std.array, std.string, std.numeric;
 
-    string encoding;
-    string compression;
-    int[] datamap;
+    string encoding; /// Encoding type.
+    string compression; /// Compression type.
+    int[] datamap; /// Data of the tiles in the layer.
 
-    void parse(R)(R data) @trusted
+    /// Type recognition or data reading, depending on the information specified in the argument.
+    void parse(R)(R data, int compressionlevel = -1) @trusted
     {
         if(data.type == EntityType.elementStart)
         {
@@ -156,53 +195,175 @@ struct LayerData
             }else
             if(encoding == "base64")
             {
-                debug(tiled_base64)
+                import std.zlib;
+                import zstd;
+                import std.encoding;
+
+                ubyte[] decoded = Base64.decode(data.text[4 .. $ - 3]);
+
+                if(compression == "zlib")
                 {
-                    import std.zlib;
-
-                    auto decoded = Base64.decode(data.text);
-
-                    if(compression == "zlib")
-                    {
-                        datamap = cast(int[]) std.zlib.uncompress(cast(void[]) decoded);
-                    }
-
-                    for(int i = 0; i < decoded.length; i += 4)
-                    {
-                        datamap ~= decoded[i .. i + 4].byteTo!int;
-                    }
+                    decoded = cast(ubyte[]) std.zlib.uncompress(cast(void[]) decoded);
                 }else
-                    assert(false, "Base64 is not support!");
+                if(compression == "gzip")
+                {
+                    decoded = cast(ubyte[]) (new std.zlib.UnCompress(HeaderFormat.gzip).uncompress(cast(void[]) decoded));
+                }else
+                if(compression == "zstd")
+                {
+                    auto unc = new zstd.Decompressor();
+                    ubyte[] swapData;
+        
+                    immutable chunkLen = decoded.length / compressionlevel;
+
+                    for(int i = 0; i < decoded.length / chunkLen; i++) {
+                        swapData ~= unc.decompress(decoded[(i * chunkLen) .. ((i + 1) * chunkLen)]); 
+                    }
+
+                    decoded = swapData;
+                }
+
+                for(int i = 0; i < decoded.length; i += 4)
+                {
+                    datamap ~= decoded[i .. i + 4].byteTo!int;
+                }
             }
         }
     }
 }
 
-struct TileLayer
+/// A layer from a group of tiles.
+class TileLayer : IDrawable
 {
-    int id;
-    string name;
-    int width, height;
-    int offsetx, offsety;
-    LayerData data;
+    public
+    {
+        int id; /// Unique identificator.
+        string name; /// Layer data.
+        int width, height; /// Layer size.
+        int offsetx, offsety; /// Layer offset
+        LayerData data; /// Layer data.
+        Property[] properties; /// Layer properties.
+    }
+
+    protected
+    {
+        TileMap tilemap;
+        Sprite[] sprites;
+    }
+
+    this(TileMap tilemap) @safe
+    {
+        this.tilemap = tilemap;
+    }
+
+    /// Prepares tiles into a sprite group for lightweight rendering.
+    void setup() @safe {
+        int y = 0;
+        Sprite currSprite = null;
+        for(int i = 0; i < this.data.datamap.length; i++) {
+            currSprite = new Sprite();
+            if((i - (y * this.width)) == this.width) y++;
+            immutable index = this.data.datamap[i] - 1;
+            if(index != -1)
+            {
+                currSprite.draws = tilemap.tile(index);
+                currSprite.position = Vecf((i - (y * this.width)) * tilemap.mapinfo.tilewidth,
+                                            y * tilemap.mapinfo.tileheight) + Vecf(this.offsetx, this.offsety);
+                sprites ~= currSprite;
+            }
+
+            currSprite = null;
+        }
+    }
+
+    override void draw(IRenderer render, Vecf position) @safe
+    {
+        foreach(e; sprites)
+            render.draw(e, position);
+    }
 }
 
+/// A layer from a picture.
+class ImageLayer : IDrawable
+{
+    public
+    {
+        int id; /// Unique identificator.
+        string name; /// Layer name
+        int offsetx, offsety; /// Layer offset. (position)
+        Image image; /// 
+        string imagesource; /// Path to the file.
+        int x, y; /// 
+        float opacity = 1.0f; /// Opacity.
+        bool visible = true; /// Layer is visible?
+        Color!ubyte tintcolor; ///
+        Property[] properties; /// Layer properties.
+    }
+
+    /// Reading data from a document element.
+    void parse(R)(R data) @safe
+    {
+        if(data.name == "imagelayer")
+        {
+            foreach(attrib; data.attributes)
+            {
+                if(attrib.name == "id") id = attrib.value.to!int;
+                if(attrib.name == "name") name = attrib.value;
+                if(attrib.name == "offsetx") offsetx = attrib.value.to!int;
+                if(attrib.name == "offsety") offsety = attrib.value.to!int;
+                if(attrib.name == "opacity") opacity = attrib.value.to!float;
+                if(attrib.name == "visible") visible = attrib.value.to!int == 1;
+                if(attrib.name == "tintcolor") tintcolor = HEX(attrib.value);
+            }
+        }else
+        if(data.name == "image")
+        {
+            image = new Image();
+            foreach(attrib; data.attributes) {
+                if(attrib.name == "source") imagesource = attrib.value;
+            }
+
+            image
+                .load(imagesource)
+                .fromTexture();
+        }
+    }
+
+    override void draw(IRenderer render, Vecf position) @safe
+    {
+        render.draw(image, Vecf(offsetx, offsety));
+    }
+}
+
+/// Tile Map.
 class TileMap : IDrawable
 {
-    MapMeta mapinfo;
-    Tileset[] tilesets;
-    TileLayer[] layers;
-    ObjectGroup[] objgroups;
+    public
+    {
+        MapMeta mapinfo; /// Map information.
+        Tileset[] tilesets; /// Tileset's.
+        TileLayer[] layers; /// Layer's.
+        ObjectGroup[] objgroups; /// Object group's.
+        ImageLayer[] imagelayers; /// Image layer's.
+    }
 
-    void loadFromMem(R)(R data) @trusted
+    /++
+        Loading data from memory.
+
+        Params:
+            data = Data (XML/JSON).
+    +/
+    void loadFromMem(R)(R data) @safe
     {
         auto xml = parseXML(data);
 
-        TileLayer* currentLayer = null;
-        bool dataelement = false;
-
-        ObjectGroup* currentGroup = null;
+        TileLayer currentLayer = null;
+        ObjectGroup currentGroup = null;
+        ImageLayer currentImage = null;
+        
         bool isprop = false;
+        bool dataelement = false;
+        bool isimage = false;
 
         foreach(element; xml)
         {
@@ -224,6 +385,7 @@ class TileMap : IDrawable
                         if(attr.name == "backgroundcolor") mapinfo.backgroundColor = HEX(attr.value);
                         if(attr.name == "nextlayerid") mapinfo.nexlayerid = attr.value.to!int;
                         if(attr.name == "nextobjectid") mapinfo.nextobjectid = attr.value.to!int;
+                        if(attr.name == "compressionlevel") mapinfo.compressionlevel = attr.value.to!int;
                     }
                 }else
                 if(element.name == "tileset") {
@@ -238,7 +400,7 @@ class TileMap : IDrawable
                     tilesets ~= temp;
                 }else
                 if(element.name == "layer") {
-                    TileLayer layer;
+                    TileLayer layer = new TileLayer(this);
 
                     foreach(attrib; element.attributes) {
                         if(attrib.name == "name") layer.name = attrib.value;
@@ -249,7 +411,7 @@ class TileMap : IDrawable
                         if(attrib.name == "offsety") layer.offsety = attrib.value.to!int;
                     }
 
-                    currentLayer = &layer;
+                    currentLayer = layer;
                 }else
                 if(element.name == "data") {
                     currentLayer.data.parse(element);
@@ -262,7 +424,7 @@ class TileMap : IDrawable
                         if(attrib.name == "id") temp.id = attrib.value.to!int;
                         if(attrib.name == "name") temp.name = attrib.value;
                     }
-                    currentGroup = &temp;
+                    currentGroup = temp;
                 }else
                 if(element.name == "properties") {
                     isprop = true;
@@ -275,7 +437,9 @@ class TileMap : IDrawable
                         if(attrib.name == "value") prop.value = attrib.value;
                     }
 
-                    currentGroup.properties ~= prop;
+                    if(currentGroup !is null) currentGroup.properties ~= prop; else 
+                    if(currentLayer !is null) currentLayer.properties ~= prop; else
+                    if(currentImage !is null) currentImage.properties ~= prop;
                 }else
                 if(element.name == "object") {
                     Object obj;
@@ -289,46 +453,69 @@ class TileMap : IDrawable
                     }
 
                     currentGroup.objects ~= obj;
+                }else
+                if(element.name == "imagelayer") {
+                    currentImage = new ImageLayer();
+                    currentImage.parse(element);
+                }else
+                if(element.name == "image") {
+                    isimage = true;
+                    if(currentImage !is null) currentImage.parse(element);
                 }
             }else
             if(element.type == EntityType.elementEnd) {
                 if(element.name == "layer") {
-                    layers ~= *currentLayer;
+                    layers ~= currentLayer;
                     currentLayer = null;
                 }else
                 if(element.name == "data") {
                     dataelement = false;
                 }else
                 if(element.name == "objectgroup") {
-                    objgroups ~= *currentGroup;
+                    objgroups ~= currentGroup;
                     currentGroup = null;
                 }else
                 if(element.name == "properties") {
                     isprop = false;
+                }else
+                if(element.name == "imagelayer") {
+                    imagelayers ~= currentImage;
+                    currentImage = null;
+                }else
+                if(element.name == "image") {
+                    isimage = false;
                 }
             }else
             if(element.type == EntityType.text) {
                 if(dataelement) {
-                    currentLayer.data.parse(element);
+                    currentLayer.data.parse(element, mapinfo.compressionlevel);
+                }else
+                if(isimage) {
+                    currentImage.parse(element);
                 }
             }
         }
     }
 
+    /// Load data from file.
     void load(string path) @trusted
     {
         loadFromMem(cast(string) read(path));
     }
 
+    /// Prepare layers for work.
     void setup() @safe
     {
-        renderer.background = mapinfo.backgroundColor;
-
         foreach(e; tilesets) {
+            e.setup();
+        }
+
+        foreach(e; layers) {
             e.setup();
         }
     }
 
+    ///
     ObjectGroup objgroupByName(string name) @safe
     {
         foreach(e; objgroups) if(e.name == name) return e;
@@ -336,38 +523,33 @@ class TileMap : IDrawable
         return ObjectGroup.init;
     }
 
+    ///
     Image tile(int id) @safe
     {
         Image image = null;
         int currTileSet = 0;
+        int countPrevious = 0;
 
         while(image is null) {
             if(currTileSet == this.tilesets.length) break;
 
-            int countPrevious = 0;
-            foreach(i; 0 .. currTileSet) countPrevious += this.tilesets[i].data.length;
+            countPrevious += this.tilesets[currTileSet].data.length;
 
             if(id > countPrevious) {
                 currTileSet++;
             }else
-                return this.tilesets[currTileSet].data[id - countPrevious];
+                image = this.tilesets[currTileSet].data[currTileSet != 0 ? id - countPrevious : id];
         }
 
-        return null;
+        return image;
     }
 
     override void draw(IRenderer render, Vecf position) @safe
     {
-        foreach(e; layers) {
-            int y = 0;
-            for(int i = 0; i < e.data.datamap.length; i++) {
-                if((i - (y * e.width)) == e.width) y++;
-                immutable index = e.data.datamap[i] - 1;
-                if(index != -1)
-                render.draw(tile(index),
-                            position + Vecf((i - (y * e.width)) * mapinfo.tilewidth,
-                                            y * mapinfo.tileheight) + Vecf(e.offsetx, e.offsety));
-            }
-        }
+        foreach(e; layers) 
+            render.draw(e, position);
+
+        foreach(e; imagelayers)
+            render.draw(e, position);
     }
 }

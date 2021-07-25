@@ -3,6 +3,7 @@
     "targetType": "sourceLibrary",
     "dependencies" : {
     	"tida" : "*",
-    	"dxml": "~>0.4.3"
+    	"dxml": "~>0.4.3",
+        "zstd": "~>0.2.1"
     }
 }
