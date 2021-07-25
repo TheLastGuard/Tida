@@ -2,6 +2,7 @@
     "name" : "tiled",
     "targetType": "sourceLibrary",
     "dependencies" : {
-    	"tida" : "*"
+    	"tida" : "*",
+    	"dxml": "~>0.4.3"
     }
 }
