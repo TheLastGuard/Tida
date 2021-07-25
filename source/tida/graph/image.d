@@ -713,9 +713,9 @@ Image[] strip(Image image,int x,int y,int w,int h) @safe
 {
     Image[] result;
 
-    foreach(ix; x .. x + w)
+    for(int i = 0; i < image.width; i += w)
     {
-        result ~= image.copy(ix,y,w,h);
+        result ~= image.copy(i,y,w,h);
     }
 
     return result;

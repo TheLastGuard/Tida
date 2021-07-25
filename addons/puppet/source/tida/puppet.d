@@ -633,6 +633,7 @@ class Puppet : IDrawable
         loadFromMem(cast(ubyte[]) read(file));
     }
 
+    ///
     ubyte[] toRaw() @trusted
     {
         ubyte[] data = cast(ubyte[]) "TRNSRTS\0";
@@ -654,11 +655,13 @@ class Puppet : IDrawable
         return data;
     }
 
+    ///
     void parseJSON(JSONValue json) @trusted {
         meta.parseJSON(json["meta"]);
         node = jsonToNode(json["nodes"], this);
     }
 
+    ///
     JSONValue toJSON() @trusted {
         JSONValue json;
         json["meta"] = meta.toJSON();

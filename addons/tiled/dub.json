@@ -1,0 +1,7 @@
+{
+    "name" : "tiled",
+    "targetType": "sourceLibrary",
+    "dependencies" : {
+    	"tida" : "*"
+    }
+}
