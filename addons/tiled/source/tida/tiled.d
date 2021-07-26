@@ -23,6 +23,7 @@
 module tida.tiled;
 
 import dxml.parser;
+import std.json;
 import std.file : read;
 import std.conv : to;
 import std.base64;
@@ -40,6 +41,15 @@ private T byteTo(T)(ubyte[] bytes) @trusted
     foreach(i; 0 .. bytes.length) data |= bytes[i] << (8 * i);
 
     return data;
+}
+
+private bool isKeyExists(JSONValue json, string key) @trusted {
+    try {
+        auto item = json[key];
+        return true;
+    }catch(Exception e) {
+        return false;
+    }
 }
 
 /// Property included in layers.
@@ -62,11 +72,17 @@ struct Object
 /// A group of objects.
 class ObjectGroup
 {
-    string name; /// Name objects group.
-    int id; /// Unique udencificator.
-    Color!ubyte color; /// Color.
-    Property[] properties; /// Object group properties.
-    Object[] objects; /// Objects.
+    public
+    {
+        string name; /// Name objects group.
+        int id; /// Unique udencificator.
+        Color!ubyte color; /// Color.
+        Property[] properties; /// Object group properties.
+        Object[] objects; /// Objects.
+        bool visible = true; /// Is visible group
+        int x, /// position
+            y; /// ditto
+    }
 }
 
 /// Map information structure
@@ -170,21 +186,81 @@ struct LayerData
     string compression; /// Compression type.
     int[] datamap; /// Data of the tiles in the layer.
 
-    /// Type recognition or data reading, depending on the information specified in the argument.
-    void parse(R)(R data, int compressionlevel = -1) @trusted
+    /++
+        Reads data from an input stream with both XML and JSON data.
+
+        Params:
+            R = Type data.
+            Type = What card format was provided for reading (XML or JSON)
+            data = Layer data.
+            compressionLevel = Compression level.
+    +/
+    void parse(R, int Type)(R data, int compressionlevel = -1) @trusted
     {
-        if(data.type == EntityType.elementStart)
+        static if(Type == MapType.XML)
         {
-            foreach(attrib; data.attributes) {
-                if(attrib.name == "encoding") encoding = attrib.value;
-                if(attrib.name == "compression") compression = attrib.value;
+            if(data.type == EntityType.elementStart)
+            {
+                foreach(attrib; data.attributes) {
+                    if(attrib.name == "encoding") encoding = attrib.value;
+                    if(attrib.name == "compression") compression = attrib.value;
+                }
+            }else
+            if(data.type == EntityType.text)
+            {
+                if(encoding == "csv")
+                {
+                    string csvdata = data.text;
+                    string[] stolbs = csvdata.split('\n');
+                    foreach(es; stolbs) {
+                        foreach(ei; es.split(',')) {
+                            if(ei.isNumeric)
+                                datamap ~= ei.to!int;
+                        }
+                    }
+                }else
+                if(encoding == "base64")
+                {
+                    import std.zlib;
+                    import zstd;
+                    import std.encoding;
+
+                    ubyte[] decoded = Base64.decode(data.text[4 .. $ - 3]);
+
+                    if(compression == "zlib")
+                    {
+                        decoded = cast(ubyte[]) std.zlib.uncompress(cast(void[]) decoded);
+                    }else
+                    if(compression == "gzip")
+                    {
+                        decoded = cast(ubyte[]) (new std.zlib.UnCompress(HeaderFormat.gzip).uncompress(cast(void[]) decoded));
+                    }else
+                    if(compression == "zstd")
+                    {
+                        auto unc = new zstd.Decompressor();
+                        ubyte[] swapData;
+            
+                        immutable chunkLen = decoded.length / compressionlevel;
+
+                        for(int i = 0; i < decoded.length / chunkLen; i++) {
+                            swapData ~= unc.decompress(decoded[(i * chunkLen) .. ((i + 1) * chunkLen)]); 
+                        }
+
+                        decoded = swapData;
+                    }
+
+                    for(int i = 0; i < decoded.length; i += 4)
+                    {
+                        datamap ~= decoded[i .. i + 4].byteTo!int;
+                    }
+                }
             }
         }else
-        if(data.type == EntityType.text)
+        static if(Type == MapType.JSON) 
         {
-            if(encoding == "csv")
+            if(data["encoding"].str == "csv")
             {
-                string csvdata = data.text;
+                string csvdata = data["data"].str;
                 string[] stolbs = csvdata.split('\n');
                 foreach(es; stolbs) {
                     foreach(ei; es.split(',')) {
@@ -193,13 +269,13 @@ struct LayerData
                     }
                 }
             }else
-            if(encoding == "base64")
+            if(data["encoding"].str == "base64")
             {
                 import std.zlib;
                 import zstd;
                 import std.encoding;
 
-                ubyte[] decoded = Base64.decode(data.text[4 .. $ - 3]);
+                ubyte[] decoded = Base64.decode(data["data"].str);
 
                 if(compression == "zlib")
                 {
@@ -213,7 +289,7 @@ struct LayerData
                 {
                     auto unc = new zstd.Decompressor();
                     ubyte[] swapData;
-        
+
                     immutable chunkLen = decoded.length / compressionlevel;
 
                     for(int i = 0; i < decoded.length / chunkLen; i++) {
@@ -232,6 +308,12 @@ struct LayerData
     }
 }
 
+/// Map format
+enum MapType : int
+{
+    XML, JSON
+}
+
 /// A layer from a group of tiles.
 class TileLayer : IDrawable
 {
@@ -239,10 +321,14 @@ class TileLayer : IDrawable
     {
         int id; /// Unique identificator.
         string name; /// Layer data.
-        int width, height; /// Layer size.
-        int offsetx, offsety; /// Layer offset
+        int width, /// Layer size.
+            height; /// Layer size.
+        int offsetx, /// Layer offset.
+            offsety; /// Layer offset.
         LayerData data; /// Layer data.
         Property[] properties; /// Layer properties.
+        bool visible = true; /// Is visible layer.
+        Color!ubyte transparentcolor; /// Parent color.
     }
 
     protected
@@ -251,6 +337,7 @@ class TileLayer : IDrawable
         Sprite[] sprites;
     }
 
+    ///
     this(TileMap tilemap) @safe
     {
         this.tilemap = tilemap;
@@ -290,13 +377,15 @@ class ImageLayer : IDrawable
     {
         int id; /// Unique identificator.
         string name; /// Layer name
-        int offsetx, offsety; /// Layer offset. (position)
-        Image image; /// 
+        int offsetx, /// Layer offset. (position) 
+            offsety; /// Layer offset. (position)
+        Image image; /// Layer picture.
         string imagesource; /// Path to the file.
-        int x, y; /// 
+        int x, /// x 
+            y; /// y
         float opacity = 1.0f; /// Opacity.
         bool visible = true; /// Layer is visible?
-        Color!ubyte tintcolor; ///
+        Color!ubyte tintcolor; /// Tint color
         Property[] properties; /// Layer properties.
     }
 
@@ -353,145 +442,248 @@ class TileMap : IDrawable
         Params:
             data = Data (XML/JSON).
     +/
-    void loadFromMem(R)(R data) @safe
+    void loadFromMem(R, int Type)(R data) @trusted
     {
-        auto xml = parseXML(data);
-
-        TileLayer currentLayer = null;
-        ObjectGroup currentGroup = null;
-        ImageLayer currentImage = null;
-        
-        bool isprop = false;
-        bool dataelement = false;
-        bool isimage = false;
-
-        foreach(element; xml)
+        static if(Type == MapType.XML)
         {
-            if(	element.type == EntityType.elementStart ||
-                element.type == EntityType.elementEmpty)
+            auto xml = parseXML(data);
+
+            TileLayer currentLayer = null;
+            ObjectGroup currentGroup = null;
+            ImageLayer currentImage = null;
+            
+            bool isprop = false;
+            bool dataelement = false;
+            bool isimage = false;
+
+            foreach(element; xml)
             {
-                if(element.name == "map") {
-                    foreach(attr; element.attributes)
-                    {
-                        if(attr.name == "version") mapinfo.ver = attr.value;
-                        if(attr.name == "tiledversion") mapinfo.tiledver = attr.value;
-                        if(attr.name == "orientation") mapinfo.orientation = attr.value;
-                        if(attr.name == "renderorder") mapinfo.renderorder = attr.value;
-                        if(attr.name == "width") mapinfo.width = attr.value.to!int;
-                        if(attr.name == "height") mapinfo.height = attr.value.to!int;
-                        if(attr.name == "tilewidth") mapinfo.tilewidth = attr.value.to!int;
-                        if(attr.name == "tileheight") mapinfo.tileheight = attr.value.to!int;
-                        if(attr.name == "infinite") mapinfo.infinite = attr.value.to!int == 1;
-                        if(attr.name == "backgroundcolor") mapinfo.backgroundColor = HEX(attr.value);
-                        if(attr.name == "nextlayerid") mapinfo.nexlayerid = attr.value.to!int;
-                        if(attr.name == "nextobjectid") mapinfo.nextobjectid = attr.value.to!int;
-                        if(attr.name == "compressionlevel") mapinfo.compressionlevel = attr.value.to!int;
+                if(	element.type == EntityType.elementStart ||
+                    element.type == EntityType.elementEmpty)
+                {
+                    if(element.name == "map") {
+                        foreach(attr; element.attributes)
+                        {
+                            if(attr.name == "version") mapinfo.ver = attr.value;
+                            if(attr.name == "tiledversion") mapinfo.tiledver = attr.value;
+                            if(attr.name == "orientation") mapinfo.orientation = attr.value;
+                            if(attr.name == "renderorder") mapinfo.renderorder = attr.value;
+                            if(attr.name == "width") mapinfo.width = attr.value.to!int;
+                            if(attr.name == "height") mapinfo.height = attr.value.to!int;
+                            if(attr.name == "tilewidth") mapinfo.tilewidth = attr.value.to!int;
+                            if(attr.name == "tileheight") mapinfo.tileheight = attr.value.to!int;
+                            if(attr.name == "infinite") mapinfo.infinite = attr.value.to!int == 1;
+                            if(attr.name == "backgroundcolor") mapinfo.backgroundColor = HEX(attr.value);
+                            if(attr.name == "nextlayerid") mapinfo.nexlayerid = attr.value.to!int;
+                            if(attr.name == "nextobjectid") mapinfo.nextobjectid = attr.value.to!int;
+                            if(attr.name == "compressionlevel") mapinfo.compressionlevel = attr.value.to!int;
+                        }
+                    }else
+                    if(element.name == "tileset") {
+                        Tileset temp = new Tileset();
+
+                        foreach(attr; element.attributes) {
+                            if(attr.name == "firstgid") temp.firstgid = attr.value.to!int;
+                            if(attr.name == "source") temp.source = attr.value;
+                        }
+
+                        temp.load();
+                        tilesets ~= temp;
+                    }else
+                    if(element.name == "layer") {
+                        TileLayer layer = new TileLayer(this);
+
+                        foreach(attrib; element.attributes) {
+                            if(attrib.name == "name") layer.name = attrib.value;
+                            if(attrib.name == "id") layer.id = attrib.value.to!int;
+                            if(attrib.name == "width") layer.width = attrib.value.to!int;
+                            if(attrib.name == "height") layer.height = attrib.value.to!int;
+                            if(attrib.name == "offsetx") layer.offsetx = attrib.value.to!int;
+                            if(attrib.name == "offsety") layer.offsety = attrib.value.to!int;
+                        }
+
+                        currentLayer = layer;
+                    }else
+                    if(element.name == "data") {
+                        currentLayer.data.parse!(typeof(element), MapType.XML)(element);
+                        dataelement = true;
+                    }else
+                    if(element.name == "objectgroup") {
+                        ObjectGroup temp = new ObjectGroup();
+                        foreach(attrib; element.attributes) {
+                            if(attrib.name == "color") temp.color = HEX(attrib.value);
+                            if(attrib.name == "id") temp.id = attrib.value.to!int;
+                            if(attrib.name == "name") temp.name = attrib.value;
+                        }
+                        currentGroup = temp;
+                    }else
+                    if(element.name == "properties") {
+                        isprop = true;
+                    }else
+                    if(element.name == "property") {
+                        Property prop;
+                        foreach(attrib; element.attributes) {
+                            if(attrib.name == "name") prop.name = attrib.value;
+                            if(attrib.name == "type") prop.type = attrib.value;
+                            if(attrib.name == "value") prop.value = attrib.value;
+                        }
+
+                        if(currentGroup !is null) currentGroup.properties ~= prop; else 
+                        if(currentLayer !is null) currentLayer.properties ~= prop; else
+                        if(currentImage !is null) currentImage.properties ~= prop;
+                    }else
+                    if(element.name == "object") {
+                        Object obj;
+                        foreach(attrib; element.attributes) {
+                            if(attrib.name == "id") obj.id = attrib.value.to!int;
+                            if(attrib.name == "gid") obj.gid = attrib.value.to!int;
+                            if(attrib.name == "x") obj.x = attrib.value.to!int;
+                            if(attrib.name == "y") obj.y = attrib.value.to!int;
+                            if(attrib.name == "width") obj.width = attrib.value.to!int;
+                            if(attrib.name == "height") obj.height = attrib.value.to!int;
+                        }
+
+                        currentGroup.objects ~= obj;
+                    }else
+                    if(element.name == "imagelayer") {
+                        currentImage = new ImageLayer();
+                        currentImage.parse(element);
+                    }else
+                    if(element.name == "image") {
+                        isimage = true;
+                        if(currentImage !is null) currentImage.parse(element);
                     }
                 }else
-                if(element.name == "tileset") {
-                    Tileset temp = new Tileset();
-
-                    foreach(attr; element.attributes) {
-                        if(attr.name == "firstgid") temp.firstgid = attr.value.to!int;
-                        if(attr.name == "source") temp.source = attr.value;
+                if(element.type == EntityType.elementEnd) {
+                    if(element.name == "layer") {
+                        layers ~= currentLayer;
+                        currentLayer = null;
+                    }else
+                    if(element.name == "data") {
+                        dataelement = false;
+                    }else
+                    if(element.name == "objectgroup") {
+                        objgroups ~= currentGroup;
+                        currentGroup = null;
+                    }else
+                    if(element.name == "properties") {
+                        isprop = false;
+                    }else
+                    if(element.name == "imagelayer") {
+                        imagelayers ~= currentImage;
+                        currentImage = null;
+                    }else
+                    if(element.name == "image") {
+                        isimage = false;
                     }
-
-                    temp.load();
-                    tilesets ~= temp;
                 }else
-                if(element.name == "layer") {
-                    TileLayer layer = new TileLayer(this);
-
-                    foreach(attrib; element.attributes) {
-                        if(attrib.name == "name") layer.name = attrib.value;
-                        if(attrib.name == "id") layer.id = attrib.value.to!int;
-                        if(attrib.name == "width") layer.width = attrib.value.to!int;
-                        if(attrib.name == "height") layer.height = attrib.value.to!int;
-                        if(attrib.name == "offsetx") layer.offsetx = attrib.value.to!int;
-                        if(attrib.name == "offsety") layer.offsety = attrib.value.to!int;
+                if(element.type == EntityType.text) {
+                    if(dataelement) {
+                        currentLayer.data.parse!(typeof(element),Type)(element, mapinfo.compressionlevel);
+                    }else
+                    if(isimage) {
+                        currentImage.parse(element);
                     }
-
-                    currentLayer = layer;
-                }else
-                if(element.name == "data") {
-                    currentLayer.data.parse(element);
-                    dataelement = true;
-                }else
-                if(element.name == "objectgroup") {
-                    ObjectGroup temp = new ObjectGroup();
-                    foreach(attrib; element.attributes) {
-                        if(attrib.name == "color") temp.color = HEX(attrib.value);
-                        if(attrib.name == "id") temp.id = attrib.value.to!int;
-                        if(attrib.name == "name") temp.name = attrib.value;
-                    }
-                    currentGroup = temp;
-                }else
-                if(element.name == "properties") {
-                    isprop = true;
-                }else
-                if(element.name == "property") {
-                    Property prop;
-                    foreach(attrib; element.attributes) {
-                        if(attrib.name == "name") prop.name = attrib.value;
-                        if(attrib.name == "type") prop.type = attrib.value;
-                        if(attrib.name == "value") prop.value = attrib.value;
-                    }
-
-                    if(currentGroup !is null) currentGroup.properties ~= prop; else 
-                    if(currentLayer !is null) currentLayer.properties ~= prop; else
-                    if(currentImage !is null) currentImage.properties ~= prop;
-                }else
-                if(element.name == "object") {
-                    Object obj;
-                    foreach(attrib; element.attributes) {
-                        if(attrib.name == "id") obj.id = attrib.value.to!int;
-                        if(attrib.name == "gid") obj.gid = attrib.value.to!int;
-                        if(attrib.name == "x") obj.x = attrib.value.to!int;
-                        if(attrib.name == "y") obj.y = attrib.value.to!int;
-                        if(attrib.name == "width") obj.width = attrib.value.to!int;
-                        if(attrib.name == "height") obj.height = attrib.value.to!int;
-                    }
-
-                    currentGroup.objects ~= obj;
-                }else
-                if(element.name == "imagelayer") {
-                    currentImage = new ImageLayer();
-                    currentImage.parse(element);
-                }else
-                if(element.name == "image") {
-                    isimage = true;
-                    if(currentImage !is null) currentImage.parse(element);
                 }
-            }else
-            if(element.type == EntityType.elementEnd) {
-                if(element.name == "layer") {
-                    layers ~= currentLayer;
-                    currentLayer = null;
-                }else
-                if(element.name == "data") {
-                    dataelement = false;
-                }else
-                if(element.name == "objectgroup") {
-                    objgroups ~= currentGroup;
-                    currentGroup = null;
-                }else
-                if(element.name == "properties") {
-                    isprop = false;
-                }else
-                if(element.name == "imagelayer") {
-                    imagelayers ~= currentImage;
-                    currentImage = null;
-                }else
-                if(element.name == "image") {
-                    isimage = false;
+            }
+        }else
+        static if(Type == MapType.JSON)
+        {
+            auto json = data.parseJSON;
+
+            Property[] propertiesParse(JSONValue elem) @trusted
+            {
+                Property[] prs;
+                foreach(e; elem["properties"].array) {
+                    Property temp;
+                    temp.name = e["name"].str;
+                    temp.type = e["type"].str;
+                    if(temp.type == "int") 
+                        temp.value = e["value"].get!int.to!string;
+                    else
+                    if(temp.type == "string")
+                        temp.value = e["value"].str;
+
+                    prs ~= temp;
                 }
-            }else
-            if(element.type == EntityType.text) {
-                if(dataelement) {
-                    currentLayer.data.parse(element, mapinfo.compressionlevel);
+
+                return prs;
+            }
+
+            assert(json.isKeyExists("type"), "It's not a json map!");
+            assert(json["type"].str == "map", "It's not a json map!");
+
+            if(json.isKeyExists("backgroundcolor")) mapinfo.backgroundColor = HEX(json["backgroundcolor"].str);
+            mapinfo.compressionlevel = json["compressionlevel"].get!int;
+            mapinfo.width = json["width"].get!int;
+            mapinfo.height = json["height"].get!int;
+            mapinfo.infinite = json["infinite"].get!bool;
+            mapinfo.nexlayerid = json["nextlayerid"].get!int;
+            if(json.isKeyExists("nextobjectid")) mapinfo.nextobjectid = json["nextobjectid"].get!int;
+            mapinfo.orientation = json["orientation"].str;
+            mapinfo.tiledver = json["tiledversion"].str;
+            mapinfo.ver = json["version"].str;
+            mapinfo.tilewidth = json["tilewidth"].get!int;
+            mapinfo.tileheight = json["tileheight"].get!int;
+            mapinfo.renderorder = json["renderorder"].str;
+
+            foreach(e; json["tilesets"].array) {
+                Tileset tileset = new Tileset();
+                tileset.firstgid = e["firstgid"].get!int;
+                tileset.source = e["source"].str;
+                tileset.load();
+                tilesets ~= tileset;
+            }
+
+            foreach(e; json["layers"].array) {
+                if(e["type"].str == "tilelayer") {
+                    TileLayer tilelayer = new TileLayer(this);
+                    tilelayer.id = e["id"].get!int;
+                    tilelayer.visible = e["visible"].get!bool;
+                    if(e.isKeyExists("offsetx")) tilelayer.offsetx = e["offsetx"].get!int;
+                    if(e.isKeyExists("offsety")) tilelayer.offsety = e["offsety"].get!int;
+                    tilelayer.width = e["width"].get!int;
+                    tilelayer.height = e["height"].get!int;
+                    tilelayer.data.compression = e["compression"].str;
+                    tilelayer.data.encoding = e["encoding"].str;
+                    if(e.isKeyExists("transparentcolor")) 
+                        tilelayer.transparentcolor = HEX(e["transparentcolor"].str);
+                    tilelayer.data.parse!(typeof(e),Type)(e, mapinfo.compressionlevel);
+                    if(e.isKeyExists("properties"))
+                        tilelayer.properties = propertiesParse(e["properties"]);
+                    layers ~= tilelayer;
                 }else
-                if(isimage) {
-                    currentImage.parse(element);
+                if(e["type"].str == "imagelayer") {
+                    ImageLayer imagelayer = new ImageLayer();
+                    imagelayer.id = e["id"].get!int;
+                    imagelayer.name = e["name"].str;
+                    imagelayer.imagesource = e["image"].str;
+                    imagelayer.opacity = e["opacity"].get!float;
+                    imagelayer.visible = e["visible"].get!bool;
+                    imagelayer.offsetx = e["offsetx"].get!int;
+                    imagelayer.offsety = e["offsety"].get!int;
+                    if(e.isKeyExists("properties")) imagelayer.properties = propertiesParse(e);
+                    imagelayer.image = new Image().load(imagelayer.imagesource).fromTexture();
+                    imagelayers ~= imagelayer;
+                }else
+                if(e["type"].str == "objectgroup") {
+                    ObjectGroup group = new ObjectGroup();
+                    group.id = e["id"].get!int;
+                    group.name = e["name"].str;
+                    group.color = HEX(e["color"].str);
+                    group.visible = e["visible"].get!bool;
+                    if(e.isKeyExists("offsetx")) group.x = e["offsetx"].get!int;
+                    if(e.isKeyExists("offsety")) group.y = e["offsety"].get!int;
+                    foreach(elem; e["objects"].array) {
+                        Object obj;
+                        obj.gid = elem["gid"].get!int;
+                        obj.width = elem["width"].get!int;
+                        obj.height = elem["height"].get!int;
+                        obj.x = elem["x"].get!int;
+                        obj.y = elem["y"].get!int;
+                        group.objects ~= obj;
+                    }
+                    if(e.isKeyExists("properties")) group.properties = propertiesParse(e);
                 }
             }
         }
@@ -500,7 +692,16 @@ class TileMap : IDrawable
     /// Load data from file.
     void load(string path) @trusted
     {
-        loadFromMem(cast(string) read(path));
+        import std.path;
+
+        if(path.extension == ".tmx")
+        {
+            loadFromMem!(string, MapType.XML)(cast(string) read(path));
+        }else
+        if(path.extension == ".json")
+        {
+            loadFromMem!(string, MapType.JSON)(cast(string) read(path));
+        }
     }
 
     /// Prepare layers for work.

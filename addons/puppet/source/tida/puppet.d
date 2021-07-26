@@ -51,7 +51,7 @@ import tida.color;
 
 private bool isKeyExists(JSONValue json, string key) @trusted {
     try {
-        auto item = json["key"];
+        auto item = json[key];
         return true;
     }catch(Exception e) {
         return false;
