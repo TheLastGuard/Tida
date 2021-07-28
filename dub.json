@@ -2,9 +2,6 @@
 	"-ddoxFilterArgs": [
 		"source/tida/"
 	],
-	"authors": [
-		"TodNaz"
-	],
 	"configurations": [
 		{
 			"dependencies": {
@@ -51,7 +48,6 @@
 			"targetType": "library"
 		}
 	],
-	"copyright": "Copyright © 2020, TodNaz",
 	"dependencies": {
 		"bindbc-freetype": "~>0.9.1",
 		"bindbc-openal": "~>0.4.1",
@@ -59,9 +55,7 @@
 		"imageformats": "~>7.0.2",
 		"mp3decoder": "~>1.0.0"
 	},
-	"description": "Tida is a library for creating 2D games, which is written with manual window creation and rendering using opengl and other tools for D games.",
-	"license": "MIT",
-	"name": "tida",
+	
 	"subPackages": [
 		"./addons/tiled",
 		"./addons/puppet",
@@ -75,5 +69,13 @@
 		"FT_210",
 		"GL_AllowDeprecated",
 		"GL_46"
-	]
+	],
+	"name": "tida",
+	"description": "Tida is a library for creating 2D games, which is written with manual window creation and rendering using opengl and other tools for D games.",
+	"license": "MIT",
+	"copyright": "Copyright © 2020, TodNaz",
+	"authors": [
+		"TodNaz"
+	],
+	"homepage" : "https://github.com/TodNaz/Tida"
 }

@@ -315,8 +315,10 @@ class Scene
             this.instances[instance.id .. $].each!((ref e) => e.id--);
         }
 
-        //instance.eventDestroy(type);
-        //this.eventDestroy(instance);
+        if(sceneManager !is null) {
+            sceneManager.DestroyEventCall(instance);
+            sceneManager.DestroyEventSceneCall(this, instance);
+        }
 
         if(sceneManager !is null && isRemoveHandle)
             sceneManager.RemoveHandle(this, instance);

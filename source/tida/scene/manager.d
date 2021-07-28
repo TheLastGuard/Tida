@@ -391,6 +391,20 @@ class SceneManager
         Array!SRTrigger[Component] COnTriggerFunctions;
     }
 
+    void DestroyEventCall(T)(T instance) @trusted
+    in(isInstance!T)
+    do
+    {
+        foreach(func; IOnDestroyFunctions[instance]) func(instance);
+    }
+
+    void DestroyEventSceneCall(T, R)(T scene, R instance) @trusted
+    in(isScene!T && isInstance!R)
+    do
+    {
+        foreach(func; OnDestroyFunctions[scene]) func(instance);
+    }
+
     void ComponentHandle(T)(Instance instance, T component) @trusted
     in(isComponent!T)
     do

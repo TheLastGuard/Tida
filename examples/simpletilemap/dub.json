@@ -1,0 +1,9 @@
+{
+    "name" : "simpletilemap",
+    "targetType": "executable",
+    "dependencies" : {
+    	"tida" : "*",
+        "opengl:gl2-static" : "~>1.0.0",
+        "tida:tiled" : "*"
+    }
+}

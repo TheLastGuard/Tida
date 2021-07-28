@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.7.1" orientation="orthogonal" renderorder="left-up" compressionlevel="9" width="16" height="16" tilewidth="32" tileheight="32" infinite="0" backgroundcolor="#4040ff" nextlayerid="6" nextobjectid="6">
+ <tileset firstgid="1" source="tileset.tsx"/>
+ <layer id="1" name="MainTerrain" width="16" height="16">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAAAw0FAMQCMwAAAB8zSBcBAAAAC0gzSANISB8LSAMzSAEBHx9IDU1WAAAAVwAAAB8AAAA8oFA9B6CCCaTKPBtxVAivBLAbo2XNzIOWfhPeqPaolmF9jNrH/VPfO3048oKMRJCmI6tHScE1ghXvYJpTd61Qjwf6Ur/mDuZ4s5jd4/4hL4eH8SI3jLGgU6RK3CPk+Fyb4X6YxCZofnxYWHfLsbSwXZMC
+  </data>
+ </layer>
+ <objectgroup color="#000000" id="4" name="Hero">
+  <properties>
+   <property name="uuid" type="int" value="13"/>
+  </properties>
+  <object id="5" gid="76" x="418" y="93" width="32" height="32"/>
+ </objectgroup>
+ <imagelayer id="5" name="ImageLayer" offsetx="180" offsety="180">
+  <image source="tileset.png" width="320" height="320"/>
+ </imagelayer>
+</map>
