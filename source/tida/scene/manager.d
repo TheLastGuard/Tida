@@ -659,6 +659,9 @@ class SceneManager
                 static if(is(attrib : FunEvent!OnError)) {
                     OnErrorFunctions[scene] ~= &__traits(getMember, scene, member);
                 }else
+                static if(is(attrib : FunEvent!Destroy)) {
+                    OnDestroyFunctions[scene] ~= &__traits(getMember, scene, member);
+                }else
                 static if(attrib.stringof[0 .. 12] == "TriggerEvent") {
                     OnTriggerFunctions[scene] ~= SRTrigger(attrib,
                     cast(FETrigger) &__traits(getMember, scene, member));
