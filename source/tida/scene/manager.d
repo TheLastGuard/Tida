@@ -621,6 +621,7 @@ class SceneManager
         DrawFunctions[scene] = Array!FEDraw();
         OnErrorFunctions[scene] = Array!FEOnError();
         OnTriggerFunctions[scene] = Array!SRTrigger();
+        OnDestroyFunctions[scene] = Array!FEDestroy();
 
         static foreach(member; __traits(allMembers, T)) {
             static foreach(attrib; __traits(getAttributes, __traits(getMember, scene, member)))
