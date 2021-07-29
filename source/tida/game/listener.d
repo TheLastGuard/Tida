@@ -101,7 +101,7 @@ class Listener
         foreach(i; 0 .. timers.length)
         {
             if(timers[i] == tm) {
-                timers.remove(i);
+                timers = timers.remove(i);
                 return;
             }
         }
