@@ -12,7 +12,7 @@ class Main : Scene
     {
         puppet = new Puppet();
 
-        puppet.load("data.inp");
+        puppet.load("stest.inp");
     }
 
     @Event!EventHandle

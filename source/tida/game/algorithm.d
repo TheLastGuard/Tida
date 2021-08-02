@@ -1,3 +1,9 @@
+/++
+    Module of game algorithms.
+
+    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
+    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
++/
 module tida.game.algorithm;
 
 import tida.vector;

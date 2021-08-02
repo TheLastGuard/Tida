@@ -768,6 +768,11 @@ unittest
     assert(rgb(255, 0, 0).to!int == 0xFF0000FF);
 }
 
+bool validateBytes(int format)(inout(ubyte[]) pixels) @safe nothrow pure
+{
+    return (pixels.length % BytesPerColor!format) == 0;
+}
+
 /++
     Converts the format of a sequence of color bytes.
 	
@@ -777,10 +782,15 @@ unittest
         pixels = Sequence of color bytes.
 +/
 ubyte[] fromFormat(int format1,int format2)(ubyte[] pixels) @safe nothrow pure
+in
 {
     static assert(isCorrectFormat!format1,"The format cannot be detected automatically!");
     static assert(isCorrectFormat!format2,"The format cannot be detected automatically!");
-
+    assert(validateBytes!format1(pixels),"The input pixels data is incorrect!");
+}
+out(r; validateBytes!format2(r), "The out pixels data is incorrect!")
+do
+{
     static if(format1 == format2) return pixels;
 
     static if(format1 == PixelFormat.RGB)

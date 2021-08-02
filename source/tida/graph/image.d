@@ -28,11 +28,16 @@ template isCorrectAxis(int axis)
     enum isCorrectAxis = axis == XAxis || axis == YAxis;
 }
 
+bool validateImageData(int w, int h, ubyte[] data) @safe nothrow pure
+{
+    return validateBytes!(PixelFormat.RGBA)(data) && (w * h * BytesPerColor!(PixelFormat.RGBA) == data.length);
+}
+
 /// Image.
 class Image : IDrawable, IDrawableEx, IDrawableColor
 {
     import tida.color, tida.vector, tida.graph.gl, tida.graph.render, tida.graph.each, tida.graph.texture;
-    import imageformats;
+    import imagefmt;
     import std.algorithm;
     import std.conv : to;
 
@@ -45,7 +50,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /// Empty initialization.
-    this() @safe nothrow
+    this() @safe nothrow pure
     {
         _pixels = null;
     }
@@ -59,7 +64,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             newWidth = Image width.
             newHeight = Image height.
     +/
-    this(uint newWidth,uint newHeight) @safe nothrow
+    this(uint newWidth,uint newHeight) @safe nothrow pure
     {
         _pixels = new Color!ubyte[](newWidth * newHeight);
 
@@ -70,13 +75,13 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /// A sequence of pixels.
-    Color!ubyte[] pixels() @safe @property nothrow
+    Color!ubyte[] pixels() @safe @property nothrow pure
     {
         return _pixels;
     }
 
     /// ditto
-    void pixels(Color!ubyte[] otherPixels) @safe @property nothrow
+    void pixels(Color!ubyte[] otherPixels) @safe @property nothrow pure
     in(otherPixels.length == _pixels.length)
     do
     {
@@ -89,7 +94,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             format = Pixel format.
     +/
-    ubyte[] bytes(int format = PixelFormat.RGBA)() @safe nothrow
+    ubyte[] bytes(int format = PixelFormat.RGBA)() @safe nothrow pure
     in(isCorrectFormat!format)
     do
     {
@@ -102,13 +107,18 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         return tryBytes;
     }
 
+    bool empty() @safe nothrow pure
+    {
+        return _pixels.length == 0;
+    }
+
     /++
         Fills the entire picture with color.
         
         Params:
             color = Color fill.
     +/
-    auto fill(Color!ubyte color) @safe nothrow
+    Image fill(Color!ubyte color) @safe nothrow pure
     {
         _pixels.fill(color);
 
@@ -132,17 +142,11 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         image.bytes!(PixelFormat.RGBA)(bt);
         ---
     +/
-    void bytes(int format = PixelFormat.RGBA)(ubyte[] bt) @safe nothrow
+    void bytes(int format = PixelFormat.RGBA)(ubyte[] bt) @safe nothrow pure
     in
     {
         static assert(isCorrectFormat!format, "You cannot find out the format on the fly.");
-
-        if(format == PixelFormat.RGB)
-            assert(bt.length <= _width * _height * 3,
-            "The size of the picture is much larger than this one!");
-        else
-            assert(bt.length <= _width * _height * 4,
-            "The size of the picture is much larger than this one!");
+        assert(validateImageData(_width, _height, bt), "The size of the picture is much larger than this one!");
     }
     do
     {
@@ -157,7 +161,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             y = The y-axis position pixel.
             color = Pixel.
     +/
-    void setPixel(int x,int y,Color!ubyte color) @safe nothrow
+    void setPixel(int x,int y,Color!ubyte color) @safe nothrow pure
     {
         if(x >= width || y >= height || x < 0 || y < 0)
             return;
@@ -174,7 +178,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             x = The x-axis position pixel.
             y = The y-axis position pixel.
     +/
-    Color!ubyte getPixel(int x,int y) @safe nothrow
+    Color!ubyte getPixel(int x,int y) @safe nothrow pure
     {
         if(x >= width || y >= height || x < 0 || y < 0) return rgba(0,0,0,0);
 
@@ -231,7 +235,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             newWidth = Image width.
             newHeight = Image height.
     +/
-    auto create(uint newWidth,uint newHeight) @safe nothrow
+    Image create(uint newWidth,uint newHeight) @safe nothrow pure
     {
         _pixels = new Color!ubyte[](newWidth * newHeight);
 
@@ -250,27 +254,28 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             path = Relative or full path to the image file.
     +/
-    auto load(string path) @trusted
+    Image load(string path) @trusted
     {
         import std.file : exists;
 
         if(!exists(path))
             throw new Exception("Not find file `"~path~"`!");
 
-        IFImage temp = read_image(path, ColFmt.RGBA);
+        IFImage temp = read_image(path, 4);
+        scope(exit) temp.free();
 
         _width = temp.w;
         _height = temp.h;
 
         create(_width,_height);
 
-        this.bytes!(PixelFormat.RGBA)(temp.pixels);
+        this.bytes!(PixelFormat.RGBA)(temp.buf8);
 
         return this;
     }
 
     /// Whether the picture is a texture.
-    bool isTexture() @safe nothrow
+    bool isTexture() @safe nothrow pure
     {
         return texture !is null;
     }
@@ -278,7 +283,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     /++
         Convert to a texture for rendering to the window.
     +/
-    auto fromTexture() @safe
+    Image fromTexture() @safe
     {
         if(GL.isInitialize)
         {
@@ -298,7 +303,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         return this;
     }
 
-    auto fromTextureWithoutShape() @safe
+    Image fromTextureWithoutShape() @safe
     {
         if(GL.isInitialize)
         {
@@ -315,12 +320,12 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         return this;
     }
 
-    Texture texture() @safe @property nothrow
+    Texture texture() @safe @property nothrow pure
     {
         return _texture;
     }
 
-    void texture(Texture tex) @safe @property nothrow
+    void texture(Texture tex) @safe @property nothrow pure
     {
         this._texture = tex;
     }
@@ -332,7 +337,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             newWidth = Image new width.
             newHeight = Image new height.
     +/
-    auto resize(uint newWidth,uint newHeight) @safe nothrow
+    Image resize(uint newWidth,uint newHeight) @safe nothrow pure
     {
         uint oldWidth = _width;
         uint oldHeight = _height;
@@ -367,7 +372,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         Params:
             k = factor.
     +/
-    auto scale(float k) @safe nothrow
+    Image scale(float k) @safe nothrow pure
     {
         uint newWidth = cast(uint) ((cast(float) _width) * k);
         uint newHeight = cast(uint) ((cast(float) _height) * k);
@@ -376,19 +381,19 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 
     /// The widht of the picture.
-    uint width() @safe @property nothrow
+    uint width() @safe @property nothrow pure
     {
         return _width;
     }
 
     /// The height of the picture.
-    uint height() @safe @property nothrow 
+    uint height() @safe @property nothrow pure
     {
         return _height;
     }
 
     /// Creates a copy of the picture. Doesn't create a copy of the texture.
-    Image dup() @safe @property nothrow 
+    Image dup() @safe @property nothrow pure
     {
         Image image = new Image();
 
@@ -601,10 +606,10 @@ do
 +/
 void saveImageFromFile(Image image,string path) @trusted
 {
-    import imageformats;
+    import imagefmt;
     import tida.color;
 
-    write_image(path, image.width, image.height, image.bytes!(PixelFormat.RGBA), ColFmt.RGBA);
+    write_image(path, image.width, image.height, image.bytes!(PixelFormat.RGBA), 4);
 }
 
 import tida.shape;
@@ -620,7 +625,8 @@ import tida.shape;
     Returns: Cropped picture.
 +/
 Image shapeCopy(int Type = DefaultOperation)(Image image,Shape shape,Image outImage = null) @safe
-in(shape.type != ShapeType.triangle)
+in(shape.type != ShapeType.unknown && shape.type != ShapeType.triangle && shape.type != ShapeType.polygon,
+"This shape is not a croppeared!")
 do
 {
     import tida.graph.each;
@@ -726,7 +732,7 @@ import tida.vector;
 /// ditto
 Image unite(int Type = DefaultOperation)(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @trusted
 {
-    import std.algorithm, std.conv, std.range, std.parallelism;
+    import std.algorithm, std.conv;
     import tida.color;
 
     Image result = new Image();
@@ -772,7 +778,7 @@ Image unite(int Type = DefaultOperation)(Image a,Image b,Vecf posA = Vecf(0,0),V
 
     Return: Matrix
 +/
-float[][] gausKernel(int width,int height,float sigma) @safe
+float[][] gausKernel(int width,int height,float sigma) @safe nothrow pure
 {
     import std.math : exp;
 
@@ -806,7 +812,7 @@ float[][] gausKernel(int width,int height,float sigma) @safe
     Params:
         r = Radiuos gaus.
 +/
-float[][] gausKernel(float r) @safe
+float[][] gausKernel(float r) @safe nothrow pure
 {
     return gausKernel(cast(int) (r * 2), cast(int) (r * 2), r);
 }
@@ -819,7 +825,7 @@ float[][] gausKernel(float r) @safe
         image = Image.
         r = radius gaus kernel.
 +/
-Image blur(int Type = DefaultOperation)(Image image,float r) @trusted
+Image blur(int Type = DefaultOperation)(Image image,float r) @safe
 {
     return blur!Type(image, gausKernel(r));
 }
@@ -851,7 +857,6 @@ Image blur(int Type = DefaultOperation)(Image image,float[][] otherKernel) @trus
 {
     import tida.color;
     import tida.graph.each;
-    import std.parallelism, std.range;
 
     auto kernel = otherKernel; 
     

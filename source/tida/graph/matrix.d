@@ -85,6 +85,42 @@ float[4][4] rotateMat(float[4][4] mat, float angle, float x, float y, float z) @
 }
 
 ///
+float[4][4] eulerRotateMat(float roll, float pitch, float yaw) @safe nothrow pure
+{
+    import std.math;
+
+    float[4][4] xres = identity();
+    float[4][4] yres = identity();
+    float[4][4] zres = identity();
+
+    immutable ct = [cos(roll), cos(pitch), cos(yaw)];
+    immutable st = [sin(roll), sin(pitch), sin(yaw)];
+
+    xres[1][1] = ct[0];
+    xres[1][2] = -st[0];
+    xres[2][1] = st[0];
+    xres[2][2] = ct[0];
+
+    yres[0][0] = ct[1];
+    yres[0][2] = st[1];
+    yres[2][0] = -st[1];
+    yres[2][2] = ct[1];
+
+    zres[0][0] = ct[2];
+    zres[0][1] = -st[2];
+    zres[1][0] = st[2];
+    zres[1][1] = ct[2];
+
+    return mulmat(mulmat(xres, yres), zres);
+}
+
+///
+float[4][4] eulerRotate(float[4][4] mat, float roll, float pitch, float yaw) @safe nothrow pure
+{
+    return mulmat(mat, eulerRotateMat(roll, pitch, yaw));
+}
+
+///
 float[4][4] mulmat(float[4][4] a, float[4][4] b) @safe nothrow pure
 {
     float[4][4] result = 0.0f;
