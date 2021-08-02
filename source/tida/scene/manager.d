@@ -353,42 +353,45 @@ class SceneManager
             FETrigger fun;
         }
 
-        Array!FEInit[Scene] InitFunctions;
-        Array!FEStep[Scene] StepFunctions;
-        Array!FERestart[Scene] RestartFunctions;
-        Array!FEEntry[Scene] EntryFunctions;
-        Array!FELeave[Scene] LeaveFunctions;
-        Array!FEGameStart[Scene] GameStartFunctions;
-        Array!FEGameExit[Scene] GameExitFunctions;
-        Array!FEGameRestart[Scene] GameRestartFunctions;
-        Array!FEEventHandle[Scene] EventHandleFunctions;
-        Array!FEDraw[Scene] DrawFunctions;
-        Array!FEOnError[Scene] OnErrorFunctions;
-        Array!SRTrigger[Scene] OnTriggerFunctions;
-        Array!FEDestroy[Scene] OnDestroyFunctions;
+        FEInit[][Scene] InitFunctions;
+        FEStep[][Scene] StepFunctions;
+        FEStep[][size_t][Scene] StepThreadFunctions;
+        FERestart[][Scene] RestartFunctions;
+        FEEntry[][Scene] EntryFunctions;
+        FELeave[][Scene] LeaveFunctions;
+        FEGameStart[][Scene] GameStartFunctions;
+        FEGameExit[][Scene] GameExitFunctions;
+        FEGameRestart[][Scene] GameRestartFunctions;
+        FEEventHandle[][Scene] EventHandleFunctions;
+        FEDraw[][Scene] DrawFunctions;
+        FEOnError[][Scene] OnErrorFunctions;
+        SRTrigger[][Scene] OnTriggerFunctions;
+        FEDestroy[][Scene] OnDestroyFunctions;
 
-        Array!FEInit[Instance] IInitFunctions;
-        Array!FEStep[Instance] IStepFunctions;
-        Array!FERestart[Instance] IRestartFunctions;
-        Array!FEEntry[Instance] IEntryFunctions;
-        Array!FELeave[Instance] ILeaveFunctions;
-        Array!FEGameStart[Instance] IGameStartFunctions;
-        Array!FEGameExit[Instance] IGameExitFunctions;
-        Array!FEGameRestart[Instance] IGameRestartFunctions;
-        Array!FEEventHandle[Instance] IEventHandleFunctions;
-        Array!FEDraw[Instance] IDrawFunctions;
-        Array!FEOnError[Instance] IOnErrorFunctions;
-        Array!SRCollider[Instance] IColliderStructs;
-        Array!FECollision[Instance] ICollisionFunctions;
-        Array!SRTrigger[Instance] IOnTriggerFunctions;
-        Array!FEDestroy[Instance] IOnDestroyFunctions;
+        FEInit[][Instance] IInitFunctions;
+        FEStep[][Instance] IStepFunctions;
+        FEStep[][size_t][Instance] IStepThreadFunctions;
+        FERestart[][Instance] IRestartFunctions;
+        FEEntry[][Instance] IEntryFunctions;
+        FELeave[][Instance] ILeaveFunctions;
+        FEGameStart[][Instance] IGameStartFunctions;
+        FEGameExit[][Instance] IGameExitFunctions;
+        FEGameRestart[][Instance] IGameRestartFunctions;
+        FEEventHandle[][Instance] IEventHandleFunctions;
+        FEDraw[][Instance] IDrawFunctions;
+        FEOnError[][Instance] IOnErrorFunctions;
+        SRCollider[][Instance] IColliderStructs;
+        FECollision[][Instance] ICollisionFunctions;
+        SRTrigger[][Instance] IOnTriggerFunctions;
+        FEDestroy[][Instance] IOnDestroyFunctions;
 
-        Array!FEStep[Component] CStepFunctions;
-        Array!FELeave[Component] CLeaveFunctions;
-        Array!FEEventHandle[Component] CEventHandleFunctions;
-        Array!FEDraw[Component] CDrawFunctions;
-        Array!FEOnError[Component] COnErrorFunctions;
-        Array!SRTrigger[Component] COnTriggerFunctions;
+        FEStep[][Component] CStepFunctions;
+        FEStep[][size_t][Component] CStepThreadFunctions;
+        FELeave[][Component] CLeaveFunctions;
+        FEEventHandle[][Component] CEventHandleFunctions;
+        FEDraw[][Component] CDrawFunctions;
+        FEOnError[][Component] COnErrorFunctions;
+        SRTrigger[][Component] COnTriggerFunctions;
     }
 
     void DestroyEventCall(T)(T instance) @trusted
@@ -409,12 +412,12 @@ class SceneManager
     in(isComponent!T)
     do
     {
-        CStepFunctions[component] = Array!FEStep();
-        CLeaveFunctions[component] = Array!FELeave();
-        CEventHandleFunctions[component] = Array!FEEventHandle();
-        CDrawFunctions[component] = Array!FEDraw();
-        COnErrorFunctions[component] = Array!FEOnError();
-        COnTriggerFunctions[component] = Array!SRTrigger();
+        CStepFunctions[component] = [];
+        CLeaveFunctions[component] = [];
+        CEventHandleFunctions[component] = [];
+        CDrawFunctions[component] = [];
+        COnErrorFunctions[component] = [];
+        COnTriggerFunctions[component] = [];
 
         static foreach(member; __traits(allMembers, T)) {
             static foreach(attrib; __traits(getAttributes, __traits(getMember, component, member)))
@@ -438,6 +441,9 @@ class SceneManager
                 static if(is(attrib : FunEvent!OnError)) {
                     COnErrorFunctions[component] ~= &__traits(getMember, component, member);
                 } else
+                static if(attrib.stringof[0 .. 8] == "InThread") {
+                    CStepThreadFunctions[instance][attrib.id] ~= &__traits(getMember, instance, member);
+                }else
                 static if(attrig.stringof[0 .. 12] == "TriggerEvent") {
                     COnTriggerFunctions[component] ~= SRTrigger(attrib,
                     cast(FETrigger) &__traits(getMember, component, member));
@@ -446,17 +452,22 @@ class SceneManager
         }
     }
 
-    Array!SRCollider[Instance] colliders() @safe @property
+    FEStep[][size_t][Instance] threadSteps() @safe @property
+    {
+        return IStepThreadFunctions;
+    }
+
+    SRCollider[][Instance] colliders() @safe @property
     {
         return IColliderStructs;
     }
 
-    Array!FECollision[Instance] collisionFunctions() @safe @property
+    FECollision[][Instance] collisionFunctions() @safe @property
     {
         return ICollisionFunctions;    
     }
 
-    Array!FELeave[Component] leaveComponents() @safe @property
+    FELeave[][Component] leaveComponents() @safe @property
     {
         return CLeaveFunctions;
     }
@@ -478,27 +489,29 @@ class SceneManager
         ICollisionFunctions.remove(instance);
         IOnTriggerFunctions.remove(instance);
         IOnDestroyFunctions.remove(instance);
+        IStepThreadFunctions.remove(instance);
     }
 
     void InstanceHandle(T)(Scene scene, T instance) @trusted
     {
+        import std.algorithm : canFind, remove;
         if(instance in IInitFunctions) return;
 
-        IInitFunctions[instance] = Array!FEInit();
-        IStepFunctions[instance] = Array!FEStep();
-        IEntryFunctions[instance] = Array!FEEntry();
-        IRestartFunctions[instance] = Array!FERestart();
-        ILeaveFunctions[instance] = Array!FELeave();
-        IGameStartFunctions[instance] = Array!FEGameStart();
-        IGameExitFunctions[instance] = Array!FEGameExit();
-        IGameRestartFunctions[instance] = Array!FEGameRestart();
-        IEventHandleFunctions[instance] = Array!FEEventHandle();
-        IDrawFunctions[instance] = Array!FEDraw();
-        IOnErrorFunctions[instance] = Array!FEOnError();
-        IColliderStructs[instance] = Array!SRCollider();
-        IOnTriggerFunctions[instance] = Array!SRTrigger();
-        IOnDestroyFunctions[instance] = Array!FEDestroy();
-        ICollisionFunctions[instance] = Array!FECollision();
+        IInitFunctions[instance] = [];
+        IStepFunctions[instance] = [];
+        IEntryFunctions[instance] = [];
+        IRestartFunctions[instance] = [];
+        ILeaveFunctions[instance] = [];
+        IGameStartFunctions[instance] = [];
+        IGameExitFunctions[instance] = [];
+        IGameRestartFunctions[instance] = [];
+        IEventHandleFunctions[instance] = [];
+        IDrawFunctions[instance] = [];
+        IOnErrorFunctions[instance] = [];
+        IColliderStructs[instance] = [];
+        IOnTriggerFunctions[instance] = [];
+        IOnDestroyFunctions[instance] = [];
+        ICollisionFunctions[instance] = [];
 
         static foreach(member; __traits(allMembers, T)) {
             static foreach(attrib; __traits(getAttributes, __traits(getMember, instance, member)))
@@ -542,13 +555,16 @@ class SceneManager
                 static if(is(attrib : FunEvent!Collision)) {
                     ICollisionFunctions[instance] ~= &__traits(getMember, instance, member);
                 }else
+                static if(attrib.stringof[0 .. 8] == "InThread") {
+                    IStepThreadFunctions[instance][attrib.id] ~= &__traits(getMember, instance, member);
+                }else
+                static if(attrib.stringof[0 .. 12] == "TriggerEvent") {
+                    IOnTriggerFunctions[instance] ~= SRTrigger(attrib,
+                    cast(FETrigger) &__traits(getMember, instance, member));
+                }else
                 static if(attrib.stringof[0 .. 14] == "CollisionEvent") {
                     IColliderStructs[instance] ~= SRCollider(attrib,
                     cast(FECollision) &__traits(getMember, instance, member));
-                }else
-                static if(attrig.stringof[0 .. 12] == "TriggerEvent") {
-                    IOnTriggerFunctions[instance] ~= SRTrigger(attrib,
-                    cast(FETrigger) &__traits(getMember, instance, member));
                 }
             }
         }
@@ -609,19 +625,19 @@ class SceneManager
     in(isScene!T)
     do
     {
-        InitFunctions[scene] = Array!FEInit();
-        StepFunctions[scene] = Array!FEStep();
-        EntryFunctions[scene] = Array!FEEntry();
-        RestartFunctions[scene] = Array!FERestart();
-        LeaveFunctions[scene] = Array!FELeave();
-        GameStartFunctions[scene] = Array!FEGameStart();
-        GameExitFunctions[scene] = Array!FEGameExit();
-        GameRestartFunctions[scene] = Array!FEGameRestart();
-        EventHandleFunctions[scene] = Array!FEEventHandle();
-        DrawFunctions[scene] = Array!FEDraw();
-        OnErrorFunctions[scene] = Array!FEOnError();
-        OnTriggerFunctions[scene] = Array!SRTrigger();
-        OnDestroyFunctions[scene] = Array!FEDestroy();
+        InitFunctions[scene] = [];
+        StepFunctions[scene] = [];
+        EntryFunctions[scene] = [];
+        RestartFunctions[scene] = [];
+        LeaveFunctions[scene] = [];
+        GameStartFunctions[scene] = [];
+        GameExitFunctions[scene] = [];
+        GameRestartFunctions[scene] = [];
+        EventHandleFunctions[scene] = [];
+        DrawFunctions[scene] = [];
+        OnErrorFunctions[scene] = [];
+        OnTriggerFunctions[scene] = [];
+        OnDestroyFunctions[scene] = [];
 
         static foreach(member; __traits(allMembers, T)) {
             static foreach(attrib; __traits(getAttributes, __traits(getMember, scene, member)))
@@ -661,6 +677,9 @@ class SceneManager
                 }else
                 static if(is(attrib : FunEvent!Destroy)) {
                     OnDestroyFunctions[scene] ~= &__traits(getMember, scene, member);
+                }else
+                static if(attrib.stringof[0 .. 8] == "InThread") {
+                    StepThreadFunctions[scene][attrib.id] ~= &__traits(getMember, scene, member);
                 }else
                 static if(attrib.stringof[0 .. 12] == "TriggerEvent") {
                     OnTriggerFunctions[scene] ~= SRTrigger(attrib,
@@ -941,11 +960,18 @@ class SceneManager
         {
             current.worldCollision();
 
+            if(thread == 0)
             if(current in StepFunctions)
             {
                 foreach(fun; StepFunctions[current]) {
                     fun();
                 }
+            }
+
+            if(current in StepThreadFunctions) 
+            if(thread in StepThreadFunctions[current]) {
+                foreach(fun; StepThreadFunctions[current][thread])
+                    fun();
             }
 
             foreach(instance; current.getThreadList(thread)) {
@@ -954,6 +980,8 @@ class SceneManager
                     current.sort();
                     continue;
                 }
+
+                if(!instance.active || instance.withDraw) continue;
             
                 if(instance in IStepFunctions) {
                     foreach(fun; IStepFunctions[instance]) {
@@ -965,6 +993,27 @@ class SceneManager
                 {
                     if(component in CStepFunctions) {
                         foreach(fun; CStepFunctions[component]) {
+                            fun();
+                        }
+                    }
+                }
+            }
+
+            foreach(instance; current.getList()) {
+                if(!instance.active || instance.withDraw) continue;
+
+                if(instance in IStepThreadFunctions)
+                if(thread in IStepThreadFunctions[instance])
+                {
+                    foreach(fun; IStepThreadFunctions[instance][thread])
+                        fun();
+                }
+
+                foreach(component; instance.getComponents())
+                {
+                    if(component in CStepThreadFunctions)
+                    if(thread in CStepThreadFunctions[component]) {
+                        foreach(fun; CStepThreadFunctions[component][thread]) {
                             fun();
                         }
                     }
@@ -1021,16 +1070,10 @@ class SceneManager
             }
 
             foreach(instance; current.getErentInstances()) {
-                if(instance is null) continue;
-                
-                if(instance.visible) render.draw(instance.spriteDraw(),instance.position);
-            }
-
-            foreach(instance; current.getErentInstances()) {
-                if(instance is null) continue;
-
                 if(instance.active && instance.visible)
                 {
+                    render.draw(instance.spriteDraw(),instance.position);
+
                     if(instance in IDrawFunctions) {
                         foreach(fun; IDrawFunctions[instance]) {
                             fun(render);

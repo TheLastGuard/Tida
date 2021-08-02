@@ -7,6 +7,7 @@
 module tida.scene.instance;
 
 import tida.scene.component;
+import std.algorithm : remove;
 
 static immutable ubyte InMemory = 0; ///
 static immutable ubyte InScene = 1; ///
@@ -14,24 +15,6 @@ static immutable ubyte InScene = 1; ///
 template isComponent(T)
 {
     enum isComponent = is(T : Component);
-}
-
-private void remove(T)(ref T[] obj,size_t index) @trusted nothrow
-{
-    auto dump = obj.dup;
-    foreach (i; index .. dump.length)
-    {
-        import core.exception : RangeError;
-        try
-        {
-            dump[i] = dump[i + 1];
-        }
-        catch (RangeError e)
-        {
-            continue;
-        }
-    }
-    obj = dump[0 .. $-1];
 }
 
 /// Instance information
@@ -129,7 +112,7 @@ class Instance
         /++
             Allows you to move the instance link to another 
             scene upon transition. Turns on once.
-        ++/
+        +/
         bool persistent = false;
 
         /++
@@ -192,7 +175,7 @@ class Instance
     void add(T)(T cmp) @safe
     in
     {
-        assert(isComponent!T);
+        static assert(isComponent!T);
         assert(cmp,"Component is not create!");
     }do
     {
@@ -311,7 +294,7 @@ class Instance
                     foreach(fun; sceneManager.leaveComponents[cmp]) fun();
                 }
 
-                components.remove(i);
+                components = components.remove(i);
                 break;
             }
         }
@@ -326,7 +309,7 @@ class Instance
                 foreach(fun; sceneManager.leaveComponents[components[i]]) fun();
             }
 
-            components.remove(i);
+            components = components.remove(i);
         }
     }
 
@@ -340,7 +323,7 @@ class Instance
     {
         foreach(i; 0 .. components.length) {
             if(components[i].getName == name) {
-                components.remove(i);
+                components = components.remove(i);
             }
         }
     }

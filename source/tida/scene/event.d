@@ -63,10 +63,10 @@ enum : int
 }
 
 /// Example: FunEvent!Step
-struct FunEvent(int Type)
-{
+struct FunEvent(int Type) {}
 
-}
+struct InThread { size_t id; } /// Example: InThread(1)
+alias InParallel = InThread; ///
 
 /// Example: CollisionEvent("NameObject","TagObject")
 struct CollisionEvent
@@ -82,7 +82,4 @@ template CollisionTagEvent(string tag)
 }
 
 // Example: TriggerEvent("MyTriggeredTrigger")
-struct TriggerEvent
-{
-    string name;
-}
+struct TriggerEvent { string name; }
