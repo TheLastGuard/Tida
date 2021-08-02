@@ -92,6 +92,8 @@ interface IRenderer
     +/
     void triangle(Vecf[3] points,Color!ubyte color,bool isFill) @safe;
 
+    void roundrect(Vecf position, int width, int height, float radious, Color!ubyte color, bool isFill) @safe;
+
     /++
         Drawing a polygon from an array of vertices.
 
@@ -461,6 +463,112 @@ class GLRender : IRenderer
             currentShader.setUniform("color", color);
 
             GL3.drawArrays(GL_LINES, 0, 2 * 4);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            destroy(vid);
+        }
+
+        resetShader();
+    }
+
+    override void roundrect(Vecf position, int width, int height, float radious, Color!ubyte color, bool isFill) @trusted
+    {
+        position -= camera.port.begin;
+
+        if(currentShader is null) {
+            currentShader = getShader("Default");
+        }
+
+        if(isFill) {
+            auto vid = generateVertex(Shape.RoundRectangle(position, position + Vecf(width, height), radious));
+
+            vid.bindVertexArray();
+            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
+
+            GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 2, GL_FLOAT, false, 0, null);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            currentShader.using();
+            vid.bindVertexArray();
+
+            currentShader.setUniform("projection", _projection);
+            currentShader.setUniform("color", color);
+
+            vid.draw(vid.shapeinfo.type, 2);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+        }else {
+            import std.math;
+            import tida.angle;
+
+            Vecf[] buffer;
+
+            for(float i = 180; i <= 270; i += 0.05)
+            {
+                buffer ~= position + Vecf(radious, radious) + 
+                            Vecf(cos(i.conv!(Degrees, Radians)), sin(i.conv!(Degrees, Radians))) * radious;
+            }
+
+            buffer ~=   [
+                            position + Vecf(radious, 0), position + Vecf(width - radious, 0)
+                        ];
+
+            for(float i = 270; i <= 360; i += 0.05)
+            {
+                buffer ~= position + Vecf(width - radious, radious) + 
+                            Vecf(cos(i.conv!(Degrees, Radians)), sin(i.conv!(Degrees, Radians))) * radious;
+            }
+
+            buffer ~=   [
+                            position + Vecf(width - radious, radious) + 
+                            Vecf(cos(360.conv!(Degrees, Radians)), sin(360.conv!(Degrees, Radians))) * radious,
+                            position + Vecf(width, radious),
+                            position + Vecf(width, height - radious)
+                        ];
+
+            for(float i = 0; i <= 90; i += 0.05)
+            {
+                buffer ~= position + Vecf(width - radious, height - radious) + Vecf(cos(i.conv!(Degrees, Radians)), sin(i.conv!(Degrees, Radians))) * radious;
+            }
+
+            buffer ~=   [
+                            position + Vecf(width - radious, height),
+                            position + Vecf(radious, height)
+                        ];
+
+            for(float i = 90; i <= 180; i += 0.05)
+            {
+                buffer ~= position + Vecf(radious, height - radious) + Vecf(cos(i.conv!(Degrees, Radians)), sin(i.conv!(Degrees, Radians))) * radious;
+            }
+
+            buffer ~=   [
+                            position + Vecf(0, height - radious),
+                            position + Vecf(0, radious)
+                        ];
+
+            auto vid = new VertexInfo().generateFromBuffer(buffer.generateArray);
+
+            vid.bindVertexArray();
+            GL3.bindBuffer(GL_ARRAY_BUFFER, vid.idBufferArray);
+            GL3.enableVertexAttribArray(currentShader.getAttribLocation("position"));
+            GL3.vertexAttribPointer(currentShader.getAttribLocation("position"), 2, GL_FLOAT, false, 2 * float.sizeof, null);
+
+            GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
+            GL3.bindVertexArray(0);
+
+            currentShader.using();
+            vid.bindVertexArray();
+
+            currentShader.setUniform("projection", _projection);
+            currentShader.setUniform("color", color);
+
+            GL3.drawArrays(GL_LINES, 0, vid.length / 2);
 
             GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
             GL3.bindVertexArray(0);
@@ -1278,6 +1386,11 @@ class Software : IRenderer
         {
             point(Vecf(x,y),color);
         }
+    }
+
+    override void roundrect(Vecf position, int width, int height, float radious, Color!ubyte color, bool isFill) @safe
+    {
+        assert(null, "Round rectangle is not a support with software render!");
     }
 
     override void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe

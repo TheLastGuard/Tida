@@ -135,6 +135,10 @@ class VertexInfo
                 GL3.drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
             break;
 
+            case ShapeType.roundrect:
+                GL3.drawArrays(GL_TRIANGLES, 0, cast(uint) (bufferLength / 4 * count));
+            break;
+
             case ShapeType.circle:
                 GL3.drawArrays(GL_TRIANGLE_FAN, 0, cast(uint) (bufferLength / 4 * count));
             break;
@@ -203,6 +207,52 @@ do
                          shape.end,
                          Vecf(shape.begin.x, shape.end.y),
                          shape.begin];
+        break;
+
+        case ShapeType.roundrect:
+            immutable pos1 = shape.begin + Vecf(shape.radius, 0);
+            immutable pos2 = shape.begin + Vecf(0, shape.radius);
+
+            immutable size = Vecf(shape.width, shape.height);
+
+            vertexs =   [
+                            // FIRST RECTANGLE
+                            pos1,
+                            pos1 + Vecf(size.x - shape.radius * 2, 0),
+                            pos1 + size - Vecf(shape.radius * 2, 0),
+
+                            pos1,
+                            pos1 + Vecf(0, size.y),
+                            pos1 + size - Vecf(shape.radius * 2, 0),
+
+                            // SECOND RECTANGLE
+                            pos2,
+                            pos2 + Vecf(size.x, 0),
+                            pos2 + size - Vecf(0, shape.radius * 2),
+
+                            pos2,
+                            pos2 + Vecf(0, size.y - shape.radius * 2),
+                            pos2 + size - Vecf(0, shape.radius * 2)
+                        ];
+
+            void rounded(Vecf pos, float a1, float a2, float iter)
+            {
+                for(float i = a1; i <= a2;)
+                {
+                    vertexs ~= pos + Vecf(cos(i), sin(i)) * shape.radius;
+
+                    i += iter;
+                    vertexs ~= pos + Vecf(cos(i), sin(i)) * shape.radius;
+                    vertexs ~= pos;
+
+                    i += iter;
+                }
+            }
+
+            rounded(shape.begin + Vecf(shape.radius, shape.radius), 270, 360, 0.25);
+            rounded(shape.begin + Vecf(size.x - shape.radius, shape.radius), 0, 90, 0.25);
+            rounded(shape.begin + Vecf(shape.radius, size.y - shape.radius), 180, 270, 0.25);
+            rounded(shape.begin + Vecf(size.x - shape.radius, size.y - shape.radius), 90, 180, 0.25);
         break;
 
         case ShapeType.circle:

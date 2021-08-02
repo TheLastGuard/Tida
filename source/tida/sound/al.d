@@ -334,7 +334,7 @@ class Wav
         ubyte[] dat = cast(ubyte[]) read(file);
 
         if(cast(string) dat[0 .. 4] != "RIFF")
-            throw new Exception("It not sound file!");
+            throw new Exception("It not a sound file!");
 
         ubyte[] cDat = dat[20 .. 36];
         audioFormat = cDat[0 .. 1].byteTo!ubyte;

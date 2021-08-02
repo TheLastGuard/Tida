@@ -43,6 +43,7 @@ enum ShapeType
     rectangle, /// Rectangle
     circle, /// Circle
     triangle, /// Triangle
+    roundrect, /// Roundrect
     polygon, /// Polygon
     multi /// Several shapes in one.
 }
@@ -205,7 +206,7 @@ struct Shape
 
     /// The radius the figure.
     float radius() @safe @property nothrow pure inout
-    in(type == ShapeType.circle,"This is not a circle!")
+    in(type == ShapeType.circle || type == ShapeType.roundrect,"This is not a circle!")
     do
     {
         return _radius;
@@ -213,7 +214,7 @@ struct Shape
 
     /// ditto
     void radius(float value) @safe @property nothrow pure
-    in(type == ShapeType.circle,"This is not a circle!")
+    in(type == ShapeType.circle || type == ShapeType.roundrect,"This is not a circle!")
     do
     {
         _radius = value;
@@ -239,7 +240,7 @@ struct Shape
 
     /// Shape width
     float width() @safe @property nothrow pure inout
-    in(type == ShapeType.rectangle,"This is not a rectangle!")
+    in(type == ShapeType.rectangle || type == ShapeType.roundrect,"This is not a rectangle!")
     do
     {
         return end.x - begin.x;
@@ -247,7 +248,7 @@ struct Shape
 
     /// Shape height
     float height() @safe @property nothrow pure inout
-    in(type == ShapeType.rectangle,"This is not a rectangle!")
+    in(type == ShapeType.rectangle || type == ShapeType.roundrect,"This is not a rectangle!")
     do
     {
         return end.y - begin.y;
@@ -255,7 +256,7 @@ struct Shape
 
     /// Shape width
     void width(float value) @safe @property nothrow pure
-    in(type == ShapeType.rectangle,"This is not a rectangle!")
+    in(type == ShapeType.rectangle || type == ShapeType.roundrect,"This is not a rectangle!")
     do
     {
         _end = begin + Vecf(value,height);
@@ -263,7 +264,7 @@ struct Shape
 
     /// Shape height
     void height(float value) @safe @property nothrow pure
-    in(type == ShapeType.rectangle,"This is not a rectangle!")
+    in(type == ShapeType.rectangle || type == ShapeType.roundrect,"This is not a rectangle!")
     do
     {
         _end = begin + Vecf(width,value);
@@ -520,6 +521,18 @@ struct Shape
         shape.type = ShapeType.rectangle;
         shape.begin = begin;
         shape.end = end;
+
+        return shape;
+    }
+
+    static Shape RoundRectangle(Vecf begin, Vecf end, float radius) @safe nothrow pure
+    {
+        Shape shape;
+
+        shape.type = ShapeType.roundrect;
+        shape.begin = begin;
+        shape.end = end;
+        shape.radius = radius;
 
         return shape;
     }
