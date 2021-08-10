@@ -398,8 +398,8 @@ class Scene
     {
         foreach(instance; getList)
         {
-            if(instance.from!T !is null)
-                return instance.from!T;
+            if((cast(T) instance) !is null)
+                return cast(T) instance;
         }
     	
         return null;
