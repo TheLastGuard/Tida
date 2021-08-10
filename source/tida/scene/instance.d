@@ -351,18 +351,16 @@ class Instance
         }
     }
 
-    import tida.scene.manager : from;
-
     override bool opEquals(Object other) const
     {
-        Instance ins = other.from!Instance;
+        Instance ins = (cast(Instance) other);
 
         return (ins !is null) ? this.depth == ins.depth : false; 
     }
 
     int opCmp(ref Object other) const
     {
-        Instance ins = other.from!Instance;
+        Instance ins = (cast(Instance) other);
         if(ins is null) return 0;
 
         if(this.depth > ins.depth) return 1;

@@ -81,5 +81,5 @@ template CollisionTagEvent(string tag)
     enum CollisionTagEvent = CollisionEvent("", tag);
 }
 
-// Example: TriggerEvent("MyTriggeredTrigger")
+/// Example: TriggerEvent("MyTriggeredTrigger")
 struct TriggerEvent { string name; }

@@ -143,16 +143,13 @@ bool lineCircleImpl(const Vecf[] a, const Vecf circlePos, const float circleRadi
     float dot = (   (circlePos.x - a[0].x) * (a[1].x - a[0].x)) +
                 (   (circlePos.y - a[0].y) * (a[1].y - a[0].y)) / (len * len);
 
-    float closestX = a[0].x + (dot * (a[1].x - a[0].y));
-    float closestY = a[0].y + (dot * (a[1].y - a[0].y));
+    const closest = a[0] + ((a[1] - a[0]) * dot);
 
-    bool onSegment = pointLineImpl(Vecf(closestX,closestY), a);
+    bool onSegment = pointLineImpl(closest, a);
     if(onSegment) return true;
 
-    float distX = closestX - circlePos.x;
-    float distY = closestY - circlePos.y;
-
-    len = Vecf(distX,distY).length;
+    const dist = closest - circlePos;
+    len = dist.length;
 
     return (len <= circleRadius);
 }

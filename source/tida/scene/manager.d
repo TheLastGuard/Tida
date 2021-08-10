@@ -7,40 +7,54 @@
 module tida.scene.manager;
 
 import tida.scene.instance;
-import tida.scene.scene;
 import tida.scene.event;
+import tida.scene.scene;
+import tida.graph.render;
+import tida.scene.instance;
+import tida.event;
+import tida.fps;
 
+/++
+    Mistakes of using communication between the manager and the game cycle.
++/
 enum APIError : uint
 {
-    succes,
-    ThreadIsNotExists
+    succes, /// Errors are not detected.
+    ThreadIsNotExists /// The stream with which it was necessary to interact - does not exist.
 }
 
+/++
+    Commands that should execute the game cycle.
++/
 enum APIType : uint
 {
-    None,
-    ThreadCreate,
+    None, /// None
+    ThreadCreate, /// Create the specified number of threads.
     ThreadPause,
     ThreadResume,
     ThreadClose,
 }
 
+/++
+    Container to send a message to the game cycle.
++/
 struct APIResponse
 {
-    uint code;
-    uint value;
+    uint code; /// Command thah should execute the game cycle.
+    uint value; /// Value response
 }
 
-T from(T)(Object obj) @trusted
-{
-    return cast(T) obj;
-}
-
+/++
+    Returns: Is this class scene.
++/
 template isScene(T)
 {
     enum isScene = is(T : Scene);
 }
 
+/++
+    Returns: In this class instance.
++/
 template isInstance(T)
 {
     enum isInstance = is(T : Instance);
@@ -48,12 +62,11 @@ template isInstance(T)
 
 import core.thread;
 
+/++
+    Thread for execution of steps for scenes and instances.
++/
 class InstanceThread : Thread 
 {
-    import tida.fps;
-    import tida.scene.instance;
-    import tida.graph.render;
-
     private
     {
         bool isJob = true;
@@ -64,6 +77,12 @@ class InstanceThread : Thread
         IRenderer rend;
     }
 
+    /++
+        Params: 
+            thread =    Unique Identificator for Flow, namely, a place in the array for which it can 
+                        contact such arrays for copies of the compliant ideal.
+            rend   =    Renderer instance.
+    +/
     this(size_t thread,IRenderer rend) @safe
     {
         fps = new FPSManager();
@@ -74,6 +93,7 @@ class InstanceThread : Thread
         super(&run);
     }
 
+    /// Replaces the idle identifier. 
     void rebindThreadID(size_t newID) @safe {
         thread = newID;
     }
@@ -91,16 +111,19 @@ class InstanceThread : Thread
         }
     }
 
+    /// Pause the work of the thread.
     void pause() @safe
     {
         isPause = true;
     }
 
+    /// Continues thread work.
     void resume() @safe
     {
         isPause = false;
     }
 
+    /// Completes the flow of the thread.
     void exit() @safe
     {
         isJob = false;
@@ -115,18 +138,25 @@ SceneManager sceneManager() @trusted
     return _sceneManager;
 }
 
+/// Allocates memory under the scene manager.
 void initSceneManager() @trusted
 {
     _sceneManager = new SceneManager();
 }
 
-/// Scene manager
-class SceneManager
-{
-    import tida.scene.scene;
-    import tida.graph.render;
-    import tida.event;
+/++
+    Class describing scene manager.
 
+    Performs the functions of switching the context of the scenes, memorize
+    the list for subsequent circulation, the ability to execute elementary
+    events, give an instance access to the current scene or scene, which is
+    involved in the event.
+
+    To transfer the context, use the `gotoin`. Learn the current scene - `current`.
+    previous - `previous` Contact precisely to the global object - `scenemanager`.
++/
+final class SceneManager
+{
     private
     {
         Scene[string] _scenes;
@@ -176,11 +206,22 @@ class SceneManager
         return _previous;
     }
 
+    /++
+        A scene that restarts at the moment.
+    +/
     Scene restarted() @safe @property
     {
         return _restarted;
     }
 
+    /++
+        Restarting the game.
+
+        Please note that this does not affect memory,
+        the state of variables, etc., however, gives such a simulation,
+        therefore, create a corresponding event for resetting the state
+        when the game is restarted, if this is provided.
+    +/
     void gameRestart() @trusted
     {
         foreach(scene; scenes)
@@ -202,17 +243,17 @@ class SceneManager
     }
 
     /++
-        Link to the currently active scene. With the help of it, 
-        it will be convenient for the instances to communicate 
-        with the scene. 
-            For more convenient communication, there 
-        is a function `from`, by which you can access the
-        functions of the heir, but the main thing is to check 
-        the correctness of the scene, otherwise you can get 
-        an error:
-        ---
-        sceneManager.current.from!HeirScene.callback();
-        ---
+        Link to the current scene.
+
+        Please note that such a pointer is correct only in those events that
+        differ from `init`,` restart`, `leave`, they can not go at all on the
+        current one that you hoped. Example: In the initialization event, you
+        want access to the scene, which is initialized, but here you can make
+        a mistake - the pointer leads to the previous scene. You can access
+        the current through `sceneManager.initable`.
+
+        See_Also:
+            tida.scene.manager.SceneManager.initable
     +/
     Scene current() @safe @property nothrow
     {
@@ -220,23 +261,64 @@ class SceneManager
     }
 
     /++
-        Temporary reference during initialization. Use it only 
-        in the `init`,` restart`, `entry` events. Contains a 
-        link to the current scene, which will be initialized 
-        (i.e., control is transferred).
+        The reference to the scene, which is undergoing context change
+        processing.
+
+        The use of such a link is permissible only in context transmission
+        events, otherwise, it is possible to detect the scene leading nowhere.
     +/
     Scene initable() @safe @property
     {
         return _initable;
     }
 
+    /++
+        The reference to the current stage, as if it is under initialization,
+        whether it is during a restart or without them.
+
+        This link is selected depending on what is happening. If this is caused
+        during the change of context, it will lead exactly the scene that
+        receives the context. If the manager restarts the game, the link leads
+        to the scene, which is now restarting if there are no such events, then
+        the scene leads to the current working scene.
+
+        Examples:
+        ---
+        @Event!Init
+        void Initialization() @safe
+        {
+            assert(sceneManager.initable is sceneManager.context); // ok
+        }
+
+        @Event!Step
+        void Move() @safe
+        {
+            assert(sceneManager.current is sceneManager.context); // ok
+        }
+
+        @Event!GameRestart
+        void onGameRestart() @safe
+        {
+            assert(sceneManager.restarted is sceneManager.context); // ok
+        }
+        ---
+    +/
     Scene context() @safe @property
     {
-        return current is null ? initable : current;
+        if(_initable is null) {
+            if(_restarted is null) {
+                return _current;
+            }else
+                return _restarted;
+        }else
+            return _initable;
+
     }
 
     /++
         Calls a trigger for the current scene, as well as its instances.
+
+
 
         Params:
             name = Trigger name.

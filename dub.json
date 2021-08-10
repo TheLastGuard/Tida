@@ -8,8 +8,6 @@
 	"configurations": [
 		{
 			"dependencies": {
-				"glx-d": "~>1.0.0",
-				"opengl:gl2-static": "~>1.0.0",
 				"x11": "~>1.0.21"
 			},
 			"libs": [
@@ -30,8 +28,6 @@
 		},
 		{
 			"dependencies": {
-				"glx-d": "~>1.0.0",
-				"opengl:gl2-static": "~>1.0.0",
 				"x11": "~>1.0.21"
 			},
 			"libs": [
@@ -57,6 +53,7 @@
 		"bindbc-openal": "~>0.4.1",
 		"bindbc-opengl": "~>0.13.0",
 		"imagefmt": "~>2.1.2",
+		"intel-intrinsics": "~>1.5.1",
 		"mp3decoder": "~>1.0.0"
 	},
 	"description": "Tida is a library for creating 2D games, which is written with manual window creation and rendering using opengl and other tools for D games.",
@@ -75,6 +72,7 @@
 	"versions": [
 		"FT_210",
 		"GL_AllowDeprecated",
-		"GL_46"
+		"GL_46",
+		"Dynamic_GLX"
 	]
 }
