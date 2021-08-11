@@ -6,24 +6,6 @@
 +/
 module tida.scene.scene;
 
-private void remove(T)(ref T[] obj,size_t index) @trusted nothrow
-{
-    auto dump = obj.dup;
-    foreach (i; index .. dump.length)
-    {
-        import core.exception : RangeError;
-        try
-        {
-            dump[i] = dump[i + 1];
-        }
-        catch (RangeError e)
-        {
-            continue;
-        }
-    }
-    obj = dump[0 .. $-1];
-}
-
 /++
     Scene.
 +/ 
@@ -73,7 +55,7 @@ class Scene
     /++
         Returns a list of instances.
     +/
-    Instance[] getList() @safe nothrow
+    final Instance[] getList() @safe nothrow
     {
         return instances;
     }
@@ -84,7 +66,7 @@ class Scene
         Params:
             index = Thread id.
     +/
-    Instance[] getThreadList(size_t index) @safe nothrow
+    final Instance[] getThreadList(size_t index) @safe nothrow
     {
         return bufferThread[index];
     }
@@ -95,13 +77,13 @@ class Scene
         Params:
             index = Thread id.
     +/
-    bool isThreadExists(size_t index) @safe nothrow
+    final bool isThreadExists(size_t index) @safe nothrow
     {
         return index < bufferThread.length;
     }
 
     /// Starts a buffer of instances with the specified number.
-    void initThread(size_t count = 1) @safe nothrow
+    final void initThread(size_t count = 1) @safe nothrow
     {
         foreach(_; 0 .. count)
         {
@@ -116,7 +98,7 @@ class Scene
             instance = Instance.
             threadID = In which thread to add execution.
     +/
-    void add(T)(T instance,size_t threadID = 0) @safe
+    final void add(T)(T instance,size_t threadID = 0) @safe
     in(isInstance!T,"This is not a instance!")
     in(instance,"Instance is not create!")
     do
@@ -145,7 +127,7 @@ class Scene
         Note:
             There must be no arguments in the constructor.
     +/
-    void add(Name)(size_t threadID = 0) @safe
+    final void add(Name)(size_t threadID = 0) @safe
     in(isInstance!Name,"It's not instance!")
     do
     {
@@ -161,7 +143,7 @@ class Scene
             instances = Instances.
             threadID = In which thread to add execution. 
     +/
-    void add(Instance[] instances,size_t threadID = 0) @safe
+    final void add(Instance[] instances,size_t threadID = 0) @safe
     {
         foreach(instance; instances) {
             add(instance,threadID);
@@ -175,7 +157,7 @@ class Scene
             Names = Names instances.
             threadID = In which thread to add execution. 
     +/
-    void add(Names...)(size_t threadID = 0) @safe
+    final void add(Names...)(size_t threadID = 0) @safe
     {
         static foreach(Name; Names) {
             add!Name(threadID);
@@ -185,7 +167,7 @@ class Scene
     /++
         Returns a sorted list of instances.
     +/
-    Instance[] getErentInstances() @safe nothrow
+    final Instance[] getErentInstances() @safe nothrow
     {
         return erentInstances;
     }
@@ -196,7 +178,7 @@ class Scene
         Params:
             instance = Instance. 
     +/
-    bool hasInstance(Instance instance) @safe nothrow
+    final bool hasInstance(Instance instance) @safe nothrow
     {
         foreach(ins; instances) {
             if(instance is ins)
@@ -294,18 +276,18 @@ class Scene
             `InMemory` - Removes permanently, from the scene and from memory 
                          (by the garbage collector).
     +/
-    void instanceDestroy(ubyte type)(Instance instance, bool isRemoveHandle = true) @trusted 
+    final void instanceDestroy(ubyte type)(Instance instance, bool isRemoveHandle = true) @trusted
     in(hasInstance(instance))
     do
     {
-        import std.algorithm : each;
+        import std.algorithm : each, remove;
 
-        instances.remove(instance.id);
+        instances = instances.remove(instance.id);
 
         foreach(size_t i; 0 .. bufferThread[instance.threadID].length)
         {
             if(bufferThread[instance.threadID][i] is instance) {
-                remove(bufferThread[instance.threadID],i);
+                bufferThread[instance.threadID] = remove(bufferThread[instance.threadID],i);
                 break;
             }
         }
@@ -341,7 +323,7 @@ class Scene
             `InMemory` - Removes permanently, from the scene and from memory 
                          (by the garbage collector).
     +/
-    void instanceDestroy(ubyte type,Name)() @trusted
+    final void instanceDestroy(ubyte type,Name)() @trusted
     in(isInstance!Name)
     do
     {
@@ -354,7 +336,7 @@ class Scene
         Params:
             name = Instance name.
     +/ 
-    Instance getInstanceByName(string name) @safe nothrow
+    final Instance getInstanceByName(string name) @safe nothrow
     {
         foreach(instance; getList)
         {
@@ -372,7 +354,7 @@ class Scene
             name = Instance name.
             tag = Instance tag.
     +/
-    Instance getInstanceByNameTag(string name,string tag) @safe nothrow
+    final Instance getInstanceByNameTag(string name,string tag) @safe nothrow
     {
         foreach(instance; getList)
         {
@@ -392,7 +374,7 @@ class Scene
         Params:
             T = Class name.
     +/
-    T getInstanceByClass(T)() @safe nothrow
+    final T getInstanceByClass(T)() @safe nothrow
     in(isInstance!T)
     do
     {
@@ -407,8 +389,8 @@ class Scene
 
     unittest
     {
-        class A : Instance { this() { name = "A"; tags = ["A"]; }}
-        class B : Instance { this() { name = "B"; tags = ["B"]; }}
+        class A : Instance { this() @safe { name = "A"; tags = ["A"]; }}
+        class B : Instance { this() @safe { name = "B"; tags = ["B"]; }}
     	
         Scene scene = new Scene();
     	
@@ -428,7 +410,7 @@ class Scene
 
     import tida.shape, tida.vector;
 
-    Instance getInstanceByMask(Shape shape,Vecf position) @safe
+    final Instance getInstanceByMask(Shape shape,Vecf position) @safe
     {
         import tida.game.collision;
 
@@ -447,7 +429,7 @@ class Scene
     {
         Scene scene = new Scene();
 
-        Instance    a = new Instance();
+        Instance a = new Instance();
 
         a.mask = Shape.Rectangle(Vecf(0,0), Vecf(32,32));
         a.solid = true;
@@ -455,10 +437,11 @@ class Scene
         scene.add(a);
 
         assert(scene.getInstanceByMask(Shape.Line(Vecf(4,4), Vecf(24, 24)), Vecf(0, 0)) is a);
+        assert(scene.getInstanceByMask(Shape.Line(Vecf(128, 64), Vecf(256, 32)) is null);
     }
 
     ///
-    Instance[] getInstancesByMask(Shape shape,Vecf position) @safe
+    final Instance[] getInstancesByMask(Shape shape,Vecf position) @safe
     {
         import tida.game.collision;
 

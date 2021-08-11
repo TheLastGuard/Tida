@@ -264,6 +264,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         float[4][4] model = identity();
 
         model = translate(model, position.x, position.y, 0.0f);
+        model = mulmat(model, renderer.currentModelMatrix);
 
         shader.using();
 
@@ -286,6 +287,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         GL.bindTexture(0);
 
         renderer.resetShader();
+        renderer.resetModelMatrix();
     }
 
     override void drawEx(IRenderer renderer,Vecf position,float angle,Vecf center,Vecf size,ubyte alpha,Color!ubyte color) @trusted
@@ -319,6 +321,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         model = translate(model, center.x, center.y, 0.0f);
 
         model = translate(model, position.x, position.y, 0.0f);
+        model = mulmat(model, renderer.currentModelMatrix);
 
         shader.using();
 
@@ -343,6 +346,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         GL.bindTexture(0);
 
         renderer.resetShader();
+        renderer.resetModelMatrix();
     }
 
     override void drawColor(IRenderer renderer,Vecf position,Color!ubyte color) @trusted
@@ -365,6 +369,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         float[4][4] model = identity();
 
         model = translate(model, position.x, position.y, 0.0f);
+        model = mulmat(model, renderer.currentModelMatrix);
 
         shader.using();
 
@@ -387,6 +392,7 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         GL.bindTexture(0);
 
         renderer.resetShader();
+        renderer.resetModelMatrix();
     }
 
     ~this() @safe

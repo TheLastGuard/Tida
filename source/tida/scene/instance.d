@@ -140,7 +140,7 @@ class Instance
 
         Please note that this action will be performed in the next step.
     +/
-    void sort() @safe
+    final void sort() @safe
     {
         _sort = 1;
     }
@@ -150,7 +150,7 @@ class Instance
 
         Please note that this action will be performed in the next step.
     +/
-    void destroy() @safe
+    final void destroy() @safe
     {
         _destroy = 1;
     }
@@ -158,7 +158,7 @@ class Instance
     /++
         Instance information
     +/
-    InstanceInfo info() @safe @property
+    final InstanceInfo info() @safe @property
     {
         return InstanceInfo(
             name, tags, position, previous, mask, 
@@ -172,7 +172,7 @@ class Instance
         Params:
             cmp = Component.
     +/
-    void add(T)(T cmp) @safe
+    final void add(T)(T cmp) @safe
     in
     {
         static assert(isComponent!T);
@@ -198,7 +198,7 @@ class Instance
         Params:
             Name = Component.
     +/
-    void add(Name)() @safe
+    final void add(Name)() @safe
     in(isComponent!Name,"Its not component!")
     do
     {
@@ -217,7 +217,7 @@ class Instance
         instance.of!Gravity.F = 0.1f;
         ---
     +/
-    T of(T)() @safe
+    final T of(T)() @safe
     in(isComponent!T,"It not component!")
     do
     {
@@ -237,12 +237,12 @@ class Instance
         Params:
             name = Component name. 
     +/
-    Component of(string name)() @safe
+    final Component of(string name)() @safe
     {
         Component obj;
 
         foreach(cmp; components) {
-            if(cmp.getName() == name) {
+            if(cmp.name == name) {
                 obj = cmp;
                 break;
             }
@@ -257,12 +257,12 @@ class Instance
         Params:
             name = Component name. 
     +/
-    Component of(string name) @safe
+    final Component of(string name) @safe
     {
         Component obj;
 
         foreach(cmp; components) {
-            if(cmp.getName() == name) {
+            if(cmp.name == name) {
                 obj = cmp;
                 break;
             }
@@ -277,7 +277,7 @@ class Instance
         Params:
             Name = Class component.
     +/
-    void dissconnect(Name)() @trusted
+    final void dissconnect(Name)() @trusted
     in(isComponent!Name,"It's not component!")
     do
     {
@@ -300,7 +300,7 @@ class Instance
         }
     }
 
-    void dissconnectAll() @trusted
+    final void dissconnectAll() @trusted
     {
         import tida.scene.manager;
 
@@ -319,10 +319,10 @@ class Instance
         Params:
             name = Component name.
     +/
-    void dissconnect(string name) @safe
+    final void dissconnect(string name) @safe
     {
         foreach(i; 0 .. components.length) {
-            if(components[i].getName == name) {
+            if(components[i].name == name) {
                 components = components.remove(i);
             }
         }

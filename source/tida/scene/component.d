@@ -17,6 +17,4 @@ class Component
     {
         string name;
     }
-
-    final string getName() @safe {return name;}
 }

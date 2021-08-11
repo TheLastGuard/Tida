@@ -6,6 +6,8 @@
 +/
 module tida.graph.render;
 
+import tida.graph.matrix;
+
 /++
     What type of rendering.
 +/
@@ -149,6 +151,15 @@ interface IRenderer
     /// Reset the shader to main.
     void resetShader() @safe;
 
+    float[4][4] currentModelMatrix() @safe @property;
+
+    void currentModelMatrix(float[4][4] matrix) @safe @property;
+
+    final void resetModelMatrix() @safe
+    {
+        this.currentModelMatrix = identity();
+    }
+
     /++
         Renders an object.
 
@@ -213,6 +224,8 @@ class GLRender : IRenderer
 
         Shader!Program[string] shaders;
         Shader!Program current;
+
+        float[4][4] _model;
     }
 
     this(IWindow window) @safe
@@ -230,9 +243,10 @@ class GLRender : IRenderer
         #version 130
         in vec3 position;
         uniform mat4 projection;
+        uniform mat4 model;
 
         void main() {
-            gl_Position = projection * vec4(position, 1.0f);
+            gl_Position = projection * model * vec4(position, 1.0f);
         }
         `);
 
@@ -254,9 +268,21 @@ class GLRender : IRenderer
 
         shaders["Default"] = defaultShader;
 
+        _model = identity();
+
         blendMode(BlendMode.Blend);
 
         this.reshape();
+    }
+
+    override float[4][4] currentModelMatrix() @safe @property
+    {
+        return _model;
+    }
+
+    override void currentModelMatrix(float[4][4] matrix) @safe @property
+    {
+        this._model = matrix;
     }
 
     ///
@@ -355,6 +381,8 @@ class GLRender : IRenderer
 
         currentShader.setUniform("projection", _projection);
         currentShader.setUniform("color", color);
+        if(currentShader.getUniformLocation("model") != -1)
+            currentShader.setUniform("model", _model);
 
         GL3.drawArrays(GL_POINTS, 0, 2);
 
@@ -364,6 +392,7 @@ class GLRender : IRenderer
         destroy(vid);
 
         resetShader();
+        resetModelMatrix();
     }
 
     override void line(Vecf[2] points, Color!ubyte color) @trusted
@@ -390,6 +419,8 @@ class GLRender : IRenderer
 
         currentShader.setUniform("projection", _projection);
         currentShader.setUniform("color", color);
+        if(currentShader.getUniformLocation("model") != -1)
+            currentShader.setUniform("model", _model);
 
         GL3.drawArrays(GL_LINES, 0, 2);
 
@@ -399,6 +430,7 @@ class GLRender : IRenderer
         destroy(vid);
 
         resetShader();
+        resetModelMatrix();
     }
 
     override void rectangle(Vecf position, int width, int height, Color!ubyte color, bool isFill) @trusted
@@ -430,6 +462,8 @@ class GLRender : IRenderer
 
             currentShader.setUniform("projection", _projection);
             currentShader.setUniform("color", color);
+            if(currentShader.getUniformLocation("model") != -1)
+                currentShader.setUniform("model", _model);
 
             vid.draw(vid.shapeinfo.type);
 
@@ -461,6 +495,8 @@ class GLRender : IRenderer
 
             currentShader.setUniform("projection", _projection);
             currentShader.setUniform("color", color);
+            if(currentShader.getUniformLocation("model") != -1)
+                currentShader.setUniform("model", _model);
 
             GL3.drawArrays(GL_LINES, 0, 2 * 4);
 
@@ -471,6 +507,7 @@ class GLRender : IRenderer
         }
 
         resetShader();
+        resetModelMatrix();
     }
 
     override void roundrect(Vecf position, int width, int height, float radious, Color!ubyte color, bool isFill) @trusted
@@ -498,6 +535,8 @@ class GLRender : IRenderer
 
             currentShader.setUniform("projection", _projection);
             currentShader.setUniform("color", color);
+            if(currentShader.getUniformLocation("model") != -1)
+                currentShader.setUniform("model", _model);
 
             vid.draw(vid.shapeinfo.type, 2);
 
@@ -567,6 +606,8 @@ class GLRender : IRenderer
 
             currentShader.setUniform("projection", _projection);
             currentShader.setUniform("color", color);
+            if(currentShader.getUniformLocation("model") != -1)
+                currentShader.setUniform("model", _model);
 
             GL3.drawArrays(GL_LINES, 0, vid.length / 2);
 
@@ -577,6 +618,7 @@ class GLRender : IRenderer
         }
 
         resetShader();
+        resetModelMatrix();
     }
 
     override void circle(Vecf position, float radius, Color!ubyte color, bool isFill) @trusted
@@ -604,6 +646,8 @@ class GLRender : IRenderer
 
             currentShader.setUniform("projection", _projection);
             currentShader.setUniform("color", color);
+            if(currentShader.getUniformLocation("model") != -1)
+                currentShader.setUniform("model", _model);
 
             vid.draw(vid.shapeinfo.type);
 
@@ -652,6 +696,8 @@ class GLRender : IRenderer
 
             currentShader.setUniform("projection", _projection);
             currentShader.setUniform("color", color);
+            if(currentShader.getUniformLocation("model") != -1)
+                currentShader.setUniform("model", _model);
 
             GL3.drawArrays(GL_LINES, 0, vid.length / 2);
 
@@ -692,6 +738,8 @@ class GLRender : IRenderer
 
             currentShader.setUniform("projection", projection);
             currentShader.setUniform("color", color);
+            if(currentShader.getUniformLocation("model") != -1)
+                currentShader.setUniform("model", _model);
 
             GL3.drawArrays(GL_TRIANGLE_FAN, 0, cast(uint) points.length);
 
@@ -725,6 +773,8 @@ class GLRender : IRenderer
 
             currentShader.setUniform("projection", projection);
             currentShader.setUniform("color", color);
+            if(currentShader.getUniformLocation("model") != -1)
+                currentShader.setUniform("model", _model);
 
             GL3.drawArrays(GL_LINES, 0, cast(uint) points.length * 2);
 
@@ -760,6 +810,8 @@ class GLRender : IRenderer
 
             currentShader.setUniform("projection", projection);
             currentShader.setUniform("color", color);
+            if(currentShader.getUniformLocation("model") != -1)
+                currentShader.setUniform("model", _model);
 
             vid.draw(vid.shapeinfo.type);
 
@@ -787,6 +839,8 @@ class GLRender : IRenderer
 
             currentShader.setUniform("projection", projection);
             currentShader.setUniform("color", color);
+            if(currentShader.getUniformLocation("model") != -1)
+                currentShader.setUniform("model", _model);
 
             GL3.drawArrays(GL_LINES, 0, cast(uint) vid.length);
 
@@ -1583,6 +1637,16 @@ class Software : IRenderer
     override void resetShader() @safe
     {
         assert(null, "There are no shaders in this version of the render.");
+    }
+
+    override void currentModelMatrix(float[4][4] matrix) @safe @property
+    {
+        assert(null, "There are no matrix in this version of the render.");
+    }
+
+    override float[4][4] currentModelMatrix() @safe @property
+    {
+        assert(null, "There are not matrix in this version of the render.");
     }
 }
 

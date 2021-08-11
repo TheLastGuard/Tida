@@ -6,6 +6,8 @@
 +/
 module tida.graph.matrix;
 
+alias mat4 = float[4][4];
+
 ///
 float[4][4] identity() @safe nothrow pure
 {

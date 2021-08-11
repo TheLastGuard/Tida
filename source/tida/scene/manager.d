@@ -318,14 +318,25 @@ final class SceneManager
     /++
         Calls a trigger for the current scene, as well as its instances.
 
+        Triggers are required for custom signal and events. By calling, you can
+        force to pull functions with special attributes, for example:
+        ---
+        alias SpecEvent = Trigger("SpecialEvent");
 
+        @SpecEvent
+        void onSpec() @safe { ... }
+        ...
+        sceneManager.trigger("SpecialEvent");
+        // Will cause the exact event to be called by calling the function,
+        // only for the scene that is being held in the context.
+        ---
 
         Params:
             name = Trigger name.
     +/
     void trigger(string name) @trusted
     {
-        auto scene = current is null ? initable : current;
+        auto scene = this.context();
 
         if(scene in OnTriggerFunctions) {
             foreach(fun; OnTriggerFunctions[scene]) {
@@ -365,15 +376,27 @@ final class SceneManager
         return false;
     }
 
+    /++
+        Checks for the existence of a scene by its original class.
+
+        Params:
+            Name = Class name.
+    +/
     bool hasScene(Name)() @safe
     {
         foreach(scene; scenes) {
-            if(scene.from!Name !is null) return true;
+            if((cast(Name) scene) !is null) return true;
         }
 
         return false;
     }
 
+    /++
+        Checks if there is a scene with the specified name.
+
+        Params:
+            name = Scene name.
+    +/
     bool hasScene(string name) @safe
     {
         foreach(scene; scenes) {
@@ -476,6 +499,12 @@ final class SceneManager
         SRTrigger[][Component] COnTriggerFunctions;
     }
 
+    /++
+        Raise the event of destruction of the instance. (@Event!Destroy)
+
+        Params:
+            instance = Instance.
+    +/
     void DestroyEventCall(T)(T instance) @trusted
     in(isInstance!T)
     do
@@ -483,6 +512,13 @@ final class SceneManager
         foreach(func; IOnDestroyFunctions[instance]) func(instance);
     }
 
+    /++
+        Reise the event of destruction in current scene. (@Event!Destroy)
+
+        Params:
+            scene = Current scene.
+            instance = Instance.
+    +/
     void DestroyEventSceneCall(T, R)(T scene, R instance) @trusted
     in(isScene!T && isInstance!R)
     do
@@ -490,7 +526,7 @@ final class SceneManager
         foreach(func; OnDestroyFunctions[scene]) func(instance);
     }
 
-    void ComponentHandle(T)(Instance instance, T component) @trusted
+    package(tida.scene) void ComponentHandle(T)(Instance instance, T component) @trusted
     in(isComponent!T)
     do
     {
@@ -534,27 +570,27 @@ final class SceneManager
         }
     }
 
-    FEStep[][size_t][Instance] threadSteps() @safe @property
+    package(tida.scene) FEStep[][size_t][Instance] threadSteps() @safe @property
     {
         return IStepThreadFunctions;
     }
 
-    SRCollider[][Instance] colliders() @safe @property
+    package(tida.scene) SRCollider[][Instance] colliders() @safe @property
     {
         return IColliderStructs;
     }
 
-    FECollision[][Instance] collisionFunctions() @safe @property
+    package(tida.scene) FECollision[][Instance] collisionFunctions() @safe @property
     {
         return ICollisionFunctions;    
     }
 
-    FELeave[][Component] leaveComponents() @safe @property
+    package(tida.scene) FELeave[][Component] leaveComponents() @safe @property
     {
         return CLeaveFunctions;
     }
 
-    void RemoveHandle(Scene scene, Instance instance) @trusted
+    package(tida.scene) void RemoveHandle(Scene scene, Instance instance) @trusted
     {
         IInitFunctions.remove(instance);
         IStepFunctions.remove(instance);
@@ -574,7 +610,7 @@ final class SceneManager
         IStepThreadFunctions.remove(instance);
     }
 
-    void InstanceHandle(T)(Scene scene, T instance) @trusted
+    package(tida.scene) void InstanceHandle(T)(Scene scene, T instance) @trusted
     {
         import std.algorithm : canFind, remove;
         if(instance in IInitFunctions) return;
@@ -773,28 +809,55 @@ final class SceneManager
 
     public
     {
+        /++
+            Array of requests. At each stroke of the cycle, it is checked,
+            processed and cleaned. If an error occurs during the request,
+            they are added to `apiError`.
+        +/
         APIResponse[] api;
+
+        /++
+            An array of request errors associated with the request type.
+        +/
         uint[uint] apiError;
     }
 
-    ///
+    /++
+        Exits the game with a successful error code.
+    +/
     void close() @safe
     {
         api ~= APIResponse(APIType.ThreadClose, 0);
     }
 
-    ///
+    /++
+        Creates the specified count of anonymous threads.
+
+        Params:
+            count = Count anonymous threads.
+    +/
     void initThread(uint count = 1) @safe
     {
         api ~= APIResponse(APIType.ThreadCreate, count);
     }
 
-    ///
+    /++
+        Pauses said thread.
+
+        Params:
+            value = Thread identificator.
+    +/
     void pauseThread(uint value) @safe
     {
         api ~= APIResponse(APIType.ThreadPause, value);
     }
 
+    /++
+        Resumes said thread.
+
+        Params:
+            value = Thread identificator.
+    +/
     void resumeThread(uint value) @safe
     {
         api ~= APIResponse(APIType.ThreadResume, value);
@@ -861,7 +924,11 @@ final class SceneManager
     }
 
     /++
-        Goes to the scene by his heir name.
+        Moves to the scene at the pointer.
+
+        It is such a function that generates initialization events, entry,
+        transferring the context to the scene and causing the corresponding
+        events to lose the context.
 
         Params:
             scene = Scene heir. 
@@ -968,7 +1035,12 @@ final class SceneManager
         _current = scene;
     }
 
-    ///
+    /++
+        Calling the game launch event.
+
+        Should be called before all events, before the beginning of the
+        cycle of life.
+    +/
     void callGameStart() @trusted
     {
         foreach(scene; scenes) {
@@ -990,7 +1062,10 @@ final class SceneManager
         }
     }
 
-    ///
+    /++
+        Game completion call events (successful).
+        The unsuccessful event should raise the `onError` event.
+    +/
     void callGameExit() @trusted
     {
         foreach(scene; scenes) {
@@ -1012,7 +1087,14 @@ final class SceneManager
         }
     }
 
-    ///
+    /++
+        Triggering an emergency event.
+
+        Does not terminate the game, should be called on exceptions. After that,
+        the programmer himself decides what to do next (if he implements his own
+        life cycle). Called usually on `scope (failure)`, however, it will not
+        throw a specific exception.
+    +/
     void callOnError() @trusted
     {
         if(current !is null)
@@ -1035,7 +1117,14 @@ final class SceneManager
         }
     }
 
-    ///
+    /++
+        Calling a game step. Should always be called during a loop step in an
+        exception when the thread is suspended.
+
+        Params:
+            thread = Thread identificator.
+            rend   = Renderer instance.
+    +/
     void callStep(size_t thread,IRenderer rend) @trusted
     {
         if(current !is null)
@@ -1104,7 +1193,12 @@ final class SceneManager
         }
     }
 
-    ///
+    /++
+        System event event for scenes and instances of the current context.
+
+        Params:
+            event = System event handler instance.
+    +/
     void callEvent(EventHandler event) @trusted
     {
         if(current !is null)
@@ -1138,7 +1232,12 @@ final class SceneManager
         }
     }
 
-    ///
+    /++
+        Calling an event to render scenes and instances of the current context.
+
+        Params:
+            render = Render instance.
+    +/
     void callDraw(IRenderer render) @trusted
     {
         import tida.vector;
@@ -1175,6 +1274,7 @@ final class SceneManager
         }
     }
 
+    /// Free memory.
     void free() @safe
     {
         _scenes = null;
