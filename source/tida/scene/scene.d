@@ -282,15 +282,8 @@ class Scene
     {
         import std.algorithm : each, remove;
 
-        instances = instances.remove(instance.id);
-
-        foreach(size_t i; 0 .. bufferThread[instance.threadID].length)
-        {
-            if(bufferThread[instance.threadID][i] is instance) {
-                bufferThread[instance.threadID] = remove(bufferThread[instance.threadID],i);
-                break;
-            }
-        }
+        instances = instances.remove!(a => a is instance);
+        bufferThread[instance.threadID] = bufferThread[instance.threadID].remove!(a => a is instance);
 
         if(this.instances.length != 0)
         {
