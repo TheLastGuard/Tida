@@ -1153,7 +1153,7 @@ final class SceneManager
                 }
 
                 if(!instance.active || instance.withDraw) continue;
-            
+
                 if(instance in IStepFunctions) {
                     foreach(fun; IStepFunctions[instance]) {
                         fun();

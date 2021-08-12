@@ -280,10 +280,35 @@ class Scene
     in(hasInstance(instance))
     do
     {
-        import std.algorithm : each, remove;
+        import std.algorithm : each;
 
-        instances = instances.remove!(a => a is instance);
-        bufferThread[instance.threadID] = bufferThread[instance.threadID].remove!(a => a is instance);
+        // dont remove, it's succes work.
+        void remove(T)(ref T[] obj,size_t index) @trusted nothrow
+        {
+            auto dump = obj.dup;
+            foreach (i; index .. dump.length)
+            {
+                import core.exception : RangeError;
+                try
+                {
+                    dump[i] = dump[i + 1];
+                }
+                catch (RangeError e)
+                {
+                    continue;
+                }
+            }
+            obj = dump[0 .. $-1];
+        }
+
+        remove(instances, instance.id);
+        foreach(size_t i; 0 .. bufferThread[instance.threadID].length)
+        {
+            if(bufferThread[instance.threadID][i] is instance) {
+                remove(bufferThread[instance.threadID],i);
+                break;
+            }
+        }
 
         if(this.instances.length != 0)
         {
