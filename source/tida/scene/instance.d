@@ -224,7 +224,7 @@ class Instance
         T obj;
 
         foreach(cmp; components) {
-            if((obj = cmp.from!T) !is null)
+            if((obj = (cast(T) cmp)) !is null)
                 break;
         }
 
@@ -287,7 +287,7 @@ class Instance
         Component cmp;
 
         foreach(i; 0 .. components.length) {
-            if(components[i].from!Name !is null) {
+            if((cast(Name) components[i]) !is null) {
                 cmp = components[i];
                 
                 if(sceneManager !is null) {

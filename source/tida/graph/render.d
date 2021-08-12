@@ -94,6 +94,18 @@ interface IRenderer
     +/
     void triangle(Vecf[3] points,Color!ubyte color,bool isFill) @safe;
 
+    /++
+        Draws a rectangle with rounded edges.
+        (Rendering is available only through hardware acceleration).
+
+        Params:
+            position = Position roundrectangle.
+            width = Width roundrectangle.
+            height = Height roundrectangle.
+            radious = Radius rounded edges.
+            color = Color roundrect.
+            isFill = Roundrect is filled color?
+    +/
     void roundrect(Vecf position, int width, int height, float radious, Color!ubyte color, bool isFill) @safe;
 
     /++
@@ -151,10 +163,13 @@ interface IRenderer
     /// Reset the shader to main.
     void resetShader() @safe;
 
+    /// Current model matrix.
     float[4][4] currentModelMatrix() @safe @property;
 
+    /// ditto
     void currentModelMatrix(float[4][4] matrix) @safe @property;
 
+    /// Reset current model matrix.
     final void resetModelMatrix() @safe
     {
         this.currentModelMatrix = identity();
