@@ -722,7 +722,7 @@ final class SceneManager
     {
         foreach(scene; scenes)
         {
-            if(scene.from!T !is null) {
+            if((cast(T) scene) !is null) {
                 remove(scene);
                 return;
             }
@@ -907,7 +907,7 @@ final class SceneManager
 
         foreach(s; scenes)
         {
-            if(s.from!Name !is null)
+            if((cast(Name) s) !is null)
             {
                 gotoin(s);
 
