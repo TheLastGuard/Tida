@@ -185,7 +185,6 @@ class Instance
             cmp.name = T.stringof;
         }
 
-        cmp.init(this);
         components ~= cmp;
 
         if(sceneManager !is null)
