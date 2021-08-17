@@ -12,14 +12,14 @@ alias Vecf = Vector!float; /// Two-decimal vector
 alias vecf = Vector!float; /// ditto
 alias vec2f = vecf; /// ditto
 
-/++
-    Returns an empty (non-zero) vector.
-+/
-Vecf VecfNan() @safe nothrow pure
-{
-    return Vecf(float.nan, float.nan);
-}
+enum VecfNan = Vecf(float.nan, float.nan); /// Non-vector.
 
+/++
+    Generate buffer numbres from vector array.
+
+    Params:
+        array = Vector array.
++/
 T[] generateArray(T)(Vector!T[] array) @safe nothrow pure
 {
     T[] result;
@@ -91,8 +91,8 @@ struct Vector(T)
         this.y = vec[1];
     }
 
-    alias X = x;
-    alias Y = y;
+    alias X = x; ///
+    alias Y = y; ///
 
     /++
         Gives x coordinate in int format
@@ -144,13 +144,14 @@ struct Vector(T)
     @("opEquals")
     @safe unittest
     {
-        Vector!float a = Vecf(32, 32);
+        const a = Vecf(32, 32);
         Vector!float b = Vecf(32, 32);
         assert(a == b);
         b = Vecf(32, 64);
         assert(a != b);
     }
 
+    ///
     Vector!T opBinary(string op)(Vector rhs) @safe nothrow pure inout
     {
         static if(op == "+")
@@ -173,6 +174,7 @@ struct Vector(T)
         }
     }
 
+    ///
     Vector!T opBinary(string op)(T num) @safe nothrow pure inout
     {
         static if(op == "+")
@@ -207,6 +209,7 @@ struct Vector(T)
         assert(a == Vecf(32, 32));
     }
 
+    ///
     void opOpAssign(string op)(Vector rhs) @safe nothrow 
     {
         static if (op == "+")
@@ -220,8 +223,9 @@ struct Vector(T)
             this.y = y - rhs.y;
         }
     }
-    
-    void opOpAssign(string op)(T num) @safe nothrow 
+
+    ///
+    void opOpAssign(string op)(T num) @safe nothrow
     {
         static if (op == "*")
         {
@@ -279,7 +283,7 @@ struct Vector(T)
         return this;
     }
     
-    string toString() @trusted
+    string toString() @trusted inout
     {
         import std.conv : to;
 

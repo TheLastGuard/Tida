@@ -221,7 +221,7 @@ struct Shape
     }
 
     /// The top of the triangle.
-    Vecf vertex(uint num)() @safe @property nothrow pure
+    Vecf vertex(uint num)() @safe @property nothrow pure inout
     in
     {
         static assert(num < 3,"The triangle has only three vertices! (0 .. 2)");
@@ -314,7 +314,7 @@ struct Shape
     {
         import tida.angle;
 
-        float dir = begin.pointDirection(end);
+        const dir = begin.pointDirection(end);
 
         end = (vectorDirection(dir) * value);
     }
@@ -617,6 +617,7 @@ struct Shape
 
 import tida.vector;
 
+///
 Shape rectVertexs(Vecf[] vertexArray) @safe nothrow pure
 {
     import std.algorithm : maxElement, minElement;

@@ -178,6 +178,39 @@ bool rectCircleImpl(const Vecf[] a, const Vecf circlePos, const float circleRadi
     return len <= circleRadius;
 }
 
+bool trianglePointImpl(const Vecf[3] a, const Vecf b) @safe nothrow pure
+{
+    import std.math : abs;
+
+    const area = abs (  (a[1].x - a[0].x) * (a[2].y - a[0].y) -
+                        (a[2].x - a[0].x) * (a[1].y - a[0].y) );
+    const(float)[] areas =
+    [
+        abs( (a[0].x - b.x) * (a[1].y - b.y) - (a[1].x - b.x) * (a[0].y - b.y) ),
+        abs( (a[1].x - b.x) * (a[2].y - b.y) - (a[2].x - b.x) * (a[1].y - b.y) ),
+        abs( (a[2].x - b.x) * (a[0].y - b.y) - (a[0].x - b.x) * (a[2].y - b.y) )
+    ];
+
+    return (areas[0] + areas[1] + areas[2]) == area;
+}
+
+bool triangleLineImpl(const Vecf[3] a, const Vecf[2] b) @safe nothrow pure
+{
+    import tida.graph.each;
+
+    bool iscollision = false;
+
+    foreach(x, y; LineNoThrowImpl(b[0], b[1]))
+    {
+        if(trianglePointImpl(a, Vecf(x, y))) {
+            iscollision = true;
+            break;
+        }
+    }
+
+    return iscollision;
+}
+
 /++
     A function to check the intersection of two shapes. It does not give an intersection point, 
     it gives a state that informs if there is an intersection.

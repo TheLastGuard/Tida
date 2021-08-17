@@ -1459,7 +1459,32 @@ class Software : IRenderer
 
     override void roundrect(Vecf position, int width, int height, float radious, Color!ubyte color, bool isFill) @safe
     {
-        assert(null, "Round rectangle is not a support with software render!");
+        import std.math : cos, sin;
+
+        rectangle(position + Vecf(radious, 0), cast(int) (width - radious * 2), height, color, true);
+        rectangle(position + Vecf(0, radious), width, cast(int) (height - radious * 2), color, true);
+
+        immutable size = Vecf(width, height);
+
+        void rounded(Vecf pos, float a, float b,float iter) @safe
+        {
+            import tida.angle;
+
+            for(float i = a; i <= b;)
+            {
+                Vecf temp;
+                temp = pos + Vecf(cos(i.from!(Degrees, Radians)), sin(i.from!(Degrees, Radians))) * radious;
+
+                line([pos, temp], color);
+                i += iter;
+            }
+        }
+
+        const iter = 0.25;
+        rounded(position + Vecf(radious, radious), 180, 270, iter);
+        rounded(position + Vecf(size.x - radious, radious), 270, 360, iter);
+        rounded(position + Vecf(radious, size.y - radious), 90, 180, iter);
+        rounded(position + Vecf(size.x - radious, size.y - radious), 0, 90, iter);
     }
 
     override void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe

@@ -9,9 +9,15 @@ module tida.scene.instance;
 import tida.scene.component;
 import std.algorithm : remove;
 
-static immutable ubyte InMemory = 0; ///
-static immutable ubyte InScene = 1; ///
+enum InMemory = 0; ///
+enum InScene = 1; ///
 
+/++
+    Whether the given class is a component.
+
+    Params:
+        T = Class.
++/
 template isComponent(T)
 {
     enum isComponent = is(T : Component);
@@ -158,7 +164,7 @@ class Instance
     /++
         Instance information
     +/
-    final InstanceInfo info() @safe @property
+    InstanceInfo info() @safe @property
     {
         return InstanceInfo(
             name, tags, position, previous, mask, 
@@ -172,7 +178,7 @@ class Instance
         Params:
             cmp = Component.
     +/
-    final void add(T)(T cmp) @safe
+    void add(T)(T cmp) @safe
     in
     {
         static assert(isComponent!T);
@@ -197,7 +203,7 @@ class Instance
         Params:
             Name = Component.
     +/
-    final void add(Name)() @safe
+    void add(Name)() @safe
     in(isComponent!Name,"Its not component!")
     do
     {
@@ -216,7 +222,7 @@ class Instance
         instance.of!Gravity.F = 0.1f;
         ---
     +/
-    final T of(T)() @safe
+    T of(T)() @safe
     in(isComponent!T,"It not component!")
     do
     {
@@ -236,7 +242,7 @@ class Instance
         Params:
             name = Component name. 
     +/
-    final Component of(string name)() @safe
+    Component of(string name)() @safe
     {
         Component obj;
 
@@ -270,13 +276,15 @@ class Instance
         return obj;
     }
 
+    alias getComponent = of; /// ditto
+
     /++ 
         Dissconnect component
 
         Params:
             Name = Class component.
     +/
-    final void dissconnect(Name)() @trusted
+    void dissconnect(Name)() @trusted
     in(isComponent!Name,"It's not component!")
     do
     {
@@ -299,7 +307,11 @@ class Instance
         }
     }
 
-    final void dissconnectAll() @trusted
+    alias dissconnectComponent = dissconnect; /// ditto
+    alias removeComponent = dissconnect; /// ditto
+
+    /// dissconnectet all components
+    void dissconnectAll() @trusted
     {
         import tida.scene.manager;
 
@@ -348,23 +360,5 @@ class Instance
         {
             return components;
         }
-    }
-
-    override bool opEquals(Object other) const
-    {
-        Instance ins = (cast(Instance) other);
-
-        return (ins !is null) ? this.depth == ins.depth : false; 
-    }
-
-    int opCmp(ref Object other) const
-    {
-        Instance ins = (cast(Instance) other);
-        if(ins is null) return 0;
-
-        if(this.depth > ins.depth) return 1;
-        else if(this.depth < ins.depth) return -1;
-
-        return 0;
     }
 }

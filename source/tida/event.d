@@ -223,7 +223,7 @@ class EventHandler : IEventHandler
     {
         this.window = window;
 
-        destroyWindowEvent = GetAtom!"WM_DELETE_WINDOW";
+        destroyWindowEvent = getAtom("WM_DELETE_WINDOW");
 
         ic = XCreateIC(XOpenIM(runtime.display, null, null, null), 
             XNInputStyle, XIMPreeditNothing | XIMStatusNothing, XNClientWindow, window.handle, null);

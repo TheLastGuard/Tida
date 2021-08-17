@@ -25,7 +25,7 @@ class VertexInfo
 
     public
     {
-        Shape shapeinfo; // Shape information
+        Shape shapeinfo; /// Shape information
     }
 
     /++
@@ -94,30 +94,30 @@ class VertexInfo
     }
 
     /// ID of the generated vertex array.
-    uint idVertexArray() @safe nothrow @property
+    uint idVertexArray() @safe nothrow @property inout
     {
         return _idVertexArr;
     }
 
     /// The identifier of the buffer in memory.
-    uint idBufferArray() @safe nothrow @property
+    uint idBufferArray() @safe nothrow @property inout
     {
         return _idBufferArr;
     }
 
     /// The identifier of the elements in memory.
-    uint idElementArray() @safe nothrow @property
+    uint idElementArray() @safe nothrow @property inout
     {
         return _idElemenArr;
     }
 
     /// Buffer length.
-    uint length() @safe nothrow @property
+    uint length() @safe nothrow @property inout
     {
         return bufferLength;
     }
 
-    uint elemLength() @safe nothrow @property
+    uint elemLength() @safe nothrow @property inout
     {
         return elementLength;
     }

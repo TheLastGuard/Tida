@@ -152,6 +152,19 @@ class Texture : IDrawable, IDrawableEx, IDrawableColor
         GL.bindTexture(0);
     }
 
+    void updateFromInfo(int format)(TextureInfo info) @safe
+    {
+        _width = info.width;
+        _height = info.height;
+
+        ubyte[] bytes = info.bytes.fromFormat!(format, PixelFormat.RGBA);
+
+        GL.bindTexture(glTextureID);
+        GL.texUpdate(_width, _height, bytes);
+        editParams(info.params);
+        GL.bindTexture(0);
+    }
+
     /// Information about the vertices of the texture.
     VertexInfo vertexInfo() @safe @property
     {

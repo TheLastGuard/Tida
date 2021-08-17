@@ -28,9 +28,9 @@ template isCorrectAxis(int axis)
     enum isCorrectAxis = axis == XAxis || axis == YAxis;
 }
 
-bool validateImageData(int w, int h, ubyte[] data) @safe nothrow pure
+bool validateImageData(int format)(int w, int h, ubyte[] data) @safe nothrow pure
 {
-    return validateBytes!(PixelFormat.RGBA)(data) && (w * h * BytesPerColor!(PixelFormat.RGBA) == data.length);
+    return validateBytes!(format)(data) && (w * h * BytesPerColor!(format) == data.length);
 }
 
 /// Image.
@@ -107,6 +107,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         return tryBytes;
     }
 
+    /// Whether the picture is empty for the data.
     bool empty() @safe nothrow pure
     {
         return _pixels.length == 0;
@@ -146,7 +147,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     in
     {
         static assert(isCorrectFormat!format, "You cannot find out the format on the fly.");
-        assert(validateImageData(_width, _height, bt), "The size of the picture is much larger than this one!");
+        assert(validateImageData!format(_width, _height, bt), "The size of the picture is much larger than this one!");
     }
     do
     {
@@ -526,6 +527,16 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
     }
 }
 
+/++
+    Rotate the picture by the specified angle from the specified center.
+
+    Params:
+        image = The picture to be rotated.
+        angle = Angle of rotation.
+        center =    Center of rotation.
+                    (If the vector is empty (non-zero `VecfNan`), then the
+                    center is determined automatically).
++/
 Image rotateImage(int Type = DefaultOperation)(Image image,float angle,Vecf center = VecfNan) @safe
 {
     import tida.angle;
@@ -546,21 +557,6 @@ Image rotateImage(int Type = DefaultOperation)(Image image,float angle,Vecf cent
     }
 
     return rotated;
-}
-
-/++
-    Inverts the image.
-
-    Params:
-        image = Image.
-+/ 
-Image invert(Image image) @safe nothrow
-{
-    import std.algorithm : each;
-
-    image.pixels.each!((ref e) => e = e.inverted());
-
-    return image;
 }
 
 /++
@@ -713,7 +709,14 @@ do
 }
 
 /++
+    Divides the picture into frames.
 
+    Params:
+        image = Atlas.
+        x = Begin x-axis position divide.
+        y = Begin y-axis position divide.
+        w = Frame width.
+        h = Frame height.
 +/
 Image[] strip(Image image,int x,int y,int w,int h) @safe
 {
@@ -729,7 +732,15 @@ Image[] strip(Image image,int x,int y,int w,int h) @safe
 
 import tida.vector;
 
-/// ditto
+/++
+    Combining two paintings into one using color mixing.
+
+    Params:
+        a = First image.
+        b = Second image.
+        posA = First image position.
+        posB = Second image position.
++/
 Image unite(int Type = DefaultOperation)(Image a,Image b,Vecf posA = Vecf(0,0),Vecf posB = Vecf(0,0)) @trusted
 {
     import std.algorithm, std.conv;
@@ -743,10 +754,7 @@ Image unite(int Type = DefaultOperation)(Image a,Image b,Vecf posA = Vecf(0,0),V
     width = (posA.x + a.width > posB.x + b.width) ? posA.x.to!int + a.width : posB.x.to!int + b.width;
     height = (posA.y + a.height > posB.y + b.height) ? posA.y.to!int + a.height : posB.x.to!int + b.height;
 
-    result.create(width,height);
-    result.fill(rgba(0,0,0,0));
-
-    result.create(width,height);
+    result.create(width, height);
     result.fill(rgba(0,0,0,0));
 
     foreach(x, y; Coord!Type(posA.x.to!int + a.width, posA.y.to!int + a.height,
@@ -760,7 +768,7 @@ Image unite(int Type = DefaultOperation)(Image a,Image b,Vecf posA = Vecf(0,0),V
                              posB.x.to!int, posB.y.to!int))
     {
         Color!ubyte color = b.getPixel(x - posB.x.to!int, y - posB.y.to!int);
-        Color!ubyte backColor = result.getPixel(x,y);
+        Color!ubyte backColor = result.getPixel(x, y);
         color.colorize!Alpha(backColor);
         result.setPixel(x,y,color);
     }
@@ -782,7 +790,7 @@ float[][] gausKernel(int width,int height,float sigma) @safe nothrow pure
 {
     import std.math : exp;
 
-    float[][] result = new float[][](width,height);
+    float[][] result = new float[][](width, height);
 
     float sum = 0f;
 
@@ -887,6 +895,23 @@ Image blur(int Type = DefaultOperation)(Image image,float[][] otherKernel) @trus
 
 import tida.color, tida.graph.each;
 
+/++
+    Image processing process. The function traverses the picture, giving the
+    input delegate a pointer to the color and traversal position in the form
+    of a vector.
+
+    Params:
+        image = Image processing.
+        func = Function processing.
+
+    Example:
+    ---
+    // Darkening the picture in the corners.
+    myImage.process((ref e, position) {
+        e = e * (position.x / myImage.width * position.y / myImage.height);
+    });
+    ---
++/
 Image process(int Type = DefaultOperation)(Image image, void delegate(ref Color!ubyte,const Vecf) @safe func) @safe
 {
     foreach(x, y; Coord!Type(image.width, image.height)) 

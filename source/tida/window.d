@@ -130,9 +130,9 @@
 +/
 module tida.window;
 
-enum ubyte Empty     = 0; /// Will not initialize the window.
-enum ubyte Simple    = 1; /// Initializes a window with no graphics context for OpenGL.
-enum ubyte ContextIn = 2; /// Initialization of a window with a graphics pipeline for OpenGL.
+enum Empty     = 0; /// Will not initialize the window.
+enum Simple    = 1; /// Initializes a window with no graphics context for OpenGL.
+enum ContextIn = 2; /// Initialization of a window with a graphics pipeline for OpenGL.
 
 /// Attributes for creating context.
 struct GLAttributes
@@ -219,10 +219,10 @@ interface IWindow
     void swapBuffers() @safe;
 
     /// X-axis position of the window.
-    int x() @safe @property;
+    int x() @safe @property inout;
 
     /// Y-axis position of the window.
-    int y() @safe @property;
+    int y() @safe @property inout;
 
     /++
         Resizes the window.
@@ -244,33 +244,33 @@ interface IWindow
     void resizable(bool value) @safe @property;
 
     /// ditto
-    bool resizable() @safe @property;
+    bool resizable() @safe @property inout;
 
     /// Window states, full screen or windowed.
     void fullscreen(bool value) @safe @property;
 
     /// ditto
-    bool fullscreen() @safe @property;
+    bool fullscreen() @safe @property inout;
 
     /// The state of the borders, whether they are there or not.
     void border(bool value) @safe @property;
 
     /// ditto
-    bool border() @safe @property;
+    bool border() @safe @property inout;
 
     /// Window title.
     void title(string newTitle) @safe @property;
 
     /// ditto
-    string title() @safe @property;
+    string title() @safe @property inout;
 
     void icon(Image image) @safe @property;
 
     /// Window width.
-    uint width() @safe @property;
+    uint width() @safe @property inout;
 
     /// Window height.
-    uint height() @safe @property;
+    uint height() @safe @property inout;
 
     /// Destroys the window instance.
     void destroyWindow() @safe;
@@ -283,6 +283,7 @@ interface IWindow
 }
 
 version(Posix)
+/// Posix context implemetation
 class Context : IContext
 {
     import tida.x11, tida.runtime;
@@ -294,6 +295,7 @@ class Context : IContext
         GLXFBConfig bestFbcs;   
     }
 
+    /// Embeds a ready-made context into the structure.
     void bindContext(GLXContext ctx) @safe
     {
         this._context = ctx;
@@ -360,11 +362,13 @@ class Context : IContext
         if(visual) XFree(visual);
     }
 
+    /// Visual information
     XVisualInfo* visualInfo() @safe @property
     {
         return visual;
     }
 
+    /// Context pointer
     GLXContext context() @safe @property
     {
         return _context;
@@ -402,6 +406,13 @@ class Window : IWindow
         int _depth;
     }
 
+    /++
+        Embeds the finished window into a convenient window management framework.
+        WARNING! Does not automatically detect title and window state!
+
+        Params:
+            window = Window identificator (X11 Window)
+    +/
     void bindWindow(tida.x11.Window window) @trusted
     {
         this.window = window;
@@ -424,6 +435,15 @@ class Window : IWindow
         this._depth = attrib.depth;
     }
 
+    /++
+        Parameter constructor. Note that it will only create the parameters,
+        not the window itself.
+
+        Params:
+            newWidth = Window width.
+            newHeight = Window height.
+            newTitle = Window caption.
+    +/
     this(uint newWidth,uint newHeight,string newTitle) @safe
     {
         _width = newWidth;
@@ -431,6 +451,14 @@ class Window : IWindow
         _title = newTitle;
     }
 
+    /++
+        Create a window with visual information for the window.
+
+        Params:
+            info = Visual information structure.
+            posX = Start x-axis position window.
+            posY = Start y-axis position window.
+    +/
     void createFromXVisual(XVisualInfo* vinfo,int posX = 100,int posY = 100) @trusted 
     {
         scope Visual* visual = vinfo.visual;
@@ -458,7 +486,7 @@ class Window : IWindow
 
         title = _title;
 
-        auto wmAtom = GetAtom!"WM_DELETE_WINDOW";
+        auto wmAtom = getAtom("WM_DELETE_WINDOW");
 
         XSetWMProtocols(runtime.display, window, &wmAtom, 1);
     }
@@ -486,17 +514,14 @@ class Window : IWindow
             info.visual = visual;
             info.depth = depth;
 
-            createFromXVisual(info);
+            createFromXVisual(info, posX, posY);
         }else
         static if(Type == ContextIn)
         {
             _context = new Context();
             _context.attributeInitialize(GLAttribAutoColorSize!8);
 
-            scope Visual* visual = (cast(Context) _context).visualInfo.visual;
-            int depth = (cast(Context) _context).visualInfo.depth;
-
-            createFromXVisual((cast(Context) _context).visualInfo);
+            createFromXVisual((cast(Context) _context).visualInfo, posX, posY);
 
             _context.initialize();
 
@@ -534,7 +559,7 @@ class Window : IWindow
         glXSwapBuffers(runtime.display, window);
     }
 
-    override int x() @trusted @property
+    override int x() @trusted @property inout
     {
         XWindowAttributes xwa;
         XGetWindowAttributes(runtime.display, window, &xwa);
@@ -542,7 +567,7 @@ class Window : IWindow
         return xwa.x;
     }
 
-    override int y() @trusted @property
+    override int y() @trusted @property inout
     {
         XWindowAttributes xwa;
         XGetWindowAttributes(runtime.display, window, &xwa);
@@ -593,7 +618,7 @@ class Window : IWindow
         XSetWMNormalHints(runtime.display, window, sh);
     }
 
-    override bool resizable() @safe @property
+    override bool resizable() @safe @property inout
     {
         return _resizable;
     }
@@ -602,8 +627,8 @@ class Window : IWindow
     {
         XEvent event;
         
-        const wmState = GetAtom!"_NET_WM_STATE";
-        const wmFullscreen = GetAtom!"_NET_WM_STATE_FULLSCREEN";
+        const wmState = getAtom("_NET_WM_STATE");
+        const wmFullscreen = getAtom("_NET_WM_STATE_FULLSCREEN");
 
         event.xany.type = ClientMessage;
         event.xclient.message_type = wmState;
@@ -620,7 +645,7 @@ class Window : IWindow
         _fullscreen = value;
     }
 
-    override bool fullscreen() @safe @property
+    override bool fullscreen() @safe @property inout
     {
         return _fullscreen;
     }
@@ -639,7 +664,7 @@ class Window : IWindow
 
         auto hint = MWMHints(1 << 1, 0, value.to!ulong, 0, 0);
 
-        auto wmHINTS = GetAtom!"_MOTIF_WM_HINTS";
+        auto wmHINTS = getAtom("_MOTIF_WM_HINTS");
 
         XChangeProperty(runtime.display, window, wmHINTS, wmHINTS, 32,
             PropModeReplace, cast(ubyte*) &hint, MWMHints.sizeof / long.sizeof);
@@ -647,7 +672,7 @@ class Window : IWindow
         _border = value;
     }
 
-    override bool border() @safe @property
+    override bool border() @safe @property inout
     {
         return _border;
     }
@@ -660,7 +685,7 @@ class Window : IWindow
         _title = newTitle;
     }
 
-    override string title() @safe @property
+    override string title() @safe @property inout
     {
         return _title;
     }
@@ -675,8 +700,8 @@ class Window : IWindow
             pixels ~= pixel.to!(ulong,PixelFormat.ARGB);
 
         auto event = WMEvent();
-        event.first = GetAtom!"_NET_WM_ICON";
-        event.second = GetAtom!"CARDINAL";
+        event.first = getAtom("_NET_WM_ICON");
+        event.second = getAtom("CARDINAL");
         event.data = cast(ubyte*) pixels;
         event.length = pixels.length;
         event.mode = PropModeReplace;
@@ -686,12 +711,12 @@ class Window : IWindow
         event.send();
     }
 
-    override uint width() @safe @property
+    override uint width() @safe @property inout
     {
         return _width;
     }
 
-    override uint height() @safe @property
+    override uint height() @safe @property inout
     {
         return _height;
     }
@@ -707,16 +732,21 @@ class Window : IWindow
         _height = size[1];
     }
 
-    ulong handle() @safe @property
+    /++
+        Returns: the identifier of the window.
+    +/
+    ulong handle() @safe @property inout
     {
         return window;
     }
 
+    /// Returns: Visual structure.
     Visual* getVisual() @safe
     {
         return _visual;
     }
 
+    /// Returns: depth.
     int getDepth() @safe
     {
         return _depth;
@@ -729,8 +759,8 @@ class Window : IWindow
     +/
     void alpha(float alpha) @trusted @property
     {
-        auto atom = GetAtom!"_NET_WM_WINDOW_OPACITY";
-        auto cardinal = GetAtom!"CARDINAL";
+        auto atom = getAtom("_NET_WM_WINDOW_OPACITY");
+        auto cardinal = getAtom("CARDINAL");
 
         auto tAlpha = cast(ulong) (cast(ulong) 0xFFFFFF * alpha);
 
@@ -745,6 +775,7 @@ class Window : IWindow
 }
 
 version(Windows)
+/// Window context implemetation
 class Context : IContext
 {
     import tida.winapi, tida.runtime;
@@ -756,6 +787,7 @@ class Context : IContext
         PIXELFORMATDESCRIPTOR pfd;
     }
 
+    /// Make device from window.
     void deviceMake(HWND window) @trusted
     {
         deviceHandle = GetDC(window);
@@ -786,11 +818,15 @@ class Context : IContext
         SetPixelFormat(deviceHandle, chsPixel, &pfd);
     }
 
-    PIXELFORMATDESCRIPTOR* pixelformat() @safe {
+    /// Pixel format descriptor.
+    PIXELFORMATDESCRIPTOR* pixelformat() @safe @property inout
+    {
         return &pfd;
     }
 
-    auto device() @safe {
+    /// Device.
+    HDC device() @safe @property inout
+    {
         return deviceHandle;
     }
 
@@ -804,7 +840,8 @@ class Context : IContext
         wglDeleteContext(_context);
     }
 
-    HGLRC context() @safe
+    /// Graphics context.
+    HGLRC context() @safe @property inout
     {
         return _context;
     }
@@ -830,32 +867,32 @@ version(Windows)
 
     alias FwglCreateContextAttribsARB = extern(C) HGLRC function(HDC, HGLRC, int*);
 
-    __gshared FwglChoosePixelFormatARB wglChoosePixelFormatARB; 
-    __gshared FwglGetExtensionsStringARB wglGetExtensionsStringARB;
-    __gshared FwglCreateContextAttribsARB wglCreateContextAttribsARB;
+    __gshared FwglChoosePixelFormatARB wglChoosePixelFormatARB; ///
+    __gshared FwglGetExtensionsStringARB wglGetExtensionsStringARB; ///
+    __gshared FwglCreateContextAttribsARB wglCreateContextAttribsARB; ///
 
     enum
     {
-        WGL_DRAW_TO_WINDOW_ARB = 0x2001,
-        WGL_RED_BITS_ARB = 0x2015,
-        WGL_GREEN_BITS_ARB = 0x2017,
-        WGL_BLUE_BITS_ARB = 0x2019,
-        WGL_ALPHA_BITS_ARB = 0x201B,
-        WGL_DOUBLE_BUFFER_ARB = 0x2011,
-        WGL_DEPTH_BITS_ARB = 0x2022,
-        WGL_CONTEXT_MAJOR_VERSION_ARB = 0x2091,
-        WGL_CONTEXT_MINOR_VERSION_ARB = 0x2092,
-        WGL_CONTEXT_FLAGS_ARB = 0x2094,
-        WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB = 0x0002,
-        WGL_SUPPORT_OPENGL_ARB = 0x2010,
-        WGL_COLOR_BITS_ARB = 0x2014,
-        WGL_STENCIL_BITS_ARB = 0x2023,
-        WGL_ACCELERATION_ARB = 0x2003,
-        WGL_FULL_ACCELERATION_ARB = 0x2027,
-        WGL_PIXEL_TYPE_ARB = 0x2013,
-        WGL_TYPE_RGBA_ARB = 0x202B,
-        WGL_CONTEXT_PROFILE_MASK_ARB = 0x9126,
-        WGL_CONTEXT_CORE_PROFILE_BIT_ARB = 0x00000001
+        WGL_DRAW_TO_WINDOW_ARB = 0x2001, ///
+        WGL_RED_BITS_ARB = 0x2015, ///
+        WGL_GREEN_BITS_ARB = 0x2017, ///
+        WGL_BLUE_BITS_ARB = 0x2019, ///
+        WGL_ALPHA_BITS_ARB = 0x201B, ///
+        WGL_DOUBLE_BUFFER_ARB = 0x2011, ///
+        WGL_DEPTH_BITS_ARB = 0x2022, ///
+        WGL_CONTEXT_MAJOR_VERSION_ARB = 0x2091, ///
+        WGL_CONTEXT_MINOR_VERSION_ARB = 0x2092, ///
+        WGL_CONTEXT_FLAGS_ARB = 0x2094, ///
+        WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB = 0x0002, ///
+        WGL_SUPPORT_OPENGL_ARB = 0x2010, ///
+        WGL_COLOR_BITS_ARB = 0x2014, ///
+        WGL_STENCIL_BITS_ARB = 0x2023, ///
+        WGL_ACCELERATION_ARB = 0x2003, ///
+        WGL_FULL_ACCELERATION_ARB = 0x2027, ///
+        WGL_PIXEL_TYPE_ARB = 0x2013, ///
+        WGL_TYPE_RGBA_ARB = 0x202B, ///
+        WGL_CONTEXT_PROFILE_MASK_ARB = 0x9126, ///
+        WGL_CONTEXT_CORE_PROFILE_BIT_ARB = 0x00000001 ///
 
     }
 }
@@ -887,6 +924,13 @@ class Window : IWindow
         HWND window;
     }   
 
+    /++
+        Embeds the finished window into a convenient window management framework.
+        WARNING! Does not automatically detect title and window state!
+
+        Params:
+            window = Window identificator (X11 Window)
+    +/
     this(uint newWidth,uint newHeight,string newTitle) @safe
     {
         _width = newWidth;
@@ -894,14 +938,24 @@ class Window : IWindow
         _title = newTitle;
     }
 
+    /++
+        Window initialization. In the class, it must be executed as a template to generate the appropriate context.
+        You can initialize the window of the following types:
+        * Simple    -   Generates a window without a graphics pipeline. Those. a simple window will be created,
+                        if you need a context, you have to make it yourself and send it to the window.
+        * ContextIn -   Generates a window with a graphics pipeline for OpenGL.
+        Params:
+            Type = The type initial window.
+            posX = The initial x position of the window.
+            posY = The initial y position of the window.
+            isShow = Whether to show the window.
+    +/
     void initialize(ubyte Type)(int posX = 100,int posY = 100,bool isShow = true) @trusted
     {
         static if(Type == Simple)
         {
             extern(Windows) auto _wndProc(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam) nothrow
             {
-                int maxW = 64, maxH = 64, minW = 2048, minH = 2048;
-
                 switch(message) {
                     default:
                         return DefWindowProc(hWnd, message, wParam, lParam);
@@ -936,7 +990,6 @@ class Window : IWindow
             _context.attributeInitialize(attributes);
             _context.initialize();
 
-            auto oldctx = (cast(Context) _context).context;
             auto deviceHandle = (cast(Context) _context).device;
 
             context = _context;
@@ -1022,17 +1075,17 @@ class Window : IWindow
         _context = ofcontext;
     }
 
-    override IContext context() @safe @property
+    override IContext context() @safe @property inout
     {
         return _context;
     }
 
-    override void swapBuffers() @trusted @property
+    override void swapBuffers() @trusted
     {
         SwapBuffers(GetDC(window));
     }
 
-    override int x() @trusted @property
+    override int x() @trusted @property inout
     {
         RECT rect;
 
@@ -1041,7 +1094,7 @@ class Window : IWindow
         return rect.left;
     }
 
-    override int y() @trusted @property
+    override int y() @trusted @property inout
     {
         RECT rect;
 
@@ -1078,7 +1131,7 @@ class Window : IWindow
         _resizable = value;
     }
 
-    override bool resizable() @safe @property
+    override bool resizable() @safe @property inout
     {
         return _resizable;
     }
@@ -1118,7 +1171,7 @@ class Window : IWindow
         _fullscreen = value;
     }
 
-    override bool fullscreen() @safe @property
+    override bool fullscreen() @safe @property inout
     {
         return _fullscreen;
     }
@@ -1137,12 +1190,14 @@ class Window : IWindow
 
         SetWindowLong(window, GWL_STYLE, style);
 
-        SetWindowPos(window, null, 0,0,0,0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+        SetWindowPos(window, null, 0,0,0,0, SWP_FRAMECHANGED | SWP_NOMOVE |
+                                            SWP_NOSIZE | SWP_NOZORDER |
+                                            SWP_NOOWNERZORDER);
 
         _border = value;
     }
 
-    override bool border() @trusted @property
+    override bool border() @trusted @property inout
     {
         return _border;
     }
@@ -1154,7 +1209,7 @@ class Window : IWindow
         _title = newTitle;
     }
 
-    override string title() @safe @property
+    override string title() @safe @property inout
     {
         return _title;
     }
@@ -1178,12 +1233,12 @@ class Window : IWindow
         SendMessage(window, WM_SETICON, ICON_BIG, cast(LPARAM) icon);
     }
 
-    override uint width() @safe @property
+    override uint width() @safe @property inout
     {
         return _width;
     }
 
-    override uint height() @safe @property
+    override uint height() @safe @property inout
     {
         return _height;
     }
@@ -1199,7 +1254,8 @@ class Window : IWindow
         _height = size[1];
     }
 
-    HWND handle() @safe
+    /// Returns: Window structure point
+    HWND handle() @safe @property inout
     {
         return window;
     }

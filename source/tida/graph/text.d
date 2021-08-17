@@ -67,7 +67,7 @@ class Font
             
         Throws: `Exception` If the font was not found in the file system, or if the font is damaged.
     +/
-    auto load(string path,size_t size) @trusted
+    Font load(string path,size_t size) @trusted
     {
         enforce(exists(path),"Not file file `"~path~"`");
 
@@ -88,7 +88,6 @@ class Font
         }
 
         FT_Set_Charmap(_face, found);
-
         FT_Set_Char_Size(_face, 0, cast(int) size*32, 300, 300);
         FT_Set_Pixel_Sizes(_face, 0, cast(int) size*2);
 
@@ -184,7 +183,7 @@ class SymbolRender : IDrawable, IDrawableEx
                             s.color);
             }
 
-            position.x += s.advance.intX >> 6;
+            position = position + Vecf(s.advance.intX >> 6, 0);
         }
     }
 

@@ -560,6 +560,12 @@ struct Color(T)
         return cast(T) (this.toGrayscalef() * T.max);
     }
 
+    /// Convert color to grayscale color.
+    Color!ubyte grayscaleColor() @safe nothrow pure inout
+    {
+        return grayscale(this.toGrayscale());
+    }
+
     ///Converts color to monochrome. In particular, it will return a luminance number between 0 and 1.
     float toGrayscalef() @safe nothrow pure inout
     {

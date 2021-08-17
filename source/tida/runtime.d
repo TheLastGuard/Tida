@@ -20,7 +20,7 @@ enum AllLibrary = LibraryLoader(true,true); /// With all library
 
 version(Posix)
 {
-    __gshared bool _glxIsLoad = false;
+    __gshared bool _glxIsLoad = false; ///
 
     /// Is load glx library
     bool glxIsLoad() @trusted
@@ -29,7 +29,7 @@ version(Posix)
     }
 }
 
-__gshared TidaRuntime _runtime;
+__gshared TidaRuntime _runtime; ///
 
 /// Runtime instance.
 TidaRuntime runtime() @trusted
@@ -66,6 +66,7 @@ interface ITidaRuntime
 
 version(Posix)
 {
+    /// XDG sessions enumerates
     enum XDGSession
     {
         Undefined,
@@ -73,8 +74,9 @@ version(Posix)
         Wayland
     }
 
-    __gshared XDGSession _sessionType = XDGSession.Undefined;
+    __gshared XDGSession _sessionType = XDGSession.Undefined; ///
 
+    /// Session type
     XDGSession sessionType() @trusted
     {
         return _sessionType;
@@ -113,7 +115,7 @@ class TidaRuntime : ITidaRuntime
 
         if(sessionType == XDGSession.Undefined)
         {
-            auto env = environment.get("XDG_SESSION_TYPE");
+            const env = environment.get("XDG_SESSION_TYPE");
             if(env == "wayland") {
                 _sessionType = XDGSession.Wayland;
             } else {
@@ -127,7 +129,7 @@ class TidaRuntime : ITidaRuntime
         {
             if(libstr.glx) runtime.xDisplayOpen();
         } else {
-            
+            // TODO: Wayland implemetation
         }
     }
 
@@ -212,7 +214,8 @@ class TidaRuntime : ITidaRuntime
         return xDisplayID;
     }
 
-    void closeDisplay() @trusted @property nothrow
+    /// Close x11 session
+    void closeDisplay() @trusted nothrow
     {
         if(xDisplay !is null) XCloseDisplay(xDisplay);
     }
@@ -297,7 +300,7 @@ class TidaRuntime : ITidaRuntime
     }
 
     /// Returns an instance for working with WinAPI functions.
-    HINSTANCE instance() @safe nothrow
+    HINSTANCE instance() @safe @property nothrow
     {
         return hInstance;
     }

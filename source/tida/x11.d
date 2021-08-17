@@ -29,28 +29,31 @@ public
     Params:
         name = Atom name.
 +/
-Atom GetAtom(string name)() @trusted
+Atom getAtom(string name) @trusted
 {
     import tida.runtime;
+    import std.string : toStringz;
 
-    return XInternAtom(runtime.display, name, 0);
+    return XInternAtom(runtime.display, name.toStringz, 0);
 }
 
+/// Window Manager event structure
 struct WMEvent
 {
     import tida.runtime;
 
     public
     {
-        Atom first;
-        Atom second;
-        int format;
-        int mode;
-        ubyte* data;
-        size_t length;
-        Window window;
+        Atom first; /// First atom
+        Atom second; /// Second atom.
+        int format; /// Format event.
+        int mode; /// Mode event
+        ubyte* data; /// Event data.
+        size_t length; /// Event length data.
+        Window window; /// Window event.
     }
 
+    /// Send event in window manager.
     void send() @trusted
     {
         XChangeProperty(runtime.display, window, first, second, format,

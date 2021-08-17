@@ -149,6 +149,11 @@ struct GL
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width,height, 0, GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) pixels);
     }
 
+    static void texUpdate(uint width,uint height,ubyte[] pixels) @trusted nothrow
+    {
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) pixels);
+    }
+
     static void vertex(Vecf vector,Vecf size = Vecf()) @trusted nothrow
     {
         glVertex3f(vector.x,vector.y,0.0f);
