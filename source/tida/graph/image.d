@@ -451,7 +451,12 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
         }else
         if(renderer.type == RenderType.Soft)
         {
-            if(size.x.to!int != _width || size.y.to!int != _height) {
+            import std.math;
+
+            if(size.x == 0 || size.x.isNaN) size.x = _width;
+            if(size.y == 0 || size.y.isNaN) size.y = _height;
+
+            if( size.x.to!int != _width || size.y.to!int != _height) {
                 Image cp = this.dup();
 
                 cp.resize(size.x.to!int,size.y.to!int);
@@ -461,7 +466,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
                 return;
             }
 
-             if(angle == 0)
+            if(angle == 0)
             {
                 foreach(x,y; Coord(_width,_height))
                 {
