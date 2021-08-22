@@ -61,6 +61,13 @@ class Device
         enforce(alGetError() == AL_NO_ERROR,"Error make context!");
     }
 
+    import tida.vector;
+
+    void position(Vecf pos) @trusted @property
+    {
+        alListener3f(AL_POSITION, pos.x, pos.y, 0.0f);
+    }
+
     /// Close the context.
     void close() @trusted
     {
@@ -91,6 +98,7 @@ class Sound
         ubyte[] _bufferData;
 
         bool _isPlay;
+        Vecf _position;
     }
 
     /++
@@ -139,6 +147,23 @@ class Sound
         alSource3f(_source, AL_POSITION, 0, 0, 0);
         alSource3f(_source, AL_VELOCITY, 0, 0, 0);
         alSourcei(_source, AL_LOOPING, AL_FALSE);
+    }
+
+    import tida.vector;
+
+    void position(Vecf pos) @trusted @property
+    {
+        this._position = pos;
+
+        float[] posv = pos.array;
+        posv ~= 0.0f;
+
+        alSourcefv(_source, AL_POSITION, posv.ptr);
+    }
+
+    Vecf position() @trusted @property
+    {
+        return this._position;
     }
 
     /// Do I need to repeat the sample.
@@ -240,6 +265,26 @@ class Sound
 
         return dur!"seconds"(
             (size * 8 / (chn * bits)) / fq
+        );
+    }
+
+    Duration currentDuration() @trusted
+    {
+        int size;
+        int chn;
+        int bits;
+        int fq;
+        float currSample = 0.0f;
+
+        alGetBufferi(_buffer,AL_SIZE,&size);
+        alGetBufferi(_buffer,AL_CHANNELS,&chn);
+        alGetBufferi(_buffer,AL_BITS,&bits);
+        alGetBufferi(_buffer,AL_FREQUENCY,&fq);
+
+        alGetSourcef(_source, AL_SAMPLE_OFFSET, &currSample);
+
+        return dur!"seconds"(
+            ((cast(int) currSample) * 32 / (chn * bits)) / fq
         );
     }
 

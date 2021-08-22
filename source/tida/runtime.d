@@ -102,6 +102,8 @@ class TidaRuntime : ITidaRuntime
         Device device;
     }
 
+    Device soundDevice() @safe @property { return device; }
+
     /++
         Initializes a runtime by connecting to the windowing server and opening libraries.
 

@@ -42,7 +42,6 @@ struct GameConfig
         uint width = 320; /// Window width
         uint height = 240; /// Window height
         string caption = "Tida"; /// Window caption
-        Image icon = null; /// Window icon
         ubyte contextType = ContextIn; /// Graphics pipeline type
         RenderType renderType = RenderType.AUTO; /// RenderType
         Color!ubyte background = rgb(255, 255, 255); /// Window background
@@ -53,6 +52,7 @@ struct GameConfig
         bool isListenerCreate = true; ///
 
         void delegate() @safe onDrawCall = null; ///
+        Image icon = null; /// Window icon
     }
 }
 

@@ -976,19 +976,26 @@ interface IPlane
 +/
 template PointToImpl(int pixelformat)
 {
+    static assert(isCorrectFormat!pixelformat);
+
     override void pointTo(Vecf position, Color!ubyte color) @trusted
     {
-        import std.conv : to;
+        import tida.graph.each;
 
-        position = position - Vecf(xput,yput);
+        position = position - vecf(xput, yput);
 
-        if(position.x.to!int >= _width || position.y.to!int >= _height ||
-           position.x.to!int < 0 || position.y.to!int < 0)
-            return;
+        immutable scaleWidth = (cast(float) _pwidth) / (cast(float) _width);
+        immutable scaleHeight = (cast(float) _pheight) / (cast(float) _height);
+        int w = _width / _pwidth + 1;
+        int h = _height / _pheight + 1;
 
-        if(_pwidth == _width && _pheight == _height)
+        position = position / vecf(scaleWidth, scaleHeight);
+        Color!ubyte original = color;
+        foreach(ix, iy; Coord(  position.intX + w, position.intY + h,
+                                position.intX, position.intY))
         {
-            auto pos = ((_width * position.y.to!int) + position.x.to!int) * 4;
+            if(ix >= _width || iy >= _height || ix < 0 || iy < 0) continue;
+            immutable pos = ((iy * _width) + ix) * BytesPerColor!pixelformat;
 
             if(bmode == BlendMode.Blend) {
                 static if(pixelformat == PixelFormat.BGRA)
@@ -1001,7 +1008,7 @@ template PointToImpl(int pixelformat)
                 }else
                 static if(pixelformat == PixelFormat.RGBA)
                 {
-                    color.colorize!Alpha(rgba(buffer[pos], buffer[pos+1],buffer[pos+2],buffer[pos+3]));
+                    color.colorize!Alpha(rgba(buffer[pos],buffer[pos+1],buffer[pos+2],buffer[pos+3]));
                 }else
                 static if(pixelformat == PixelFormat.RGB)
                 {
@@ -1009,103 +1016,33 @@ template PointToImpl(int pixelformat)
                 }
             }
 
-            static if(pixelformat == PixelFormat.BGRA)
+            if(pos < buffer.length)
             {
-                buffer[pos] = color.b;
-                buffer[pos+1] = color.g;
-                buffer[pos+2] = color.r;
-                buffer[pos+3] = color.a;
-            }else
-            static if(pixelformat == PixelFormat.BGR)
-            {
-                buffer[pos] = color.b;
-                buffer[pos+1] = color.g;
-                buffer[pos+2] = color.r;
-            }else
-            static if(pixelformat == PixelFormat.RGBA)
-            {
-                buffer[pos] = color.r;
-                buffer[pos+1] = color.g;
-                buffer[pos+2] = color.b;
-                buffer[pos+3] = color.a;
-            }else
-            static if(pixelformat == PixelFormat.RGB)
-            {
-                buffer[pos] = color.r;
-                buffer[pos+1] = color.g;
-                buffer[pos+2] = color.b;
-            }
-        }else
-        {
-            import tida.graph.each;
-
-            auto scaleWidth = cast(double) _pwidth / cast(double) _width;
-            auto scaleHeight = cast(double) _pheight / cast(double) _height;
-
-            int w = cast(int) _width / _pwidth + 1;
-            int h = cast(int) _height / _pheight + 1;
-
-            position = Vecf(position.x / scaleWidth, position.y / scaleHeight);
-
-            Color!ubyte original = color;
-
-            foreach(ix, iy; Coord(position.x.to!int + w,position.y.to!int + h,
-                                  position.x.to!int,position.y.to!int))
-            {
-                if(ix > _width || iy > _height || ix < 0 || iy < 0)
-                    continue;
-
-                auto pos = (iy * _width) + ix;
-                pos *= 4;
-
-                color = original;
-                if(bmode == BlendMode.Blend) {
-                    static if(pixelformat == PixelFormat.BGRA)
-                    {
-                        color.colorize!Alpha(rgba(buffer[pos+3],buffer[pos+2],buffer[pos+1],buffer[pos]));
-                    }else
-                    static if(pixelformat == PixelFormat.BGR)
-                    {
-                        color.colorize!Alpha(rgba(buffer[pos+2],buffer[pos+1],buffer[pos],255));
-                    }else
-                    static if(pixelformat == PixelFormat.RGBA)
-                    {
-                        color.colorize!Alpha(rgba(buffer[pos],buffer[pos+1],buffer[pos+2],buffer[pos+3]));
-                    }else
-                    static if(pixelformat == PixelFormat.RGB)
-                    {
-                        color.colorize!Alpha(rgba(buffer[pos],buffer[pos+1],buffer[pos+2],255));
-                    }
-                }
-
-                if(pos < buffer.length)
+                static if(pixelformat == PixelFormat.BGRA)
                 {
-                    static if(pixelformat == PixelFormat.BGRA)
-                    {
-                        buffer[pos] = color.b;
-                        buffer[pos+1] = color.g;
-                        buffer[pos+2] = color.r;
-                        buffer[pos+3] = color.a;
-                    }else
-                    static if(pixelformat == PixelFormat.BGR)
-                    {
-                        buffer[pos] = color.b;
-                        buffer[pos+1] = color.g;
-                        buffer[pos+2] = color.r;
-                    }else
-                    static if(pixelformat == PixelFormat.RGBA)
-                    {
-                        buffer[pos] = color.r;
-                        buffer[pos+1] = color.g;
-                        buffer[pos+2] = color.b;
-                        buffer[pos+3] = color.a;
-                    }else
-                    static if(pixelformat == PixelFormat.RGB)
-                    {
-                        buffer[pos] = color.r;
-                        buffer[pos+1] = color.g;
-                        buffer[pos+2] = color.b;
-                    }
+                    buffer[pos] = color.b;
+                    buffer[pos+1] = color.g;
+                    buffer[pos+2] = color.r;
+                    buffer[pos+3] = color.a;
+                }else
+                static if(pixelformat == PixelFormat.BGR)
+                {
+                    buffer[pos] = color.b;
+                    buffer[pos+1] = color.g;
+                    buffer[pos+2] = color.r;
+                }else
+                static if(pixelformat == PixelFormat.RGBA)
+                {
+                    buffer[pos] = color.r;
+                    buffer[pos+1] = color.g;
+                    buffer[pos+2] = color.b;
+                    buffer[pos+3] = color.a;
+                }else
+                static if(pixelformat == PixelFormat.RGB)
+                {
+                    buffer[pos] = color.r;
+                    buffer[pos+1] = color.g;
+                    buffer[pos+2] = color.b;
                 }
             }
         }
@@ -1159,7 +1096,7 @@ class Plane : IPlane
         _width = width;
         _height = height;
 
-        buffer = new ubyte[](_width * _height * 4);
+        buffer = new ubyte[](_width * _height * BytesPerColor!(PixelFormat.BGRA));
 
         if(_isAlloc)
         {
@@ -1217,7 +1154,7 @@ class Plane : IPlane
         bmode = mode;
     }
 
-    mixin PointToImpl!(PixelFormat.BGR);
+    mixin PointToImpl!(PixelFormat.BGRA);
 }
 
 version(Windows)
@@ -1361,7 +1298,6 @@ class Software : IRenderer
         plane = new Plane(cast(Window) window, _isAlloc);
 
         _camera = new Camera();
-
         if(window !is null)
         {
             _camera.shape = Shape.Rectangle(Vecf(0,0),Vecf(window.width,window.height));
@@ -1375,11 +1311,12 @@ class Software : IRenderer
 
     this(IPlane plane) @safe
     {
-        this(null, false);
-
         this.plane = plane;
 
+        _camera = new Camera();
+
         plane.blendMode(BlendMode.Blend);
+        reshape();
     }
 
     override RenderType type() @safe
@@ -1392,8 +1329,8 @@ class Software : IRenderer
         import std.conv : to;
 
         plane.alloc(_camera.shape.end.x.to!int,_camera.shape.end.y.to!int);
-        plane.viewport(_camera.port.end.y.to!int,_camera.port.end.y.to!int);
-        plane.move(_camera.shape.begin.x.to!int,_camera.shape.begin.y.to!int);
+        plane.viewport(_camera.port.end.x.to!int,_camera.port.end.y.to!int);
+        plane.move(_camera.port.begin.x.to!int,_camera.port.begin.y.to!int);
     }    
 
     override void camera(Camera camera) @safe
@@ -1461,30 +1398,57 @@ class Software : IRenderer
     {
         import std.math : cos, sin;
 
-        rectangle(position + Vecf(radious, 0), cast(int) (width - radious * 2), height, color, true);
-        rectangle(position + Vecf(0, radious), width, cast(int) (height - radious * 2), color, true);
-
         immutable size = Vecf(width, height);
+        immutable iter = 0.25;
 
-        void rounded(Vecf pos, float a, float b,float iter) @safe
+        if(isFill)
         {
-            import tida.angle;
+            rectangle(position + Vecf(radious, 0), cast(int) (width - radious * 2), height, color, true);
+            rectangle(position + Vecf(0, radious), width, cast(int) (height - radious * 2), color, true);
 
-            for(float i = a; i <= b;)
+            void rounded(Vecf pos, float a, float b,float iter) @safe
             {
-                Vecf temp;
-                temp = pos + Vecf(cos(i.from!(Degrees, Radians)), sin(i.from!(Degrees, Radians))) * radious;
+                import tida.angle;
 
-                line([pos, temp], color);
-                i += iter;
+                for(float i = a; i <= b;)
+                {
+                    Vecf temp;
+                    temp = pos + Vecf(cos(i.from!(Degrees, Radians)), sin(i.from!(Degrees, Radians))) * radious;
+
+                    line([pos, temp], color);
+                    i += iter;
+                }
             }
-        }
 
-        const iter = 0.25;
-        rounded(position + Vecf(radious, radious), 180, 270, iter);
-        rounded(position + Vecf(size.x - radious, radious), 270, 360, iter);
-        rounded(position + Vecf(radious, size.y - radious), 90, 180, iter);
-        rounded(position + Vecf(size.x - radious, size.y - radious), 0, 90, iter);
+            rounded(position + Vecf(radious, radious), 180, 270, iter);
+            rounded(position + Vecf(size.x - radious, radious), 270, 360, iter);
+            rounded(position + Vecf(radious, size.y - radious), 90, 180, iter);
+            rounded(position + Vecf(size.x - radious, size.y - radious), 0, 90, iter);
+        } else
+        {
+            void rounded(Vecf pos, float a, float b,float iter) @safe
+            {
+                import tida.angle;
+
+                for(float i = a; i <= b;)
+                {
+                    Vecf temp;
+                    temp = pos + Vecf(cos(i.from!(Degrees, Radians)), sin(i.from!(Degrees, Radians))) * radious;
+                    point(temp, color);
+                    i += iter;
+                }
+            }
+
+            rounded(position + Vecf(radious, radious), 180, 270, iter);
+            rounded(position + Vecf(size.x - radious, radious), 270, 360, iter);
+            rounded(position + Vecf(radious, size.y - radious), 90, 180, iter);
+            rounded(position + Vecf(size.x - radious, size.y - radious), 0, 90, iter);
+
+            line([position + Vecf(radious, 0), position + Vecf(width - radious, 0)], color);
+            line([position + Vecf(width, radious), position + Vecf(width, height - radious)], color);
+            line([position + Vecf(radious, height), position + Vecf(width - radious, height)], color);
+            line([position + Vecf(0, radious), position + Vecf(0, height - radious)], color);
+        }
     }
 
     override void circle(Vecf position,float radious,Color!ubyte color,bool isFill) @safe

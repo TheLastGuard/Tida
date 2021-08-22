@@ -27,7 +27,7 @@ enum PixelFormat : int
 +/
 template isCorrectFormat(int format)
 {
-    enum isCorrectFormat = format != PixelFormat.AUTO && format < PixelFormat.max;
+    enum isCorrectFormat = format != PixelFormat.AUTO && format <= PixelFormat.max;
 }
 
 /++

@@ -53,7 +53,6 @@
 		"bindbc-openal": "~>0.4.1",
 		"bindbc-opengl": "~>0.13.0",
 		"imagefmt": "~>2.1.2",
-		"intel-intrinsics": "~>1.5.1",
 		"mp3decoder": "~>1.0.0"
 	},
 	"description": "Tida is a library for creating 2D games, which is written with manual window creation and rendering using opengl and other tools for D games.",
@@ -67,7 +66,8 @@
 		"./examples/simplerender",
 		"./examples/simplegame",
 		"./examples/simplepuppet",
-		"./examples/simpletilemap"
+		"./examples/simpletilemap",
+		"./examples/seabattle"
 	],
 	"versions": [
 		"FT_210",
