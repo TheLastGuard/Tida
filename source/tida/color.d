@@ -19,6 +19,30 @@ enum PixelFormat : int
     BGR ///
 }
 
+int pixelformatGL(PixelFormat pixelformat) @safe nothrow pure
+in(pixelformat != PixelFormat.AUTO, "Incorrect pixel format!")
+do
+{
+    import tida.graph.gl;
+
+    if(pixelformat == PixelFormat.RGB) 
+        return GL_RGB;
+    else
+    if(pixelformat == PixelFormat.RGBA)
+        return GL_RGBA;
+    else
+    if(pixelformat == PixelFormat.ARGB)
+        assert(null, "Incorrect pixel format!");
+    else
+    if(pixelformat == PixelFormat.BGRA)
+        return GL_BGRA;
+    else
+    if(pixelformat == PixelFormat.BGR)
+        return GL_BGR;
+
+    assert(null, "Incorrect pixel format!");
+}
+
 /++
     Is the pixel format correct? That is, it excludes automatic detection.
 
@@ -38,7 +62,7 @@ template isCorrectFormat(int format)
 +/
 template BytesPerColor(int format)
 {
-    static assert(isCorrectFormat!format);
+    static assert(isCorrectFormat!format, "This pixel format is incorrect!");
 
     static if(format == PixelFormat.RGB || format == PixelFormat.BGR)
         enum BytesPerColor = 3;
@@ -481,35 +505,42 @@ struct Color(T)
             T = Type.
             format = Pixel format.
     +/
-    T to(T,int format = PixelFormat.RGBA)() @safe nothrow pure inout
+    R to(R,int format = PixelFormat.RGBA)() @safe nothrow pure inout
     {
-        static if(is(T : ulong) || is(T : uint))
+        static if(is(R : ulong) || is(R : uint))
         {
-            static if(format == PixelFormat.RGBA)
-                return ((r & 0xff) << 24) + ((g & 0xff) << 16) + ((b & 0xff) << 8) + (a & 0xff);
-            else
-            static if(format == PixelFormat.RGB)
-                return ((r & 0xff) << 16) + ((g & 0xff) << 8) + ((b & 0xff));
-            else
-            static if(format == PixelFormat.ARGB)
-                return ((a & 0xff) << 24) + ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
-            else
-            static if(format == PixelFormat.BGRA)
-                return ((b & 0xff) << 24) + ((g & 0xff) << 16) + ((r & 0xff) << 8) + (a & 0xff);
-            else
-            static if(format == PixelFormat.BGR)
-                return ((b & 0xff) << 16) + ((g & 0xff) << 8) + ((r & 0xff));
-            else
+            static if(!isInterim!T)
+            {
+                static if(format == PixelFormat.RGBA)
+                    return cast(R) (((r & 0xff) << 24) + ((g & 0xff) << 16) + ((b & 0xff) << 8) + (a & 0xff));
+                else
+                static if(format == PixelFormat.RGB)
+                    return cast(R) ((r & 0xff) << 16) + ((g & 0xff) << 8) + ((b & 0xff));
+                else
+                static if(format == PixelFormat.ARGB)
+                    return cast(R) (((a & 0xff) << 24) + ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff));
+                else
+                static if(format == PixelFormat.BGRA)
+                    return cast(R) (((b & 0xff) << 24) + ((g & 0xff) << 16) + ((r & 0xff) << 8) + (a & 0xff));
+                else
+                static if(format == PixelFormat.BGR)
+                    return cast(R) (((b & 0xff) << 16) + ((g & 0xff) << 8) + ((r & 0xff)));
+                else
+                    return 0;
+            }else
                 return 0;
         }else
-        static if(is(T : string))
+        static if(is(R : string))
         {
             import std.conv : to;
             import std.digest : toHexString;
             
-            return this.fromBytes!format.toHexString;
+            static if(!isInterim!T)
+                return cast(R) this.fromBytes!format.toHexString;
+            else
+                return stringComponents();
         }else
-        static if(is(T : HSL))
+        static if(is(R : HSL))
         {
             import std.algorithm : max, min;
             import std.math : abs;
@@ -560,12 +591,6 @@ struct Color(T)
         return cast(T) (this.toGrayscalef() * T.max);
     }
 
-    /// Convert color to grayscale color.
-    Color!ubyte grayscaleColor() @safe nothrow pure inout
-    {
-        return grayscale(this.toGrayscale());
-    }
-
     ///Converts color to monochrome. In particular, it will return a luminance number between 0 and 1.
     float toGrayscalef() @safe nothrow pure inout
     {
@@ -604,13 +629,13 @@ struct Color(T)
     {
         import std.conv : to;
     
-        return "\x1b[38;2;"~red.to!string~";"~green.to!string~";"~blue.to!string~"m" ~ this.to!string ~ "\u001b[0m";
+        return "\x1b[38;2;"~red.to!string~";"~green.to!string~";"~blue.to!string~"m" ~ stringComponents() ~ "\u001b[0m";
     }
     
     ///
-    string toString() @safe nothrow
+    string toString() @safe
     {
-        return this.to!string;
+        return stringComponents();
     }
 
     ///
@@ -632,41 +657,6 @@ struct Color(T)
             return [b,g,r];
         else
             return [];
-    }
-
-    /++
-        Colors the color.
-
-        Params:
-            blending = Whether to apply alpha blending.
-            color = Mixed color.
-    +/
-    Color!T colorize(ubyte blending)(Color!T color) @safe nothrow pure
-    {
-        import std.math : abs;
-
-        static if(blending == NoAlpha)
-        {
-            r = cast(T) (color.rf * this.rf * T.max);
-            g = cast(T) (color.gf * this.gf * T.max);
-            b = cast(T) (color.bf * this.bf * T.max);
-        }else
-        static if(blending == Alpha)
-        {
-            r = cast(T) (((r * a) + (color.r * (T.max - a))) / T.max);
-            g = cast(T) (((g * a) + (color.g * (T.max - a))) / T.max);
-            b = cast(T) (((b * a) + (color.b * (T.max - a))) / T.max);
-
-            a = T.max;
-        }
-
-        return this;
-    }
-
-    /// ditto
-    Color!T colorized(ubyte blending)(Color!T color) @safe nothrow pure inout
-    {
-        return dup.colorize!blending(color);
     }
 
     auto mulf(float koe) @safe nothrow pure
@@ -695,78 +685,618 @@ struct Color(T)
         return Color!T(r, g, b, a);
     }
 
-    Color!T opBinary(string op)(float koe) @safe nothrow pure inout
+    Color!T opBinary(string op)(float koe) @safe nothrow pure
     {
         import std.conv : to;
 
+        static if(op == "+")
+            return Color!T( cast(T) (r + koe),
+                            cast(T) (g + koe),
+                            cast(T) (b + koe),
+                            cast(T) (a + koe));
+        else
+        static if(op == "-")
+            return Color!T( cast(T) (r - koe),
+                            cast(T) (g - koe),
+                            cast(T) (b - koe),
+                            cast(T) (a - koe));
+        else
         static if(op == "*")
-            return Color!T( cast(T) (r.to!float * koe),
-                            cast(T) (g.to!float * koe),
-                            cast(T) (b.to!float * koe),
-                            a);
+            return Color!T( cast(T) (r * koe),
+                            cast(T) (g * koe),
+                            cast(T) (b * koe),
+                            cast(T) (a * koe));
         else
         static if(op == "/")
-            return Color!T( cast(T) (r.to!float / koe),
-                            cast(T) (g.to!float / koe),
-                            cast(T) (b.to!float / koe),
-                            a);
+            return Color!T( cast(T) (r / koe),
+                            cast(T) (g / koe),
+                            cast(T) (b / koe),
+                            cast(T) (a / koe));
         else
             static assert(0, "Operator `" ~ op ~ "` not implemented.");
     }
 
-    Color!T opBinary(string op)(Color!ubyte color) @safe nothrow pure inout
+    Color!T opBinary(string op)(Color!T color) @safe nothrow pure
     {
         static if(op == "+") {
             return Color!T( cast(T) (r + color.r),
                             cast(T) (g + color.g),
-                            cast(T) (b + color.b));
+                            cast(T) (b + color.b),
+                            cast(T) (a + color.a));
         }
         else
         static if(op == "-")
             return Color!T( cast(T) (r - color.r),
                             cast(T) (g - color.g),
-                            cast(T) (b - color.b));
+                            cast(T) (b - color.b),
+                            cast(T) (a - color.a));
         else
         static if(op == "*")
-            return color.colorize!NoAlpha(this);
+            return Color!T( cast(T) r * color.r,
+                                    g * color.g,
+                                    b * color.b,
+                                    a * color.a);
         else
         static if(op == "/")
-            return Color!T( (color.rf / this.rf) * T.max,
-                            (color.gf / this.gf) * T.max,
-                            (color.bf / this.bf) * T.max);
+            return Color!T( cast(T) r / color.r,
+                                    g / color.g,
+                                    b / color.b,
+                                    a / color.a);
         else
             static assert(0, "Operator `" ~ op ~ "` not implemented.");
     }
 
     /// Will return the color opposite to itself.
-    Color!T inverted() @safe nothrow pure inout
+    Color!T inverted() @safe nothrow pure
     {
-        return Color!T(r ^ T.max, g ^ T.max, b ^ T.max, a);
+        return Color!T(T.max - r, T.max - g, T.max - b, a);
+    }
+
+    T invertAlpha() @safe nothrow pure inout
+    {
+        return T.max - alpha;
     }
 
     /// Returns a red value in the form of a range from 0 to 1.
-    float rf() @safe nothrow pure inout
+    float rf() @safe @property nothrow pure inout
     {
         return cast(float) r / cast(float) T.max;
     }
 
+    void rf(float value) @safe @property nothrow pure
+    {
+        this.r = cast(T) (T.max * value);
+    }
+
     /// Returns a green value in the form of a range from 0 to 1.
-    float gf() @safe nothrow pure inout
+    float gf() @safe @property nothrow pure inout
     {
         return cast(float) g / cast(float) T.max;
     }
 
+    void gf(float value) @safe @property nothrow pure
+    {
+        this.g = cast(T) (T.max * value);
+    }
+
     /// Returns a alpha value in the form of a range from 0 to 1.
-    float bf() @safe nothrow pure inout
+    float bf() @safe @property nothrow pure inout
     {
         return cast(float) b / cast(float) T.max;
     }
 
+    void bf(float value) @safe @property nothrow pure
+    {
+        this.b = cast(T) (T.max * value);
+    }
+
     /// Returns a alpha value in the form of a range from 0 to 1.
-    float af() @safe nothrow pure inout
+    float af() @safe @property nothrow pure inout
     {
         return cast(float) a / cast(float) T.max;
     }
+
+    void af(float value) @safe @property nothrow pure
+    {
+        this.a = cast(T) (T.max * value);
+    }
+}
+
+alias FInterim = float;
+
+template isInterim(T)
+{
+    enum isInterim = is(T : FInterim);
+}
+
+Color!FInterim toInterim(T)(Color!T color) @safe nothrow pure
+{
+    return Color!FInterim(color.rf, color.gf, color.bf, color.af);
+}
+
+Color!T fromInterim(T)(Color!FInterim color) @safe nothrow pure
+{
+    return Color!T  (
+                        cast(T) (color.r * T.max),
+                        cast(T) (color.g * T.max),
+                        cast(T) (color.b * T.max),
+                        cast(T) (color.a * T.max)
+                    );
+}
+
+Color!T mix(T)(Color!T orig, Color!T color) @safe nothrow pure
+{
+    Color!T result;
+
+    result.rf = (color.rf * orig.rf * T.max);
+    result.gf = (color.gf * orig.gf * T.max);
+    result.bf = (color.bf * orig.bf * T.max);
+
+    return result;
+}
+
+enum BlendFactor
+{
+    Zero,
+    One,
+    SrcColor,
+    OneMinusSrcColor,
+    DstColor,
+    OneMinusDstColor,
+    SrcAlpha,
+    OneMinusSrcAlpha,
+    DstAlpha,
+    OneMinusDstAlpha,
+    ConstantColor,
+    OneMinusConstantColor,
+    ConstantAlpha,
+    OneMinusConstanceAlpha
+}
+
+int factorGL(BlendFactor factor) @safe nothrow pure
+{
+    import tida.graph.gl;
+
+    if(factor == BlendFactor.Zero) 
+        return GL_ZERO;
+    else
+    if(factor == BlendFactor.One)
+        return GL_ONE;
+    else
+    if(factor == BlendFactor.SrcColor)
+        return GL_SRC_COLOR;
+    else
+    if(factor == BlendFactor.OneMinusSrcColor)
+        return GL_ONE_MINUS_SRC_COLOR;
+    else
+    if(factor == BlendFactor.DstColor)
+        return GL_DST_COLOR;
+    else
+    if(factor == BlendFactor.OneMinusDstColor)
+        return GL_ONE_MINUS_DST_COLOR;
+    else
+    if(factor == BlendFactor.SrcAlpha)
+        return GL_SRC_ALPHA;
+    else
+    if(factor == BlendFactor.OneMinusSrcAlpha)
+        return GL_ONE_MINUS_SRC_ALPHA;
+    else
+    if(factor == BlendFactor.DstAlpha)
+        return GL_DST_ALPHA;
+    else
+    if(factor == BlendFactor.OneMinusDstAlpha)
+        return GL_ONE_MINUS_DST_ALPHA;
+
+    assert(0, "Unknown blend factor!");
+}
+
+Color!T BlendImpl(int fac1, int fac2, T)(Color!T orig, Color!T color) @safe nothrow pure
+{
+    if(orig.a == 0) return color;
+    if(orig.a == T.max) return orig;
+
+    Color!FInterim origf = orig.toInterim;
+    Color!FInterim colorf = color.toInterim;
+
+    Color!FInterim srcf, drtf;
+
+    // Factory 1
+    static if(fac1 == BlendFactor.Zero)
+        srcf = Color!FInterim(0.0f, 0.0f, 0.0f, 0.0f);
+    else
+    static if(fac1 == BlendFactor.One)
+        srcf = Color!FInterim(1.0f, 1.0f, 1.0f, 1.0f);
+    else
+    static if(fac1 == BlendFactor.SrcColor)
+        srcf = Color!FInterim(origf.r, origf.g, origf.b, 1.0f);
+    else
+    static if(fac1 == BlendFactor.OneMinusSrcAlpha)
+        srcf = Color!FInterim(1.0f - origf.r, 1.0f - origf.g, 1.0f - origf.b, 1.0f);
+    else
+    static if(fac1 == BlendFactor.DstColor)
+        srcf = Color!FInterim(colorf.r, colorf.g, colorf.b, 1.0f);
+    else
+    static if(fac1 == BlendFactor.OneMinusDstColor)
+        srcf = Color!FInterim(1.0f - colorf.r, 1.0f - colorf.g, 1.0f - colorf.b, 1.0f);
+    else
+    static if(fac1 == BlendFactor.SrcAlpha)
+        srcf = Color!FInterim(origf.a, origf.a, origf.a, origf.a);
+    else
+    static if(fac1 == BlendFactor.OneMinusSrcAlpha)
+        srcf = Color!FInterim(1.0f - origf.a, 1.0f - origf.a, 1.0f - origf.a, 1.0f - origf.a);
+    else
+    static if(fac1 == BlendFactor.DstAlpha)
+        srcf = Color!FInterim(colorf.a, colorf.a, colorf.a, colorf.a);
+    else
+    static if(fac1 == BlendFactor.OneMinusDstAlpha)
+        srcf = Color!FInterim(1.0f - colorf.a, 1.0f - colorf.a, 1.0f - colorf.a, 1.0f - colorf.a);
+
+    // Factory 2
+    static if(fac2 == BlendFactor.Zero)
+        drtf = Color!FInterim(0.0f, 0.0f, 0.0f, 0.0f);
+    else
+    static if(fac2 == BlendFactor.One)
+        drtf = Color!FInterim(1.0f, 1.0f, 1.0f, 1.0f);
+    else
+    static if(fac2 == BlendFactor.SrcColor)
+        drtf = Color!FInterim(origf.r, origf.g, origf.b, 1.0f);
+    else
+    static if(fac2 == BlendFactor.OneMinusSrcAlpha)
+        drtf = Color!FInterim(1.0f - origf.r, 1.0f - origf.g, 1.0f - origf.b, 1.0f);
+    else
+    static if(fac2 == BlendFactor.DstColor)
+        drtf = Color!FInterim(colorf.r, colorf.g, colorf.b, 1.0f);
+    else
+    static if(fac2 == BlendFactor.OneMinusDstColor)
+        drtf = Color!FInterim(1.0f - colorf.r, 1.0f - colorf.g, 1.0f - colorf.b, 1.0f);
+    else
+    static if(fac2 == BlendFactor.SrcAlpha)
+        drtf = Color!FInterim(origf.a, origf.a, origf.a, origf.a);
+    else
+    static if(fac2 == BlendFactor.OneMinusSrcAlpha)
+        drtf = Color!FInterim(1.0f - origf.a, 1.0f - origf.a, 1.0f - origf.a, 1.0f - origf.a);
+    else
+    static if(fac2 == BlendFactor.DstAlpha)
+        drtf = Color!FInterim(colorf.a, colorf.a, colorf.a, colorf.a);
+    else
+    static if(fac2 == BlendFactor.OneMinusDstAlpha)
+        drtf = Color!FInterim(1.0f - colorf.a, 1.0f - colorf.a, 1.0f - colorf.a, 1.0f - colorf.a);
+
+    return fromInterim!T ((origf * srcf) + (colorf * drtf));
+}
+
+alias BlendAlpha(T) = BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcAlpha, T);
+alias BlendAdd(T) = BlendImpl!(BlendFactor.One, BlendFactor.One, T);
+alias BlendMultiply(T) = BlendImpl!(BlendFactor.DstColor, BlendFactor.Zero, T);
+alias BlendSrc2DST(T) = BlendImpl!(BlendFactor.SrcColor, BlendFactor.One, T);
+alias BlendAddMul(T) = BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.One, T);
+alias BlendAddAlpha(T) = BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.One, T);
+
+alias FuncBlend(T) = Color!T function(Color!T,Color!T) @safe nothrow pure;
+
+FuncBlend!T BlendFunc(T)(int fac1, int fac2) @trusted nothrow pure
+{
+    if(fac1 == BlendFactor.Zero) {
+        if(fac2 == BlendFactor.Zero) 
+            return &BlendImpl!(BlendFactor.Zero, BlendFactor.Zero, T);
+        else
+        if(fac2 == BlendFactor.One)
+            return &BlendImpl!(BlendFactor.Zero, BlendFactor.One, T);
+        else
+        if(fac2 == BlendFactor.SrcColor)
+            return &BlendImpl!(BlendFactor.Zero, BlendFactor.SrcColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcColor)
+            return &BlendImpl!(BlendFactor.Zero, BlendFactor.OneMinusSrcColor, T);
+        else
+        if(fac2 == BlendFactor.DstColor)
+            return &BlendImpl!(BlendFactor.Zero, BlendFactor.DstColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstColor)
+            return &BlendImpl!(BlendFactor.Zero, BlendFactor.OneMinusDstColor, T);
+        else
+        if(fac2 == BlendFactor.SrcAlpha)
+            return &BlendImpl!(BlendFactor.Zero, BlendFactor.SrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+            return &BlendImpl!(BlendFactor.Zero, BlendFactor.OneMinusSrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.DstAlpha)
+            return &BlendImpl!(BlendFactor.Zero, BlendFactor.DstAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstAlpha)
+            return &BlendImpl!(BlendFactor.Zero, BlendFactor.OneMinusDstAlpha, T);
+    }else
+    if(fac1 == BlendFactor.One)
+    {
+        if(fac2 == BlendFactor.Zero) 
+            return &BlendImpl!(BlendFactor.One, BlendFactor.Zero, T);
+        else
+        if(fac2 == BlendFactor.One)
+            return &BlendImpl!(BlendFactor.One, BlendFactor.One, T);
+        else
+        if(fac2 == BlendFactor.SrcColor)
+            return &BlendImpl!(BlendFactor.One, BlendFactor.SrcColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcColor)
+            return &BlendImpl!(BlendFactor.One, BlendFactor.OneMinusSrcColor, T);
+        else
+        if(fac2 == BlendFactor.DstColor)
+            return &BlendImpl!(BlendFactor.One, BlendFactor.DstColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstColor)
+            return &BlendImpl!(BlendFactor.One, BlendFactor.OneMinusDstColor, T);
+        else
+        if(fac2 == BlendFactor.SrcAlpha)
+            return &BlendImpl!(BlendFactor.One, BlendFactor.SrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+            return &BlendImpl!(BlendFactor.One, BlendFactor.OneMinusSrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.DstAlpha)
+            return &BlendImpl!(BlendFactor.One, BlendFactor.DstAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstAlpha)
+            return &BlendImpl!(BlendFactor.One, BlendFactor.OneMinusDstAlpha, T);
+    }else
+    if(fac1 == BlendFactor.SrcColor)
+    {
+        if(fac2 == BlendFactor.Zero) 
+            return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.Zero, T);
+        else
+        if(fac2 == BlendFactor.One)
+            return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.One, T);
+        else
+        if(fac2 == BlendFactor.SrcColor)
+            return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.SrcColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcColor)
+            return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.OneMinusSrcColor, T);
+        else
+        if(fac2 == BlendFactor.DstColor)
+            return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.DstColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstColor)
+            return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.OneMinusDstColor, T);
+        else
+        if(fac2 == BlendFactor.SrcAlpha)
+            return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.SrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+            return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.OneMinusSrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.DstAlpha)
+            return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.DstAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstAlpha)
+            return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.OneMinusDstAlpha, T);
+    }else
+    if(fac1 == BlendFactor.OneMinusSrcColor)
+    {
+        if(fac2 == BlendFactor.Zero) 
+            return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.Zero, T);
+        else
+        if(fac2 == BlendFactor.One)
+            return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.One, T);
+        else
+        if(fac2 == BlendFactor.SrcColor)
+            return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.SrcColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcColor)
+            return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.OneMinusSrcColor, T);
+        else
+        if(fac2 == BlendFactor.DstColor)
+            return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.DstColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstColor)
+            return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.OneMinusDstColor, T);
+        else
+        if(fac2 == BlendFactor.SrcAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.SrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.OneMinusSrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.DstAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.DstAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.OneMinusDstAlpha, T);
+    }else
+    if(fac1 == BlendFactor.DstColor)
+    {
+        if(fac2 == BlendFactor.Zero) 
+            return &BlendImpl!(BlendFactor.DstColor, BlendFactor.Zero, T);
+        else
+        if(fac2 == BlendFactor.One)
+            return &BlendImpl!(BlendFactor.DstColor, BlendFactor.One, T);
+        else
+        if(fac2 == BlendFactor.SrcColor)
+            return &BlendImpl!(BlendFactor.DstColor, BlendFactor.SrcColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcColor)
+            return &BlendImpl!(BlendFactor.DstColor, BlendFactor.OneMinusSrcColor, T);
+        else
+        if(fac2 == BlendFactor.DstColor)
+            return &BlendImpl!(BlendFactor.DstColor, BlendFactor.DstColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstColor)
+            return &BlendImpl!(BlendFactor.DstColor, BlendFactor.OneMinusDstColor, T);
+        else
+        if(fac2 == BlendFactor.SrcAlpha)
+            return &BlendImpl!(BlendFactor.DstColor, BlendFactor.SrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+            return &BlendImpl!(BlendFactor.DstColor, BlendFactor.OneMinusSrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.DstAlpha)
+            return &BlendImpl!(BlendFactor.DstColor, BlendFactor.DstAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstAlpha)
+            return &BlendImpl!(BlendFactor.DstColor, BlendFactor.OneMinusDstAlpha, T);
+    }else
+    if(fac1 == BlendFactor.OneMinusDstColor)
+    {
+        if(fac2 == BlendFactor.Zero) 
+            return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.Zero, T);
+        else
+        if(fac2 == BlendFactor.One)
+            return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.One, T);
+        else
+        if(fac2 == BlendFactor.SrcColor)
+            return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.SrcColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcColor)
+            return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.OneMinusSrcColor, T);
+        else
+        if(fac2 == BlendFactor.DstColor)
+            return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.DstColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstColor)
+            return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.OneMinusDstColor, T);
+        else
+        if(fac2 == BlendFactor.SrcAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.SrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.OneMinusSrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.DstAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.DstAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.OneMinusDstAlpha, T);
+    }else
+    if(fac1 == BlendFactor.SrcAlpha)
+    {
+        if(fac2 == BlendFactor.Zero) 
+            return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.Zero, T);
+        else
+        if(fac2 == BlendFactor.One)
+            return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.One, T);
+        else
+        if(fac2 == BlendFactor.SrcColor)
+            return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.SrcColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcColor)
+            return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcColor, T);
+        else
+        if(fac2 == BlendFactor.DstColor)
+            return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.DstColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstColor)
+            return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.OneMinusDstColor, T);
+        else
+        if(fac2 == BlendFactor.SrcAlpha)
+            return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.SrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+            return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.DstAlpha)
+            return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.DstAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstAlpha)
+            return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.OneMinusDstAlpha, T);
+    }else
+    if(fac1 == BlendFactor.OneMinusSrcAlpha)
+    {
+        if(fac2 == BlendFactor.Zero) 
+            return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.Zero, T);
+        else
+        if(fac2 == BlendFactor.One)
+            return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.One, T);
+        else
+        if(fac2 == BlendFactor.SrcColor)
+            return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.SrcColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcColor)
+            return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.OneMinusSrcColor, T);
+        else
+        if(fac2 == BlendFactor.DstColor)
+            return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.DstColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstColor)
+            return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.OneMinusDstColor, T);
+        else
+        if(fac2 == BlendFactor.SrcAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.SrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.OneMinusSrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.DstAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.DstAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.OneMinusDstAlpha, T);
+    }else
+    if(fac1 == BlendFactor.DstAlpha)
+    {
+        if(fac2 == BlendFactor.Zero) 
+            return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.Zero, T);
+        else
+        if(fac2 == BlendFactor.One)
+            return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.One, T);
+        else
+        if(fac2 == BlendFactor.SrcColor)
+            return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.SrcColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcColor)
+            return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.OneMinusSrcColor, T);
+        else
+        if(fac2 == BlendFactor.DstColor)
+            return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.DstColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstColor)
+            return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.OneMinusDstColor, T);
+        else
+        if(fac2 == BlendFactor.SrcAlpha)
+            return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.SrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+            return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.OneMinusSrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.DstAlpha)
+            return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.DstAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstAlpha)
+            return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.OneMinusDstAlpha, T);
+    }else
+    if(fac1 == BlendFactor.OneMinusDstAlpha)
+    {
+        if(fac2 == BlendFactor.Zero) 
+            return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.Zero, T);
+        else
+        if(fac2 == BlendFactor.One)
+            return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.One, T);
+        else
+        if(fac2 == BlendFactor.SrcColor)
+            return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.SrcColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcColor)
+            return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.OneMinusSrcColor, T);
+        else
+        if(fac2 == BlendFactor.DstColor)
+            return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.DstColor, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstColor)
+            return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.OneMinusDstColor, T);
+        else
+        if(fac2 == BlendFactor.SrcAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.SrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.OneMinusSrcAlpha, T);
+        else
+        if(fac2 == BlendFactor.DstAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.DstAlpha, T);
+        else
+        if(fac2 == BlendFactor.OneMinusDstAlpha)
+            return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.OneMinusDstAlpha, T);
+    }
+
+    assert(null, "Unknown blend factor's!");
 }
 
 unittest

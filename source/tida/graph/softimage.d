@@ -31,6 +31,7 @@ class SoftImage : IPlane
         int yput;
 
         BlendMode bmode;
+        BlendFactor[2] sdfactor;
     }
 
     this(Image img) @safe
@@ -70,6 +71,16 @@ class SoftImage : IPlane
     override void blendMode(BlendMode mode) @safe @property
     {
         bmode = mode;
+    }
+
+    override void blendOperation(BlendFactor sfactor, BlendFactor dfactor) @safe
+    {
+        sdfactor = [sfactor, dfactor];
+    }
+
+    override BlendFactor[2] blendOperation() @safe
+    {
+        return sdfactor;
     }
 
     override ubyte[] data() @safe @property

@@ -131,6 +131,9 @@ interface IRenderer
     /// Set the coloring method. Those. with or without alpha blending.
     void blendMode(BlendMode mode) @safe;
 
+    /// Set factor blend
+    void blendOperation(BlendFactor sfactor, BlendFactor dfactor) @safe;
+
     /// The color to fill when clearing.
     void background(Color!ubyte background) @safe @property;
 
@@ -888,10 +891,39 @@ class GLRender : IRenderer
         }
     }
 
+    override void blendOperation(BlendFactor sfactor, BlendFactor dfactor) @trusted
+    {
+        glBlendFunc(factorGL(sfactor), factorGL(dfactor));
+    }
+
     override RenderType type() @safe
     {
         return _type;
     }
+}
+
+struct GL_WindowPixelsData
+{
+    ubyte[] data;
+    uint w, h;
+}
+
+GL_WindowPixelsData GL_readPixels(int pixelformat)(IWindow win, int w = 0, int h = 0, int posX = 0, int posY = 0) @trusted
+{
+    import tida.graph.gl, tida.color;
+    import std.algorithm : reverse;
+
+    if(w == 0) w = win.width;
+    if(h == 0) h = win.height;
+
+    GL_WindowPixelsData data;
+    data.data = new ubyte[](w * h * BytesPerColor!pixelformat);
+    data.w = w;
+    data.h = h;
+
+    glReadPixels(posX, posY, w, h, pixelformatGL(cast(PixelFormat) pixelformat), GL_UNSIGNED_BYTE, &data.data[0]);
+
+    return data;
 }
 
 alias ICanvas = IPlane; /// Inteface Canvas
@@ -932,7 +964,14 @@ interface IPlane
     /++
         Set the color mixing mode.
     +/
-    void blendMode(BlendMode mode) @safe @property;
+    void blendMode(BlendMode mode) @safe;
+
+    /++
+
+    +/
+    void blendOperation(BlendFactor sfactor, BlendFactor dfactor) @safe;
+
+    BlendFactor[2] blendOperation() @safe;
 
     /++
         Draw a point on the canvas.
@@ -974,9 +1013,14 @@ interface IPlane
     Params:
         pixelformat = Pixel Format.
 +/
-template PointToImpl(int pixelformat)
+template PointToImpl(int pixelformat, int BPC = 0)
 {
     static assert(isCorrectFormat!pixelformat);
+
+    static if(BPC == 0)
+        enum BytPer = BytesPerColor!pixelformat;
+    else
+        enum BytPer = BPC;
 
     override void pointTo(Vecf position, Color!ubyte color) @trusted
     {
@@ -990,30 +1034,35 @@ template PointToImpl(int pixelformat)
         int h = _height / _pheight + 1;
 
         position = position / vecf(scaleWidth, scaleHeight);
-        Color!ubyte original = color;
+        
         foreach(ix, iy; Coord(  position.intX + w, position.intY + h,
                                 position.intX, position.intY))
         {
             if(ix >= _width || iy >= _height || ix < 0 || iy < 0) continue;
-            immutable pos = ((iy * _width) + ix) * BytesPerColor!pixelformat;
+            immutable pos = ((iy * _width) + ix) * BytPer;
 
             if(bmode == BlendMode.Blend) {
+                Color!ubyte blendcolor;
+
                 static if(pixelformat == PixelFormat.BGRA)
                 {
-                    color.colorize!Alpha(rgba(buffer[pos+3],buffer[pos+2],buffer[pos+1],buffer[pos]));
+                    blendcolor = rgba(buffer[pos+3],buffer[pos+2],buffer[pos+1],buffer[pos]);
                 }else
                 static if(pixelformat == PixelFormat.BGR)
                 {
-                    color.colorize!Alpha(rgba(buffer[pos+2],buffer[pos+1],buffer[pos],255));
+                    blendcolor = rgba(buffer[pos+2],buffer[pos+1],buffer[pos],255);
                 }else
                 static if(pixelformat == PixelFormat.RGBA)
                 {
-                    color.colorize!Alpha(rgba(buffer[pos],buffer[pos+1],buffer[pos+2],buffer[pos+3]));
+                    blendcolor = rgba(buffer[pos],buffer[pos+1],buffer[pos+2],buffer[pos+3]);
                 }else
                 static if(pixelformat == PixelFormat.RGB)
                 {
-                    color.colorize!Alpha(rgba(buffer[pos],buffer[pos+1],buffer[pos+2],255));
+                    blendcolor = rgba(buffer[pos],buffer[pos+1],buffer[pos+2],255);
                 }
+
+                BlendFactor[2] factors = blendOperation();
+                color = BlendFunc!ubyte(factors[0], factors[1])(color, blendcolor);
             }
 
             if(pos < buffer.length)
@@ -1073,6 +1122,7 @@ class Plane : IPlane
         uint yput;
 
         bool _isAlloc = true;
+        BlendFactor[2] sdfactor;
     }
 
     this(tida.window.Window window,bool isAlloc = true) @trusted
@@ -1149,12 +1199,22 @@ class Plane : IPlane
         }
     }
 
-    override void blendMode(BlendMode mode) @safe @property
+    override void blendMode(BlendMode mode) @safe
     {
         bmode = mode;
     }
 
-    mixin PointToImpl!(PixelFormat.BGRA);
+    override void blendOperation(BlendFactor sfactor, BlendFactor dfactor) @safe
+    {
+        sdfactor = [sfactor, dfactor];
+    }
+
+    override BlendFactor[2] blendOperation() @safe
+    {
+        return sdfactor;
+    }
+
+    mixin PointToImpl!(PixelFormat.BGR, 4);
 }
 
 version(Windows)
@@ -1182,6 +1242,8 @@ class Plane : IPlane
         int _pheight;
         int xput;
         int yput;
+
+        BlendFactor[2] sdfactor;
 
         bool _isAlloc = true;
     }
@@ -1260,6 +1322,16 @@ class Plane : IPlane
         bmode = mode;
     }
 
+    override void blendOperation(BlendFactor sfactor, BlendFactor dfactor) @safe
+    {
+        sdfactor = [sfactor, dfactor];
+    }
+
+    override BlendFactor[2] blendOperation() @safe
+    {
+        return sdfactor;
+    }
+
     mixin PointToImpl!(PixelFormat.BGR);
 }
 
@@ -1305,6 +1377,7 @@ class Software : IRenderer
         }
 
         plane.blendMode(BlendMode.Blend);
+        plane.blendOperation(BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcAlpha);
 
         reshape();
     }
@@ -1609,6 +1682,11 @@ class Software : IRenderer
     override void blendMode(BlendMode mode) @safe
     {
         plane.blendMode(mode);
+    }
+
+    override void blendOperation(BlendFactor sfactor, BlendFactor dfactor) @safe
+    {
+        plane.blendOperation(sfactor, dfactor);
     }
 
     IPlane getPlane() @safe

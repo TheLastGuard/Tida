@@ -508,7 +508,7 @@ class Image : IDrawable, IDrawableEx, IDrawableColor
             {
                 auto pixel = getPixel(x,y);
 
-                pixel.colorize!NoAlpha(color);
+                pixel = pixel.mix(color);
 
                 renderer.point(Vecf(position.intX + x,position.intY + y),pixel);
             }
@@ -605,7 +605,7 @@ do
         image = Image.
         path = Path to the file.
 +/
-void saveImageFromFile(Image image,string path) @trusted
+void saveImageInFile(Image image,string path) @trusted
 {
     import imagefmt;
     import tida.color;
