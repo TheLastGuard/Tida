@@ -280,6 +280,12 @@ interface IWindow
         (This is needed for events when the window is resized).
     +/ 
     void eventResize(uint[2] size) @safe;
+
+    /// A window state variable for when the window can permanently overlap other windows.
+    void alwaysTop(bool value) @safe @property;
+
+    /// ditto
+    bool alwaysTop() @safe @property;
 }
 
 version(Posix)
@@ -397,6 +403,7 @@ class Window : IWindow
         bool _fullscreen;
         bool _border;
         bool _resizable;
+        bool _alwaysTop;
 
         IContext _context;
 
@@ -732,6 +739,32 @@ class Window : IWindow
         _height = size[1];
     }
 
+    override void alwaysTop(bool value) @trusted @property
+    {
+        XEvent event;
+        event.xclient.type = ClientMessage;
+        event.xclient.serial = 0;
+        event.xclient.send_event = true;
+        event.xclient.display = runtime.display;
+        event.xclient.window = window;
+        event.xclient.message_type = getAtom("_NET_WM_STATE");
+        event.xclient.format = 32;
+        event.xclient.data.l[0] = value;
+        event.xclient.data.l[1] = getAtom("_NET_WM_STATE_ABOVE");
+        event.xclient.data.l[2 .. 5] = 0;
+
+        XSendEvent( runtime.display, runtime.rootWindow, false, SubstructureRedirectMask | SubstructureNotifyMask,
+                    &event);
+        XFlush(runtime.display);
+
+        _alwaysTop = value;
+    }
+
+    override bool alwaysTop() @safe @property
+    {
+        return _alwaysTop;
+    }
+
     /++
         Returns: the identifier of the window.
     +/
@@ -914,6 +947,7 @@ class Window : IWindow
         bool _fullscreen;
         bool _border;
         bool _resizable;
+        bool _alwaysTop;
 
         IContext _context;
 
@@ -1252,6 +1286,17 @@ class Window : IWindow
     {
         _width = size[0];
         _height = size[1];
+    }
+
+    override void alwaysTop(bool value) @trusted
+    {
+        SetWindowPos(window, value ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        _alwaysTop = value;
+    }
+
+    override bool alwaysTop() @safe @property
+    {
+        return _alwaysTop;
     }
 
     /// Returns: Window structure point

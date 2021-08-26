@@ -11,7 +11,7 @@ class Main : Scene
     this() @trusted
     {
         tilemap = new TileMap();
-        tilemap.load("test.json");
+        tilemap.load("test.tmx");
         tilemap.setup();
         renderer.background = tilemap.mapinfo.backgroundColor;
     }

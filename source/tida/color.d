@@ -831,6 +831,7 @@ Color!T mix(T)(Color!T orig, Color!T color) @safe nothrow pure
     result.rf = (color.rf * orig.rf * T.max);
     result.gf = (color.gf * orig.gf * T.max);
     result.bf = (color.bf * orig.bf * T.max);
+    result.a = T.max;
 
     return result;
 }

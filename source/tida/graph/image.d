@@ -774,7 +774,7 @@ Image unite(int Type = DefaultOperation)(Image a,Image b,Vecf posA = Vecf(0,0),V
     {
         Color!ubyte color = b.getPixel(x - posB.x.to!int, y - posB.y.to!int);
         Color!ubyte backColor = result.getPixel(x, y);
-        color.colorize!Alpha(backColor);
+        color.BlendAlpha!ubyte(backColor);
         result.setPixel(x,y,color);
     }
 

@@ -1332,7 +1332,7 @@ class Plane : IPlane
         return sdfactor;
     }
 
-    mixin PointToImpl!(PixelFormat.BGR);
+    mixin PointToImpl!(PixelFormat.BGR, 4);
 }
 
 /++
