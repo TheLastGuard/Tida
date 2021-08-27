@@ -65,8 +65,8 @@ struct Object
 {
     int id; /// Unique idencificator
     int gid; /// The identifier to the picture in the tile.
-    int x, y; /// Coordinates
-    int width, height; /// Size object.
+    float x, y; /// Coordinates
+    float width, height; /// Size object.
 }
 
 /// A group of objects.
@@ -80,8 +80,8 @@ class ObjectGroup
         Property[] properties; /// Object group properties.
         Object[] objects; /// Objects.
         bool visible = true; /// Is visible group
-        int x, /// position
-            y; /// ditto
+        float   x, /// position
+                y; /// ditto
     }
 }
 
@@ -377,8 +377,8 @@ class ImageLayer : IDrawable
     {
         int id; /// Unique identificator.
         string name; /// Layer name
-        int offsetx, /// Layer offset. (position) 
-            offsety; /// Layer offset. (position)
+        float   offsetx, /// Layer offset. (position) 
+                offsety; /// Layer offset. (position)
         Image image; /// Layer picture.
         string imagesource; /// Path to the file.
         int x, /// x 
@@ -390,22 +390,22 @@ class ImageLayer : IDrawable
     }
 
     /// Reading data from a document element.
-    void parse(R)(R data) @safe
+    void parse(R, string nameof)(R data) @safe
     {
-        if(data.name == "imagelayer")
+        static if(nameof == "imagelayer")
         {
             foreach(attrib; data.attributes)
             {
                 if(attrib.name == "id") id = attrib.value.to!int;
                 if(attrib.name == "name") name = attrib.value;
-                if(attrib.name == "offsetx") offsetx = attrib.value.to!int;
-                if(attrib.name == "offsety") offsety = attrib.value.to!int;
+                if(attrib.name == "offsetx") offsetx = attrib.value.to!float;
+                if(attrib.name == "offsety") offsety = attrib.value.to!float;
                 if(attrib.name == "opacity") opacity = attrib.value.to!float;
                 if(attrib.name == "visible") visible = attrib.value.to!int == 1;
                 if(attrib.name == "tintcolor") tintcolor = HEX(attrib.value);
             }
         }else
-        if(data.name == "image")
+        static if(nameof == "image")
         {
             image = new Image();
             foreach(attrib; data.attributes) {
@@ -537,21 +537,21 @@ class TileMap : IDrawable
                         foreach(attrib; element.attributes) {
                             if(attrib.name == "id") obj.id = attrib.value.to!int;
                             if(attrib.name == "gid") obj.gid = attrib.value.to!int;
-                            if(attrib.name == "x") obj.x = attrib.value.to!int;
-                            if(attrib.name == "y") obj.y = attrib.value.to!int;
-                            if(attrib.name == "width") obj.width = attrib.value.to!int;
-                            if(attrib.name == "height") obj.height = attrib.value.to!int;
+                            if(attrib.name == "x") obj.x = attrib.value.to!float;
+                            if(attrib.name == "y") obj.y = attrib.value.to!float;
+                            if(attrib.name == "width") obj.width = attrib.value.to!float;
+                            if(attrib.name == "height") obj.height = attrib.value.to!float;
                         }
 
                         currentGroup.objects ~= obj;
                     }else
                     if(element.name == "imagelayer") {
                         currentImage = new ImageLayer();
-                        currentImage.parse(element);
+                        currentImage.parse!(typeof(element), "imagelayer")(element);
                     }else
                     if(element.name == "image") {
                         isimage = true;
-                        if(currentImage !is null) currentImage.parse(element);
+                        if(currentImage !is null) currentImage.parse!(typeof(element), "image")(element);
                     }
                 }else
                 if(element.type == EntityType.elementEnd) {
@@ -582,7 +582,8 @@ class TileMap : IDrawable
                         currentLayer.data.parse!(typeof(element),Type)(element, mapinfo.compressionlevel);
                     }else
                     if(isimage) {
-                        currentImage.parse(element);
+                        if(currentImage !is null)
+                            currentImage.parse!(typeof(element),"image")(element);
                     }
                 }
             }
@@ -704,9 +705,16 @@ class TileMap : IDrawable
         }
     }
 
+    public
+    {
+        IDrawable[] drawableSort;
+    }
+
     /// Prepare layers for work.
     void setup() @safe
     {
+        import std.algorithm : sort;
+
         foreach(e; tilesets) {
             e.setup();
         }
@@ -714,6 +722,15 @@ class TileMap : IDrawable
         foreach(e; layers) {
             e.setup();
         }
+
+        struct SortLayerStruct { IDrawable obj; int id; }
+        SortLayerStruct[] list;
+        foreach(e; layers) list ~= SortLayerStruct(e, e.id);
+        foreach(e; imagelayers) list ~= SortLayerStruct(e, e.id);
+
+        sort!((a,b) => a.id > b.id)(list);
+
+        foreach(e; list) drawableSort ~= e.obj;
     }
 
     ///
@@ -747,10 +764,6 @@ class TileMap : IDrawable
 
     override void draw(IRenderer render, Vecf position) @safe
     {
-        foreach(e; layers) 
-            render.draw(e, position);
-
-        foreach(e; imagelayers)
-            render.draw(e, position);
+        foreach(e; drawableSort) render.draw(e, position);
     }
 }

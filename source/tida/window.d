@@ -6,6 +6,7 @@
     other window parameters, which are inherent in both the x11 environment and the Windows window manager 
     in both ways. However, there are features of the implementations, for example, so far only x11 can be 
     used to set the transparency of the window.
+    
     # 1. Create window components.
     ## 1.1 Creating a simple window.
     A window is created by calling the window manager server, and for this, you first need to connect to it 
@@ -16,6 +17,7 @@
     ---
     TidaRuntime.initialize(args, NoLibrary);
     ---
+    
     (You can download individual components as needed, see: 
     [tida.runtime](https://github.com/TodNaz/Tida/blob/master/source/tida/runtime.d))
     In this case, the library will connect to the window manager, and then it will be possible to work with windows.
@@ -24,6 +26,7 @@
     ---
     auto window = new Window(640, 480, "Title!");
     ---
+    
     The random step is to create the window itself. The easiest way is through the `initialize` function. 
     The template parameter includes the window type.
     * `Simple` - Options for creating a window in which the graphics pipeline will not be created.
@@ -32,7 +35,9 @@
     ---
     window.initialize!Simple;
     ---
+    
     When creating a window, it will automatically show the window, and now you can handle the event, or draw in it.
+    
     ## 1.2 Creating a graphics pipeline and using it.
     Once hardware acceleration is required, you can create a window with a graphics pipeline that you can interact 
     with through the Open Graphics Library. Unfortunately, the rendering engine uses the capabilities of the first 
@@ -41,6 +46,7 @@
     ---
     window.initialize!ContextIn;
     ---
+    
     And in this case, the window itself will create a graphic pipeline and determine the creation parameters. 
     However, you can create a manual context, regardless of the platform through the `IContext` interface, 
     by setting the necessary context parameters. The following example will show you how this can be done. 
@@ -48,28 +54,34 @@
     ---
     window.initialize!Simple;
     ---
+    
     The next step is to allocate memory for the context:
     ---
     auto context = new Context();
     ---
+    
     Now, we can define the attributes of the graphics pipeline:
     ---
     context.attributeInitialize(GLAttributes(...));
     ---
+    
     After, when the attributes are initialized, you need to create the context itself:
     ---
     context.initialize()
     ---
+    
     The pipeline properties are defined in the GLAttributes structure, create a pipeline from its properties.
     Now this context can be assigned to a window:
     ---
     window.context = context;
     ---
+    
     Unfortunately, in the Windows environment, before creating, you need to declare a window for the context, 
     from where the parameters will be displayed:
     ---
     context.deviceMake(window.handle);
     ---
+    
     # 2. Window control.
     ## 2.1 Window size.
     The size of the window is set using the constructor, however, if you need to dynamically resize, 
@@ -84,6 +96,7 @@
         window.eventResize(event.newSizeWindow);
     }
     ---
+    
     In this situation, you yourself keep track of the size of the window. If not tracked, the size will visually change, 
     however, the properties of the window will not be changed, and when using it, there may be unexpected behavior. 
     This is due to the fact that automatic markup is impossible due to a bug in x11, when the event is set to be tracked, 
@@ -97,6 +110,7 @@
     ...
     window.fullscreen = false; // Window mode
     ---
+    
     ## 2.2 External component.
     The window represents the icon, title, icon and frame for the window. All such properties can be set through 
     the corresponding functions.
@@ -106,10 +120,12 @@
     ---
     window.icon = new Image().load("icon.png");
     ---
+    
     `window.border` -
     Determines whether the window will have frames.
     `window.title` - 
     Sets the title of the window.
+    
     ## 2.3 Features with platform.
     There may be a case when you need to work with a window directly through its native API, 
     for this there is a `handle` method. It gives a pointer to a window in its plafform, and based on it, 
@@ -125,6 +141,7 @@
     This example shows a bad attitude of work outside the stratum, since now the object, when we request a title, 
     will return the old title because it did not remember the old one. Therefore, be extremely careful when working 
     outside the interlayer.
+    
     Authors: $(HTTP https://github.com/TodNaz, TodNaz)
     License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
@@ -173,11 +190,10 @@ interface IContext
         Params:
             attributes = Attributes for creating context.
 
-
         Throws: `Exception` If the context in the process was not created 
         under the influence of input parameters.
     +/
-    void attributeInitialize(GLAttributes attributes) @safe;
+    void attributeInitialize(immutable(GLAttributes) attributes) @safe;
 
     /++
         Initializes the contest itself.
@@ -307,29 +323,29 @@ class Context : IContext
         this._context = ctx;
     }
 
-    override void attributeInitialize(GLAttributes attributes = GLAttribAutoColorSize!8) @trusted
+    override void attributeInitialize(immutable(GLAttributes) attributes = GLAttribAutoColorSize!8) @trusted
     {
         import std.conv : to;
         import std.exception : enforce;
 
         int[] glxAttribs = 
-            [
-                GLX_X_RENDERABLE    , True,
-                GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
-                GLX_RENDER_TYPE     , GLX_RGBA_BIT,
-                GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
-                GLX_RED_SIZE        , attributes.redSize,
-                GLX_GREEN_SIZE      , attributes.greenSize,
-                GLX_BLUE_SIZE       , attributes.blueSize,
-                GLX_ALPHA_SIZE      , attributes.alphaSize,
-                GLX_DEPTH_SIZE      , attributes.depthSize,
-                GLX_STENCIL_SIZE    , attributes.stencilSize,
-                GLX_DOUBLEBUFFER    , attributes.doubleBuffer.to!int,
-                None
-            ];
+        [
+            GLX_X_RENDERABLE    , True,
+            GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+            GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+            GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+            GLX_RED_SIZE        , attributes.redSize,
+            GLX_GREEN_SIZE      , attributes.greenSize,
+            GLX_BLUE_SIZE       , attributes.blueSize,
+            GLX_ALPHA_SIZE      , attributes.alphaSize,
+            GLX_DEPTH_SIZE      , attributes.depthSize,
+            GLX_STENCIL_SIZE    , attributes.stencilSize,
+            GLX_DOUBLEBUFFER    , attributes.doubleBuffer.to!int,
+            None
+        ];
 
         int fbcount = 0;
-        auto fbc = glXChooseFBConfig(runtime.display, runtime.displayID, glxAttribs.ptr, &fbcount);
+        scope GLXFBConfig* fbc = glXChooseFBConfig(runtime.display, runtime.displayID, glxAttribs.ptr, &fbcount);
 
         enforce(fbc, "fbc was not found!");
 
@@ -337,8 +353,8 @@ class Context : IContext
         foreach(int i; 0 .. fbcount)
         {
             int sampBuff, samples;
-            glXGetFBConfigAttrib(runtime.display, fbc[i], GLX_SAMPLE_BUFFERS, &sampBuff);
-            glXGetFBConfigAttrib(runtime.display, fbc[i], GLX_SAMPLES, &samples);
+            glXGetFBConfigAttrib(runtime.display, fbc[i], GLX_SAMPLE_BUFFERS, 	&sampBuff);
+            glXGetFBConfigAttrib(runtime.display, fbc[i], GLX_SAMPLES, 			&samples);
 
             if(bestFbc < 0 || (sampBuff && samples > bestNum)) {
                 bestFbc = i;
@@ -493,7 +509,7 @@ class Window : IWindow
 
         title = _title;
 
-        auto wmAtom = getAtom("WM_DELETE_WINDOW");
+        Atom wmAtom = getAtom("WM_DELETE_WINDOW");
 
         XSetWMProtocols(runtime.display, window, &wmAtom, 1);
     }
@@ -828,6 +844,8 @@ class Context : IContext
 
     override void attributeInitialize(GLAttributes attributes = GLAttribAutoColorSize!8) @trusted
     {
+    	import std.exception : enforce;
+    
         const flags = (attributes.doubleBuffer ? 
             PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL : PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL);
 
@@ -844,9 +862,7 @@ class Context : IContext
         pfd.iLayerType = PFD_MAIN_PLANE;
 
         auto chsPixel = ChoosePixelFormat(deviceHandle, &pfd);
-
-        if(chsPixel == 0)
-            throw new Exception("Not found pixel format!");
+		enforce(chsPixel != 0, "Not choose pixel format!");
 
         SetPixelFormat(deviceHandle, chsPixel, &pfd);
     }
@@ -978,6 +994,7 @@ class Window : IWindow
         * Simple    -   Generates a window without a graphics pipeline. Those. a simple window will be created,
                         if you need a context, you have to make it yourself and send it to the window.
         * ContextIn -   Generates a window with a graphics pipeline for OpenGL.
+        
         Params:
             Type = The type initial window.
             posX = The initial x position of the window.
@@ -986,6 +1003,8 @@ class Window : IWindow
     +/
     void initialize(ubyte Type)(int posX = 100,int posY = 100,bool isShow = true) @trusted
     {
+    	import std.exception : enforce;
+    
         static if(Type == Simple)
         {
             extern(Windows) auto _wndProc(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam) nothrow
@@ -1010,11 +1029,11 @@ class Window : IWindow
             window = CreateWindow(_title.toUTFz!(wchar*),_title.toUTFz!(wchar*),
                      WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_THICKFRAME,
                      posX,posY,width,height,null,null,runtime.instance,null);
+                     
+			enforce(window, "Window is not create!");
         }else
         static if(Type == ContextIn)
         {
-            import std.exception;
-
             initialize!Simple(posX,posY,false);
 
             auto attributes = GLAttributes();

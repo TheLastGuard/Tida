@@ -1,0 +1,7 @@
+{
+    "name" : "seabattle",
+    "targetType": "executable",
+    "dependencies" : {
+    	"tida" : "*"
+    }
+}

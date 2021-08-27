@@ -332,12 +332,11 @@ class EventHandler : IEventHandler
 
     override IJoystick initJoystick(ubyte number) @trusted
     {
-        import core.stdc.stdio, std.conv;
+        import core.stdc.stdio, std.conv, std.exception;
 
         Joystick joystick = new Joystick();
         joystick.descriptor = fopen(("/dev/input/js" ~ number.to!string).ptr, "r");
-
-        if(joystick.descriptor is null) throw new Exception("Not open device!");
+        enforce(joystick.descriptor, "Not open device!");
 
         joysticks ~= joystick;
 
@@ -531,13 +530,15 @@ class EventHandler : IEventHandler
                (msg.message == WM_SYSCOMMAND && msg.wParam == SC_CLOSE);
     }
 
-    private
+    public
     {
         Joystick[] joysticks;
     }
 
     override IJoystick initJoystick(ubyte number) @trusted
     {
+        import std.exception;
+    
         Joystick joystick = new Joystick();
         joystick.info = &joyInfo;
         uint numDevs = 0;
@@ -552,8 +553,7 @@ class EventHandler : IEventHandler
             default: throw new Exception("Not device found!");
         }
 
-        if(joyGetPos(id, joystick.info) == JOYERR_UNPLUGGED)
-            throw new Exception("Not device found!");
+        enforce(joyGetPos(id, joystick.info) != JOYERR_UNPLUGGED, "Not device found!");
 
         joystick.deviceID = id;
         joystick.msg = &msg;
@@ -614,7 +614,7 @@ static enum Key
     F9 = 75,
     F10 = 76,
     F11 = 95,
-  	F12 = 96,
+    F12 = 96,
     PrintScrn = 111,
     ScrollLock = 78,
     Pause = 110,
