@@ -1,71 +1,103 @@
 /++
-    A module for controlling the number of frames, and taking into account the time of the program.
+Module for limiting the release of frames per second.
 
-    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
-    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
+Macros:
+    LREF = <a href="#$1">$1</a>
+    HREF = <a href="$1">$2</a>
+
+Authors: $(HREF https://github.com/TodNaz,TodNaz)
+Copyright: Copyright (c) 2020 - 2021, TodNaz.
+License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
 +/
 module tida.fps;
 
-/// Class for controlling program time and number of frames.
+import std.datetime;
+
+/++
+The object that will keep track of the cycle time, counts and
+limits the executable frames.
++/
 class FPSManager
 {
-    import std.datetime, core.thread;
+    import core.thread;
 
-    private
+private:
+    MonoTime currTime;
+    MonoTime lastTime;
+    long _deltatime;
+
+    MonoTime startProgramTime;
+    bool isCountDownStartTime = false;
+    long cfps = 0;
+    long cpfps;
+    MonoTime ctime;
+
+public:
+    /++
+    Sets the maximum number of frames per second.
+    +/
+    long maxFPS = 60;
+
+    /++
+    Shows how many frames were formed in a second.
+    Please note that the counter is updated once per second.
+    +/
+    @property long fps() @safe
     {
-        MonoTime time;
-        MonoTime lastTime;
-        long _deltatime;
-
-        MonoTime _gameJob;
-        bool startTimeRate = false;
+        return cpfps;
     }
 
-    public
+    /++
+    Shows the running time of the program.
+    +/
+    @property Duration timeJobProgram() @safe
     {
-        long maxFPS = 60; /// The maximum number of frames per second allowed.
+        return MonoTime.currTime - startProgramTime;
     }
 
-    /// Gives the number of frames.
-    long fps() @safe
-    {
-        return (1000 / (_deltatime + 1));
-    }
-
-    /// Gives the deltatime.
-    long deltatime() @safe
+    /++
+    Delta time.
+    +/
+    @property long deltatime() @safe
     {
         return _deltatime;
     }
 
-    /// Gives the running time of the program.
-    Duration durationJobProgram() @safe
+@trusted:
+    /++
+    The origin of the frame unit. Measures time and also changes the
+    state of the frame counter.
+    +/
+    void countDown()
     {
-        return MonoTime.currTime - _gameJob;
-    }
+        if (!isCountDownStartTime)
+        {
+            startProgramTime = MonoTime.currTime;
+            isCountDownStartTime = true;
+        }
 
-    /// Counts from the beginning of the cycle body.
-    void start() @safe
-    {
-        time = MonoTime.currTime;
+        lastTime = MonoTime.currTime;
 
-        if(!startTimeRate) {
-            _gameJob = MonoTime.currTime;
-
-            startTimeRate = true;
+        if ((MonoTime.currTime - ctime).total!"msecs" > 1000)
+        {
+            cpfps = cfps;
+            cfps = 0;
+            ctime = MonoTime.currTime;
         }
     }
 
-    /// Limiting the number of frames.
-    void rate() @trusted
+    /++
+    Frame limiting function. Also, it counts frames per second.
+    +/
+    void control()
     {
-        this.lastTime = MonoTime.currTime;
-        this._deltatime = (this.lastTime - this.time).total!"msecs";
+        cfps++;
+        currTime = MonoTime.currTime;
+        _deltatime = 1000 / maxFPS - (currTime - lastTime).total!"msecs";
 
-        if(this._deltatime < 1000 / maxFPS)
+        if (_deltatime > 0)
         {
-            import std.datetime;
-            Thread.sleep(dur!"msecs"((1000 / maxFPS) - this._deltatime));
+            Thread.sleep(dur!"msecs"(_deltatime));
         }
     }
 }

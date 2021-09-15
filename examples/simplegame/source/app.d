@@ -1,7 +1,8 @@
 module app;
 
 import tida;
-import tida.graph.vertgen;
+import tida.vertgen;
+import std.stdio;
 
 class Circle : Instance
 {
@@ -21,13 +22,16 @@ class Circle : Instance
         if(image is null)
         {
             image = new Image();
-            image.create(128, 128);
+            image.allocatePlace(128, 128);
 
             Software imageRender = new Software(new SoftImage(image));
+            imageRender.camera.shape = Shapef.Rectangle(vecf(0,0), vecf(128, 128));
+            imageRender.camera.port = imageRender.camera.shape;
+            imageRender.reshape();
             
-            imageRender.background = HEX("0x00ff00ff");
+            imageRender.background = Color!ubyte("0x00ff00ff");
             imageRender.clear();
-            imageRender.rectangle(Vecf(8, 8), 128 - 16, 128 - 16, HEX("#ff0000ff"), true);
+            imageRender.rectangle(Vecf(8, 8), 128 - 16, 128 - 16, Color!ubyte("#ff0000ff"), true);
             imageRender.drawning();
 
             immutable center = Vecf(64, 64);
@@ -39,8 +43,8 @@ class Circle : Instance
                 e = e * (1 - k);
             });
 
-            image.fromTextureWithoutShape();
-            image.texture.vertexInfo = generateVertex(Shape.Circle(Vecf(0,0), 64), Vecf(image.width, image.height));
+            image.toTexture();
+            image.texture.vertexInfo = generateVertex(Shapef.Circle(vecf(0,0), 64), vecf(image.width, image.height));
 
             Resource res;
             res.init!Image(image);
@@ -55,19 +59,19 @@ class Circle : Instance
         this.isCollider = isCollider;
 
         solid = true;
-        mask = Shape.Circle(Vecf(0, 0), 64);
+        mask = Shapef.Circle(vecf(0, 0), 64);
     }
 
-    @Event!EventHandle
+    @Event!Input
     void handleEvent(EventHandler event) @safe
     {
-        if(isCollider) return;
+        if (isCollider) return;
 
-        if(event.mouseDownButton == MouseButton.left) isClick = true;
-        if(event.mouseUpButton == MouseButton.left) isClick = false;
+        if (event.mouseDownButton == MouseButton.left) isClick = true;
+        if (event.mouseUpButton == MouseButton.left) isClick = false;
 
-        if(isClick)
-            position = Vecf(event.mousePosition[0], event.mousePosition[1]);
+        if (isClick)
+            position = vecf(event.mousePosition[0], event.mousePosition[1]);
     }
 
     @Event!Draw
@@ -79,18 +83,18 @@ class Circle : Instance
     @Event!Step
     void offsetBorder() @safe
     {
-        if(position.x - 64 < 0) position.x += 0.8f;
-        if(position.x + 64 > 640) position.x -= 0.8f;
-        if(position.y - 64 < 0) position.y += 0.8f;
-        if(position.y + 64 > 480) position.y -= 0.8f;
+        if (position.x - 64 < 0) position.x += 0.8f;
+        if (position.x + 64 > 640) position.x -= 0.8f;
+        if (position.y - 64 < 0) position.y += 0.8f;
+        if (position.y + 64 > 480) position.y -= 0.8f;
     }
 
-    @CollisionEvent("CirlceShape")
+    @Collision("CirlceShape")
     void onCircleShapeCollision(Instance other) @safe
     {
-        if(!isCollider) return;
+        if (!isCollider) return;
 
-        Vecf offset = VecfNan;
+        Vecf offset = vecfNaN;
 
         offset.x = position.x > other.position.x ? 1.0f : -1.0f;
         offset.y = position.y > other.position.y ? 1.0f : -1.0f;
@@ -108,10 +112,11 @@ class SimpleGame : Scene
         add(new Circle(Vecf(256, 256), true));
     }
 
-    @Event!EventHandle
+    @Event!Input
     void ClickRightHandle(EventHandler event) @safe
     {
-        if(event.mouseDownButton == MouseButton.right) {
+        if (event.mouseDownButton == MouseButton.right)
+        {
             add(new Circle(Vecf(event.mousePosition[0], event.mousePosition[1]), true));
         }
     }
@@ -127,4 +132,4 @@ class SimpleGame : Scene
                [1]            [2]  [3]      [4]    [5]    
                V              V    V        V      V
 +/
-mixin GameRun!(WindowConfig!(640, 480, "Tida."), SimpleGame);
+mixin GameRun!(GameConfig(640, 480, "Tida."), SimpleGame);

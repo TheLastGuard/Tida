@@ -1,5 +1,5 @@
 {
-    "name" : "simplegame",
+    "name" : "simplecontext",
     "targetType": "executable",
     "dependencies" : {
     	"tida" : "*"

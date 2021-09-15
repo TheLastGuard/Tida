@@ -98,17 +98,17 @@ class PlayingField : Instance
         Symbol[] numerateVertical;
         Symbol[] numerateHorizontal;
         bool isVisibleShip = true;
-        Vecf mousePosition = VecfNan;
+        Vecf mousePosition = vecfNaN;
     }
 
     this(Font font) @safe
     {
-        numerateVertical = new Text(font).fromSymbols("0123456789", rgb(0, 0, 0));
-        numerateHorizontal = new Text(font).fromSymbols("abcdefghij", rgb(0, 0, 0));
+        numerateVertical = new Text(font).toSymbols("0123456789", rgb(0, 0, 0));
+        numerateHorizontal = new Text(font).toSymbols("abcdefghij", rgb(0, 0, 0));
         generateFieldGrid(grid);
     }
 
-    @Event!EventHandle
+    @Event!Input
     void onEvent(EventHandler event) @safe
     {
         mousePosition = vecf(event.mousePosition[0], event.mousePosition[1]);
@@ -141,8 +141,20 @@ class PlayingField : Instance
     {	
         for(int y = 0; y < grid.length; y++)
         {
-            render.drawColor(numerateVertical[y].image, position + Vecf(-12, y * CellStateSize), 	rgb(0, 0, 0)); 
-            render.drawColor(numerateHorizontal[y].image, position + Vecf(y * CellStateSize, -6) - numerateHorizontal[y].position, 	rgb(0, 0, 0));
+            render.drawEx(	numerateVertical[y].image, 
+            				position + Vecf(-12, y * CellStateSize),
+            				0.0f,
+            				vecfNaN,
+            				vecfNaN,
+            				255,
+            				rgb(0, 0, 0)); 
+            render.drawEx(	numerateHorizontal[y].image, 
+            				position + Vecf(y * CellStateSize, -6) - numerateHorizontal[y].position,
+            				0.0f,
+            				vecfNaN,
+            				vecfNaN,
+            				255,
+            				rgb(0, 0, 0));
             for(int x; x < grid[0].length; x++)
             {
                 
@@ -463,7 +475,7 @@ class SeaBattleMainScene : Scene
         }
     }
 
-    @Event!EventHandle
+    @Event!Input
     void onEvent(EventHandler event) @safe
     {
         import std.random : uniform;
@@ -511,6 +523,14 @@ class SeaBattleMainScene : Scene
             bot.clear();
         }
     }
+
+    debug @Event!Draw
+    void debugDraw(IRenderer render) @safe
+    {
+        import std.conv : to;
+
+        render.draw(new Text(font).renderSymbols(fps.deltatime.to!string, rgb(0,0,0)), vecf(0,0));
+    }
 }
 
-mixin GameRun!(WindowConfig!(640, 480, "Sea Battle"), SeaBattleMainScene);
+mixin GameRun!(GameConfig(640, 480, "Sea Battle"), SeaBattleMainScene);

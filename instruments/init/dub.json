@@ -1,6 +1,7 @@
 {
-    "name" : "simplegame",
+    "name" : "init",
     "targetType": "executable",
+    "description" : "",
     "dependencies" : {
     	"tida" : "*"
     }

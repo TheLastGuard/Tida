@@ -4,14 +4,10 @@ import tida;
 
 void main(string[] args)
 {
-    LibraryLoader lib;
-    lib.openAL = false;
-    lib.freeType = false;
-
-    TidaRuntime.initialize(args,lib);
+    TidaRuntime.initialize(args);
 
     Window window = new Window(640,480,"Simple window.");
-    window.initialize!Simple;
+    window.windowInitialize!(WithContext)(100, 100);
 
     EventHandler event = new EventHandler(window);
 
@@ -19,7 +15,7 @@ void main(string[] args)
 
     while(isGame)
     {
-        while(event.update)
+        while(event.nextEvent)
         {
             if(event.isQuit)
                 isGame = false;

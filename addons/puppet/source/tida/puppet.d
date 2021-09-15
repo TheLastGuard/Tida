@@ -37,14 +37,14 @@ module tida.puppet;
 
 import std.json;
 
-import tida.graph.gl;
-import tida.graph.drawable;
-import tida.graph.vertgen;
-import tida.graph.matrix;
-import tida.graph.render;
-import tida.graph.image;
-import tida.graph.texture;
-import tida.graph.shader;
+import tida.gl;
+import tida.drawable;
+import tida.vertgen;
+import tida.matrix;
+import tida.render;
+import tida.image;
+import tida.texture;
+import tida.shader;
 import tida.vector;
 import tida.angle;
 import tida.shape;
@@ -407,7 +407,7 @@ abstract class PuppetDrawable : PuppetNode
     {
         MeshData mesh; ///
 
-        VertexInfo vertInfo; ///
+        VertexInfo!float vertInfo; ///
     }
 
     override void parseJSON(JSONValue json, Puppet puppet) @trusted
@@ -429,12 +429,12 @@ abstract class PuppetDrawable : PuppetNode
 
     void generateVertexInfo() @safe
     {
-        vertInfo = new VertexInfo();
+        vertInfo = new VertexInfo!float();
         
         if(mesh.indices != []) {
-            vertInfo.generateFromElemBuff(mesh.verts, mesh.indices);
+            vertInfo.bindFromBufferAndElem(mesh.verts, mesh.indices);
         } else {
-            vertInfo.generateFromBuffer(mesh.verts);
+            vertInfo.bindFromBuffer(mesh.verts);
         }
     }
 }
@@ -459,7 +459,8 @@ class PuppetPart : PuppetDrawable
         this.parent = parent;
     }
 
-    this(Puppet puppet, PuppetNode parent = null) @safe {
+    this(Puppet puppet, PuppetNode parent = null) @safe 
+    {
         type = PuppetNodeType.Part;
         this.puppet = puppet;
         uuid = uniform!uint;
@@ -495,19 +496,20 @@ class PuppetPart : PuppetDrawable
         return json;
     }
 
-    void drawTexture(IRenderer render, Texture texture, Vecf position) @trusted {
+    void drawTexture(IRenderer render, Texture texture, Vecf position) @trusted 
+    {
         Shader!Program shader = texture.initShader(render);
-        VertexInfo vinfo = vertInfo;
+        VertexInfo!float vinfo = vertInfo;
 
         vinfo.bindVertexArray();
-        GL3.bindBuffer(GL_ARRAY_BUFFER, vinfo.idBufferArray);
-        GL3.bindBuffer(GL_ELEMENT_ARRAY_BUFFER, vinfo.idElementArray);
+        glBindBuffer(GL_ARRAY_BUFFER, vinfo.idBufferArray);
+       	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vinfo.idElementArray);
 
-        GL3.enableVertexAttribArray(shader.getAttribLocation("position"));
-        GL3.vertexAttribPointer(shader.getAttribLocation("position"), 2, GL_FLOAT, false, 4 * float.sizeof, null);
+        glEnableVertexAttribArray(shader.getAttribLocation("position"));
+       	glVertexAttribPointer(shader.getAttribLocation("position"), 2, GL_FLOAT, false, 4 * float.sizeof, null);
 
-        GL3.enableVertexAttribArray(shader.getAttribLocation("aTexCoord"));
-        GL3.vertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 4 * float.sizeof,
+        glEnableVertexAttribArray(shader.getAttribLocation("aTexCoord"));
+        glVertexAttribPointer(shader.getAttribLocation("aTexCoord"), 2, GL_FLOAT, false, 4 * float.sizeof,
             cast(void*) (2 * float.sizeof));
 
         float[4][4] proj = (cast(GLRender) render).projection();
@@ -517,7 +519,7 @@ class PuppetPart : PuppetDrawable
 
         shader.using();
 
-        GL3.activeTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         texture.bind();
 
         if(shader.getUniformLocation("projection") != -1)
@@ -529,14 +531,14 @@ class PuppetPart : PuppetDrawable
         if(shader.getUniformLocation("color") != -1)
         shader.setUniform("color", rgba(255, 255, 255, cast(ubyte) (ubyte.max * opacity)));
 
-        if(vinfo.elemLength != 0)
-            GL3.drawElements(GL_TRIANGLES, cast(uint) vinfo.elemLength, GL_UNSIGNED_INT, null);
+        if(vinfo.elementLength != 0)
+            glDrawElements(GL_TRIANGLES, cast(uint) vinfo.elementLength, GL_UNSIGNED_INT, null);
         else
-            GL3.drawArrays(GL_TRIANGLES, 0, cast(uint) vinfo.length / 4);
+            glDrawArrays(GL_TRIANGLES, 0, cast(uint) vinfo.length / 4);
 
-        GL3.bindBuffer(GL_ARRAY_BUFFER, 0);
-        GL3.bindVertexArray(0);
-        GL.bindTexture(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+       	glBindTexture(GL_TEXTURE_2D, 0);
 
         render.resetShader();
     }
@@ -549,7 +551,8 @@ class PuppetPart : PuppetDrawable
 }
 
 ///
-class PuppetMask : PuppetDrawable {
+class PuppetMask : PuppetDrawable 
+{
     this(PuppetNode parent = null) @safe
     {
         this.parent = parent;
@@ -679,10 +682,10 @@ class Puppet : IDrawable
             scope(exit) temp.free();
             assert(temp.e == 0, IF_ERROR[temp.e]);
 
-            image.create(temp.w,temp.h);
+            image.allocatePlace(temp.w,temp.h);
             image.bytes!(PixelFormat.RGBA)(temp.buf8);
 
-            image.fromTextureWithoutShape();
+            image.toTexture();
 
             dataTexture ~= image;
         }

@@ -1,27 +1,25 @@
 module app;
 
 import tida;
+import tida.gl;
 
 void main(string[] args)
 {
-    LibraryLoader lib;
-    lib.openAL = false;
-    lib.freeType = false;
+    TidaRuntime.initialize(args);
 
-    TidaRuntime.initialize(args,lib);
-
-    Window window = new Window(640,480,"Simple render");
-    window.initialize!ContextIn;
-
+    Window window = new Window(640, 480, "Simple render");
+    window.windowInitialize!(WithContext)(100, 100);
+	loadGraphicsLibrary();
+	
     EventHandler event = new EventHandler(window);
-    auto render = CreateRenderer(window);
-    render.background = rgb(64,64,255);
+    auto render = createRenderer(window);
+    render.background = rgb(64, 64, 255);
 
     bool isGame = true;
 
     while(isGame)
     {
-        while(event.update)
+        while(event.nextEvent)
         {
             if(event.isQuit)
                 isGame = false;
@@ -30,14 +28,14 @@ void main(string[] args)
                 isGame = false;
 
             if(event.isResize) {
-                render.camera.port = Shape.Rectangle(Vecf(0,0),
-                                                     Vecf(event.newSizeWindow[0],event.newSizeWindow[1]));
+                render.camera.port = Shapef.Rectangle(vecf(0,0),
+                                                      vecf(event.newSizeWindow[0],event.newSizeWindow[1]));
                 render.reshape();
             }
         }
 
         render.clear();
-        render.circle(Vecf(128,128),64,rgb(255,0,0),!true);
+        render.circle(vecf(128,128), 64, rgb(255,0,0), true);
         render.drawning();
     }
 }

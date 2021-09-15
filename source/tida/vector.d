@@ -1,126 +1,136 @@
 /++
-    Module for information about positioning elements.
+Module two-dimensional vectors.
 
-    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
-    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
+Mainly contains vector arithmetic functions as well as some traits.
+
+Macros:
+    LREF = <a href="#$1">$1</a>
+    HREF = <a href="$1">$2</a>
+
+Authors: $(HREF https://github.com/TodNaz,TodNaz)
+Copyright: Copyright (c) 2020 - 2021, TodNaz.
+License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
 +/
 module tida.vector;
 
 import std.traits;
 
-alias Vecf = Vector!float; /// Two-decimal vector
-alias vecf = Vector!float; /// ditto
-alias vec2f = vecf; /// ditto
-
-enum VecfNan = Vecf(float.nan, float.nan); /// Non-vector.
-
 /++
-    Generate buffer numbres from vector array.
-
-    Params:
-        array = Vector array.
-+/
-T[] generateArray(T)(Vector!T[] array) @safe nothrow pure
-{
-    T[] result;
-    foreach(e; array) result ~= e.array;
-
-    return result;
-}
-
-/++
-    Check if the vector is empty (not in the sense that it is zero,
-    but in the sense that it really is not a vector).
-
-    Params:
-        vec = Vector.
-
-    Example:
-    ---
-    assert(VecfNan.isVecfNan);
-
-    // Keep in mind that a vector does not have a number in it.
-    assert(!Vecf(0, 0).isVecfNan);
-    ---
-+/
-bool isVecfNan(Vecf vec) @safe nothrow pure
-{
-    import std.math : isNaN;
-
-    return vec.x.isNaN && vec.y.isNaN;
-}
-
-unittest
-{
-    assert(VecfNan.isVecfNan);
-}
-
-///
-T sqr(T)(T value) @safe nothrow pure @nogc
-{
-    return value * value;
-}
-
-/++
-    Vector structure. Two-dimensional, because the framework does not 
-    imply 3D capabilities.
+Vector structure. May include any numeric data type available for vector arithmetic.
 +/
 struct Vector(T)
+if (isNumeric!T && isMutable!T && isSigned!T)
 {
-    import std.math : sqrt;
+    import std.math : pow, sqrt;
 
-    public
-    {
-        T x = 0; /// X-Axis
-        T y = 0; /// Y-Axis
-    }
+    alias Type = T;
 
+public:
+    T   x, /// X-axis position.
+        y; /// Y-axis position. 
+
+@safe nothrow pure:
     /++
-        Vector init.
+    Any numeric type that can be freely converted to a template vector type 
+    can be included in the vector's constructor.
     +/
-    this(T _x,T _y) @safe nothrow pure
+    this(R)(R x, R y)
     {
-        this.x = _x;
-        this.y = _y;
+        this.x = cast(T) x;
+        this.y = cast(T) y;
     }
-
-    ///
-    this(T[2] vec) @safe nothrow pure
-    {
-        this.x = vec[0];
-        this.y = vec[1];
-    }
-
-    alias X = x; ///
-    alias Y = y; ///
 
     /++
-        Gives x coordinate in int format
-        Returns:
-            int
-    ++/
-    int intX() @safe nothrow pure
+    Any numeric type that can be freely converted to a template vector type 
+    can be included in the vector's constructor.
+    +/
+    this(R)(R[2] arrvec)
+    if (isImplicitlyConvertible!(R, T))
     {
-        return cast(int) this.x;
-    }
-    
-    /++
-        Gives y coordinate in int format
-        Returns:
-            int
-    ++/
-    int intY() @safe nothrow pure
-    {
-        return cast(int) this.y;
+        this.x = cast(T) arrvec[0];
+        this.y = cast(T) arrvec[1];
     }
 
-    /// Returns the coordinates as an array.
-    T[] array() @safe nothrow pure inout
+    void opOpAssign(string op)(Vector rhs)
+    {
+        static if (op == "+")
+        {
+            this.x += rhs.x;
+            this.y += rhs.y;
+        }else 
+        static if (op == "-")
+        {
+            this.x = x - rhs.x;
+            this.y = y - rhs.y;
+        }else
+        static if (op == "*")
+        {
+            this.x = x * rhs.x;
+            this.y = y * rhs.y;
+        }else
+        static if (op == "/")
+        {
+            this.x = x / rhs.x;
+            this.y = y / rhs.y;
+        }else
+            static assert(null, "The `" ~ op ~ "` operator is not implemented.");
+    }
+
+    void opOpAssign(string op)(T num)
+    {
+        static if (op == "+")
+        {
+            this.x = this.x + num;
+            this.y = this.y + num;
+        }else
+        static if (op == "-")
+        {
+            this.x = this.x - num;
+            this.y = this.y - num;
+        }else
+        static if (op == "*")
+        {
+            this.x = this.x * num;
+            this.y = this.y * num;
+        }else 
+        static if (op == "/")
+        {
+            this.x = this.x / num;
+            this.y = this.y / num;
+        }else
+            static assert(null, "The `" ~ op ~ "` operator is not implemented.");
+    }
+
+    unittest
+    {
+        Vector!double a = [3.0, 3.0];
+        a += Vector!double(3.0, 3.0);
+        assert(a == Vector!double(6.0, 6.0));
+
+        a /= 2;
+        assert(a == Vector!double(3.0, 3.0));
+    }
+
+    /++
+    Normalizes the vector.
+    +/
+    void normalize()
+    {
+        immutable d = 1 / length;
+
+        this.x = x * d;
+        this.y = y * d;
+    }
+inout:
+    /++
+    Converts a vector to an array.
+    +/
+    T[] array()
     {
         return [x, y];
     }
 
-    bool opEquals(Vector a, Vector b) @safe nothrow pure inout
+    bool opEquals(Vector a, Vector b)
     {
         if (a is b)
             return true;
@@ -128,190 +138,238 @@ struct Vector(T)
         return a.x == b.x && a.y == b.y;
     }
 
-    bool opEquals(Vector other) @safe nothrow pure inout
+    bool opEquals(Vector other)
     {
-        if(this is other)
+        if (this is other)
             return true;
 
         return this.x == other.x && this.y == other.y;
     }
 
-    int opCmp(Vector!T rhs) @safe nothrow pure inout
+    unittest
+    {
+        Vector!real a = [3.0, 3.0];
+        assert(a == Vector!real(3.0, 3.0));
+    }
+
+    int opCmp(Vector rhs)
     {
         return (x > rhs.x && y > rhs.y) ? 1 : -1;
     }
 
-    @("opEquals")
-    @safe unittest
+    unittest
     {
-        const a = Vecf(32, 32);
-        Vector!float b = Vecf(32, 32);
-        assert(a == b);
-        b = Vecf(32, 64);
-        assert(a != b);
+        Vector!real a = [3.0, 3.0];
+        assert(a > Vector!real(2.5, 1.1));
+        assert(a < Vector!real(4.1, 3.1));
     }
 
-    ///
-    Vector!T opBinary(string op)(Vector rhs) @safe nothrow pure inout
+    Vector!T opBinary(string op)(Vector rhs)
     {
-        static if(op == "+")
+        static if (op == "+")
         {
             return Vector!T(this.x + rhs.x, this.y + rhs.y);
         }
         else 
-        static if(op == "-")
+        static if (op == "-")
         {
             return Vector!T(this.x - rhs.x, this.y - rhs.y);
         }
-        else 
-        static if(op == "*")
+        else
+        static if (op == "*")
         {
             return Vector!T(this.x * rhs.x, this.y * rhs.y);
         }else
-        static if(op == "/")
+        static if (op == "/")
         {
             return Vector!T(this.x / rhs.x, this.y / rhs.y);
-        }
+        }else
+        static if (op == "%")
+        {
+            return Vector!T(this.x % rhs.x, this.y % rhs.y);
+        }else
+            static assert(null, "The `" ~ op ~ "` operator is not implemented.");
     }
 
-    ///
-    Vector!T opBinary(string op)(T num) @safe nothrow pure inout
+    Vector!T opBinary(string op)(T num)
     {
-        static if(op == "+")
+        static if (op == "+")
         {
             return Vector!T(this.x + num, this.y + num);
         }else
-        static if(op == "-")
+        static if (op == "-")
         {
             return Vector!T(this.x - num, this.y - num);
         }else
-        static if(op == "*")
+        static if (op == "*")
         {
             return Vector!T(this.x * num, this.y * num);
         }
         else 
-        static if(op == "/")
+        static if (op == "/")
         {
             return Vector!T(this.x / num, this.y / num);
         }else
-            static assert(null, "Unknown operator");
+        static if (op == "%")
+        {
+            return Vector!T(this.x % num, this.y % num);
+        }else
+        static if (op == "^^")
+        {
+            return Vector!T(this.x ^^ num, this.y ^^ num);
+        }else
+            static assert(null, "The `" ~ op ~ "` operator is not implemented.");
     }
 
-    @("opBinary")
-    @safe unittest
+    unittest
     {
-        Vector!float a = Vecf(32, 32);
-        a = a + Vecf(16, 16);
-        assert(a == Vecf(48, 48));
-        a = a * 2;
-        assert(a == Vecf(96, 96));
-        a = a / 3;
-        assert(a == Vecf(32, 32));
-    }
+        Vector!int a = [3, 3];
 
-    ///
-    void opOpAssign(string op)(Vector rhs) @safe nothrow 
-    {
-        static if (op == "+")
-        {
-            this.x += rhs.x;
-            this.y += rhs.y;
-        }
-        else static if (op == "-")
-        {
-            this.x = x - rhs.x;
-            this.y = y - rhs.y;
-        }
-    }
-
-    ///
-    void opOpAssign(string op)(T num) @safe nothrow
-    {
-        static if (op == "*")
-        {
-            this.x = this.x * num;
-            this.y = this.y * num;
-        }
-        else static if (op == "/")
-        {
-            this.x = this.x / num;
-            this.y = this.y / num;
-        }
-    }
-
-    @("opOpAssign")
-    @safe unittest
-    {
-        Vector!float a = Vecf(32, 32);
-        a += Vecf(32, 32);
-        assert(a == Vecf(64, 64));
-        a *= 2;
-        assert(a == Vecf(128, 128));
-        a /= 4;
-        assert(a == Vecf(32, 32));
+        assert(a + Vector!int(3, 3) == Vector!int(6, 6));
+        assert(a ^^ 2 == Vector!int(9, 9));
     }
 
     /++
-        Return length Vector.
+    Vector length.
     +/
-    T length() @safe nothrow inout
+    T length()
     {
-        static if(is(T : int))
-        {   
-            return cast(T) (sqrt(cast(float) (sqr(this.x) + sqr(this.y))));
+        static if(isIntegral!T) 
+        {
+            return cast(T) (sqrt(cast(float) ((this.x * this.x) + (this.y * this.y))));
+        }else
+        {
+            return sqrt((this.x * this.x) + (this.y * this.y));
         }
-        else
-            return sqrt(sqr(this.x) + sqr(this.y));
     }
 
-    /// Normalized vector.
-    Vector!T normalized() @safe nothrow pure inout
+    /++
+    Returns a normalized vector.
+    +/
+    Vector!T normalized()
     {
-        immutable d = 1 / this.length();
+        immutable d = 1 / length;
 
         return Vector!T(this.x * d, this.y * d);
     }
-
-    /// Normalize vector.
-    auto normalize() @safe nothrow pure
-    {
-        immutable d = 1 / this.length;
-
-        this.x *= d;
-        this.y *= d;
-
-        return this;
-    }
-    
-    string toString() @trusted inout
-    {
-        import std.conv : to;
-
-        return "[" ~ x.to!string ~ "," ~ y.to!string ~ "]";
-    }
 }
 
 /++
-    Construct the vector modulo.
-
-    Params:
-        vec = Vector.
+Checks if this type is a vector.
 +/
-Vecf abs(Vecf vec) @safe nothrow pure
+template isVector(T)
+{
+    enum isVector = __traits(hasMember, T, "x") && __traits(hasMember, T, "y");
+}
+
+/++
+Checks if the vector is integers.
++/
+template isVectorIntegral(T)
+if (isVector!T)
+{
+    enum isVectorIntegral = isIntegral!(T.Type); 
+}
+
+/++
+Checks if the vector is float.
++/
+template isVectorFloatingPoint(T)
+if (isVector!T)
+{
+    enum isVectorFloatingPoint = isFloatingPoint!(T.Type);
+}
+
+unittest
+{
+    static assert(isVector!(Vector!int));
+    static assert(!isVector!int);
+
+    static assert(isVectorIntegral!(Vector!int));
+    static assert(!isVectorIntegral!(Vector!float));
+
+    static assert(isVectorFloatingPoint!(Vector!double));
+    static assert(!isVectorFloatingPoint!(Vector!long));
+}
+
+alias Vecf = Vector!float; /// Vector float.
+alias vec(T) = Vector!T; /// Vector.
+alias vecf = vec!float; /// Vector float.
+
+/++
+Not a numeric vector.
++/
+template vecNaN(T)
+if (isVectorFloatingPoint!(Vector!T))
+{
+    enum vecNaN = Vector!T(T.nan, T.nan);
+}
+
+/// ditto
+enum vecfNaN = vecNaN!float;
+
+/++
+Checks if the vector is non-numeric.
++/
+bool isVectorNaN(T)(Vector!T vector)
+if (isVectorFloatingPoint!(Vector!T))
+{
+    import std.math : isNaN;
+
+    return vector.x.isNaN && vector.y.isNaN;
+}
+
+/// ditto
+alias isVecfNaN = isVectorNaN!float;
+
+/++
+Generates a buffer from vectors.
+
+Params:
+    vectors = Array vector.
++/
+T[] generateArray(T)(Vector!T[] vectors) @safe nothrow pure
+{
+    T[] result;
+    foreach (e; vectors)
+        result ~= e.array;
+
+    return result;
+}
+
+unittest
+{
+    assert(vecfNaN.isVecfNaN);
+    assert(vecNaN!double.isVectorNaN);
+    assert(vecNaN!real.isVectorNaN);
+}
+
+inout(T) sqr(T)(inout(T) value) @safe nothrow pure
+{
+    return value * value;
+}
+
+/++
+Construct the vector modulo.
+
+Params:
+    vec = Vector.
++/
+inout(Vector!T) abs(T)(inout(Vector!T) vec) @safe nothrow pure
 {
     import std.math : abs;
 
-    return Vecf(abs(vec.x), abs(vec.y));
+    return Vector!T(abs(vector.x), abs(vector.y));
 }
 
 /++
-    Distance between two points.
+Distance between two points.
 
-    Params:
-        a = First point.
-        b = Second point.
+Params:
+    a = First point.
+    b = Second point.
 +/
-float distance(Vecf a,Vecf b) @safe nothrow pure
+inout(T) distance(T)(inout(Vector!T) a, inout(Vector!T) b) @safe nothrow pure
 {
     import std.math : sqrt;
 
@@ -319,77 +377,68 @@ float distance(Vecf a,Vecf b) @safe nothrow pure
 }
 
 /++
-    Distance between two points.
-
-    Params:
-        vecs = Two points.
+Average distance between vectors.
 +/
-float distance(Vecf[2] vecs) @safe nothrow pure
-{
-    return vecs[0].distance(vecs[1]);
-}
-
-/++
-    Average distance between vectors.
-+/
-Vecf averateVectors(Vecf a,Vecf b) @safe nothrow pure
+inout(Vector!T) averateVectors(T)(inout(Vector!T) a, inout(Vector!T) b) @safe nothrow pure
 {
     return ((b - a) / 2) + ((a > b) ? b : a);
 }
 
 /++
-    Creates a random vector.
+Creates a random vector.
 
-    Params:
-        begin = Begin.
-        end = End.
+Params:
+    begin = Begin.
+    end = End.
 
-    Example:
-    ---
-    Vecf rnd = uniform(Vecf(32, 16), Vecf(64, 48));
-    // vec.x = random: 32 .. 64
-    // vec.y = random: 16 .. 48
-    ---
+Example:
+---
+Vecf rnd = uniform(vecf(32, 16), vecf(64, 48));
+// vec.x = random: 32 .. 64
+// vec.y = random: 16 .. 48
+---
 +/
-Vecf uniform(Vecf begin, Vecf end) @safe
+inout(Vector!T) uniform(T)(inout(Vector!T) begin, inout(Vector!T) end) @safe
 {
     import std.random : uniform;
 
-    return Vecf(uniform(begin.x, end.x), uniform(begin.y, end.y));
+    return Vector!T(uniform(begin.x, end.x), uniform(begin.y, end.y));
 }
 
 /++
-    Rounds the vector up.
+Rounds the vector up.
 
-    Params:
-        vec = Rounded vector.
+Params:
+    vec = Rounded vector.
 
-    Example:
-    ---
-    assert(Vecf(32.5,32.5) == Vecf(33, 33));
-    ---
+Example:
+---
+assert(Vecf(32.5,32.5) == Vecf(33, 33));
+---
 +/
-Vecf round(Vecf vec) @safe nothrow pure
+inout(Vector!T) round(T)(inout(Vector!T) vec) @safe nothrow pure
+if (isVectorFloatingPoint!(Vector!T))
 {
     import std.math : round;
 
-    return Vecf(round(vec.x), round(vec.y));
+    return Vector!T(round(vec.x), round(vec.y));
 }
 
 /++
-    Floors the vector down.
+Floors the vector down.
 
-    Params:
-        vec = Floored vector.
+Params:
+    vec = Floored vector.
 
-    Example:
-    ---
-    assert(Vecf(32.5,32.5) == Vecf(32,32));
-    ---
+Example:
+---
+assert(vecf(32.5, 32.5) == vecf(32, 32));
+---
 +/
-Vecf floor(Vecf vec) @safe nothrow pure
+inout(Vector!T) floor(T)(inout(Vector!T) vec) @safe nothrow pure
+if (isVectorFloatingPoint!(Vector!T))
 {
     import std.math : floor;
 
-    return Vecf(floor(vec.x), floor(vec.y));
+    return Vector!T(floor(vec.x), floor(vec.y));
 }

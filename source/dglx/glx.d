@@ -72,20 +72,12 @@ __gshared
     FglXIsDirect glXIsDirect;
 }
 
-struct LibraryResult {
-    public
-    {
-        string path;
-        bool isSucces;
-    }
-}
-
 /++
     Load GLX library, which should open context in x11 environment.
 
     Throws: `Exception` if library is not load.
 +/
-LibraryResult[] GLXLoadLibrary() @trusted
+void loadGLXLibrary() @trusted
 {
     import std.file : exists, dirEntries, SpanMode, DirEntry, isDir, isFile;
     import std.string : toStringz;
@@ -129,8 +121,6 @@ LibraryResult[] GLXLoadLibrary() @trusted
 
     string[] paths = recurseFindGLX("/usr/lib/");
 
-    LibraryResult[] results;
-
     bool isSucces = false;
     bool ErrorFind = false;
 
@@ -141,15 +131,12 @@ LibraryResult[] GLXLoadLibrary() @trusted
         if(*ptr is null) throw new Exception("Not load library!");
     }
 
-    import std.stdio, std.conv;
-
     foreach(path; paths)
     {
         if(path.exists)
         {
             glxLib = load(path.toStringz);
             if(glxLib == invalidHandle) {
-                results ~= LibraryResult(path, false);
                 continue;
             }
 
@@ -174,14 +161,10 @@ LibraryResult[] GLXLoadLibrary() @trusted
             {
                 continue;
             }
-
-            results ~= LibraryResult(path, true);
             break;
         }
     }
 
     if(!isSucces)
         throw new Exception("Library `glx` is not load!");
-
-    return results;
 }

@@ -1,7 +1,4 @@
 {
-	"-ddoxFilterArgs": [
-		"source/tida/"
-	],
 	"authors": [
 		"TodNaz"
 	],
@@ -49,13 +46,16 @@
 	],
 	"copyright": "Copyright © 2020, TodNaz",
 	"dependencies": {
-		"bindbc-freetype": "~>0.9.1",
-		"bindbc-openal": "~>0.4.1",
-		"bindbc-opengl": "~>0.13.0",
+		"bindbc-freetype": "~>1.0.2",
+		"bindbc-openal": "~>1.0.0",
+		"bindbc-opengl": "~>1.0.0",
 		"imagefmt": "~>2.1.2",
 		"mp3decoder": "~>1.0.0"
 	},
 	"description": "Tida is a library for creating 2D games, which is written with manual window creation and rendering using opengl and other tools for D games.",
+	"dflags": [
+		"-J."
+	],
 	"homepage": "https://github.com/TodNaz/Tida",
 	"license": "MIT",
 	"name": "tida",
@@ -65,9 +65,9 @@
 		"./examples/simplewindow",
 		"./examples/simplerender",
 		"./examples/simplegame",
-		"./examples/simplepuppet",
 		"./examples/simpletilemap",
-		"./examples/seabattle"
+		"./examples/seabattle",
+		"./instruments/init"
 	],
 	"versions": [
 		"FT_210",

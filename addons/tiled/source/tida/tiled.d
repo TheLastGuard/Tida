@@ -28,12 +28,12 @@ import std.file : read;
 import std.conv : to;
 import std.base64;
 
-import tida.graph.drawable;
-import tida.graph.render;
-import tida.graph.image;
+import tida.drawable;
+import tida.render;
+import tida.image;
 import tida.color;
 import tida.vector;
-import tida.game.sprite;
+import tida.sprite;
 
 private T byteTo(T)(ubyte[] bytes) @trusted
 {
@@ -142,7 +142,7 @@ class Tileset
             data ~= image.strip(0, i * meta.tileheight, meta.tilewidth, meta.tileheight);
         }
 
-        foreach(e; data) e.fromTexture();
+        foreach(e; data) e.toTexture();
     }
 
     /// Loading tileset information from a file.
@@ -402,7 +402,7 @@ class ImageLayer : IDrawable
                 if(attrib.name == "offsety") offsety = attrib.value.to!float;
                 if(attrib.name == "opacity") opacity = attrib.value.to!float;
                 if(attrib.name == "visible") visible = attrib.value.to!int == 1;
-                if(attrib.name == "tintcolor") tintcolor = HEX(attrib.value);
+                if(attrib.name == "tintcolor") tintcolor = Color!ubyte(attrib.value);
             }
         }else
         static if(nameof == "image")
@@ -414,7 +414,7 @@ class ImageLayer : IDrawable
 
             image
                 .load(imagesource)
-                .fromTexture();
+                .toTexture();
         }
     }
 
@@ -473,7 +473,7 @@ class TileMap : IDrawable
                             if(attr.name == "tilewidth") mapinfo.tilewidth = attr.value.to!int;
                             if(attr.name == "tileheight") mapinfo.tileheight = attr.value.to!int;
                             if(attr.name == "infinite") mapinfo.infinite = attr.value.to!int == 1;
-                            if(attr.name == "backgroundcolor") mapinfo.backgroundColor = HEX(attr.value);
+                            if(attr.name == "backgroundcolor") mapinfo.backgroundColor = Color!ubyte(attr.value);
                             if(attr.name == "nextlayerid") mapinfo.nexlayerid = attr.value.to!int;
                             if(attr.name == "nextobjectid") mapinfo.nextobjectid = attr.value.to!int;
                             if(attr.name == "compressionlevel") mapinfo.compressionlevel = attr.value.to!int;
@@ -511,7 +511,7 @@ class TileMap : IDrawable
                     if(element.name == "objectgroup") {
                         ObjectGroup temp = new ObjectGroup();
                         foreach(attrib; element.attributes) {
-                            if(attrib.name == "color") temp.color = HEX(attrib.value);
+                            if(attrib.name == "color") temp.color = Color!ubyte(attrib.value);
                             if(attrib.name == "id") temp.id = attrib.value.to!int;
                             if(attrib.name == "name") temp.name = attrib.value;
                         }
@@ -614,7 +614,7 @@ class TileMap : IDrawable
             assert(json.isKeyExists("type"), "It's not a json map!");
             assert(json["type"].str == "map", "It's not a json map!");
 
-            if(json.isKeyExists("backgroundcolor")) mapinfo.backgroundColor = HEX(json["backgroundcolor"].str);
+            if(json.isKeyExists("backgroundcolor")) mapinfo.backgroundColor = Color!ubyte(json["backgroundcolor"].str);
             mapinfo.compressionlevel = json["compressionlevel"].get!int;
             mapinfo.width = json["width"].get!int;
             mapinfo.height = json["height"].get!int;
@@ -648,7 +648,7 @@ class TileMap : IDrawable
                     tilelayer.data.compression = e["compression"].str;
                     tilelayer.data.encoding = e["encoding"].str;
                     if(e.isKeyExists("transparentcolor")) 
-                        tilelayer.transparentcolor = HEX(e["transparentcolor"].str);
+                        tilelayer.transparentcolor = Color!ubyte(e["transparentcolor"].str);
                     tilelayer.data.parse!(typeof(e),Type)(e, mapinfo.compressionlevel);
                     if(e.isKeyExists("properties"))
                         tilelayer.properties = propertiesParse(e["properties"]);
@@ -664,14 +664,15 @@ class TileMap : IDrawable
                     imagelayer.offsetx = e["offsetx"].get!int;
                     imagelayer.offsety = e["offsety"].get!int;
                     if(e.isKeyExists("properties")) imagelayer.properties = propertiesParse(e);
-                    imagelayer.image = new Image().load(imagelayer.imagesource).fromTexture();
+                    imagelayer.image = new Image().load(imagelayer.imagesource);
+                    imagelayer.image.toTexture();
                     imagelayers ~= imagelayer;
                 }else
                 if(e["type"].str == "objectgroup") {
                     ObjectGroup group = new ObjectGroup();
                     group.id = e["id"].get!int;
                     group.name = e["name"].str;
-                    group.color = HEX(e["color"].str);
+                    group.color = Color!ubyte(e["color"].str);
                     group.visible = e["visible"].get!bool;
                     if(e.isKeyExists("offsetx")) group.x = e["offsetx"].get!int;
                     if(e.isKeyExists("offsety")) group.y = e["offsety"].get!int;

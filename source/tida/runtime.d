@@ -1,309 +1,311 @@
 /++
-    This module is designed to connect with graphic pipelines, load libraries necessary for the engine, and the like. 
-    The most important thing is to initialize it at the beginning.
+A module for connecting to the window manager and also loading the necessary 
+libraries, everything that does runtime, to which other objects can access 
+the necessary objects.
 
-    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
-    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
+$(LREF runtime) Gives access to runtime. Before that, you need to initialize the 
+runtime with the $(HREF runtime/ITidaRuntime.initialize,ITidaRuntime.initialize)
+function if it has not been initialized earlier.
+
+The easiest way to initialize:
+---
+void main(string[] args) {
+    TidaRuntime.initialize(args);
+    ...
+}
+---
+
+Macros:
+    LREF = <a href="#$1">$1</a>
+    HREF = <a href="$1">$2</a>
+
+Authors: $(HREF https://github.com/TodNaz,TodNaz)
+Copyright: Copyright (c) 2020 - 2021, TodNaz.
+License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
 +/
 module tida.runtime;
 
-/// Struct library loader
-struct LibraryLoader
-{
-    bool openAL = true; /// OpenAL
-    bool freeType = true; /// FreeType
-    version(Posix) bool glx = true; /// GLX
-}
-
-enum NoLibrary = LibraryLoader(false,false); /// Without library
-enum AllLibrary = LibraryLoader(true,true); /// With all library
-
-version(Posix)
-{
-    __gshared bool _glxIsLoad = false; ///
-
-    /// Is load glx library
-    bool glxIsLoad() @trusted
-    {
-        return _glxIsLoad;
-    }
-}
-
-__gshared TidaRuntime _runtime; ///
-
-/// Runtime instance.
-TidaRuntime runtime() @trusted
-{
-    return _runtime;
-}
+__gshared TidaRuntime _runtimeObject;
 
 /++
-    The main functions of the runtime that should be.
+Global access to runtime. An object can be called from anywhere, 
+but cannot be replaced.
++/
+@property TidaRuntime runtime() @trusted
+{
+    return _runtimeObject;
+}
+
+enum : int
+{
+    OpenAL = 0, /// Open Audio Library
+    FreeType, /// Free Type Library
+    GLX, /// Graphics library X11
+    EGL /// EGL library wayland
+}
+
+alias LibraryUnite = int; /// 
+
+enum AllLibrary = [OpenAL, FreeType, GLX];
+enum WithoutLibrary  = [GLX];
+
+/++
+The interface of interaction between the program and the window manager.
 +/
 interface ITidaRuntime
 {
+@safe:
     /++
-        Loads dynamic libraries that will be needed into memory.
+    A function for loading external libraries that are needed when implementing
+    internal functions.
+
+    Params:
+        libs =  What external libraries need to be loaded. 
+                (allLibrary to load all external libraries,
+                 WithoutLibrary in order not to load unnecessary 
+                 external libraries.)
+
+    Throws:
+    $(OBJECTREF Exception) If the libraries were not installed on the machine 
+    being started or they were damaged.
     +/
-    void loadLibraries(LibraryLoader libstr) @trusted;
+    void loadExternalLibraries(LibraryUnite[] libs);
 
     /++
-        Terminates the program immediately.
+    Connects to the window manager.
 
-        Params:
-            errorCode = Terminates the program immediately.
+    Throws:
+    $(OBJECTREF Exception) If the libraries were not installed on the machine 
+    being started or they were damaged. And also if the connection to the 
+    window manager was not successful (for example, there is no such component 
+    in the OS or the connection to an unknown window manager is not supported).
     +/
-    final void terminate(ubyte errorCode) @trusted
+    void connectToWndMng();
+
+    /++
+    Closes the session with the window manager.
+    +/
+    void closeWndMngSession();
+
+    /++
+    Arguments given to the program.
+    +/
+    @property string[] mainArguments();
+
+    /++
+    Accepts program arguments for subsequent operations with them.
+    +/
+    void acceptArguments(string[] arguments);
+
+@trusted:
+    /++
+    Runtime initialization. It includes such stages as:
+    1. Loading external libraries.
+    2. Connection to the window manager.
+    3. Preparation of objects for work.
+
+    Params:
+        arguments = Arguments given to the program.
+        libs = What external libraries need to be loaded. 
+                (allLibrary to load all external libraries,
+                 WithoutLibrary in order not to load unnecessary 
+                 external libraries.)
+
+    Throws:
+    $(OBJECTREF Exception) If the libraries were not installed on the machine
+    being started or they were damaged. And also if the connection to the 
+    window manager was not successful (for example, there is no such 
+    component in the OS or the connection to an unknown window manager 
+    is not supported).
+    +/
+    static final void initialize(   string[] arguments  = [], 
+                                    LibraryUnite[] libs = AllLibrary)
     {
-        import core.stdc.stdlib : exit;
-
-        exit(errorCode);
+        _runtimeObject = new TidaRuntime();
+        _runtimeObject.acceptArguments(arguments);
+        _runtimeObject.loadExternalLibraries(libs);
+        _runtimeObject.connectToWndMng();
     }
-
-    /// Program arguments.
-    string[] args() @safe;
 }
 
-version(Posix)
-{
-    /// XDG sessions enumerates
-    enum XDGSession
-    {
-        Undefined,
-        X11,
-        Wayland
-    }
-
-    __gshared XDGSession _sessionType = XDGSession.Undefined; ///
-
-    /// Session type
-    XDGSession sessionType() @trusted
-    {
-        return _sessionType;
-    }
-}
 /++
-    Runtime on Linux. Used to connect to the x11 server and initialize the runtime, load libraries and its components.
+The interface of interaction between the program and the window manager.
 +/
-version(Posix)
+version (Posix)
 class TidaRuntime : ITidaRuntime
 {
-    import tida.x11;
-    import tida.sound.al;
-    import std.process;
+    import x11.X, x11.Xlib, x11.Xutil;
+    import std.exception : enforce;
+    import tida.sound : initSoundlibrary, Device;
+    import tida.text : initFontLibrary;
 
-    private
+    enum SessionType
     {
-        Display* xDisplay;
-
-        int xDisplayID;
-
-        string[] mainArguments;
-        Device device;
+        unknown,
+        x11,
+        wayland
     }
 
-    Device soundDevice() @safe @property { return device; }
+    enum SessionWarning =
+    "WARNING! The session is not defined. Perhaps she simply does not exist?";
 
-    /++
-        Initializes a runtime by connecting to the windowing server and opening libraries.
+private:
+    Display* _display;
+    int _displayID;
+    string[] arguments;
+    SessionType _session;
+    Device _device;
 
-        Params:
-            args = Program arguments.
-            libstr = Library struct.
-    +/
-    static void initialize(string[] args,LibraryLoader libstr = AllLibrary) @trusted
+public @trusted:
+    this()
     {
-        _runtime = new TidaRuntime(args);
+        import std.process;
+        import std.stdio : stderr, writeln;
 
-        if(sessionType == XDGSession.Undefined)
+        auto env = environment.get("XDG_SESSION_TYPE");
+        if (env == "x11")
         {
-            const env = environment.get("XDG_SESSION_TYPE");
-            if(env == "wayland") {
-                _sessionType = XDGSession.Wayland;
-            } else {
-                _sessionType = XDGSession.X11;
-            }
+            _session = SessionType.x11;
+        } else
+        if (env == "wayland")
+        {
+            _session = SessionType.wayland;
+        } else
+        {
+            _session = SessionType.unknown;
+            stderr.writeln(SessionWarning);
         }
 
-        runtime.loadLibraries(libstr);
-
-        if(sessionType == XDGSession.X11)
-        {
-            if(libstr.glx) runtime.xDisplayOpen();
-        } else {
-            // TODO: Wayland implemetation
-        }
     }
 
-    override void loadLibraries(LibraryLoader libstr) @trusted
+    override void loadExternalLibraries(LibraryUnite[] libs)
     {
-        import tida.graph.text;
+        import dglx.glx : loadGLXLibrary;
 
-        try
+        foreach (e; libs)
         {
-            version(Dynamic_GLX)
+            if (e == OpenAL)
             {
-                if(libstr.glx) {
-                    GLXLoadLibrary();
-
-                    _glxIsLoad = true;
-                }
-            }else
-                _glxIsLoad = true;
-        }catch(Exception e)
-        {
-            _glxIsLoad = false;
-        }finally
-        {
-            if(libstr.freeType) FreeTypeLoad();
-
-            if(libstr.openAL) {
-                InitSoundLibrary();
-                device = new Device();
-                device.open();
+                initSoundlibrary();
+                _device = new Device();
+                _device.open();
+            }
+            else
+            if (e == FreeType)
+                initFontLibrary();
+            else
+            if (e == GLX) {
+                if (_session == SessionType.x11)
+                    loadGLXLibrary();
             }
         }
     }
 
-    /++
-        Writes program arguments to global memory for later use.
-
-        Params:
-            mainArguments = Program arguments.
-    +/
-    this(string[] mainArguments) @safe
+    override void connectToWndMng()
     {
-        this.mainArguments = mainArguments;
+        this._display = XOpenDisplay(null);
+        enforce!Exception(this._display,
+        "Failed to connect to window manager.");
+
+        this._displayID = DefaultScreen(this._display);
     }
 
-    override string[] args() @safe
+    override void closeWndMngSession()
     {
-        return mainArguments;
+        XCloseDisplay(this._display);
+        this._display = null;
+        this._displayID = 0;
     }
 
-    private void xDisplayOpen() @trusted
+    override void acceptArguments(string[] arguments)
     {
-        import std.exception : enforce;
-
-        xDisplay = XOpenDisplay(null);
-
-        enforce(xDisplay, "Failed to connect to x11 server!");
-
-        xDisplayID = DefaultScreen(xDisplay);
+        this.arguments = arguments;
     }
 
-    /++
-        Gives the main window to the window system.
-    +/
-    Window rootWindow() @trusted @property nothrow
+    @property override string[] mainArguments()
     {
-        return RootWindow(xDisplay, xDisplayID);
+        return this.arguments;
     }
 
-    /++
-        Gives an instance of the connection to the x11 server.
-    +/
-    Display* display() @trusted @property nothrow
+    @property Window rootWindow()
     {
-        return xDisplay;
+        return RootWindow(_display, _displayID);
+    }
+@safe:
+    /// An instance for contacting the manager's server.
+    @property Display* display()
+    {
+        return this._display;
     }
 
-    /++
-        Gives an identifier to the display.
-    +/
-    int displayID() @trusted @property nothrow
+    /// Default screen number
+    @property int displayID()
     {
-        return xDisplayID;
+        return this._displayID;
     }
 
-    /// Close x11 session
-    void closeDisplay() @trusted nothrow
+    ~this()
     {
-        if(xDisplay !is null) XCloseDisplay(xDisplay);
+        closeWndMngSession();
     }
-
-    ~this() 
-    {
-        this.closeDisplay();
-    } 
 }
 
-/++
-    Runtime for working with WinAPI. Also, downloads the required libraries.
-+/
 version(Windows)
 class TidaRuntime : ITidaRuntime
 {
-    import tida.winapi, tida.sound.al;
+    import core.sys.windows.windows;
+    import std.exception : enforce;
+    import tida.sound : initSoundlibrary, Device;
+    import tida.text : initFontLibrary;
 
-    pragma(lib,"opengl32.lib");
+private:
+    HINSTANCE hInstance;
+    string[] arguments;
+    Device _device;
 
-    private
+public @trusted:
+    override void loadExternalLibraries(LibraryUnite[] libs)
     {
-        string[] mainArguments;
-
-        HINSTANCE hInstance;
-        Device device;
-    }
-
-    /++
-        Initializes a runtime by connecting to the windowing server and opening libraries.
-
-        Params:
-            args = Program arguments.
-            libstr = Library struct.
-    +/
-    static void initialize(string[] args,LibraryLoader libstr = AllLibrary) @trusted
-    {
-        _runtime = new TidaRuntime(args);
-
-        runtime.instanceOpen();
-        runtime.loadLibraries(libstr);
-    }
-
-    override void loadLibraries(LibraryLoader libstr) @trusted
-    {
-        import tida.graph.text;
-
-        if(libstr.freeType) FreeTypeLoad();
-
-        if(libstr.openAL) {
-            InitSoundLibrary();
-            device = new Device();
-            device.open();
+        foreach (e; libs)
+        {
+            if (e == OpenAL)
+            {
+                _device = new Device();
+                _device.open();
+            }
+            else
+            if (e == FreeType)
+                initFontLibrary();
         }
     }
 
-    /++
-        Writes program arguments to global memory for later use.
-
-        Params:
-            mainArguments = Program arguments.
-    +/
-    this(string[] mainArguments) @safe
+    override void connectToWndMng()
     {
-        this.mainArguments = mainArguments;
-    }
-
-    override string[] args() @safe
-    {
-        return mainArguments;
-    }
-
-    private void instanceOpen() @trusted
-    {
-        import std.exception : enforce;
-
-        hInstance = GetModuleHandle(null);
-
+        this.hInstance = GetModuleHandle(null);
         ShowWindow(GetConsoleWindow(), SW_HIDE);
 
-        enforce(hInstance, "hInstance is not open!");
+        enforce!Exception(this.hInstance, 
+        "Failed to connect to window manager.");
     }
 
-    /// Returns an instance for working with WinAPI functions.
-    HINSTANCE instance() @safe @property nothrow
+    override void closeWndMngSession()
     {
-        return hInstance;
+        this.hInstance = null;
+    }
+
+    override void acceptArguments(string[] arguments)
+    {
+        this.arguments = arguments;
+    }
+
+    @property override string[] mainArguments()
+    {
+        return this.arguments;
+    }
+
+@safe:
+    @property HINSTANCE instance()
+    {
+        return this.hInstance;
     }
 }

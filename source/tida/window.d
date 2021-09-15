@@ -1,334 +1,278 @@
 /++
-    This module gives access to the creation and management of a window. Unfortunately, 
-    it is not supported to create more than one window, due to security concerns of accessing 
-    memory and connecting to the window manager server. At the moment, you can create a window, 
-    and a context for the graphics pipeline, set the size, window, window resistivity and some 
-    other window parameters, which are inherent in both the x11 environment and the Windows window manager 
-    in both ways. However, there are features of the implementations, for example, so far only x11 can be 
-    used to set the transparency of the window.
-    
-    # 1. Create window components.
-    ## 1.1 Creating a simple window.
-    A window is created by calling the window manager server, and for this, you first need to connect to it 
-    to send requests such as initializing the window and changing its parameters. To do this, you need to 
-    create a runtime to connect to the window manager server. Import the runtime module, and instantiate it. 
-    In addition, it will load other libraries, this can be undone, the following example will show how to create 
-    a runtime for the server connection without loading unnecessary libraries:
-    ---
-    TidaRuntime.initialize(args, NoLibrary);
-    ---
-    
-    (You can download individual components as needed, see: 
-    [tida.runtime](https://github.com/TodNaz/Tida/blob/master/source/tida/runtime.d))
-    In this case, the library will connect to the window manager, and then it will be possible to work with windows.
-    First, you need to allocate memory for properties through the garbage collector, setting in the constructor. 
-    The constructor only sets parameters, but not how not to create a window:
-    ---
-    auto window = new Window(640, 480, "Title!");
-    ---
-    
-    The random step is to create the window itself. The easiest way is through the `initialize` function. 
-    The template parameter includes the window type.
-    * `Simple` - Options for creating a window in which the graphics pipeline will not be created.
-    * `ContextIn` - Creates both a window and a graphics pipeline for applying hardware accelerated graphics.
-    Now, let's create a window without a graphics pipeline:
-    ---
-    window.initialize!Simple;
-    ---
-    
-    When creating a window, it will automatically show the window, and now you can handle the event, or draw in it.
-    
-    ## 1.2 Creating a graphics pipeline and using it.
-    Once hardware acceleration is required, you can create a window with a graphics pipeline that you can interact 
-    with through the Open Graphics Library. Unfortunately, the rendering engine uses the capabilities of the first 
-    versions, but you can refuse rendering in favor of your own by inheriting the interface. The easiest way to create 
-    such a window is also with `initialize`:
-    ---
-    window.initialize!ContextIn;
-    ---
-    
-    And in this case, the window itself will create a graphic pipeline and determine the creation parameters. 
-    However, you can create a manual context, regardless of the platform through the `IContext` interface, 
-    by setting the necessary context parameters. The following example will show you how this can be done. 
-    First, you need to create a window from where the context will be created:
-    ---
-    window.initialize!Simple;
-    ---
-    
-    The next step is to allocate memory for the context:
-    ---
-    auto context = new Context();
-    ---
-    
-    Now, we can define the attributes of the graphics pipeline:
-    ---
-    context.attributeInitialize(GLAttributes(...));
-    ---
-    
-    After, when the attributes are initialized, you need to create the context itself:
-    ---
-    context.initialize()
-    ---
-    
-    The pipeline properties are defined in the GLAttributes structure, create a pipeline from its properties.
-    Now this context can be assigned to a window:
-    ---
-    window.context = context;
-    ---
-    
-    Unfortunately, in the Windows environment, before creating, you need to declare a window for the context, 
-    from where the parameters will be displayed:
-    ---
-    context.deviceMake(window.handle);
-    ---
-    
-    # 2. Window control.
-    ## 2.1 Window size.
-    The size of the window is set using the constructor, however, if you need to dynamically resize, 
-    you can use the `resize` method, where you can change the visual size of the window. 
-    You can find out the parameters using the properties `width`,` height`, however, when the user resizes manually, 
-    they will not be recorded automatically, you must perform this action yourself using event tracking through 
-    the handler:
-    ---
-    IEventHandler event = new EventHandler(window);
-    ...
-    if(event.isResize) {
-        window.eventResize(event.newSizeWindow);
-    }
-    ---
-    
-    In this situation, you yourself keep track of the size of the window. If not tracked, the size will visually change, 
-    however, the properties of the window will not be changed, and when using it, there may be unexpected behavior. 
-    This is due to the fact that automatic markup is impossible due to a bug in x11, when the event is set to be tracked, 
-    he graphic pipeline does not change size along with the window, from where there are gaps with scaling.
-    If you don't want the user to be able to resize, set such a property to `resizable`. 
-    If you want, this can also be canceled. Not only the user, but also the program cannot change the size.
-    It is also available to switch the window to full screen mode through the 'fullscreen' property. 
-    Both translation and translation into windowed mode are available:
-    ---
-    window.fullscreen = true; // Fullscreen mode
-    ...
-    window.fullscreen = false; // Window mode
-    ---
-    
-    ## 2.2 External component.
-    The window represents the icon, title, icon and frame for the window. All such properties can be set through 
-    the corresponding functions.
-    `window.icon` - 
-    The parameters indicate the structure of the picture, where the sequence is taken from, covented the icon, 
-    and send the data to the server. An example of how to set an icon from a file:
-    ---
-    window.icon = new Image().load("icon.png");
-    ---
-    
-    `window.border` -
-    Determines whether the window will have frames.
-    `window.title` - 
-    Sets the title of the window.
-    
-    ## 2.3 Features with platform.
-    There may be a case when you need to work with a window directly through its native API, 
-    for this there is a `handle` method. It gives a pointer to a window in its plafform, and based on it, 
-    you can change some of its parameters. Care should be taken with this, because by changing it outside 
-    of the class, you can cause the program to behave undefined. To prevent this from happening, change those 
-    properties that the handler, renderer and the window itself will not track when it works with it.
-    Here's an example of interaction:
-    ---
-    auto winPtr = window.handle();
-    // Fixes the title bar in X11 environment.
-    XStoreName(runtime.display, winPtr, newTitle.toUTFz!(char*));
-    ---
-    This example shows a bad attitude of work outside the stratum, since now the object, when we request a title, 
-    will return the old title because it did not remember the old one. Therefore, be extremely careful when working 
-    outside the interlayer.
-    
-    Authors: $(HTTP https://github.com/TodNaz, TodNaz)
-    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
+Implementation of cross-platform creation and management of a window.
+
+Also, at the same time, it is possible to create a graphical context for the 
+window to be able to use hardware acceleration using a common open API - OpenGL.
+
+Creating_a_window:
+First of all, creating a window begins with allocating memory and setting 
+the input parameters:
+---
+Window window = new Window(640, 480, "Example title");
+---
+
+Only input parameters are set in the constructor, this does not mean that the 
+window is ready for use. Here only the initial width, height and title of the 
+window are set. Other properties do not affect creation, everything is done 
+after the window is created.
+
+The window is created by the $(LREF windowInitialize) function:
+---
+windowInitialize(window, 100, 100);
+...
+window.windowInitialize(100, 100); // UFCS
+---
+
+Now, you can interact with the window or create a graphics context to access 
+hardware acceleration. To do this, again, allocate the mod memory for the 
+context collector and create a structure with a description of the 
+context properties:
+---
+Context context = new Context();
+
+// We just set the parameters by color. Each color will weigh 8 bits.
+GraphicsAttributes attributes = AttribBySizeOfTheColor!8;
+context.setAttributes(attributes);
+context.create(window);
+
+// We set the current context to the window.
+window.context = context;
+---
+Now you will have access to hardware acceleration according to the attributes 
+you specified, what you can do next is load open graphics libraries and start 
+drawing primitives. To display primitives on the screen, 
+use the $(HREF window/IWindow.swapBuffers.html, IWindow.swapBuffers) function.
+
+OS_specific_actions:
+It may be that the built-in tools are not enough and you need, say, to change 
+some properties that other platforms cannot do. For this, each object has an 
+open $(B `handle`) field. Getting it is easy, however, be careful with what you do 
+with it. You can do such things that the interaction interface after your 
+manipulations will not be able to control it. To do this, it is enough not to 
+change the properties that can be controlled by the interaction interface.
+
+Macros:
+    LREF = <a href="#$1">$1</a>
+    HREF = <a href="$1">$2</a>
+    PHOBREF = <a href="https://dlang.org/phobos/$1.html#$2">$2</a>
+
+Authors: $(HREF https://github.com/TodNaz,TodNaz)
+Copyright: Copyright (c) 2020 - 2021, TodNaz.
+License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
 +/
 module tida.window;
 
-enum Empty     = 0; /// Will not initialize the window.
-enum Simple    = 1; /// Initializes a window with no graphics context for OpenGL.
-enum ContextIn = 2; /// Initialization of a window with a graphics pipeline for OpenGL.
+enum ConfFindError = 
+"The required configuration for the specified graphic attributes was not found!";
 
-/// Attributes for creating context.
-struct GLAttributes
-{
-    public
-    {
-        int redSize = 8; /// Red size
-        int greenSize = 8; /// Green size
-        int blueSize = 8; /// Blue size
-        int alphaSize = 8; /// Alpha channel size
-        int depthSize = 24; /// Depth size
-        int stencilSize = 8; /// Stencil size
-        int colorDepth = 32; /// Color depth
-        bool doubleBuffer = true; /// Double buffering
-    }
-}
+enum WithoutContext = 0; /// Without creating a graphical context.
+enum WithContext = 1; /// With the creation of a graphical context.
 
 /++
-    Automatically resizes all colors when creating context.
-    sizeAll = Color component size.
+Graphics attributes for creating a special graphics pipeline 
+(default parameters are indicated in the structure).
 +/
-template GLAttribAutoColorSize(ubyte sizeAll)
+struct GraphicsAttributes
 {
-    enum GLAttribAutoColorSize = GLAttributes(sizeAll, sizeAll, sizeAll, sizeAll);
+    int redSize = 8; /// Red size
+    int greenSize = 8; /// Green size
+    int blueSize = 8; /// Blue size
+    int alphaSize = 8; /// Alpha channel size
+    int depthSize = 24; /// Depth size
+    int stencilSize = 8; /// Stencil size
+    int colorDepth = 32; /// Color depth
+    bool doubleBuffer = true; /// Double buffering
 }
 
 /++
-    The context interface that describes how to interact with the context.
-    See_Also:
-            $(HTTP https://dri.freedesktop.org/wiki/GLX/, GLX)
-            $(HTTP https://docs.microsoft.com/en-us/windows/win32/opengl/wgl-functions, WGL)
+Automatic determination of the structure of graphic attributes by the total 
+size of the color unit.
+
+Params:
+    colorSize = Color unit size.
++/
+template AttribBySizeOfTheColor(int colorSize)
+{
+    enum AttribBySizeOfTheColor = GraphicsAttributes(   colorSize,
+                                                        colorSize,
+                                                        colorSize,
+                                                        colorSize);
+}
+
+/++
+Graphics context creation interface for hardware graphics acceleration.
+
+With this technology, the context can be easily created with the given
+attributes, and it is obligatory $(U after) the window is created.
+
+Example:
+---
+// Window creation code . . .
+Context contex = new Context();
+context.setAttribute(attributes...);
+context.create(window);
+// The graphics context has been created!
+---
 +/
 interface IContext
 {
+@safe:
     /++
-        Initializes the attributes of the context.
-        
-        Params:
-            attributes = Attributes for creating context.
+    Sets the input attributes for creating the graphics context.
+    At the same time, he must simultaneously give these attributes
+    unsparingly to the very object of the pixel description,
+    if such is possible. As a rule, this method is followed by the creation
+    of the context, but the function itself should not do this.
 
-        Throws: `Exception` If the context in the process was not created 
-        under the influence of input parameters.
+    Params:
+        attributes = graphic context description attributes.
+
+    Throws:
+    $(PHOBREF object,Exception) if the graphics attributes did not fit the creation
+    of the context (see what parameters you could set, maybe inconsistent with
+    each other).
     +/
-    void attributeInitialize(immutable(GLAttributes) attributes) @safe;
+    void setAttributes(GraphicsAttributes attributes);
 
     /++
-        Initializes the contest itself.
-    +/
-    void initialize() @safe;
+    Creates directly, a graphics context object for a specific platform,
+    based on the previously specified graphics context attributes.
 
-    /// Context destory
-    void destroy() @safe;
+    Params:
+        window = Pointer to the window to create the graphics context.
+
+    Throws:
+    $(PHOBREF object,Exception) if the creation of the graphics context was
+    not successful. The attributes were probably not initialized.
+    +/
+    void create(IWindow window);
+
+    /++
+    Destroys the context.
+    +/
+    void destroy();
 }
 
 /++
-    The interface describing the interaction with the window in the program.
+Window interaction interface. It does not provide its creation, it is created by
+a separate function within the interface implementation, in particular 
+the `initialize` function.
 +/
 interface IWindow
 {
-    import tida.graph.image;
+    import tida.image;
 
-    /// Shows a window.
-    void show() @safe;
+@safe:
+    /// The position of the window in the plane of the desktop.
+    @property int x();
 
-    /// Hides a window.
-    void hide() @safe;
+    /// The position of the window in the plane of the desktop.
+    @property int y();
 
-    /++
-        Sets the context to the window. When creating the context manually, 
-        keep in mind that this function will not help.
+    /// Window width
+    @property uint width();
 
-        Throws: `Exception` if the context is damaged or does not match the parameters.
-    +/
-    void context(IContext context) @safe @property;
+    /// Window height
+    @property uint height();
 
-    /// The currently supplied context to the window.
-    IContext context() @safe @property;
+    /// Window mode, namely whether windowed or full screen
+    @property void fullscreen(bool value);
 
-    /++
-        Swaps buffers.
-        Throws: `Exception` If there is no graphics pipeline.
-    +/
-    void swapBuffers() @safe;
+    /// Window mode, namely whether windowed or full screen
+    @property bool fullscreen();
 
-    /// X-axis position of the window.
-    int x() @safe @property inout;
+    /// Whether the window can be resized by the user.
+    @property void resizable(bool value);
 
-    /// Y-axis position of the window.
-    int y() @safe @property inout;
+    /// Whether the window can be resized by the user.
+    @property bool resizable();
 
-    /++
-        Resizes the window.
-        Params:
-            newWidth = Window width.
-            newHeight = Window height.
-    +/
-    void resize(uint newWidth,uint newHeight) @safe;
+    /// Frames around the window.
+    @property void border(bool value);
 
-    /++
-        Changes the position of the window.
-        Params:
-            posX = Window x-axis position.
-            posY = Window y-axis position.
-    +/
-    void move(int posX,int posY) @safe;
-
-    /// Resizable states of the window.
-    void resizable(bool value) @safe @property;
-
-    /// ditto
-    bool resizable() @safe @property inout;
-
-    /// Window states, full screen or windowed.
-    void fullscreen(bool value) @safe @property;
-
-    /// ditto
-    bool fullscreen() @safe @property inout;
-
-    /// The state of the borders, whether they are there or not.
-    void border(bool value) @safe @property;
-
-    /// ditto
-    bool border() @safe @property inout;
+    /// Frames around the window.
+    @property bool border();
 
     /// Window title.
-    void title(string newTitle) @safe @property;
+    @property void title(string value);
 
-    /// ditto
-    string title() @safe @property inout;
+    /// Window title.
+    @property string title();
 
-    void icon(Image image) @safe @property;
+    /// Whether the window is always on top of the others.
+    @property void alwaysOnTop(bool value);
 
-    /// Window width.
-    uint width() @safe @property inout;
+    /// Whether the window is always on top of the others.
+    @property bool alwaysOnTop();
 
-    /// Window height.
-    uint height() @safe @property inout;
+    /// Dynamic window icon.
+    @property void icon(Image iconimage);
 
-    /// Destroys the window instance.
-    void destroyWindow() @safe;
+    /// Grahphics context
+    @property void context(IContext ctx);
+
+    /// Grahphics context
+    @property IContext context();
 
     /++
-        Changes only the window size values without changing the window itself. 
-        (This is needed for events when the window is resized).
-    +/ 
-    void eventResize(uint[2] size) @safe;
+    Window resizing function.
 
-    /// A window state variable for when the window can permanently overlap other windows.
-    void alwaysTop(bool value) @safe @property;
+    Params:
+        w = Window width.
+        h = Window height.
+    +/
+    void resize(uint w, uint h);
 
-    /// ditto
-    bool alwaysTop() @safe @property;
+    /++
+    Changes the position of the window in the plane of the desktop.
+
+    Params:
+        xposition = Position x-axis.
+        yposition = Position y-axis.
+    +/
+    void move(int xposition, int yposition);
+
+    /++
+    Shows a window in the plane of the desktop.
+    +/
+    void show();
+
+    /++
+    Hide a window in the plane of the desktop. 
+    (Can be tracked in the task manager.)
+    +/
+    void hide();
+
+    /++
+    Swap two buffers.
+    +/
+    void swapBuffers();
+
+    /++
+    Destroys the window and its associated data (not the structure itself, all values are reset to zero).
+    +/
+    void destroy();
 }
 
-version(Posix)
-/// Posix context implemetation
+version (Posix)
 class Context : IContext
 {
-    import tida.x11, tida.runtime;
+    import tida.runtime;
+    import x11.X, x11.Xlib, x11.Xutil;
+    import dglx.glx;
 
-    private
-    {
-        GLXContext _context;
-        XVisualInfo* visual;
-        GLXFBConfig bestFbcs;   
-    }
+private:
+    GLXContext _context;
+    XVisualInfo* visual;
+    GLXFBConfig bestFbcs;
 
-    /// Embeds a ready-made context into the structure.
-    void bindContext(GLXContext ctx) @safe
+public @trusted override:
+    void setAttributes(GraphicsAttributes attributes)
     {
-        this._context = ctx;
-    }
-
-    override void attributeInitialize(immutable(GLAttributes) attributes = GLAttribAutoColorSize!8) @trusted
-    {
-        import std.conv : to;
         import std.exception : enforce;
+        import std.conv : to;
 
-        int[] glxAttribs = 
+        int[] glxAttributes = 
         [
             GLX_X_RENDERABLE    , True,
             GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
@@ -345,150 +289,81 @@ class Context : IContext
         ];
 
         int fbcount = 0;
-        scope GLXFBConfig* fbc = glXChooseFBConfig(runtime.display, runtime.displayID, glxAttribs.ptr, &fbcount);
-
-        enforce(fbc, "fbc was not found!");
+        scope fbc = glXChooseFBConfig(  runtime.display, runtime.displayID, 
+                                        glxAttributes.ptr, &fbcount);
+        scope(success) XFree(fbc);
+        enforce!Exception(fbc, ConfFindError);
 
         int bestFbc = -1, bestNum = -1;
-        foreach(int i; 0 .. fbcount)
+        foreach (int i; 0 .. fbcount)
         {
             int sampBuff, samples;
-            glXGetFBConfigAttrib(runtime.display, fbc[i], GLX_SAMPLE_BUFFERS, 	&sampBuff);
-            glXGetFBConfigAttrib(runtime.display, fbc[i], GLX_SAMPLES, 			&samples);
+            glXGetFBConfigAttrib(   runtime.display, fbc[i], 
+                                    GLX_SAMPLE_BUFFERS, &sampBuff);
+            glXGetFBConfigAttrib(   runtime.display, fbc[i], 
+                                    GLX_SAMPLES, &samples);
 
-            if(bestFbc < 0 || (sampBuff && samples > bestNum)) {
+            if (bestFbc < 0 || (sampBuff && samples > bestNum)) 
+            {
                 bestFbc = i;
                 bestNum = samples;
             }
         }
 
-        bestFbcs = fbc[bestFbc];
+        this.bestFbcs = fbc[bestFbc];
+        enforce!Exception(bestFbcs, ConfFindError);
 
-        enforce(bestFbcs, "best FBS is a nil!");
-
-        visual = glXGetVisualFromFBConfig(runtime.display, bestFbcs);
-
-        enforce(visual, "Visual is a nil!");
-
-        XFree(fbc);
+        this.visual = glXGetVisualFromFBConfig(runtime.display, bestFbcs);
+        enforce!Exception(visual, ConfFindError);
     }
 
-    override void initialize() @trusted
+    void create(IWindow window)
     {
-        _context = glXCreateNewContext(runtime.display, bestFbcs, GLX_RGBA_TYPE, null, True);
+        _context = glXCreateNewContext( runtime.display, this.bestFbcs, 
+                                        GLX_RGBA_TYPE, null, true);
     }
 
-    override void destroy() @trusted
+    void destroy()
     {
-        glXDestroyContext(runtime.display, context);
+        glXDestroyContext(runtime.display, _context);
         if(visual) XFree(visual);
-    }
-
-    /// Visual information
-    XVisualInfo* visualInfo() @safe @property
-    {
-        return visual;
-    }
-
-    /// Context pointer
-    GLXContext context() @safe @property
-    {
-        return _context;
-    }
-
-    ~this() @safe
-    {
-        this.destroy();
     }
 }
 
-/// X11 window structure
-version(Posix)
+version (Posix)
 class Window : IWindow
 {
-    import tida.x11, tida.runtime, tida.graph.image;
-    import std.utf;
+    import tida.runtime, tida.image;
+    import x11.X, x11.Xlib, x11.Xutil;
+    import dglx.glx;
+    import std.utf : toUTFz;
 
-    private
+private:
+    string _title;
+    bool _fullscreen;
+    bool _border;
+    bool _resizable;
+    bool _alwaysTop;
+    IContext _context;
+    uint _widthInit;
+    uint _heightInit;
+
+public:
+    x11.X.Window handle;
+    Visual* visual;
+    int depth;
+
+@trusted:
+    this(uint w, uint h, string caption)
     {
-        uint _width;
-        uint _height;
-
-        string _title;
-
-        bool _fullscreen;
-        bool _border;
-        bool _resizable;
-        bool _alwaysTop;
-
-        IContext _context;
-
-        tida.x11.Window window;
-
-        Visual* _visual;
-        int _depth;
+        this._widthInit = w;
+        this._heightInit = h;
     }
 
-    /++
-        Embeds the finished window into a convenient window management framework.
-        WARNING! Does not automatically detect title and window state!
-
-        Params:
-            window = Window identificator (X11 Window)
-    +/
-    void bindWindow(tida.x11.Window window) @trusted
+    void createFromXVisual(XVisualInfo* vinfo, int posX = 100, int posY = 100)
     {
-        this.window = window;
-        XWindowAttributes attrib;
-
-        XGetWindowAttributes(runtime.display, window, &attrib);
-        _width = attrib.width;
-        _height = attrib.height;
-
-        scope XSizeHints* sh = XAllocSizeHints();
-        scope(exit) XFree(sh);
-
-        long flags;
-
-        XGetWMNormalHints(runtime.display, window, sh, &flags);
-
-        _resizable = (sh.flags & PMinSize) == PMinSize;
-
-        this._visual = attrib.visual;
-        this._depth = attrib.depth;
-    }
-
-    /++
-        Parameter constructor. Note that it will only create the parameters,
-        not the window itself.
-
-        Params:
-            newWidth = Window width.
-            newHeight = Window height.
-            newTitle = Window caption.
-    +/
-    this(uint newWidth,uint newHeight,string newTitle) @safe
-    {
-        _width = newWidth;
-        _height = newHeight;
-        _title = newTitle;
-    }
-
-    /++
-        Create a window with visual information for the window.
-
-        Params:
-            info = Visual information structure.
-            posX = Start x-axis position window.
-            posY = Start y-axis position window.
-    +/
-    void createFromXVisual(XVisualInfo* vinfo,int posX = 100,int posY = 100) @trusted 
-    {
-        scope Visual* visual = vinfo.visual;
-        int depth = vinfo.depth;
-
-        _visual = visual;
-        _depth = depth;
+        visual = vinfo.visual;
+        depth = vinfo.depth;
 
         auto rootWindow = runtime.rootWindow;
 
@@ -503,177 +378,123 @@ class Window : IWindow
                                    KeyReleaseMask | ButtonReleaseMask | EnterWindowMask |
                                    LeaveWindowMask | PointerMotionMask;
 
-        window = XCreateWindow (runtime.display, rootWindow, posX, posY, width, height, 0, depth,
+        this.handle = XCreateWindow (runtime.display, rootWindow, posX, posY, _widthInit, _heightInit, 0, depth,
                                 InputOutput, visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, 
                                 &windowAttribs);
 
         title = _title;
 
-        Atom wmAtom = getAtom("WM_DELETE_WINDOW");
-
-        XSetWMProtocols(runtime.display, window, &wmAtom, 1);
+        Atom wmAtom = XInternAtom(runtime.display, "WM_DELETE_WINDOW", 0);
+        XSetWMProtocols(runtime.display, this.handle, &wmAtom, 1);
     }
 
-    /++
-        Window initialization. In the class, it must be executed as a template to generate the appropriate context.
-        You can initialize the window of the following types:
-        * Simple    -   Generates a window without a graphics pipeline. Those. a simple window will be created, 
-                        if you need a context, you have to make it yourself and send it to the window.
-        * ContextIn -   Generates a window with a graphics pipeline for OpenGL.
-        Params:
-            Type = The type initial window.
-            posX = The initial x position of the window.
-            posY = The initial y position of the window.
-            isShow = Whether to show the window.
-    +/
-    void initialize(ubyte Type)(int posX = 100,int posY = 100,bool isShow = true) @trusted
+    int getDepth()
     {
-        static if(Type == Simple)
-        {
-            scope Visual* visual = XDefaultVisual(runtime.display, runtime.displayID);
-            int depth = XDefaultDepth(runtime.display, runtime.displayID);
-
-            XVisualInfo* info = new XVisualInfo();
-            info.visual = visual;
-            info.depth = depth;
-
-            createFromXVisual(info, posX, posY);
-        }else
-        static if(Type == ContextIn)
-        {
-            _context = new Context();
-            _context.attributeInitialize(GLAttribAutoColorSize!8);
-
-            createFromXVisual((cast(Context) _context).visualInfo, posX, posY);
-
-            _context.initialize();
-
-            context = _context;
-        }
-
-        if(isShow) show();
+        return depth;
     }
 
-    override void show() @trusted
+    Visual* getVisual()
     {
-        XMapWindow(runtime.display, window);
-        XClearWindow(runtime.display, window);
+        return visual;
     }
 
-    override void hide() @trusted
+    ~this()
     {
-        XUnmapWindow(runtime.display, window);
+        this.destroy();
     }
-
-    override void context(IContext ofcontext) @trusted
+override:
+    @property int x()
     {
-        glXMakeCurrent(runtime.display, window, (cast(Context) ofcontext).context);
+        XWindowAttributes winAttrib;
+        XGetWindowAttributes(runtime.display, this.handle, &winAttrib);
 
-        _context = ofcontext;
+        return winAttrib.x;
     }
 
-    override IContext context() @safe
+    @property int y()
     {
-        return _context;
+        XWindowAttributes winAttrib;
+        XGetWindowAttributes(runtime.display, this.handle, &winAttrib);
+
+        return winAttrib.y;
     }
 
-    override void swapBuffers() @trusted
+    @property uint width()
     {
-        glXSwapBuffers(runtime.display, window);
+        XWindowAttributes winAttrib;
+        XGetWindowAttributes(runtime.display, this.handle, &winAttrib);
+
+        return winAttrib.width;
     }
 
-    override int x() @trusted @property inout
+    @property uint height()
     {
-        XWindowAttributes xwa;
-        XGetWindowAttributes(runtime.display, window, &xwa);
+        XWindowAttributes winAttrib;
+        XGetWindowAttributes(runtime.display, this.handle, &winAttrib);
 
-        return xwa.x;
+        return winAttrib.height;
     }
 
-    override int y() @trusted @property inout
+    @property void fullscreen(bool value)
     {
-        XWindowAttributes xwa;
-        XGetWindowAttributes(runtime.display, window, &xwa);
+        XEvent event;
+        
+        const wmState = XInternAtom(runtime.display, 
+                                    "_NET_WM_STATE", 0);
+        const wmFullscreen = XInternAtom(   runtime.display, 
+                                            "_NET_WM_STATE_FULLSCREEN", 0);
 
-        return xwa.y;
+        event.xany.type = ClientMessage;
+        event.xclient.message_type = wmState;
+        event.xclient.format = 32;
+        event.xclient.window = this.handle;
+        event.xclient.data.l[1] = wmFullscreen;
+        event.xclient.data.l[3] = 0;
+
+        event.xclient.data.l[0] = value;
+
+        XSendEvent(runtime.display,runtime.rootWindow,0,
+                SubstructureNotifyMask | SubstructureRedirectMask, &event);
+
+        this._fullscreen = value;
     }
 
-    override void resize(uint newWidth,uint newHeight) @trusted
+    @property bool fullscreen()
     {
-        if(!resizable)
-            return;
-
-        _width = newWidth;
-        _height = newHeight;
-
-        XResizeWindow(runtime.display, window, newWidth, newHeight);
+        return this._fullscreen;
     }
 
-    override void move(int posX,int posY) @trusted
-    {
-        XMoveWindow(runtime.display, window, posX, posY);
-    }
-
-    override void resizable(bool value) @trusted @property
+    @property void resizable(bool value)
     {
         long flags;
 
         scope XSizeHints* sh = XAllocSizeHints();
-
         scope(exit) XFree(sh);
 
-        XGetWMNormalHints(runtime.display, window, sh, &flags);
+        XGetWMNormalHints(runtime.display, this.handle, sh, &flags);
         
         if(!value)
         {
             sh.flags |= PMinSize | PMaxSize;
-            sh.min_width = _width;
-            sh.max_width = _width;
-            sh.min_height = _height;
-            sh.max_height = _height;
+            sh.min_width = this.width;
+            sh.max_width = this.width;
+            sh.min_height = this.height;
+            sh.max_height = this.height;
         }else
         {
             sh.flags &= ~(PMinSize | PMaxSize);
         }
 
-        _resizable = value;
-
-        XSetWMNormalHints(runtime.display, window, sh);
+        this._resizable = value;
+        XSetWMNormalHints(runtime.display, this.handle, sh);
     }
 
-    override bool resizable() @safe @property inout
+    @property bool resizable()
     {
-        return _resizable;
+        return this._resizable;
     }
 
-    override void fullscreen(bool value) @trusted @property
-    {
-        XEvent event;
-        
-        const wmState = getAtom("_NET_WM_STATE");
-        const wmFullscreen = getAtom("_NET_WM_STATE_FULLSCREEN");
-
-        event.xany.type = ClientMessage;
-        event.xclient.message_type = wmState;
-        event.xclient.format = 32;
-        event.xclient.window = window;
-        event.xclient.data.l[1] = wmFullscreen;
-        event.xclient.data.l[3] = 0;
-
-        event.xclient.data.l[0] = fullscreen ? 1 : 0;
-
-        XSendEvent(runtime.display,runtime.rootWindow,0,
-                SubstructureNotifyMask | SubstructureRedirectMask, &event);
-
-        _fullscreen = value;
-    }
-
-    override bool fullscreen() @safe @property inout
-    {
-        return _fullscreen;
-    }
-
-    override void border(bool value) @trusted @property
+    @property void border(bool value)
     {
         import std.conv : to;
 
@@ -685,225 +506,138 @@ class Window : IWindow
             ulong status;
         }
 
-        auto hint = MWMHints(1 << 1, 0, value.to!ulong, 0, 0);
+        const hint = MWMHints(1 << 1, 0, value.to!ulong, 0, 0);
+        const wmHINTS = XInternAtom(runtime.display, "_MOTIF_WM_HINTS", 0);
 
-        auto wmHINTS = getAtom("_MOTIF_WM_HINTS");
-
-        XChangeProperty(runtime.display, window, wmHINTS, wmHINTS, 32,
+        XChangeProperty(runtime.display, this.handle, wmHINTS, wmHINTS, 32,
             PropModeReplace, cast(ubyte*) &hint, MWMHints.sizeof / long.sizeof);
 
-        _border = value;
+        this._border = value;
     }
 
-    override bool border() @safe @property inout
+    @property bool border()
     {
-        return _border;
+        return this._border;
     }
 
-    override void title(string newTitle) @trusted @property
+    @property void title(string value)
     {
-        XStoreName(runtime.display, window, newTitle.toUTFz!(char*));
-        XSetIconName(runtime.display, window, newTitle.toUTFz!(char*));
+        XStoreName(runtime.display, this.handle, value.toUTFz!(char*));
+        XSetIconName(runtime.display, this.handle, value.toUTFz!(char*));
 
-        _title = newTitle;
+        this._title = value;
     }
 
-    override string title() @safe @property inout
+    @property string title()
     {
-        return _title;
+        return this._title;
     }
 
-    override void icon(Image image) @trusted @property
+    @property void alwaysOnTop(bool value)
     {
-        import tida.color;
+        const wmState = XInternAtom(runtime.display, "_NET_WM_STATE", 0);
+        const wmAbove = XInternAtom(runtime.display, "_NET_WM_STATE_ABOVE", 0);
 
-        ulong[] pixels = [cast(ulong) image.width,cast(ulong) image.height];
-
-        foreach(pixel; image.pixels)
-            pixels ~= pixel.to!(ulong,PixelFormat.ARGB);
-
-        auto event = WMEvent();
-        event.first = getAtom("_NET_WM_ICON");
-        event.second = getAtom("CARDINAL");
-        event.data = cast(ubyte*) pixels;
-        event.length = pixels.length;
-        event.mode = PropModeReplace;
-        event.format = 32;
-        event.window = window;
-
-        event.send();
-    }
-
-    override uint width() @safe @property inout
-    {
-        return _width;
-    }
-
-    override uint height() @safe @property inout
-    {
-        return _height;
-    }
-
-    override void destroyWindow() @trusted
-    {
-        XDestroyWindow(runtime.display, window);
-    }
-
-    override void eventResize(uint[2] size) @safe
-    {
-        _width = size[0];
-        _height = size[1];
-    }
-
-    override void alwaysTop(bool value) @trusted @property
-    {
         XEvent event;
         event.xclient.type = ClientMessage;
         event.xclient.serial = 0;
         event.xclient.send_event = true;
         event.xclient.display = runtime.display;
-        event.xclient.window = window;
-        event.xclient.message_type = getAtom("_NET_WM_STATE");
+        event.xclient.window = this.handle;
+        event.xclient.message_type = wmState;
         event.xclient.format = 32;
         event.xclient.data.l[0] = value;
-        event.xclient.data.l[1] = getAtom("_NET_WM_STATE_ABOVE");
+        event.xclient.data.l[1] = wmAbove;
         event.xclient.data.l[2 .. 5] = 0;
 
-        XSendEvent( runtime.display, runtime.rootWindow, false, SubstructureRedirectMask | SubstructureNotifyMask,
-                    &event);
+        XSendEvent( runtime.display, runtime.rootWindow, false, 
+                    SubstructureRedirectMask | SubstructureNotifyMask, &event);
         XFlush(runtime.display);
 
-        _alwaysTop = value;
+        this._alwaysTop = value;
     }
 
-    override bool alwaysTop() @safe @property
+    @property bool alwaysOnTop()
     {
-        return _alwaysTop;
+        return this._alwaysTop;
     }
 
-    /++
-        Returns: the identifier of the window.
-    +/
-    ulong handle() @safe @property inout
+    void icon(Image iconimage)
     {
-        return window;
+        import tida.color;
+
+        ulong[] pixels = [  cast(ulong) iconimage.width,
+                            cast(ulong) iconimage.height];
+
+        foreach(pixel; iconimage.pixels)
+            pixels ~= pixel.to!(ulong, PixelFormat.ARGB);
+
+        const first = XInternAtom(runtime.display, "_NET_WM_ICON", 0);
+        const second = XInternAtom(runtime.display, "CARDINAL", 0);
+
+        XChangeProperty(runtime.display, this.handle, first, second, 32,
+                        PropModeReplace, cast(ubyte*) pixels, 
+                        cast(int) pixels.length);
     }
 
-    /// Returns: Visual structure.
-    Visual* getVisual() @safe
+    @property void context(IContext ctx)
     {
-        return _visual;
+        this._context = ctx;
+        glXMakeCurrent(runtime.display, this.handle, (cast(Context) ctx)._context);
     }
 
-    /// Returns: depth.
-    int getDepth() @safe
+    @property IContext context()
     {
-        return _depth;
+        return this._context;
     }
 
-    /++
-        Sets the alpha value to the window. Only applicable to x11 windows.
-        Params:
-            alpha = Alpha value.
-    +/
-    void alpha(float alpha) @trusted @property
+    void resize(uint w, uint h)
     {
-        auto atom = getAtom("_NET_WM_WINDOW_OPACITY");
-        auto cardinal = getAtom("CARDINAL");
-
-        auto tAlpha = cast(ulong) (cast(ulong) 0xFFFFFF * alpha);
-
-        XChangeProperty(runtime.display, window, atom, cardinal, 32,
-                PropModeReplace, cast(ubyte*) &tAlpha, 1);
+        XResizeWindow(runtime.display, this.handle, w, h);
     }
 
-    ~this() @safe
+    void move(int xposition, int yposition)
     {
-        destroyWindow();
+        XMoveWindow(runtime.display, this.handle, xposition, yposition);
+    }
+
+    void show()
+    {
+        XMapWindow(runtime.display, this.handle);
+        XClearWindow(runtime.display, this.handle);
+    }
+
+    void hide()
+    {
+         XUnmapWindow(runtime.display, this.handle);
+    }
+
+    void swapBuffers()
+    {
+        import dglx.glx : glXSwapBuffers; 
+
+        glXSwapBuffers(runtime.display, this.handle);
+    }
+
+    void destroy()
+    {
+        XDestroyWindow(runtime.display, this.handle);
+        this.handle = 0;
     }
 }
 
 version(Windows)
-/// Window context implemetation
 class Context : IContext
 {
-    import tida.winapi, tida.runtime;
+    import tida.runtime;
+    import core.sys.windows.windows;
+    import std.exception : enforce;
 
-    private
-    {
-        HDC deviceHandle;
-        HGLRC _context;
-        PIXELFORMATDESCRIPTOR pfd;
-    }
-
-    /// Make device from window.
-    void deviceMake(HWND window) @trusted
-    {
-        deviceHandle = GetDC(window);
-    }
-
-    override void attributeInitialize(GLAttributes attributes = GLAttribAutoColorSize!8) @trusted
-    {
-    	import std.exception : enforce;
+private:
+    GraphicsAttributes attributes;
+    HDC deviceHandle;
     
-        const flags = (attributes.doubleBuffer ? 
-            PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL : PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL);
-
-        pfd.nSize = PIXELFORMATDESCRIPTOR.sizeof;
-        pfd.nVersion = 1;
-        pfd.dwFlags = flags;
-        pfd.iPixelType = PFD_TYPE_RGBA;
-        pfd.cRedBits = cast(ubyte) attributes.redSize;
-        pfd.cGreenBits = cast(ubyte) attributes.greenSize;
-        pfd.cBlueBits = cast(ubyte) attributes.blueSize;
-        pfd.cAlphaBits = cast(ubyte) attributes.alphaSize;
-        pfd.cDepthBits = cast(ubyte) attributes.depthSize;
-        pfd.cStencilBits = cast(ubyte) attributes.stencilSize;
-        pfd.iLayerType = PFD_MAIN_PLANE;
-
-        auto chsPixel = ChoosePixelFormat(deviceHandle, &pfd);
-		enforce(chsPixel != 0, "Not choose pixel format!");
-
-        SetPixelFormat(deviceHandle, chsPixel, &pfd);
-    }
-
-    /// Pixel format descriptor.
-    PIXELFORMATDESCRIPTOR* pixelformat() @safe @property inout
-    {
-        return &pfd;
-    }
-
-    /// Device.
-    HDC device() @safe @property inout
-    {
-        return deviceHandle;
-    }
-
-    override void initialize() @trusted
-    {
-        _context = wglCreateContext(deviceHandle);
-    }
-
-    override void destroy() @trusted
-    {
-        wglDeleteContext(_context);
-    }
-
-    /// Graphics context.
-    HGLRC context() @safe @property inout
-    {
-        return _context;
-    }
-
-    ~this() @safe
-    {
-        destroy();
-    }
-}
-
-version(Windows)
-{
-    import tida.winapi;
+    PIXELFORMATDESCRIPTOR pfd;
 
     alias FwglChoosePixelFormatARB = extern(C) bool function( HDC hdc,
                                                     int *piAttribIList,
@@ -916,288 +650,259 @@ version(Windows)
 
     alias FwglCreateContextAttribsARB = extern(C) HGLRC function(HDC, HGLRC, int*);
 
-    __gshared FwglChoosePixelFormatARB wglChoosePixelFormatARB; ///
-    __gshared FwglGetExtensionsStringARB wglGetExtensionsStringARB; ///
-    __gshared FwglCreateContextAttribsARB wglCreateContextAttribsARB; ///
+    FwglChoosePixelFormatARB wglChoosePixelFormatARB;
+    FwglGetExtensionsStringARB wglGetExtensionsStringARB;
+    FwglCreateContextAttribsARB wglCreateContextAttribsARB;
 
     enum
     {
-        WGL_DRAW_TO_WINDOW_ARB = 0x2001, ///
-        WGL_RED_BITS_ARB = 0x2015, ///
-        WGL_GREEN_BITS_ARB = 0x2017, ///
-        WGL_BLUE_BITS_ARB = 0x2019, ///
-        WGL_ALPHA_BITS_ARB = 0x201B, ///
-        WGL_DOUBLE_BUFFER_ARB = 0x2011, ///
-        WGL_DEPTH_BITS_ARB = 0x2022, ///
-        WGL_CONTEXT_MAJOR_VERSION_ARB = 0x2091, ///
-        WGL_CONTEXT_MINOR_VERSION_ARB = 0x2092, ///
-        WGL_CONTEXT_FLAGS_ARB = 0x2094, ///
-        WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB = 0x0002, ///
-        WGL_SUPPORT_OPENGL_ARB = 0x2010, ///
-        WGL_COLOR_BITS_ARB = 0x2014, ///
-        WGL_STENCIL_BITS_ARB = 0x2023, ///
-        WGL_ACCELERATION_ARB = 0x2003, ///
-        WGL_FULL_ACCELERATION_ARB = 0x2027, ///
-        WGL_PIXEL_TYPE_ARB = 0x2013, ///
-        WGL_TYPE_RGBA_ARB = 0x202B, ///
-        WGL_CONTEXT_PROFILE_MASK_ARB = 0x9126, ///
-        WGL_CONTEXT_CORE_PROFILE_BIT_ARB = 0x00000001 ///
+        WGL_DRAW_TO_WINDOW_ARB = 0x2001,
+        WGL_RED_BITS_ARB = 0x2015,
+        WGL_GREEN_BITS_ARB = 0x2017,
+        WGL_BLUE_BITS_ARB = 0x2019,
+        WGL_ALPHA_BITS_ARB = 0x201B,
+        WGL_DOUBLE_BUFFER_ARB = 0x2011,
+        WGL_DEPTH_BITS_ARB = 0x2022,
+        WGL_CONTEXT_MAJOR_VERSION_ARB = 0x2091,
+        WGL_CONTEXT_MINOR_VERSION_ARB = 0x2092,
+        WGL_CONTEXT_FLAGS_ARB = 0x2094,
+        WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB = 0x0002,
+        WGL_SUPPORT_OPENGL_ARB = 0x2010,
+        WGL_COLOR_BITS_ARB = 0x2014,
+        WGL_STENCIL_BITS_ARB = 0x2023,
+        WGL_ACCELERATION_ARB = 0x2003,
+        WGL_FULL_ACCELERATION_ARB = 0x2027,
+        WGL_PIXEL_TYPE_ARB = 0x2013, 
+        WGL_TYPE_RGBA_ARB = 0x202B,
+        WGL_CONTEXT_PROFILE_MASK_ARB = 0x9126,
+        WGL_CONTEXT_CORE_PROFILE_BIT_ARB = 0x00000001
+    }
 
+public:
+    HGLRC _context;
+
+@trusted:
+    ~this()
+    {
+        destroy();
+    }
+override:
+    void setAttributes(GraphicsAttributes attributes)
+    {
+        this.attributes = attributes;
+
+        const flags = 
+            (attributes.doubleBuffer ? 
+            (PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL) : 
+            (PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL));
+
+        pfd.nSize = PIXELFORMATDESCRIPTOR.sizeof;
+        pfd.nVersion = 1;
+        pfd.dwFlags = flags;
+        pfd.iPixelType = PFD_TYPE_RGBA;
+        pfd.cRedBits = cast(ubyte) this.attributes.redSize;
+        pfd.cGreenBits = cast(ubyte) this.attributes.greenSize;
+        pfd.cBlueBits = cast(ubyte) this.attributes.blueSize;
+        pfd.cAlphaBits = cast(ubyte) this.attributes.alphaSize;
+        pfd.cDepthBits = cast(ubyte) this.attributes.depthSize;
+        pfd.cStencilBits = cast(ubyte) this.attributes.stencilSize;
+        pfd.iLayerType = PFD_MAIN_PLANE;
+    }
+
+    void create(IWindow window)
+    {
+        scope handle = (cast(Window) window).handle;
+        deviceHandle = GetDC(handle);
+        auto chsPixel = ChoosePixelFormat(deviceHandle, &pfd);
+        enforce!Exception(chsPixel != 0, ConfFindError);
+
+        SetPixelFormat(deviceHandle, chsPixel, &pfd);
+
+        scope ctx = wglCreateContext(deviceHandle);
+        wglMakeCurrent(deviceHandle, ctx);
+
+        void* data = wglGetProcAddress("wglGetExtensionsStringARB");
+        enforce!Exception(data,"wglGetExtensionsStringARB pointer is null");
+        wglGetExtensionsStringARB = cast(FwglGetExtensionsStringARB) data;
+        data = null;
+
+        data = wglGetProcAddress("wglChoosePixelFormatARB");
+        enforce!Exception(data,"wglChoosePixelFormatARB pointer is null");
+        wglChoosePixelFormatARB = cast(FwglChoosePixelFormatARB) data;
+        data = null;
+
+        data = wglGetProcAddress("wglCreateContextAttribsARB");
+        enforce!Exception(data,"wglCreateContextAttribsARB pointer is null");
+        wglCreateContextAttribsARB = cast(FwglCreateContextAttribsARB) data;
+        data = null;
+
+        int[] iattrib =  
+        [
+            WGL_SUPPORT_OPENGL_ARB, true,
+            WGL_DRAW_TO_WINDOW_ARB, true,
+            WGL_DOUBLE_BUFFER_ARB, attributes.doubleBuffer,
+            WGL_RED_BITS_ARB, attributes.redSize,
+            WGL_GREEN_BITS_ARB, attributes.greenSize,
+            WGL_BLUE_BITS_ARB, attributes.blueSize,
+            WGL_ALPHA_BITS_ARB, attributes.alphaSize,
+            WGL_DEPTH_BITS_ARB, attributes.depthSize,
+            WGL_COLOR_BITS_ARB, attributes.colorDepth,
+            WGL_STENCIL_BITS_ARB, attributes.stencilSize,
+            WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+            WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
+            0
+        ];
+
+        uint nNumFormats;
+        int nPixelFormat;
+        wglChoosePixelFormatARB(deviceHandle,   iattrib.ptr, 
+                                                null,
+                                                1, &nPixelFormat,
+                                                &nNumFormats);
+        enforce(nPixelFormat, "nPixelFormats error!");
+
+        DescribePixelFormat(deviceHandle, nPixelFormat, pfd.sizeof, &pfd);
+        SetPixelFormat(deviceHandle, nPixelFormat, &pfd);
+
+        int[] attrib =  
+        [
+            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+            WGL_CONTEXT_MINOR_VERSION_ARB, 0,
+            WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+            0
+        ];
+        this._context = wglCreateContextAttribsARB( deviceHandle, 
+                                                    null, 
+                                                    attrib.ptr);
+        enforce(ctx, "ContextARB is not a create!");
+
+        wglMakeCurrent(null, null);
+        wglDeleteContext(ctx);
+    }
+
+    void destroy()
+    {
+        wglDeleteContext(_context);
     }
 }
 
-/// Windows window structure
 version(Windows)
 class Window : IWindow
 {
-    import tida.winapi, tida.runtime, tida.graph.image, tida.color;
-    import std.utf;
+    import tida.runtime;
+    import std.utf : toUTFz;
+    import std.exception : enforce;
+    import core.sys.windows.windows;
 
-    private
+    pragma(lib, "opengl32.lib");
+
+private:
+    uint _widthInit;
+    uint _heightInit;
+
+    string _title;
+
+    bool _fullscreen;
+    bool _border;
+    bool _resizable;
+    bool _alwaysTop;
+
+    IContext _context;
+
+    LONG style;
+    LONG oldStyle;
+    WINDOWPLACEMENT wpc;
+    HDC dc;
+
+public:
+    HWND handle;
+
+    this(uint w, uint h, string caption)
     {
-        uint _width;
-        uint _height;
-
-        string _title;
-
-        bool _fullscreen;
-        bool _border;
-        bool _resizable;
-        bool _alwaysTop;
-
-        IContext _context;
-
-        LONG style;
-        LONG oldStyle;
-        WINDOWPLACEMENT wpc;
-
-        HWND window;
-    }   
-
-    /++
-        Embeds the finished window into a convenient window management framework.
-        WARNING! Does not automatically detect title and window state!
-
-        Params:
-            window = Window identificator (X11 Window)
-    +/
-    this(uint newWidth,uint newHeight,string newTitle) @safe
-    {
-        _width = newWidth;
-        _height = newHeight;
-        _title = newTitle;
+        this._widthInit = w;
+        this._heightInit = h;
+        _title = caption;
     }
 
-    /++
-        Window initialization. In the class, it must be executed as a template to generate the appropriate context.
-        You can initialize the window of the following types:
-        * Simple    -   Generates a window without a graphics pipeline. Those. a simple window will be created,
-                        if you need a context, you have to make it yourself and send it to the window.
-        * ContextIn -   Generates a window with a graphics pipeline for OpenGL.
-        
-        Params:
-            Type = The type initial window.
-            posX = The initial x position of the window.
-            posY = The initial y position of the window.
-            isShow = Whether to show the window.
-    +/
-    void initialize(ubyte Type)(int posX = 100,int posY = 100,bool isShow = true) @trusted
+@trusted:
+    void create(int posX, int posY)
     {
-    	import std.exception : enforce;
-    
-        static if(Type == Simple)
+        extern(Windows) auto _wndProc(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam) nothrow
         {
-            extern(Windows) auto _wndProc(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam) nothrow
-            {
-                switch(message) {
-                    default:
-                        return DefWindowProc(hWnd, message, wParam, lParam);
-                }
+            switch(message) {
+                default:
+                    return DefWindowProc(hWnd, message, wParam, lParam);
             }
-
-            WNDCLASSEX wc;
-
-            wc.cbSize = wc.sizeof;
-            wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-            wc.lpfnWndProc = &_wndProc;
-            wc.hInstance = runtime.instance;
-            wc.hCursor = LoadCursor(null, IDC_ARROW);
-            wc.lpszClassName = _title.toUTFz!(wchar*);
-
-            RegisterClassEx(&wc);
-
-            window = CreateWindow(_title.toUTFz!(wchar*),_title.toUTFz!(wchar*),
-                     WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_THICKFRAME,
-                     posX,posY,width,height,null,null,runtime.instance,null);
-                     
-			enforce(window, "Window is not create!");
-        }else
-        static if(Type == ContextIn)
-        {
-            initialize!Simple(posX,posY,false);
-
-            auto attributes = GLAttributes();
-
-            _context = new Context();
-            (cast(Context) _context).deviceMake(window);
-            _context.attributeInitialize(attributes);
-            _context.initialize();
-
-            auto deviceHandle = (cast(Context) _context).device;
-
-            context = _context;
-
-            void* data = wglGetProcAddress("wglGetExtensionsStringARB");
-            enforce(data,"wglGetExtensionsStringARB pointer is null");
-            wglGetExtensionsStringARB = cast(FwglGetExtensionsStringARB) data;
-            data = null;
-
-            data = wglGetProcAddress("wglChoosePixelFormatARB");
-            enforce(data,"wglChoosePixelFormatARB pointer is null");
-            wglChoosePixelFormatARB = cast(FwglChoosePixelFormatARB) data;
-            data = null;
-
-            data = wglGetProcAddress("wglCreateContextAttribsARB");
-            enforce(data,"wglCreateContextAttribsARB pointer is null");
-            wglCreateContextAttribsARB = cast(FwglCreateContextAttribsARB) data;
-            data = null;
-
-            int[] iattrib =  [
-                                WGL_SUPPORT_OPENGL_ARB, true,
-                                WGL_DRAW_TO_WINDOW_ARB, true,
-                                WGL_DOUBLE_BUFFER_ARB, attributes.doubleBuffer,
-                                //WGL_RED_BITS_ARB, attributes.redSize,
-                                //WGL_GREEN_BITS_ARB, attributes.greenSize,
-                                //WGL_BLUE_BITS_ARB, attributes.blueSize,
-                                //WGL_ALPHA_BITS_ARB, attributes.alphaSize,
-                                WGL_DEPTH_BITS_ARB, attributes.depthSize,
-                                WGL_COLOR_BITS_ARB, attributes.colorDepth,
-                                WGL_STENCIL_BITS_ARB, attributes.stencilSize,
-                                WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-                                WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
-                                0
-                            ];
-
-            uint nNumFormats;
-            int nPixelFormat;
-
-            wglChoosePixelFormatARB(deviceHandle,   iattrib.ptr, 
-                                                    null,
-                                                    1, &nPixelFormat,
-                                                    &nNumFormats);
-
-            enforce(nPixelFormat, "nNumFormats error!");
-
-            PIXELFORMATDESCRIPTOR pfd;
-            DescribePixelFormat(deviceHandle, nPixelFormat, pfd.sizeof, &pfd);
-            SetPixelFormat(deviceHandle, nPixelFormat, &pfd);
-
-            int[] attributess =  [
-                                    WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-                                    WGL_CONTEXT_MINOR_VERSION_ARB, 0,
-                                    WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-                                    WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-                                    0
-                                ];
-
-            auto ctx = wglCreateContextAttribsARB(deviceHandle, null, attributess.ptr);
-            enforce(ctx, "ContextARB is not a create!");
-
-            wglMakeCurrent(null, null);
-            wglDeleteContext((cast(Context) _context).context);
-            wglMakeCurrent(deviceHandle, ctx);
         }
 
-        if(isShow) show();
+        WNDCLASSEX wc;
+
+        wc.cbSize = wc.sizeof;
+        wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+        wc.lpfnWndProc = &_wndProc;
+        wc.hInstance = runtime.instance;
+        wc.hCursor = LoadCursor(null, IDC_ARROW);
+        wc.lpszClassName = _title.toUTFz!(wchar*);
+
+        RegisterClassEx(&wc);
+
+        this.handle = CreateWindow( _title.toUTFz!(wchar*), 
+                                    _title.toUTFz!(wchar*),
+                                    WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | 
+                                    WS_CLIPCHILDREN | WS_THICKFRAME,
+                                    posX, posY, this._widthInit, 
+                                    this._heightInit, null, null, 
+                                    runtime.instance, null);
+                 
+        enforce!Exception(this.handle, "Window is not create!");
+
+        dc = GetDC(this.handle);
     }
 
-    override void show() @trusted
-    {
-        ShowWindow(window, 1);
-    }
-
-    override void hide() @trusted
-    {
-        ShowWindow(window,SW_HIDE);
-    }
-
-    override void context(IContext ofcontext) @trusted @property
-    {
-        wglMakeCurrent(GetDC(window),(cast(Context) ofcontext).context);
-
-        _context = ofcontext;
-    }
-
-    override IContext context() @safe @property inout
-    {
-        return _context;
-    }
-
-    override void swapBuffers() @trusted
-    {
-        SwapBuffers(GetDC(window));
-    }
-
-    override int x() @trusted @property inout
+override:
+    @property int x()
     {
         RECT rect;
-
-        GetWindowRect(window,&rect);
+        GetWindowRect(this.handle, &rect);
 
         return rect.left;
     }
 
-    override int y() @trusted @property inout
+    @property int y()
     {
         RECT rect;
-
-        GetWindowRect(window,&rect);
+        GetWindowRect(this.handle, &rect);
 
         return rect.top;
     }
 
-    override void resize(uint newWidth,uint newHeight) @trusted
+    @property uint width()
     {
-        SetWindowPos(window, null, x, y ,newWidth, newHeight, 0);
+        RECT rect;
+        GetWindowRect(this.handle, &rect);
 
-        _width = newWidth;
-        _height = newHeight;
+        return rect.right;
     }
 
-    override void move(int posX,int posY) @trusted
+    @property uint height()
     {
-        SetWindowPos(window, null, posX, posY, _width, _height, 0);
+        RECT rect;
+        GetWindowRect(this.handle, &rect);
+
+        return rect.bottom;
     }
 
-    override void resizable(bool value) @trusted @property
+    @property void fullscreen(bool value)
     {
-        auto lStyle = GetWindowLong(window, GWL_STYLE);
-        
-        if(value) {
-            lStyle |= WS_THICKFRAME;
-        }else {
-            lStyle &= ~(WS_THICKFRAME);
-        }
-
-        SetWindowLong(window, GWL_STYLE, lStyle);
-
-        _resizable = value;
-    }
-
-    override bool resizable() @safe @property inout
-    {
-        return _resizable;
-    }
-
-    override void fullscreen(bool value) @trusted @property
-    {
-        if(value) 
+        if (value) 
         {
-            GetWindowPlacement(window, &wpc);
+            GetWindowPlacement(this.handle, &wpc);
+
             if(style == 0)
-                style = GetWindowLong(window, GWL_STYLE);
+                style = GetWindowLong(this.handle, GWL_STYLE);
             if(oldStyle == 0)
-                oldStyle = GetWindowLong(window,GWL_EXSTYLE);
+                oldStyle = GetWindowLong(this.handle, GWL_EXSTYLE);
 
             auto NewHWNDStyle = style;
             NewHWNDStyle &= ~WS_BORDER;
@@ -1207,78 +912,120 @@ class Window : IWindow
             auto NewHWNDStyleEx = oldStyle;
             NewHWNDStyleEx &= ~WS_EX_WINDOWEDGE;
 
-            SetWindowLong(window, GWL_STYLE, NewHWNDStyle | WS_POPUP );
-            SetWindowLong(window, GWL_EXSTYLE, NewHWNDStyleEx | WS_EX_TOPMOST);
-            ShowWindow(window, SHOW_FULLSCREEN);
+            SetWindowLong(  this.handle, GWL_STYLE, 
+                            NewHWNDStyle | WS_POPUP );
+            SetWindowLong(  this.handle, GWL_EXSTYLE, 
+                            NewHWNDStyleEx | WS_EX_TOPMOST);
+
+            ShowWindow(this.handle, SHOW_FULLSCREEN);
         } else 
         {
-            SetWindowLong(window, GWL_STYLE, style);
-            SetWindowLong(window, GWL_EXSTYLE, oldStyle);
-            ShowWindow(window, SW_SHOWNORMAL);
-            SetWindowPlacement(window, &wpc);
+            SetWindowLong(this.handle, GWL_STYLE, style);
+            SetWindowLong(this.handle, GWL_EXSTYLE, oldStyle);
+            ShowWindow(this.handle, SW_SHOWNORMAL);
+            SetWindowPlacement(this.handle, &wpc);
 
             style = 0;
             oldStyle = 0;
         }
 
-        _fullscreen = value;
+        this._fullscreen = value;
     }
 
-    override bool fullscreen() @safe @property inout
+    @property bool fullscreen()
     {
-        return _fullscreen;
+        return this._fullscreen;
     }
 
-    override void border(bool value) @trusted @property
+    @property void resizable(bool value)
     {
-        auto style = GetWindowLong(window, GWL_STYLE);
+        auto lStyle = GetWindowLong(this.handle, GWL_STYLE);
+        
+        if (value) 
+            lStyle |= WS_THICKFRAME;
+        else 
+            lStyle &= ~(WS_THICKFRAME);
 
-        if(!value)
-        {
-            style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
-        }else
-        {
-            style |= (WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
-        }
+        SetWindowLong(this.handle, GWL_STYLE, lStyle);
 
-        SetWindowLong(window, GWL_STYLE, style);
-
-        SetWindowPos(window, null, 0,0,0,0, SWP_FRAMECHANGED | SWP_NOMOVE |
-                                            SWP_NOSIZE | SWP_NOZORDER |
-                                            SWP_NOOWNERZORDER);
-
-        _border = value;
+        this._resizable = value;
     }
 
-    override bool border() @trusted @property inout
+    @property bool resizable()
     {
-        return _border;
+        return this._resizable;
     }
 
-    override void title(string newTitle) @trusted @property
+    @property void border(bool value)
     {
-        SetWindowTextA(window,newTitle.toUTFz!(char*));
+        auto style = GetWindowLong(this.handle, GWL_STYLE);
 
-        _title = newTitle;
+        if (!value)
+            style &=    ~(  
+                            WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | 
+                            WS_MAXIMIZEBOX | WS_SYSMENU
+                        );
+        else
+            style |=    (
+                            WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | 
+                            WS_MAXIMIZEBOX | WS_SYSMENU
+                        );
+
+        SetWindowLong(this.handle, GWL_STYLE, style);
+
+        SetWindowPos(   this.handle, null, 0, 0, 0, 0,
+                        SWP_FRAMECHANGED | SWP_NOMOVE |
+                        SWP_NOSIZE | SWP_NOZORDER |
+                        SWP_NOOWNERZORDER);
+
+        this._border = value;
     }
 
-    override string title() @safe @property inout
+    @property bool border()
     {
-        return _title;
+        return this._border;
     }
 
-    override void icon(Image image) @trusted @property
+    @property void title(string value)
+    {
+        SetWindowTextA(this.handle, title.toUTFz!(char*));
+
+        this._title = value;
+    }
+
+    @property string title()
+    {
+        return this._title;
+    }
+
+    @property void alwaysOnTop(bool value)
+    {
+        SetWindowPos(   this.handle, 
+                        value ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, 
+                        SWP_NOMOVE | SWP_NOSIZE);
+
+        this._alwaysTop = value;
+    }
+
+    @property bool alwaysOnTop()
+    {
+        return this._alwaysTop;
+    }
+
+    @property void icon(Image iconimage)
     {
         HICON icon;
 
-        ubyte[] pixels = image.bytes!(PixelFormat.BGRA);
+        ubyte[] pixels = iconimage.bytes!(PixelFormat.BGRA);
 
         ICONINFO icInfo;
 
-        auto bitmap = CreateBitmap(image.width,image.height,1,32,cast(PCVOID) pixels);
+        auto bitmap = CreateBitmap( iconimage.width,
+                                    iconimage.height,
+                                    1,32,cast(PCVOID) pixels);
 
         icInfo.hbmColor = bitmap;
-        icInfo.hbmMask = CreateBitmap(width,height,1,1,null);
+        icInfo.hbmMask = CreateBitmap(iconimage.width,iconimage.height,1,1,null);
 
         icon = CreateIconIndirect(&icInfo);
 
@@ -1286,46 +1033,102 @@ class Window : IWindow
         SendMessage(window, WM_SETICON, ICON_BIG, cast(LPARAM) icon);
     }
 
-    override uint width() @safe @property inout
+    @property void context(IContext ctx)
     {
-        return _width;
+        wglMakeCurrent(GetDC(this.handle),(cast(Context) ctx)._context);
+
+        this._context = ctx;
     }
 
-    override uint height() @safe @property inout
+    @property IContext context()
     {
-        return _height;
+        return this._context;
     }
 
-    override void destroyWindow() @trusted
+    void resize(uint w, uint h)
     {
-        DestroyWindow(window);
+        SetWindowPos(this.handle, null, x, y ,w, h, 0);
     }
 
-    override void eventResize(uint[2] size) @safe
+    void move(int xposition, int yposition)
     {
-        _width = size[0];
-        _height = size[1];
+        SetWindowPos(this.handle, null, xposition, yposition, width, height, 0);
     }
 
-    override void alwaysTop(bool value) @trusted
+    void show()
     {
-        SetWindowPos(window, value ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-        _alwaysTop = value;
+        ShowWindow(this.handle, 1);
     }
 
-    override bool alwaysTop() @safe @property
+    void hide()
     {
-        return _alwaysTop;
+        ShowWindow(this.handle, SW_HIDE);
     }
 
-    /// Returns: Window structure point
-    HWND handle() @safe @property inout
+    void swapBuffers()
     {
-        return window;
+        SwapBuffers(dc);
     }
 
-    ~this() @safe
+    void destroy()
     {
-        destroyWindow();
+        DestroyWindow(this.handle);
+        this.handle = null;
     }
+}
+
+/++
+Creating a window in the window manager. When setting a parameter in a template, 
+it can create both its regular version and with hardware graphics acceleration.
+
+Params:
+    type =  Method of creation. 
+            `WithoutContext` -  Only the window is created. 
+                                The context is created after.
+            `WithContext` - Creates both a window and a graphics context for 
+                            using hardware graphics acceleration.
+    window = Window pointer.
+    posX = Position in the plane of the desktop along the x-axis.
+    posY = Position in the plane of the desktop along the y-axis.
+
+Throws:
+`Exception` If a window has not been created in the process 
+(and this also applies to the creation of a graphical context).
+
+Examples:
+---
+windowInitialize!WithoutContext(window, 100, 100); /// Without context
+...
+windowInitialize!WithContext(window, 100, 100); /// With context
+---
++/
+void windowInitialize(int type = WithoutContext)(   Window window, 
+                                                    int posX, 
+                                                    int posY) @trusted
+{
+    version(Posix) {
+        import tida.runtime;
+        import x11.X, x11.Xlib, x11.Xutil;
+
+        scope XVisualInfo* vinfo = new XVisualInfo();
+        vinfo.visual = XDefaultVisual(runtime.display, runtime.displayID);
+        vinfo.depth = XDefaultDepth(runtime.display, runtime.displayID);
+        
+        window.createFromXVisual(vinfo);
+
+        destroy(vinfo);
+    }
+    else
+        window.create(posX, posY);
+    
+    static if(type == WithContext)
+    {
+        Context context = new Context();
+        context.setAttributes(AttribBySizeOfTheColor!8);
+        context.create(window);
+
+        window.context = context;
+    }
+
+    window.show();
 }

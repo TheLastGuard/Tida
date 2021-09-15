@@ -16,12 +16,11 @@ class Main : Scene
         renderer.background = tilemap.mapinfo.backgroundColor;
     }
 
-    @Event!EventHandle
+    @Event!Input
     void onEvent(EventHandler event) @safe
     {
         if(event.isResize) {
-            window.eventResize(event.newSizeWindow);
-            renderer.camera.shape = Shape.Rectangle(Vecf(0, 0), Vecf(event.newSizeWindow[0], event.newSizeWindow[1]));
+            renderer.camera.shape = Shapef.Rectangle(vecf(0, 0), vecf(event.newSizeWindow[0], event.newSizeWindow[1]));
             renderer.reshape();
         }
     }
@@ -33,4 +32,4 @@ class Main : Scene
     }
 }
 
-mixin GameRun!(WindowConfig!(640, 480, "GUI"), Main);
+mixin GameRun!(GameConfig(640, 480, "GUI"), Main);

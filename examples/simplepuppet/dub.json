@@ -1,8 +1,0 @@
-{
-    "name" : "simplepuppet",
-    "targetType": "executable",
-    "dependencies" : {
-    	"tida" : "*",
-        "tida:puppet" : "*"
-    }
-}

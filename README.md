@@ -1,96 +1,58 @@
 # Tida
-Tida is a kind of framework for two-dimensional games aimed at creating something of its own in the D language, while using libraries such as:
-* `X11`, `GLX`, `WGL` - to create a window and context in such a window. In the code, all this will be implemented in an OOP style, using higher-level constructs to create a window already in the main code, using such a library.
-* `OpenGL 2.0` - for rendering 2D graphics in a window. A special render will be prepared for it, where you can specify some parameters for rendering, cameras, and so on.
-* `FreeType` - for text rendering, without it it is practically difficult to implement manual text rendering.
-* `OpenAL` - To play music content. By default, it accepts raw data, but using the `mp3decoders` application library, it is now allowed to load compressed music format rather than raw data.
-* `imageformats` - To load common image formats such as `.png`,` .jpeg`, `.bmp`,` .tga`. Also, the framework has already prepared an implementation for describing images and colors to facilitate presentation.
+---
+[![dub](https://img.shields.io/dub/v/tida)](https://code.dlang.org/packages/tida) ![license](https://img.shields.io/dub/l/tida) ![version](https://img.shields.io/dub/dt/tida)
 
-# What does this project have to offer and what is it planning?
-At the moment, the project already knows how to create windows and contexts in Linux and Windows environments, and conditionally independent functions from the platform have also been implemented (Conditionally, because when trying to implement a manual complete creation, you still have to take into account some nuances, in the form of order of calls and etc., for this the process has already been facilitated, in the form of one-time initialization of the window).
+_ATTENTION! The project cannot guarantee the immutability of the API and stability. If you decide to use it for real purposes, this is your own risk. Found a bug? Throw it into the issue group._
 
-Also, the project is already able to catch such window events as changes in size, position (only through the window itself), keystrokes, tracking mouse events and tracking the event of exiting the program.
+What can?
+---
+Tida is a 2D game framework focused on objective programming.
 
-Example:
-```D
-module app;
+The framework supports rendering of post-enhanced elementary shapes, rendering textures, and can also set such textures to a shape (by type, a texture that is filled on a circle). Basic concepts of catching keyboard and mouse input (unfortunately, joysticks are not yet supported!), Simple window manipulation, working with some two-dimensional mathematical models, text rendering using fonts, working with colors and mixing them, an objective-oriented model using scene-instance-components, and can organize the game loop for you.
 
+# Features
+1. **Objective-Oriented System**. The system for defining behavior consists of scenes, instances and their components, which will help to facilitate and sort the tasks of each game unit.
+
+2. **Modularity**. Also, in addition to this, you can do without it by creating a runtime, window, processing and, in your own way, decide how you will set the behavior of the program. And also, you can extend the functionality of objects (which, of course, have interfaces through which you can already set your own behavior, otherwise - nothing). Also, if the renderer does not implement some of the rendering - do it yourself, using the implementation of the `IDrawable` /` IDrawableEx` interfaces!
+
+3. **Sufficient simplicity**. To create the simplest window, you just need to create a class and declare the game parameters, and that's it! Also, many objects are documented, so it will be much easier to understand something.
+
+4. **Useful optional extensions**. The author of the framework also implements some small additions, such as reading tile cards, some dummy. Also, there are other extensions in the plans that will appear in the future!
+
+
+# What is a scene-instance-component?
+This system allows you to easily define the behavior of the entire scene and its individual units, assigning such units (instances) individual or group behavior (depending on how you do it), while without overloading. To, for example, process keystrokes in the scene, you need to hang a special attribute on it that will track this, here's an example:
+```d
 import tida;
 
-void main(string[] args)
+class Main : Scene
 {
-    TidaRuntime.initialize(args);
-
-    Window window = new Window(640,480,"Simple window.");
-    window.initialize!Simple;
-
-    EventHandler event = new EventHandler(window);
-
-    bool isGame = true;
-
-    while(isGame)
+    @Event!Input
+    void onInput(EventHandler event) @safe
     {
-        while(event.update)
+        if (event.keyDown == Key.Left)
         {
-            if(event.isQuit)
-                isGame = false;
-
-            if(event.keyDown == Key.Escape)
-                isGame = false;
-        }
-    }
-}
-```
-(Such an example is available in a special folder -> `examples/simplewindow`).
-
-Also, at the moment, the Scene-Entity system is already being developed, which will allow programming at a higher level, where you do not need to worry about scheduling actions in the game cycle, but simply write a class and implement everything according to your respective events, which will facilitate the process of writing games using scenes and objects.
-
-# Contribution
-You can help with code given CODE STYLE, which is not very strict. Tasks can be viewed in GitHub Projects, or by opening tida.minder through Minder, it describes what needs to be implemented and what is implemented. All changes are accepted through `Pull requests`. All functions that you have changed or added are desirable to sign, for example:
-```D
-/++
-    Description...
-    
-    Params:
-        ...
-        
-    Returns:
-        ...
-        
-    Authors: TodNaz <tod.naz@ya.ru>
-+/
-T sign(T)(T number) @safe nothrow
-{
-    if(number == 0) return 0;
-
-    return number > 0 ? 1 : -1;
-}
-```
-
-# How to use the project?
-I don't think that you can seriously use this project, but if you decide, you can add it via dub, but not through the official repository, but by adding the repository to the build configuration:
-```json
-{
-    "name": "git-dependency",
-    "dependencies": {
-        "tida": {
-            "repository": "git+https://github.com/TodNaz/Tida.git",
-            "version": "~master"
+            <body>
         }
     }
 }
 ```
 
-# Documentation
-The documentation is not available from source, however you can generate it yourself. Enter the following to generate the documentation:
-```
-$ cd .../Tida
-$ dub fetch gendoc
-$ dub run gendoc
-$ cd docs/
+It is also possible with `Instance`'s, which work in the same way to track events, however, their main difference is that they are added and tracked by the scene, and instances can interact with each other using collisions or generated local events. For a complete explanation, see the example for how they work (eg, `simplegame`, `seabattle`).
+
+# How can you start a project with this framework?
+Easy enough. Grab and run the following command where you plan to initialize the project:
+```bash
+$ dub run tida:init
 ```
 
-# License
+This will bring up a project template with a source file template. Launch it, and you can already watch the game window!
+
+
+# What platforms does it support?
+At the moment - a computer with Windows and Linux operating systems. There is also Android in the plans, but only in the plans. The rest of the platforms are either not available or will not be made on principle.
+
+# License (MIT)
 Copyright 2020 (c) TodNaz
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
