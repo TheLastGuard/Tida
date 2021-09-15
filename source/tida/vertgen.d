@@ -180,7 +180,7 @@ public:
             break;
 
             case ShapeType.circle:
-                glDrawArrays(GL_TRIANGLE_FAN, 0, cast(uint) (blength / 3 * count));
+                glDrawArrays(GL_TRIANGLE_FAN, 0, cast(uint) (blength / 4 * count));
             break;
 
             case ShapeType.triangle:
