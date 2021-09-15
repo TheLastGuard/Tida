@@ -317,10 +317,29 @@ public @trusted:
         Shader!Program defaultShader = new Shader!Program();
 
         Shader!Vertex defaultVertex = new Shader!Vertex();
-        defaultVertex.bindSource(import("shaders/default.vert"));
+        defaultVertex.bindSource("
+        #version 130
+		in vec3 position;
+
+		uniform mat4 projection;
+		uniform mat4 model;
+
+		void main()
+		{
+			gl_Position = projection * model * vec4(position, 1.0f);
+		}
+        ");
 
         Shader!Fragment defaultFragment = new Shader!Fragment();
-        defaultFragment.bindSource(import("shaders/default.frag"));
+        defaultFragment.bindSource("
+        #version 130
+		uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+		void main()
+		{
+			gl_FragColor = color;
+		}
+        ");
 
         defaultShader.attach(defaultVertex);
         defaultShader.attach(defaultFragment);

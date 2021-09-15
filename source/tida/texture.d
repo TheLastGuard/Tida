@@ -180,10 +180,34 @@ public:
             Shader!Program program = new Shader!Program();
 
             Shader!Vertex vertex = new Shader!Vertex();
-            vertex.bindSource(import("shaders/defaultImage.vert"));
+            vertex.bindSource("#version 130
+			in vec3 position;
+			in vec2 texCoord;
+
+			uniform mat4 projection;
+			uniform mat4 model;
+
+			out vec2 fragTexCoord;
+
+			void main()
+			{
+				gl_Position = projection * model * vec4(position.xy, 0.0, 1.0);
+				fragTexCoord = texCoord;
+			}
+            ");
 
             Shader!Fragment fragment = new Shader!Fragment();
-            fragment.bindSource(import("shaders/defaultImage.frag"));
+            fragment.bindSource("#version 130
+			in vec2 fragTexCoord;
+
+			uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+			uniform sampler2D texture;
+
+			void main()
+			{
+				gl_FragColor = texture2D(texture, fragTexCoord) * color;
+			}
+            ");
 
             program.attach(vertex);
             program.attach(fragment);
