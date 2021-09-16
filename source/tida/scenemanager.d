@@ -525,8 +525,6 @@ public @safe:
 
     package(tida) void componentExplore(T)(Instance instance, T component) @trusted
     {
-        static assert(isComponent!T, "`" ~ T.stringof ~ "` is not a component!");
-
         CStepFunctions[component] = [];
         CLeaveFunctions[component] = [];
         CEventHandleFunctions[component] = [];
