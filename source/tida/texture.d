@@ -181,32 +181,32 @@ public:
 
             Shader!Vertex vertex = new Shader!Vertex();
             vertex.bindSource("#version 130
-			in vec3 position;
-			in vec2 texCoord;
+            in vec3 position;
+            in vec2 texCoord;
 
-			uniform mat4 projection;
-			uniform mat4 model;
+            uniform mat4 projection;
+            uniform mat4 model;
 
-			out vec2 fragTexCoord;
+            out vec2 fragTexCoord;
 
-			void main()
-			{
-				gl_Position = projection * model * vec4(position.xy, 0.0, 1.0);
-				fragTexCoord = texCoord;
-			}
+            void main()
+            {
+                gl_Position = projection * model * vec4(position.xy, 0.0, 1.0);
+                fragTexCoord = texCoord;
+            }
             ");
 
             Shader!Fragment fragment = new Shader!Fragment();
             fragment.bindSource("#version 130
-			in vec2 fragTexCoord;
+            in vec2 fragTexCoord;
 
-			uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-			uniform sampler2D texture;
+            uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            uniform sampler2D texture;
 
-			void main()
-			{
-				gl_FragColor = texture2D(texture, fragTexCoord) * color;
-			}
+            void main()
+            {
+                gl_FragColor = texture2D(texture, fragTexCoord) * color;
+            }
             ");
 
             program.attach(vertex);
@@ -219,6 +219,16 @@ public:
         }
 
         return render.getShader("DefaultImage");
+    }
+
+    void destroy()
+    {
+        glDeleteTextures(1, &glid);
+    }
+
+    ~this()
+    {
+        this.destroy();
     }
 
 override:
