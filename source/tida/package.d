@@ -1,5 +1,5 @@
 /++
-
+Main package module
 +/
 module tida;
 
@@ -31,3 +31,5 @@ public:
     import tida.loader;
     import tida.listener;
     import tida.softimage;
+    import tida.drawable;
+    import tida.component;

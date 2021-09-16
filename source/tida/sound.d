@@ -168,6 +168,37 @@ public @trusted:
     }
 
     /++
+    Load sound from file.
+
+    Params:
+        path = The path to the sound file.
+    +/
+    void load(string path)
+    {
+        import std.path;
+
+        switch (path.extension)
+        {
+            case ".wav":
+                Wav wave = new Wav();
+                wave.load(path);
+                bind(wave);
+                inSourceBindBuffer();
+            break;
+
+            case ".mp3":
+                Wav wave = new MP3();
+                wave.load(path);
+                bind(wave);
+                inSourceBindBuffer();
+            break;
+
+            default:
+                return;
+        }
+    }
+
+    /++
     Sound source volume control.
 
     Params:

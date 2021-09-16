@@ -309,12 +309,14 @@ if (isIntegral!T || isFloatingPoint!T)
 {
     alias Type = T;
 
-    static if (isIntegral!T) {
+    static if (isIntegral!T)
+    {
         enum Max = T.max;
         enum Min = 0;
     }
     else
-    static if (isFloatingPoint!T) {
+    static if (isFloatingPoint!T)
+    {
         enum Max = 1.0f;
         enum Min = 0.0f;
     }
@@ -529,7 +531,7 @@ public:
         return (rf * 0.299 + gf * 0.587 + bf * 0.144);
     }
 
-    // Whether the color is dark.
+    /// Whether the color is dark.
     bool isDark()
     {
         return (toGrayscaleFloat < 0.5f);
@@ -853,323 +855,324 @@ by mixing factors.
 +/
 FuncBlend!T BlendFunc(T)(int fac1, int fac2) @trusted nothrow pure
 {
-    if(fac1 == BlendFactor.Zero) {
-        if(fac2 == BlendFactor.Zero) 
+    if (fac1 == BlendFactor.Zero)
+    {
+        if (fac2 == BlendFactor.Zero)
             return &BlendImpl!(BlendFactor.Zero, BlendFactor.Zero, T);
         else
-        if(fac2 == BlendFactor.One)
+        if (fac2 == BlendFactor.One)
             return &BlendImpl!(BlendFactor.Zero, BlendFactor.One, T);
         else
-        if(fac2 == BlendFactor.SrcColor)
+        if (fac2 == BlendFactor.SrcColor)
             return &BlendImpl!(BlendFactor.Zero, BlendFactor.SrcColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcColor)
+        if (fac2 == BlendFactor.OneMinusSrcColor)
             return &BlendImpl!(BlendFactor.Zero, BlendFactor.OneMinusSrcColor, T);
         else
-        if(fac2 == BlendFactor.DstColor)
+        if (fac2 == BlendFactor.DstColor)
             return &BlendImpl!(BlendFactor.Zero, BlendFactor.DstColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstColor)
+        if (fac2 == BlendFactor.OneMinusDstColor)
             return &BlendImpl!(BlendFactor.Zero, BlendFactor.OneMinusDstColor, T);
         else
-        if(fac2 == BlendFactor.SrcAlpha)
+        if (fac2 == BlendFactor.SrcAlpha)
             return &BlendImpl!(BlendFactor.Zero, BlendFactor.SrcAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+        if (fac2 == BlendFactor.OneMinusSrcAlpha)
             return &BlendImpl!(BlendFactor.Zero, BlendFactor.OneMinusSrcAlpha, T);
         else
-        if(fac2 == BlendFactor.DstAlpha)
+        if (fac2 == BlendFactor.DstAlpha)
             return &BlendImpl!(BlendFactor.Zero, BlendFactor.DstAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstAlpha)
+        if (fac2 == BlendFactor.OneMinusDstAlpha)
             return &BlendImpl!(BlendFactor.Zero, BlendFactor.OneMinusDstAlpha, T);
     }else
-    if(fac1 == BlendFactor.One)
+    if (fac1 == BlendFactor.One)
     {
-        if(fac2 == BlendFactor.Zero) 
+        if (fac2 == BlendFactor.Zero)
             return &BlendImpl!(BlendFactor.One, BlendFactor.Zero, T);
         else
-        if(fac2 == BlendFactor.One)
+        if (fac2 == BlendFactor.One)
             return &BlendImpl!(BlendFactor.One, BlendFactor.One, T);
         else
-        if(fac2 == BlendFactor.SrcColor)
+        if (fac2 == BlendFactor.SrcColor)
             return &BlendImpl!(BlendFactor.One, BlendFactor.SrcColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcColor)
+        if (fac2 == BlendFactor.OneMinusSrcColor)
             return &BlendImpl!(BlendFactor.One, BlendFactor.OneMinusSrcColor, T);
         else
-        if(fac2 == BlendFactor.DstColor)
+        if (fac2 == BlendFactor.DstColor)
             return &BlendImpl!(BlendFactor.One, BlendFactor.DstColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstColor)
+        if (fac2 == BlendFactor.OneMinusDstColor)
             return &BlendImpl!(BlendFactor.One, BlendFactor.OneMinusDstColor, T);
         else
-        if(fac2 == BlendFactor.SrcAlpha)
+        if (fac2 == BlendFactor.SrcAlpha)
             return &BlendImpl!(BlendFactor.One, BlendFactor.SrcAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+        if (fac2 == BlendFactor.OneMinusSrcAlpha)
             return &BlendImpl!(BlendFactor.One, BlendFactor.OneMinusSrcAlpha, T);
         else
-        if(fac2 == BlendFactor.DstAlpha)
+        if (fac2 == BlendFactor.DstAlpha)
             return &BlendImpl!(BlendFactor.One, BlendFactor.DstAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstAlpha)
+        if (fac2 == BlendFactor.OneMinusDstAlpha)
             return &BlendImpl!(BlendFactor.One, BlendFactor.OneMinusDstAlpha, T);
     }else
-    if(fac1 == BlendFactor.SrcColor)
+    if (fac1 == BlendFactor.SrcColor)
     {
-        if(fac2 == BlendFactor.Zero) 
+        if (fac2 == BlendFactor.Zero)
             return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.Zero, T);
         else
-        if(fac2 == BlendFactor.One)
+        if (fac2 == BlendFactor.One)
             return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.One, T);
         else
-        if(fac2 == BlendFactor.SrcColor)
+        if (fac2 == BlendFactor.SrcColor)
             return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.SrcColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcColor)
+        if (fac2 == BlendFactor.OneMinusSrcColor)
             return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.OneMinusSrcColor, T);
         else
-        if(fac2 == BlendFactor.DstColor)
+        if (fac2 == BlendFactor.DstColor)
             return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.DstColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstColor)
+        if (fac2 == BlendFactor.OneMinusDstColor)
             return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.OneMinusDstColor, T);
         else
-        if(fac2 == BlendFactor.SrcAlpha)
+        if (fac2 == BlendFactor.SrcAlpha)
             return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.SrcAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+        if (fac2 == BlendFactor.OneMinusSrcAlpha)
             return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.OneMinusSrcAlpha, T);
         else
-        if(fac2 == BlendFactor.DstAlpha)
+        if (fac2 == BlendFactor.DstAlpha)
             return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.DstAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstAlpha)
+        if (fac2 == BlendFactor.OneMinusDstAlpha)
             return &BlendImpl!(BlendFactor.SrcColor, BlendFactor.OneMinusDstAlpha, T);
     }else
-    if(fac1 == BlendFactor.OneMinusSrcColor)
+    if (fac1 == BlendFactor.OneMinusSrcColor)
     {
-        if(fac2 == BlendFactor.Zero) 
+        if (fac2 == BlendFactor.Zero)
             return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.Zero, T);
         else
-        if(fac2 == BlendFactor.One)
+        if (fac2 == BlendFactor.One)
             return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.One, T);
         else
-        if(fac2 == BlendFactor.SrcColor)
+        if (fac2 == BlendFactor.SrcColor)
             return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.SrcColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcColor)
+        if (fac2 == BlendFactor.OneMinusSrcColor)
             return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.OneMinusSrcColor, T);
         else
-        if(fac2 == BlendFactor.DstColor)
+        if (fac2 == BlendFactor.DstColor)
             return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.DstColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstColor)
+        if (fac2 == BlendFactor.OneMinusDstColor)
             return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.OneMinusDstColor, T);
         else
-        if(fac2 == BlendFactor.SrcAlpha)
+        if (fac2 == BlendFactor.SrcAlpha)
             return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.SrcAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+        if (fac2 == BlendFactor.OneMinusSrcAlpha)
             return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.OneMinusSrcAlpha, T);
         else
-        if(fac2 == BlendFactor.DstAlpha)
+        if (fac2 == BlendFactor.DstAlpha)
             return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.DstAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstAlpha)
+        if (fac2 == BlendFactor.OneMinusDstAlpha)
             return &BlendImpl!(BlendFactor.OneMinusSrcColor, BlendFactor.OneMinusDstAlpha, T);
     }else
     if(fac1 == BlendFactor.DstColor)
     {
-        if(fac2 == BlendFactor.Zero) 
+        if (fac2 == BlendFactor.Zero)
             return &BlendImpl!(BlendFactor.DstColor, BlendFactor.Zero, T);
         else
-        if(fac2 == BlendFactor.One)
+        if (fac2 == BlendFactor.One)
             return &BlendImpl!(BlendFactor.DstColor, BlendFactor.One, T);
         else
-        if(fac2 == BlendFactor.SrcColor)
+        if (fac2 == BlendFactor.SrcColor)
             return &BlendImpl!(BlendFactor.DstColor, BlendFactor.SrcColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcColor)
+        if (fac2 == BlendFactor.OneMinusSrcColor)
             return &BlendImpl!(BlendFactor.DstColor, BlendFactor.OneMinusSrcColor, T);
         else
-        if(fac2 == BlendFactor.DstColor)
+        if (fac2 == BlendFactor.DstColor)
             return &BlendImpl!(BlendFactor.DstColor, BlendFactor.DstColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstColor)
+        if (fac2 == BlendFactor.OneMinusDstColor)
             return &BlendImpl!(BlendFactor.DstColor, BlendFactor.OneMinusDstColor, T);
         else
-        if(fac2 == BlendFactor.SrcAlpha)
+        if (fac2 == BlendFactor.SrcAlpha)
             return &BlendImpl!(BlendFactor.DstColor, BlendFactor.SrcAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+        if (fac2 == BlendFactor.OneMinusSrcAlpha)
             return &BlendImpl!(BlendFactor.DstColor, BlendFactor.OneMinusSrcAlpha, T);
         else
-        if(fac2 == BlendFactor.DstAlpha)
+        if (fac2 == BlendFactor.DstAlpha)
             return &BlendImpl!(BlendFactor.DstColor, BlendFactor.DstAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstAlpha)
+        if (fac2 == BlendFactor.OneMinusDstAlpha)
             return &BlendImpl!(BlendFactor.DstColor, BlendFactor.OneMinusDstAlpha, T);
     }else
-    if(fac1 == BlendFactor.OneMinusDstColor)
+    if (fac1 == BlendFactor.OneMinusDstColor)
     {
-        if(fac2 == BlendFactor.Zero) 
+        if (fac2 == BlendFactor.Zero)
             return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.Zero, T);
         else
-        if(fac2 == BlendFactor.One)
+        if (fac2 == BlendFactor.One)
             return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.One, T);
         else
-        if(fac2 == BlendFactor.SrcColor)
+        if (fac2 == BlendFactor.SrcColor)
             return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.SrcColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcColor)
+        if (fac2 == BlendFactor.OneMinusSrcColor)
             return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.OneMinusSrcColor, T);
         else
-        if(fac2 == BlendFactor.DstColor)
+        if (fac2 == BlendFactor.DstColor)
             return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.DstColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstColor)
+        if (fac2 == BlendFactor.OneMinusDstColor)
             return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.OneMinusDstColor, T);
         else
-        if(fac2 == BlendFactor.SrcAlpha)
+        if (fac2 == BlendFactor.SrcAlpha)
             return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.SrcAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+        if (fac2 == BlendFactor.OneMinusSrcAlpha)
             return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.OneMinusSrcAlpha, T);
         else
-        if(fac2 == BlendFactor.DstAlpha)
+        if (fac2 == BlendFactor.DstAlpha)
             return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.DstAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstAlpha)
+        if (fac2 == BlendFactor.OneMinusDstAlpha)
             return &BlendImpl!(BlendFactor.OneMinusDstColor, BlendFactor.OneMinusDstAlpha, T);
     }else
-    if(fac1 == BlendFactor.SrcAlpha)
+    if (fac1 == BlendFactor.SrcAlpha)
     {
-        if(fac2 == BlendFactor.Zero) 
+        if (fac2 == BlendFactor.Zero)
             return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.Zero, T);
         else
-        if(fac2 == BlendFactor.One)
+        if (fac2 == BlendFactor.One)
             return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.One, T);
         else
-        if(fac2 == BlendFactor.SrcColor)
+        if (fac2 == BlendFactor.SrcColor)
             return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.SrcColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcColor)
+        if (fac2 == BlendFactor.OneMinusSrcColor)
             return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcColor, T);
         else
-        if(fac2 == BlendFactor.DstColor)
+        if (fac2 == BlendFactor.DstColor)
             return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.DstColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstColor)
+        if (fac2 == BlendFactor.OneMinusDstColor)
             return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.OneMinusDstColor, T);
         else
-        if(fac2 == BlendFactor.SrcAlpha)
+        if (fac2 == BlendFactor.SrcAlpha)
             return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.SrcAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+        if (fac2 == BlendFactor.OneMinusSrcAlpha)
             return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcAlpha, T);
         else
-        if(fac2 == BlendFactor.DstAlpha)
+        if (fac2 == BlendFactor.DstAlpha)
             return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.DstAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstAlpha)
+        if (fac2 == BlendFactor.OneMinusDstAlpha)
             return &BlendImpl!(BlendFactor.SrcAlpha, BlendFactor.OneMinusDstAlpha, T);
     }else
-    if(fac1 == BlendFactor.OneMinusSrcAlpha)
+    if (fac1 == BlendFactor.OneMinusSrcAlpha)
     {
-        if(fac2 == BlendFactor.Zero) 
+        if (fac2 == BlendFactor.Zero)
             return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.Zero, T);
         else
-        if(fac2 == BlendFactor.One)
+        if (fac2 == BlendFactor.One)
             return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.One, T);
         else
-        if(fac2 == BlendFactor.SrcColor)
+        if (fac2 == BlendFactor.SrcColor)
             return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.SrcColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcColor)
+        if (fac2 == BlendFactor.OneMinusSrcColor)
             return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.OneMinusSrcColor, T);
         else
-        if(fac2 == BlendFactor.DstColor)
+        if (fac2 == BlendFactor.DstColor)
             return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.DstColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstColor)
+        if (fac2 == BlendFactor.OneMinusDstColor)
             return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.OneMinusDstColor, T);
         else
-        if(fac2 == BlendFactor.SrcAlpha)
+        if (fac2 == BlendFactor.SrcAlpha)
             return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.SrcAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+        if (fac2 == BlendFactor.OneMinusSrcAlpha)
             return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.OneMinusSrcAlpha, T);
         else
-        if(fac2 == BlendFactor.DstAlpha)
+        if (fac2 == BlendFactor.DstAlpha)
             return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.DstAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstAlpha)
+        if (fac2 == BlendFactor.OneMinusDstAlpha)
             return &BlendImpl!(BlendFactor.OneMinusSrcAlpha, BlendFactor.OneMinusDstAlpha, T);
     }else
-    if(fac1 == BlendFactor.DstAlpha)
+    if (fac1 == BlendFactor.DstAlpha)
     {
-        if(fac2 == BlendFactor.Zero) 
+        if (fac2 == BlendFactor.Zero)
             return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.Zero, T);
         else
-        if(fac2 == BlendFactor.One)
+        if (fac2 == BlendFactor.One)
             return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.One, T);
         else
-        if(fac2 == BlendFactor.SrcColor)
+        if (fac2 == BlendFactor.SrcColor)
             return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.SrcColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcColor)
+        if (fac2 == BlendFactor.OneMinusSrcColor)
             return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.OneMinusSrcColor, T);
         else
-        if(fac2 == BlendFactor.DstColor)
+        if (fac2 == BlendFactor.DstColor)
             return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.DstColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstColor)
+        if (fac2 == BlendFactor.OneMinusDstColor)
             return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.OneMinusDstColor, T);
         else
-        if(fac2 == BlendFactor.SrcAlpha)
+        if (fac2 == BlendFactor.SrcAlpha)
             return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.SrcAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+        if (fac2 == BlendFactor.OneMinusSrcAlpha)
             return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.OneMinusSrcAlpha, T);
         else
-        if(fac2 == BlendFactor.DstAlpha)
+        if (fac2 == BlendFactor.DstAlpha)
             return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.DstAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstAlpha)
+        if (fac2 == BlendFactor.OneMinusDstAlpha)
             return &BlendImpl!(BlendFactor.DstAlpha, BlendFactor.OneMinusDstAlpha, T);
     }else
-    if(fac1 == BlendFactor.OneMinusDstAlpha)
+    if (fac1 == BlendFactor.OneMinusDstAlpha)
     {
-        if(fac2 == BlendFactor.Zero) 
+        if (fac2 == BlendFactor.Zero)
             return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.Zero, T);
         else
-        if(fac2 == BlendFactor.One)
+        if (fac2 == BlendFactor.One)
             return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.One, T);
         else
-        if(fac2 == BlendFactor.SrcColor)
+        if (fac2 == BlendFactor.SrcColor)
             return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.SrcColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcColor)
+        if (fac2 == BlendFactor.OneMinusSrcColor)
             return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.OneMinusSrcColor, T);
         else
-        if(fac2 == BlendFactor.DstColor)
+        if (fac2 == BlendFactor.DstColor)
             return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.DstColor, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstColor)
+        if (fac2 == BlendFactor.OneMinusDstColor)
             return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.OneMinusDstColor, T);
         else
-        if(fac2 == BlendFactor.SrcAlpha)
+        if (fac2 == BlendFactor.SrcAlpha)
             return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.SrcAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusSrcAlpha)
+        if (fac2 == BlendFactor.OneMinusSrcAlpha)
             return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.OneMinusSrcAlpha, T);
         else
-        if(fac2 == BlendFactor.DstAlpha)
+        if (fac2 == BlendFactor.DstAlpha)
             return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.DstAlpha, T);
         else
-        if(fac2 == BlendFactor.OneMinusDstAlpha)
+        if (fac2 == BlendFactor.OneMinusDstAlpha)
             return &BlendImpl!(BlendFactor.OneMinusDstAlpha, BlendFactor.OneMinusDstAlpha, T);
     }
 
@@ -1199,40 +1202,40 @@ do
     static assert(isValidFormat!format1, CannotDetectAuto);
     static assert(isValidFormat!format2, CannotDetectAuto);
 
-    static if(format1 == format2) return pixels;
+    static if (format1 == format2) return pixels;
 
-    static if(format1 == PixelFormat.RGB)
+    static if (format1 == PixelFormat.RGB)
     {
-        static if(format2 == PixelFormat.RGBA)
+        static if (format2 == PixelFormat.RGBA)
         {
             ubyte[] result;
 
-            for(size_t i = 3; i <= pixels.length; i += 3)
+            for (size_t i = 3; i <= pixels.length; i += 3)
             {
                 result ~= pixels[0 .. i] ~ 255;
             }
 
             return result;
         }else
-        static if(format2 == PixelFormat.ARGB)
+        static if (format2 == PixelFormat.ARGB)
         {
             ubyte[] result;
 
-            for(size_t i = 0; i < pixels.length; i += 3)
+            for (size_t i = 0; i < pixels.length; i += 3)
             {
                 result ~= pixels[0 .. i] ~ 255;
             }
 
             return result;
         }else
-        static if(format2 == PixelFormat.BGRA)
+        static if (format2 == PixelFormat.BGRA)
         {
             import std.algorithm : reverse;
 
             size_t count = 0;
             ubyte[] result;
 
-            for(size_t i = 3; i <= pixels.length; i += 3)
+            for (size_t i = 3; i <= pixels.length; i += 3)
             {
                 result ~= pixels[i - 3 .. i].reverse ~ 255;
             }
@@ -1240,37 +1243,37 @@ do
             return result;
         }
     }else
-    static if(format1 == PixelFormat.RGBA)
+    static if (format1 == PixelFormat.RGBA)
     {
-        static if(format2 == PixelFormat.RGB)
+        static if (format2 == PixelFormat.RGB)
         {
             ubyte[] result;
 
-            for(size_t i = 0; i < pixels.length; i += 4)
+            for (size_t i = 0; i < pixels.length; i += 4)
             {
                 result ~= pixels[i .. i + 3];
             }
 
             return result;
         }else
-        static if(format2 == PixelFormat.ARGB)
+        static if (format2 == PixelFormat.ARGB)
         {
             ubyte[] result;
 
-            for(size_t i = 0; i < pixels.length; i += 4)
+            for (size_t i = 0; i < pixels.length; i += 4)
             {
                 result ~= pixels[i + 3] ~ pixels[i .. i + 3];
             }
 
             return result;
         }else
-        static if(format2 == PixelFormat.BGRA)
+        static if (format2 == PixelFormat.BGRA)
         {
             import std.algorithm : reverse;
 
             ubyte[] result;
 
-            for(size_t i = 0; i < pixels.length; i += 4)
+            for (size_t i = 0; i < pixels.length; i += 4)
             {
                 result ~= pixels[i .. i + 3].reverse ~ pixels[i + 3];
             }
@@ -1278,20 +1281,20 @@ do
             return result;
         }
     }else
-    static if(format1 == PixelFormat.ARGB)
+    static if (format1 == PixelFormat.ARGB)
     {
-        static if(format2 == PixelFormat.RGB)
+        static if (format2 == PixelFormat.RGB)
         {
             ubyte[] result;
 
-            for(size_t i = 0; i < pixels.length; i += 4)
+            for (size_t i = 0; i < pixels.length; i += 4)
             {
                 result ~= pixels[i + 1 .. i + 4];
             }
 
             return result;
         }else
-        static if(format2 == PixelFormat.RGBA)
+        static if (format2 == PixelFormat.RGBA)
         {
             ubyte[] result;
 
@@ -1302,13 +1305,13 @@ do
 
             return result;
         }else
-        static if(format2 == PixelFormat.BGRA)
+        static if (format2 == PixelFormat.BGRA)
         {
             import std.algorithm : reverse;
 
             ubyte[] result;
 
-            for(size_t i = 0; i < pixels.length; i += 4)
+            for (size_t i = 0; i < pixels.length; i += 4)
             {
                 result = pixels[i + 3] ~ pixels[i .. i + 3].reverse;
             }
@@ -1316,37 +1319,37 @@ do
             return result;
         }
     }else
-    static if(format1 == PixelFormat.BGRA)
+    static if (format1 == PixelFormat.BGRA)
     {
         import std.algorithm : reverse;
 
-        static if(format2 == PixelFormat.RGB)
+        static if (format2 == PixelFormat.RGB)
         {
             ubyte[] result;
 
-            for(size_t i = 0; i < pixels.length; i += 4)
+            for (size_t i = 0; i < pixels.length; i += 4)
             {
                 result ~= pixels[i .. i + 3].reverse;
             }
 
             return result;
         }else
-        static if(format2 == PixelFormat.RGBA)
+        static if (format2 == PixelFormat.RGBA)
         {
             ubyte[] result;
 
-            for(size_t i = 0; i < pixels.length; i += 4)
+            for (size_t i = 0; i < pixels.length; i += 4)
             {
                 result ~= pixels[i .. i + 3].reverse ~ pixels[i + 3];
             }
 
             return result;
         }else
-        static if(format2 == PixelFormat.ARGB)
+        static if (format2 == PixelFormat.ARGB)
         {
             ubyte[] result;
 
-            for(size_t i = 0; i < pixels.length; i += 4)
+            for (size_t i = 0; i < pixels.length; i += 4)
             {
                 result ~= pixels[i + 1 .. i + 4].reverse ~ pixels[i];
             }
