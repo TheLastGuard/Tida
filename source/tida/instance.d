@@ -222,7 +222,7 @@ public:
 
         foreach (e; components)
         {
-            if ((cast(T) e) is null)
+            if ((cast(T) e) !is null)
             {
                 return cast(T) e;
             }
