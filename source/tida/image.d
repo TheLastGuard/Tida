@@ -117,12 +117,14 @@ public:
     +/
     void blit(int Type = WithoutParallel)(Image otherImage, Vecf position) @trusted
     {
-        foreach (x, y; Coord!Type(  position.x + otherImage.width, 
-                                    position.y + otherImage.height,
-                                    position.x, position.y))
+        import std.conv : to;
+
+        foreach (x, y; Coord!Type(  position.x.to!int + otherImage.width, 
+                                    position.y.to!int+ otherImage.height,
+                                    position.x.to!int, position.y.to!int))
         {
-            this.setPixel(x, y, otherImage.getPixel(x - position.intX, 
-                                                    y - pos.intY));
+            this.setPixel(x, y, otherImage.getPixel(x - position.x.to!int,
+                                                    y - pos.y.to!int));
         }
     }
 
