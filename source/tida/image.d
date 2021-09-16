@@ -124,7 +124,7 @@ public:
                                     position.x.to!int, position.y.to!int))
         {
             this.setPixel(x, y, otherImage.getPixel(x - position.x.to!int,
-                                                    y - pos.y.to!int));
+                                                    y - position.y.to!int));
         }
     }
 
