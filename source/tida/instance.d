@@ -196,7 +196,7 @@ public:
         if (component.name == "")
             component.name = T.stringof;
 
-        sceneManager.componentExplore(component);
+        sceneManager.componentExplore!T(this, component);
     }
 
     /++
