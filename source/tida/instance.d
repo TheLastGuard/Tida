@@ -264,7 +264,7 @@ public:
 
         foreach (i; 0 .. components.length)
         {
-            if ((cast(Name) components[i]) !is null)
+            if ((cast(T) components[i]) !is null)
             {
                 cmp = components[i];
 
