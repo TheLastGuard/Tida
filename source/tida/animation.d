@@ -17,6 +17,9 @@ import tida.drawable;
 /++
 An object for describing animation
 (frame-by-frame, by changing rendering objects among themselves).
+
+The work of such animation takes place not only with images, but with
+drawn objects, implemented through IDrawableEx.
 +/
 class Animation : IDrawable, IDrawableEx
 {
@@ -30,16 +33,27 @@ private:
 public:
     /// Animation speed.
     float speed = 0.0f;
+
     /// Animation frames.
     IDrawableEx[] frames = [];
+
     /// When the animation ends, whether the animation needs to be re-run.
     bool isRepeat = false;
 
 @safe:
     /++
+
+    +/
+    this(float speed = 0.0f, bool isRepeat = false)
+    {
+        this.speed = speed;
+        this.isRepeat = isRepeat;
+    }
+
+    /++
     The current frame of the animation.
     +/
-    @property IDrawableEx currentFrame()
+    @property IDrawableEx currentFrame() nothrow pure
     {
         return frames[cast(size_t) _current > $ - 1 ? $ - 1 : cast(size_t) _current];
     }
@@ -47,7 +61,7 @@ public:
     /++
     The current position of the animation.
     +/
-    @property float numFrame()
+    @property float numFrame() nothrow pure
     {
         return _current;
     }
@@ -55,7 +69,7 @@ public:
     /++
     The current position of the animation.
     +/
-    @property void numFrame(float currFrame)
+    @property void numFrame(float currFrame) nothrow pure
     {
         _current = currFrame;
     }
@@ -63,7 +77,7 @@ public:
     /++
     Starts the animation from the beginning.
     +/
-    void reset()
+    void reset() nothrow pure
     {
         _current = 0.0f;
     }
@@ -74,13 +88,16 @@ public:
     Returns:
         The current frame of animation.
     +/
-    IDrawableEx step()
+    IDrawableEx step() nothrow pure
     {
-        if(cast(int) _current >= frames.length) {
-            if(isRepeat) {
+        if (cast(int) _current >= frames.length)
+        {
+            if (isRepeat)
+            {
                 _current = -speed;
             }
-        }else {
+        } else
+        {
             _current += speed;
         }
 

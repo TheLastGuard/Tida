@@ -1,4 +1,7 @@
 /++
+Module for working with mathematical angles. Contains the translation of
+measurement systems, work in the form of determining the angle,
+vector rotation and more.
 
 Macros:
     LREF = <a href="#$1">$1</a>
