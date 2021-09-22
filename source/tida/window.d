@@ -82,6 +82,8 @@ struct GraphicsAttributes
     int stencilSize = 8; /// Stencil size
     int colorDepth = 32; /// Color depth
     bool doubleBuffer = true; /// Double buffering
+    int glmajor = 3; /// GL major recomendet version.
+    int glminor = 0; /// GL minor recomendet version.
 }
 
 /++
@@ -712,7 +714,7 @@ override:
     void create(IWindow window)
     {
         scope handle = (cast(Window) window).handle;
-        deviceHandle = GetDC(handle);
+        deviceHandle = (cast(Window) window).dc;
         auto chsPixel = ChoosePixelFormat(deviceHandle, &pfd);
         enforce!Exception(chsPixel != 0, ConfFindError);
 
@@ -749,7 +751,6 @@ override:
             WGL_COLOR_BITS_ARB, attributes.colorDepth,
             WGL_STENCIL_BITS_ARB, attributes.stencilSize,
             WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-            WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
             0
         ];
 
@@ -766,8 +767,8 @@ override:
 
         int[] attrib =  
         [
-            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-            WGL_CONTEXT_MINOR_VERSION_ARB, 0,
+            WGL_CONTEXT_MAJOR_VERSION_ARB, this.attributes.glmajor,
+            WGL_CONTEXT_MINOR_VERSION_ARB, this.attributes.glminor,
             WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
             WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
             0
@@ -775,7 +776,7 @@ override:
         this._context = wglCreateContextAttribsARB( deviceHandle, 
                                                     null, 
                                                     attrib.ptr);
-        enforce(ctx, "ContextARB is not a create!");
+        enforce(this._context, "ContextARB is not a create!");
 
         wglMakeCurrent(null, null);
         wglDeleteContext(ctx);
@@ -787,10 +788,15 @@ override:
     }
 }
 
+__gshared Window _wndptr;
+
 version(Windows)
 class Window : IWindow
 {
     import tida.runtime;
+    import tida.image;
+    import tida.color;
+
     import std.utf : toUTFz;
     import std.exception : enforce;
     import core.sys.windows.windows;
@@ -813,10 +819,11 @@ private:
     LONG style;
     LONG oldStyle;
     WINDOWPLACEMENT wpc;
-    HDC dc;
 
 public:
     HWND handle;
+    HDC dc;
+    bool isClose = false;
 
     this(uint w, uint h, string caption)
     {
@@ -828,19 +835,28 @@ public:
 @trusted:
     void create(int posX, int posY)
     {
-        extern(Windows) auto _wndProc(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam) nothrow
+        extern(Windows) auto _wndProc(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam)
         {
-            switch(message) {
+            switch (message)
+            {
+                case WM_CLOSE:
+                    if (_wndptr is null || _wndptr.__vptr is null) return 0;
+                    
+                    _wndptr.sendCloseEvent();
+                    return 0;
+
                 default:
                     return DefWindowProc(hWnd, message, wParam, lParam);
             }
         }
 
+        alias WinFun = extern (Windows) long function(void*, uint, ulong, long) nothrow @system;
+
         WNDCLASSEX wc;
 
         wc.cbSize = wc.sizeof;
         wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-        wc.lpfnWndProc = &_wndProc;
+        wc.lpfnWndProc = cast(WinFun) &_wndProc;
         wc.hInstance = runtime.instance;
         wc.hCursor = LoadCursor(null, IDC_ARROW);
         wc.lpszClassName = _title.toUTFz!(wchar*);
@@ -858,6 +874,13 @@ public:
         enforce!Exception(this.handle, "Window is not create!");
 
         dc = GetDC(this.handle);
+
+        _wndptr = this;
+    }
+
+    void sendCloseEvent()
+    {
+        this.isClose = true;
     }
 
 override:
@@ -1029,8 +1052,8 @@ override:
 
         icon = CreateIconIndirect(&icInfo);
 
-        SendMessage(window, WM_SETICON, ICON_SMALL, cast(LPARAM) icon);
-        SendMessage(window, WM_SETICON, ICON_BIG, cast(LPARAM) icon);
+        SendMessage(handle, WM_SETICON, ICON_SMALL, cast(LPARAM) icon);
+        SendMessage(handle, WM_SETICON, ICON_BIG, cast(LPARAM) icon);
     }
 
     @property void context(IContext ctx)
@@ -1123,9 +1146,37 @@ void windowInitialize(int type = WithoutContext)(   Window window,
     
     static if(type == WithContext)
     {
-        Context context = new Context();
-        context.setAttributes(AttribBySizeOfTheColor!8);
-        context.create(window);
+        GraphicsAttributes attribs = AttribBySizeOfTheColor!8;
+        attribs.glmajor = 4;
+        attribs.glminor = 5;
+
+        Context context;
+        
+        void ctxCreate() {
+            context = new Context();
+            context.setAttributes(attribs);
+            context.create(window);
+        }
+
+        try
+        {
+            ctxCreate();
+        } catch(Exception e)
+        {
+            attribs.glmajor = 3;
+            attribs.glminor = 3;
+
+            try
+            {
+                ctxCreate();
+            } catch(Exception e)
+            {
+                attribs.glmajor = 3;
+                attribs.glminor = 0;
+                
+                ctxCreate();
+            }
+        }
 
         window.context = context;
     }

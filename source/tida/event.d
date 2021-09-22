@@ -396,8 +396,7 @@ public:
 
     bool isQuit()
     {
-        return  this.msg.message == WM_QUIT || this.msg.message == WM_CLOSE || 
-               (this.msg.message == WM_SYSCOMMAND && this.msg.wParam == SC_CLOSE);
+        return window.isClose;
     }
 
     bool isInputText()
