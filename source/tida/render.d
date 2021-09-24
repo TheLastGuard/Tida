@@ -467,6 +467,7 @@ override:
 
         int yborder = 0;
 
+        version (Windows_Border)
         version (Windows)
         {
             import core.sys.windows.windows;
