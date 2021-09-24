@@ -416,7 +416,7 @@ Example:
 assert(Vecf(32.5,32.5) == Vecf(33, 33));
 ---
 +/
-inout(Vector!T) round(T)(inout(Vector!T) vec) @safe nothrow pure
+inout(Vector!T) round(T)(inout(Vector!T) vec) @safe nothrow
 if (isVectorFloatingPoint!(Vector!T))
 {
     import std.math : round;
@@ -435,7 +435,7 @@ Example:
 assert(vecf(32.5, 32.5) == vecf(32, 32));
 ---
 +/
-inout(Vector!T) floor(T)(inout(Vector!T) vec) @safe nothrow pure
+inout(Vector!T) floor(T)(inout(Vector!T) vec) @safe nothrow
 if (isVectorFloatingPoint!(Vector!T))
 {
     import std.math : floor;

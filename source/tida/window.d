@@ -809,10 +809,10 @@ private:
 
     string _title;
 
-    bool _fullscreen;
-    bool _border;
-    bool _resizable;
-    bool _alwaysTop;
+    bool _fullscreen = false;
+    bool _border = true;
+    bool _resizable = true;
+    bool _alwaysTop = false;
 
     IContext _context;
 
@@ -835,6 +835,8 @@ public:
 @trusted:
     void create(int posX, int posY)
     {
+        import std.traits : Signed;
+
         extern(Windows) auto _wndProc(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam)
         {
             switch (message)
@@ -850,7 +852,7 @@ public:
             }
         }
 
-        alias WinFun = extern (Windows) long function(void*, uint, ulong, long) nothrow @system;
+        alias WinFun = extern (Windows) Signed!size_t function(void*, uint, size_t, Signed!size_t) nothrow @system;
 
         WNDCLASSEX wc;
 
@@ -905,7 +907,7 @@ override:
         RECT rect;
         GetWindowRect(this.handle, &rect);
 
-        return rect.right;
+        return rect.right - rect.left;
     }
 
     @property uint height()
@@ -913,7 +915,7 @@ override:
         RECT rect;
         GetWindowRect(this.handle, &rect);
 
-        return rect.bottom;
+        return rect.bottom - rect.top;
     }
 
     @property void fullscreen(bool value)

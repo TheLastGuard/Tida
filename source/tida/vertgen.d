@@ -18,6 +18,30 @@ module tida.vertgen;
 import tida.shape;
 import tida.vector;
 import std.traits;
+import tida.color;
+
+template glType(T)
+{
+    import tida.gl;
+
+    static if (is(T : float))
+        enum glType = GL_FLOAT;
+    else
+    static if (is(T : double))
+        enum glType = GL_DOUBLE;
+    else
+    static if (is(T : byte))
+        enum glType = GL_BYTE;
+    else
+    static if (is(T : ubyte))
+        enum glType = GL_UNSIGNED_BYTE;
+    else
+    static if (is(T : int))
+        enum glType = GL_INT;
+    else
+    static if (is(T : uint))
+        enum glType = GL_UNSIGNED_INT;
+}
 
 /++
 A storage object for the identifiers of the buffers stored in memory.
@@ -126,6 +150,24 @@ public:
         glBindVertexArray(0);
     }
 
+    /// Define an array of generic vertex attribute data
+    void vertexAttribPointer(uint vertLocation, int sample = 2) nothrow
+    {
+        glVertexAttribPointer(vertLocation, 2, glType!T, false, sample * cast(int) T.sizeof, null);
+    }
+
+    /// Define an array of generic vertex attribute data
+    void textureAttribPointer(uint location, int sample = 4) nothrow
+    {
+        glVertexAttribPointer(location, 2, glType!T, false, sample * cast(int) T.sizeof, cast(void*) (T.sizeof * 2));
+    }
+
+    /// Define an array of generic vertex attribute data
+    void colorAttribPointer(uint location, uint sample = 6) nothrow
+    {
+        glVertexAttribPointer(location, 4, glType!T, false, sample * cast(int) T.sizeof, cast(void*) (T.sizeof * 2));
+    }
+
     /// ID of the generated vertex array.
     @property uint idVertexArray() nothrow inout
     {
@@ -176,7 +218,7 @@ public:
             break;
 
             case ShapeType.roundrect:
-                glDrawArrays(GL_TRIANGLES, 0, cast(uint) (blength / 4 * count));
+                glDrawArrays(GL_TRIANGLES, 0, cast(uint) (blength / 2 * count));
             break;
 
             case ShapeType.circle:
@@ -185,6 +227,10 @@ public:
 
             case ShapeType.triangle:
                 glDrawArrays(GL_TRIANGLES, 0, cast(uint) blength);
+            break;
+
+            case ShapeType.polygon:
+                glDrawArrays(GL_TRIANGLE_FAN, 0, cast(uint) blength);
             break;
 
             default:
@@ -295,11 +341,11 @@ Vector!T[] generateBuffer(T)(Shape!T shape, Vector!T textureSize = vecNaN!T) @sa
             {
                 vertexs ~= shape.begin + vec!T(cos(i), sin(i)) * shape.radius;
 
-                i += 0.5;
+                i += 0.25;
                 vertexs ~= shape.begin + vec!T(cos(i), sin(i)) * shape.radius;
                 vertexs ~= shape.begin;
 
-                i += 0.5;
+                i += 0.25;
             }
         break;
 
@@ -309,6 +355,7 @@ Vector!T[] generateBuffer(T)(Shape!T shape, Vector!T textureSize = vecNaN!T) @sa
 
         case ShapeType.polygon:
             vertexs = shape.data;
+            vertexs ~= shape.data[0];
         break;
 
         case ShapeType.multi:
@@ -347,6 +394,44 @@ VertexInfo!T generateVertex(T)(Shape!T shape, Vector!T textSize = vecNaN!T) @tru
     buffer = generateBuffer!T(shape, textSize).generateArray;
 
     VertexInfo!T info = new VertexInfo!T();
+
+    if (shape.type == ShapeType.rectangle)
+    {
+        uint[] elements = [0 ,1, 2, 2, 3 ,0];
+        info.bindFromBufferAndElem(buffer, elements);
+    }else
+    {
+        info.bindFromBuffer(buffer);
+    }
+
+    info.shapeinfo = shape;
+
+    destroy(buffer);
+
+    return info;
+}
+
+/// ditto
+VertexInfo!T generateVertexColor(T)(Shape!T shape, Color!ubyte[] colors) @trusted
+{
+    T[] buffer;
+    Color!float[] fcolors;
+
+    foreach (e; colors)
+        fcolors ~= e.convert!(ubyte, float);
+
+    buffer = generateBuffer!T(shape).generateArray;
+    T[] buffDump = buffer.dup;
+    buffer = [];
+
+    VertexInfo!T info = new VertexInfo!T();
+
+    size_t j = 0;
+    for (size_t i = 0; i < buffDump.length; i += 2)
+    {
+        buffer ~= buffDump[i .. i + 2] ~ fcolors[j].toBytes!(PixelFormat.RGBA);
+        j++;
+    }
 
     if (shape.type == ShapeType.rectangle)
     {

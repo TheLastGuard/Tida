@@ -153,6 +153,7 @@ public:
     /// Bind the texture to the current render cycle.
     void bind()
     {
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, glid);
     }
 
@@ -161,6 +162,68 @@ public:
     {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
+
+    enum deprecatedVertex =
+    "#version 130
+    in vec2 position;
+    in vec2 texCoord;
+
+    uniform mat4 projection;
+    uniform mat4 model;
+
+    out vec2 fragTexCoord;
+
+    void main()
+    {
+        gl_Position = projection * model * vec4(position, 0.0, 1.0);
+        fragTexCoord = texCoord;
+    }
+    ";
+
+    enum deprecatedFragment =
+    "#version 130
+    in vec2 fragTexCoord;
+
+    uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    uniform sampler2D texture;
+
+    void main()
+    {
+        gl_FragColor = texture2D(texture, fragTexCoord) * color;
+    }
+    ";
+
+    enum modernVertex =
+    "#version 330 core
+    layout(location = 0) in vec2 position;
+    layout(location = 1) in vec2 texCoord;
+
+    uniform mat4 projection;
+    uniform mat4 model;
+
+    out vec2 fragTexCoord;
+
+    void main()
+    {
+        gl_Position = projection * model * vec4(position, 0.0, 1.0);
+        fragTexCoord = texCoord;
+    }
+    ";
+
+    enum modernFragment =
+    "#version 330 core
+    in vec2 fragTexCoord;
+
+    uniform vec4 color = vec4(1.0, 1.0, 1.0, 1.0);
+    uniform sampler2D ctexture;
+
+    out vec4 fragColor;
+
+    void main()
+    {
+        fragColor = texture(ctexture, fragTexCoord) * color;
+    }
+    ";
 
     /++
     Initializes the shader for rendering the texture
@@ -179,35 +242,24 @@ public:
         {
             Shader!Program program = new Shader!Program();
 
-            Shader!Vertex vertex = new Shader!Vertex();
-            vertex.bindSource("#version 130
-            in vec3 position;
-            in vec2 texCoord;
+            string vsource, fsource;
+            bool isModern = (cast(GLRender) render).isModern;
 
-            uniform mat4 projection;
-            uniform mat4 model;
-
-            out vec2 fragTexCoord;
-
-            void main()
+            if (isModern)
             {
-                gl_Position = projection * model * vec4(position.xy, 0.0, 1.0);
-                fragTexCoord = texCoord;
+                vsource = modernVertex;
+                fsource = modernFragment;
+            } else
+            {
+                vsource = deprecatedVertex;
+                fsource = deprecatedFragment;
             }
-            ");
+
+            Shader!Vertex vertex = new Shader!Vertex();
+            vertex.bindSource(vsource);
 
             Shader!Fragment fragment = new Shader!Fragment();
-            fragment.bindSource("#version 130
-            in vec2 fragTexCoord;
-
-            uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-            uniform sampler2D texture;
-
-            void main()
-            {
-                gl_FragColor = texture2D(texture, fragTexCoord) * color;
-            }
-            ");
+            fragment.bindSource(fsource);
 
             program.attach(vertex);
             program.attach(fragment);
@@ -238,45 +290,41 @@ override:
 
         vertexInfo.bindVertexArray();
         vertexInfo.bindBuffer();
-        if(vertexInfo.idElementArray != 0)
-            vertexInfo.bindElementBuffer();
+        if (vertexInfo.idElementArray != 0) vertexInfo.bindElementBuffer();
 
-        glEnableVertexAttribArray(shader.getAttribLocation("position"));
-        glVertexAttribPointer(shader.getAttribLocation("position"), 2, GL_FLOAT, false, 4 * float.sizeof, null);
+        shader.enableVertex("position");
+        vertexInfo.vertexAttribPointer(shader.getAttribLocation("position"), 4);
 
-        glEnableVertexAttribArray(shader.getAttribLocation("texCoord"));
-        glVertexAttribPointer(shader.getAttribLocation("texCoord"), 2, GL_FLOAT, false, 4 * float.sizeof,
-            cast(void*) (2 * float.sizeof));
+        shader.enableVertex("texCoord");
+        vertexInfo.textureAttribPointer(shader.getAttribLocation("texCoord"), 4);
         vertexInfo.unbindBuffer();
-        vertexInfo.unbindVertexArray();
 
-        float[4][4] proj = (cast(GLRender) renderer).projection();
-        float[4][4] model = identity();
+        mat4 proj = (cast(GLRender) renderer).projection;
+        mat4 model = identity();
 
         model = mulmat(model, renderer.currentModelMatrix);
         model = translate(model, position.x, position.y, 0.0f);
 
-        vertexInfo.bindVertexArray();
         shader.using();
 
-        glActiveTexture(GL_TEXTURE0);
         bind();
 
-        if(shader.getUniformLocation("projection") != -1)
-        shader.setUniform("projection", proj);
+        if (shader.getUniformLocation("projection") != -1)
+            shader.setUniform("projection", proj);
 
-        if(shader.getUniformLocation("model") != -1)
-        shader.setUniform("model", model);
 
-        if(shader.getUniformLocation("color") != -1)
-        shader.setUniform("color", rgba(255, 255, 255, 255));
+        if (shader.getUniformLocation("model") != -1)
+            shader.setUniform("model", model);
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
+        if (shader.getUniformLocation("color") != -1)
+            shader.setUniform("color", rgba(255, 255, 255, 255));
 
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        vertexInfo.draw(vertexInfo.shapeinfo.type);
+
+        vertexInfo.unbindBuffer();
+        if (vertexInfo.idElementArray != 0) vertexInfo.unbindElementBuffer();
+        vertexInfo.unbindVertexArray();
+        unbind();
 
         renderer.resetShader();
         renderer.resetModelMatrix();
@@ -303,23 +351,20 @@ override:
 
         vertexInfo.bindVertexArray();
         vertexInfo.bindBuffer();
-        if(vertexInfo.idElementArray != 0)
-            vertexInfo.bindElementBuffer();
+        if (vertexInfo.idElementArray != 0) vertexInfo.bindElementBuffer();
 
-        glEnableVertexAttribArray(shader.getAttribLocation("position"));
-        glVertexAttribPointer(shader.getAttribLocation("position"), 2, GL_FLOAT, false, 4 * float.sizeof, null);
+        shader.enableVertex("position");
+        vertexInfo.vertexAttribPointer(shader.getAttribLocation("position"), 4);
 
-        glEnableVertexAttribArray(shader.getAttribLocation("texCoord"));
-        glVertexAttribPointer(shader.getAttribLocation("texCoord"), 2, GL_FLOAT, false, 4 * float.sizeof,
-            cast(void*) (2 * float.sizeof));
+        shader.enableVertex("texCoord");
+        vertexInfo.textureAttribPointer(shader.getAttribLocation("texCoord"), 4);
         vertexInfo.unbindBuffer();
-        vertexInfo.unbindVertexArray();
 
-        float[4][4] proj = (cast(GLRender) renderer).projection();
-        float[4][4] model = identity();
+        mat4 proj = (cast(GLRender) renderer).projection;
+        mat4 model = identity();
 
         model = mulmat(model, renderer.currentModelMatrix);
-        model = scale(model, scaleFactor.x, scaleFactor.y);
+        model = scale(model, scaleFactor.x, scaleFactor.y, 1.0f);
 
         model = translate(model, -center.x, -center.y, 0.0f);
         model = rotateMat(model, -angle, 0.0f, 0.0f, 1.0f);
@@ -327,27 +372,26 @@ override:
 
         model = translate(model, position.x, position.y, 0.0f);
 
-        vertexInfo.bindVertexArray();
         shader.using();
 
-        glActiveTexture(GL_TEXTURE0);
         bind();
 
-        if(shader.getUniformLocation("projection") != -1)
-        shader.setUniform("projection", proj);
+        if (shader.getUniformLocation("projection") != -1)
+            shader.setUniform("projection", proj);
 
-        if(shader.getUniformLocation("model") != -1)
-        shader.setUniform("model", model);
 
-        if(shader.getUniformLocation("color") != -1)
-        shader.setUniform("color", rgba(color.r, color.g, color.b, alpha));
+        if (shader.getUniformLocation("model") != -1)
+            shader.setUniform("model", model);
+
+        if (shader.getUniformLocation("color") != -1)
+            shader.setUniform("color", rgba(color.r, color.g, color.b, alpha));
 
         vertexInfo.draw(vertexInfo.shapeinfo.type);
 
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        vertexInfo.unbindBuffer();
+        if (vertexInfo.idElementArray != 0) vertexInfo.unbindElementBuffer();
+        vertexInfo.unbindVertexArray();
+        unbind();
 
         renderer.resetShader();
         renderer.resetModelMatrix();

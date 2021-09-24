@@ -13,6 +13,19 @@ module tida.gl;
 
 public import bindbc.opengl;
 
+__gshared int[2] _glVersionSpecifed;
+__gshared string _glslVersion;
+
+@property int[2] glVersionSpecifed() @trusted
+{
+    return _glVersionSpecifed;
+}
+
+@property string glslVersion() @trusted
+{
+    return _glslVersion;
+}
+
 /++
 The function loads the `OpenGL` libraries for hardware graphics acceleration.
 
@@ -23,6 +36,7 @@ implement hardware acceleration.
 void loadGraphicsLibrary() @trusted
 {
     import std.exception : enforce;
+    import std.conv : to;
 
     bool valid(GLSupport value) {
         return value != GLSupport.noContext &&
@@ -33,4 +47,8 @@ void loadGraphicsLibrary() @trusted
     GLSupport retValue = loadOpenGL();
     enforce!Exception(valid(retValue), 
     "The library was not loaded or the context was not created!");
+
+    glGetIntegerv(GL_MAJOR_VERSION, &_glVersionSpecifed[0]);
+    glGetIntegerv(GL_MINOR_VERSION, &_glVersionSpecifed[1]);
+   _glslVersion = glGetString(GL_SHADING_LANGUAGE_VERSION).to!string[0 .. 4];
 }

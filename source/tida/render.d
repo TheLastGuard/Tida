@@ -294,6 +294,58 @@ class GLRender : IRenderer
     import tida.matrix;
     import tida.shape;
 
+    enum deprecatedVertex =
+    "
+    #version 130
+    in vec3 position;
+
+    uniform mat4 projection;
+    uniform mat4 model;
+
+    void main()
+    {
+        gl_Position = projection * model * vec4(position, 1.0f);
+    }
+    ";
+
+    enum deprecatedFragment =
+    "
+    #version 130
+    uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+    void main()
+    {
+        gl_FragColor = color;
+    }
+    ";
+
+    enum modernVertex =
+    "
+    #version 330 core
+    layout (location = 0) in vec3 position;
+
+    uniform mat4 projection;
+    uniform mat4 model;
+
+    void main()
+    {
+        gl_Position = projection * model * vec4(position, 1.0f);
+    }
+    ";
+
+    enum modernFragment =
+    "
+    #version 330 core
+    uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+    out vec4 fragColor;
+
+    void main()
+    {
+        fragColor = color;
+    }
+    ";
+
 private:
     IWindow window;
     Color!ubyte _background;
@@ -304,6 +356,8 @@ private:
     Shader!Program current;
 
     mat4 _model;
+
+    bool _isModern = false;
 
 public @trusted:
     this(IWindow window)
@@ -316,30 +370,25 @@ public @trusted:
 
         Shader!Program defaultShader = new Shader!Program();
 
+        string vsource, fsource;
+
+        if (glslVersion == "1.10" || glslVersion == "1.20")
+        {
+            vsource = deprecatedVertex;
+            fsource = deprecatedFragment;
+            _isModern = false;
+        } else
+        {
+            vsource = modernVertex;
+            fsource = modernFragment;
+            _isModern = true;
+        }
+
         Shader!Vertex defaultVertex = new Shader!Vertex();
-        defaultVertex.bindSource("
-        #version 130
-		in vec3 position;
-
-		uniform mat4 projection;
-		uniform mat4 model;
-
-		void main()
-		{
-			gl_Position = projection * model * vec4(position, 1.0f);
-		}
-        ");
+        defaultVertex.bindSource(vsource);
 
         Shader!Fragment defaultFragment = new Shader!Fragment();
-        defaultFragment.bindSource("
-        #version 130
-		uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-		void main()
-		{
-			gl_FragColor = color;
-		}
-        ");
+        defaultFragment.bindSource(fsource);
 
         defaultShader.attach(defaultVertex);
         defaultShader.attach(defaultFragment);
@@ -393,13 +442,47 @@ public @trusted:
 
         return 0;
     }
+
+    void setDefaultUniform(Color!ubyte color)
+    {
+        if (currentShader.getUniformLocation("projection") != -1)
+            currentShader.setUniform("projection", _projection);
+
+        if (currentShader.getUniformLocation("color") != -1)
+            currentShader.setUniform("color", color);
+
+        if (currentShader.getUniformLocation("model") != -1)
+            currentShader.setUniform("model", _model);
+    }
+
+    @property bool isModern()
+    {
+        return _isModern;
+    }
+
 override:
     void reshape()
     {
         import std.conv : to;
 
-        glViewport(0, 0, _camera.shape.width.to!int, _camera.shape.height.to!int);
-        clear();
+        int yborder = 0;
+
+        version (Windows)
+        {
+            import core.sys.windows.windows;
+
+            if (window.border)
+            {
+                RECT crect, wrect;
+                GetClientRect((cast(Window) window).handle, &crect);
+                GetWindowRect((cast(Window) window).handle, &wrect);
+
+
+                yborder = -((wrect.bottom - wrect.top) - (crect.bottom - crect.top));
+            }
+        }
+
+        glViewport(0, yborder, _camera.shape.end.x.to!int, _camera.shape.end.y.to!int);
         this._projection = ortho(0.0, _camera.port.end.x, _camera.port.end.y, 0.0, -1.0, 1.0);
     }
 
@@ -418,28 +501,27 @@ override:
         if (currentShader is null)
             currentShader = getShader("Default");
 
-        VertexInfo!float vinfo = generateVertex!float(Shapef.Point(vec));
-        auto vertLocation = currentShader.getAttribLocation("position");
+        Shapef shape = Shapef.Point(vec);
+        VertexInfo!float vinfo = generateVertex!(float)(shape);
 
-        vinfo.bindVertexArray();
         vinfo.bindBuffer();
-        glEnableVertexAttribArray(vertLocation);
-        glVertexAttribPointer(vertLocation, 2, GL_FLOAT, false, 0, null);
-
-        VertexInfo!float.unbindBuffer();
+        vinfo.bindVertexArray();
+        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"));
 
         currentShader.using();
-        currentShader.setUniform("projection", _projection);
-        currentShader.setUniform("color", color);
-        if(currentShader.getUniformLocation("model") != -1)
-            currentShader.setUniform("model", _model);
+        currentShader.enableVertex("position");
 
-        glDrawArrays(GL_POINTS, 0, 2);
-        VertexInfo!float.unbindVertexArray();
+        setDefaultUniform(color);
+
+        vinfo.draw(vinfo.shapeinfo.type);
+
+        currentShader.disableVertex("position");
+        vinfo.unbindBuffer();
+        vinfo.unbindVertexArray();
+        vinfo.deleting();
 
         resetShader();
         resetModelMatrix();
-        destroy(vinfo);
     }
 
     void line(Vecf[2] points, Color!ubyte color)
@@ -447,28 +529,27 @@ override:
         if (currentShader is null)
             currentShader = getShader("Default");
 
-        VertexInfo!float vinfo = generateVertex!float(Shapef.Line(points[0], points[1]));
-        auto vertLocation = currentShader.getAttribLocation("position");
+        auto shape = Shapef.Line(points[0], points[1]);
+        VertexInfo!float vinfo = generateVertex!(float)(shape);
 
-        vinfo.bindVertexArray();
         vinfo.bindBuffer();
-        glEnableVertexAttribArray(vertLocation);
-        glVertexAttribPointer(vertLocation, 2, GL_FLOAT, false, 2 * float.sizeof, null);
+        vinfo.bindVertexArray();
+
+        currentShader.enableVertex("position");
+        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"));
+
         vinfo.unbindBuffer();
 
         currentShader.using();
-        currentShader.setUniform("projection", _projection);
-        currentShader.setUniform("color", color);
-        if(currentShader.getUniformLocation("model") != -1)
-            currentShader.setUniform("model", _model);
+        setDefaultUniform(color);
+        vinfo.draw(vinfo.shapeinfo.type);
 
-        glDrawArrays(GL_LINES, 0, 2);
-
+        currentShader.disableVertex("position");
         vinfo.unbindVertexArray();
+        vinfo.deleting();
 
         resetShader();
         resetModelMatrix();
-        destroy(vinfo);
     }
 
     void rectangle(Vecf position, uint width, uint height, Color!ubyte color, bool isFill)
@@ -476,131 +557,83 @@ override:
         if (currentShader is null)
             currentShader = getShader("Default");
 
-        VertexInfo!float vinfo;
-        auto vertLocation = currentShader.getAttribLocation("position");
+        Shapef shape;
 
         if (isFill)
         {
-            vinfo = generateVertex!float(Shapef.Rectangle(position, position + vecf(width, height)));
-            vinfo.bindVertexArray();
-            vinfo.bindBuffer();
-            vinfo.bindElementBuffer();
-            glEnableVertexAttribArray(vertLocation);
-            glVertexAttribPointer(vertLocation, 2, GL_FLOAT, false, 2 * float.sizeof, null);
-            vinfo.unbindBuffer();
-            vinfo.unbindVertexArray();
-
-            currentShader.using();
-            vinfo.bindVertexArray();
-            currentShader.setUniform("projection", _projection);
-            currentShader.setUniform("color", color);
-            if(currentShader.getUniformLocation("model") != -1)
-                currentShader.setUniform("model", _model);
-
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
-
-            vinfo.unbindElementBuffer();
-            vinfo.unbindVertexArray();
+            shape = Shapef.Rectangle(position, position + vecf(width, height));
         } else
         {
-            vinfo = generateVertex!float(Shapef.Multi(	[
-                                                            Shapef.Line(position, position + vecf(width, 0)),
-                                                            Shapef.Line(position + vecf(width, 0), position + Vecf(width, height)),
-                                                            Shapef.Line(position, position + vecf(0, height)),
-                                                            Shapef.Line(position + vecf(0, height), position + Vecf(width, height))
-                                                        ]));
-            vinfo.bindVertexArray();
-            vinfo.bindBuffer();
-            glEnableVertexAttribArray(vertLocation);
-            glVertexAttribPointer(vertLocation, 2, GL_FLOAT, false, 0, null);
-            vinfo.unbindBuffer();
-
-            currentShader.using();
-            currentShader.setUniform("projection", _projection);
-            currentShader.setUniform("color", color);
-            if(currentShader.getUniformLocation("model") != -1)
-                currentShader.setUniform("model", _model);
-
-            glDrawArrays(GL_LINES, 0, 2 * 4);
-
-            vinfo.unbindVertexArray();
+            shape = Shapef.RectangleLine(position, position + vecf(width, height));
         }
+
+        VertexInfo!float vinfo = generateVertex!(float)(shape);
+
+        vinfo.bindVertexArray();
+        vinfo.bindBuffer();
+        if (isFill) vinfo.bindElementBuffer();
+
+        currentShader.enableVertex("position");
+        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"), 2);
+
+        vinfo.unbindBuffer();
+
+        currentShader.using();
+        setDefaultUniform(color);
+
+        if (isFill)
+            vinfo.draw(vinfo.shapeinfo.type, 1);
+        else
+            vinfo.draw(ShapeType.line, 4);
+
+        currentShader.disableVertex("position");
+        vinfo.unbindVertexArray();
+        if (isFill) vinfo.unbindElementBuffer();
+        vinfo.deleting();
 
         resetShader();
         resetModelMatrix();
-        destroy(vinfo);
     }
 
     void circle(Vecf position, float radius, Color!ubyte color, bool isFill)
     {
-        import std.math : sin, cos;
-
         if (currentShader is null)
             currentShader = getShader("Default");
 
-        VertexInfo!float vinfo;
-        auto vertLocation = currentShader.getAttribLocation("position");
+        Shapef shape;
 
         if (isFill)
         {
-            vinfo = generateVertex!float(Shapef.Circle(position, radius));
-            vinfo.bindVertexArray();
-            vinfo.bindBuffer();
-            glEnableVertexAttribArray(vertLocation);
-            glVertexAttribPointer(vertLocation, 2, GL_FLOAT, false, 0, null);
-            vinfo.unbindBuffer();
-
-            currentShader.using();
-            currentShader.setUniform("projection", _projection);
-            currentShader.setUniform("color", color);
-            if(currentShader.getUniformLocation("model") != -1)
-                currentShader.setUniform("model", _model);
-
-            vinfo.draw(ShapeType.circle);
-
-            vinfo.unbindVertexArray();
+            shape = Shapef.Circle(position, radius);
         } else
         {
-            Shapef shape;
-            shape.type = ShapeType.multi;
-
-            Vecf currPoint;
-
-            for (float i = 0; i <= 360;)
-            {
-                currPoint = vecf(cos(i), sin(i)) * radius;
-
-                auto vec = position + currPoint;
-
-                i += 0.5f;
-                currPoint = vecf(cos(i), sin(i)) * radius;
-                shape.shapes ~= Shapef.Line(vec, position + currPoint);
-
-                i += 0.5f;
-            }
-
-            vinfo = generateVertex!float(shape);
-
-            vinfo.bindVertexArray();
-            vinfo.bindBuffer();
-            glEnableVertexAttribArray(vertLocation);
-            glVertexAttribPointer(vertLocation, 2, GL_FLOAT, false, 0, null);
-            vinfo.unbindBuffer();
-
-            currentShader.using();
-            currentShader.setUniform("projection", _projection);
-            currentShader.setUniform("color", color);
-            if(currentShader.getUniformLocation("model") != -1)
-                currentShader.setUniform("model", _model);
-
-            glDrawArrays(GL_LINES, 0, cast(int) vinfo.length / 2);
-
-            vinfo.unbindVertexArray();
+            shape = Shapef.CircleLine(position, radius);
         }
+
+        VertexInfo!float vinfo = generateVertex!(float)(shape);
+
+        vinfo.bindVertexArray();
+        vinfo.bindBuffer();
+
+        currentShader.enableVertex("position");
+        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"));
+
+        vinfo.unbindBuffer();
+
+        currentShader.using();
+        setDefaultUniform(color);
+
+        if (isFill)
+            vinfo.draw(vinfo.shapeinfo.type, 1);
+        else
+            vinfo.draw(ShapeType.line, cast(int) vinfo.shapeinfo.shapes.length);
+
+        currentShader.disableVertex("position");
+        vinfo.unbindVertexArray();
+        vinfo.deleting();
 
         resetShader();
         resetModelMatrix();
-        destroy(vinfo);
     }
 
     void roundrect(Vecf position, uint width, uint height, float radius, Color!ubyte color, bool isFill)
@@ -608,110 +641,40 @@ override:
         if (currentShader is null)
             currentShader = getShader("Default");
 
-        VertexInfo!float vinfo;
-        auto vertLocation = currentShader.getAttribLocation("position");
+        Shapef shape;
 
         if (isFill)
         {
-            vinfo = generateVertex!(float)(Shapef.RoundRectangle(   position,
-                                                                    position + vecf(width, height),
-                                                                    radius));
-
-            vinfo.bindVertexArray();
-            vinfo.bindBuffer();
-            glEnableVertexAttribArray(vertLocation);
-            glVertexAttribPointer(vertLocation, 2, GL_FLOAT, false, 0, null);
-            vinfo.unbindBuffer();
-
-            currentShader.using();
-            currentShader.setUniform("projection", _projection);
-            currentShader.setUniform("color", color);
-            if(currentShader.getUniformLocation("model") != -1)
-                currentShader.setUniform("model", _model);
-
-            vinfo.draw(ShapeType.roundrect, 2);
-
-            vinfo.unbindVertexArray();
+            shape = Shapef.RoundRectangle(position, position + vecf(width, height), radius);
         } else
         {
-            import std.math;
-            import tida.angle;
-
-            Vecf[] buffer;
-
-            for (float i = 180; i <= 270; i += 0.05)
-            {
-                buffer ~= position + vecf(radius, radius) +
-                            vecf(   cos(i.conv!(Degrees, Radians)),
-                                    sin(i.conv!(Degrees, Radians))) * radius;
-            }
-
-            buffer ~=   [
-                            position + vecf(radius, 0),
-                            position + vecf(width - radius, 0)
-                        ];
-
-            for (float i = 270; i <= 360; i += 0.05)
-            {
-                buffer ~= position + vecf(width - radius, radius) +
-                            vecf(   cos(i.conv!(Degrees, Radians)),
-                                    sin(i.conv!(Degrees, Radians))) * radius;
-            }
-
-            buffer ~=   [
-                            position + Vecf(width - radius, radius) +
-                            vecf(   cos(360.conv!(Degrees, Radians)),
-                                    sin(360.conv!(Degrees, Radians))) * radius,
-                            position + Vecf(width, radius),
-                            position + Vecf(width, height - radius)
-                        ];
-
-            for (float i = 0; i <= 90; i += 0.05)
-            {
-                buffer ~= position +    vecf(width - radius, height - radius) +
-                                        vecf(cos(i.conv!(Degrees, Radians)),
-                                        sin(i.conv!(Degrees, Radians))) * radius;
-            }
-
-            buffer ~=   [
-                            position + vecf(width - radius, height),
-                            position + vecf(radius, height)
-                        ];
-
-            for(float i = 90; i <= 180; i += 0.05)
-            {
-                buffer ~= position +    vecf(radius, height - radius) +
-                                        vecf(   cos(i.conv!(Degrees, Radians)),
-                                                sin(i.conv!(Degrees, Radians))) * radius;
-            }
-
-            buffer ~=   [
-                            position + vecf(0, height - radius),
-                            position + vecf(0, radius)
-                        ];
-
-            vinfo = new VertexInfo!(float)();
-            vinfo.bindFromBuffer(buffer.generateArray);
-            vinfo.bindVertexArray();
-            vinfo.bindBuffer();
-            glEnableVertexAttribArray(vertLocation);
-            glVertexAttribPointer(vertLocation, 2, GL_FLOAT, false, 0, null);
-            vinfo.unbindBuffer();
-
-            currentShader.using();
-            currentShader.setUniform("projection", _projection);
-            currentShader.setUniform("color", color);
-            if(currentShader.getUniformLocation("model") != -1)
-                currentShader.setUniform("model", _model);
-
-            glDrawArrays(GL_LINES, 0, cast(int) vinfo.length / 2);
-
-            vinfo.unbindVertexArray();
+            shape = Shapef.RoundRectangleLine(position,  position + vecf(width, height), radius);
         }
+
+        VertexInfo!float vinfo = generateVertex!(float)(shape);
+
+        vinfo.bindVertexArray();
+        vinfo.bindBuffer();
+
+        currentShader.enableVertex("position");
+        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"));
+
+        vinfo.unbindBuffer();
+
+        currentShader.using();
+        setDefaultUniform(color);
+
+        if (isFill)
+            vinfo.draw(vinfo.shapeinfo.type, 1);
+        else
+            vinfo.draw(ShapeType.line, cast(int) vinfo.shapeinfo.shapes.length);
+
+        currentShader.disableVertex("position");
+        vinfo.unbindVertexArray();
+        vinfo.deleting();
 
         resetShader();
         resetModelMatrix();
-        destroy(vinfo);
     }
 
     void triangle(Vecf[3] points, Color!ubyte color, bool isFill)
@@ -719,52 +682,40 @@ override:
         if (currentShader is null)
             currentShader = getShader("Default");
 
-        VertexInfo!float vinfo;
-        auto vertLocation = currentShader.getAttribLocation("position");
+        Shapef shape;
 
         if (isFill)
         {
-            vinfo = generateVertex!(float)(Shapef.Triangle(points));
-
-            vinfo.bindVertexArray();
-            vinfo.bindBuffer();
-            glEnableVertexAttribArray(vertLocation);
-            glVertexAttribPointer(vertLocation, 2, GL_FLOAT, false, 0, null);
-            vinfo.unbindBuffer();
-
-            currentShader.using();
-            currentShader.setUniform("projection", _projection);
-            currentShader.setUniform("color", color);
-            if(currentShader.getUniformLocation("model") != -1)
-                currentShader.setUniform("model", _model);
-
-            vinfo.draw(ShapeType.triangle);
-
-            vinfo.unbindVertexArray();
+            shape = Shapef.Triangle(points);
         } else
         {
-            vinfo = generateVertex!(float)(Shapef.TriangleLine(points));
-
-            vinfo.bindVertexArray();
-            vinfo.bindBuffer();
-            glEnableVertexAttribArray(vertLocation);
-            glVertexAttribPointer(vertLocation, 2, GL_FLOAT, false, 0, null);
-            vinfo.unbindBuffer();
-
-            currentShader.using();
-            currentShader.setUniform("projection", _projection);
-            currentShader.setUniform("color", color);
-            if(currentShader.getUniformLocation("model") != -1)
-                currentShader.setUniform("model", _model);
-
-            glDrawArrays(GL_LINES, 0, cast(int) vinfo.length / 2);
-
-            vinfo.unbindVertexArray();
+            shape = Shapef.TriangleLine(points);
         }
+
+        VertexInfo!float vinfo = generateVertex!(float)(shape);
+
+        vinfo.bindVertexArray();
+        vinfo.bindBuffer();
+
+        currentShader.enableVertex("position");
+        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"));
+
+        vinfo.unbindBuffer();
+
+        currentShader.using();
+        setDefaultUniform(color);
+
+        if (isFill)
+            vinfo.draw(vinfo.shapeinfo.type, 1);
+        else
+            vinfo.draw(ShapeType.line, cast(int) vinfo.shapeinfo.shapes.length);
+
+        currentShader.disableVertex("position");
+        vinfo.unbindVertexArray();
+        vinfo.deleting();
 
         resetShader();
         resetModelMatrix();
-        destroy(vinfo);
     }
 
     void polygon(Vecf position, Vecf[] points, Color!ubyte color, bool isFill)
@@ -774,62 +725,41 @@ override:
         if (currentShader is null)
             currentShader = getShader("Default");
 
-        VertexInfo!float vinfo;
-        auto vertLocation = currentShader.getAttribLocation("position");
-
-        points.each!((ref e) => e += position);
+        Shapef shape;
+        points.each!((ref e) => e = position + e);
 
         if (isFill)
         {
-            vinfo = generateVertex!(float)(Shapef.Polygon(points));
-
-            vinfo.bindVertexArray();
-            vinfo.bindBuffer();
-            glEnableVertexAttribArray(vertLocation);
-            glVertexAttribPointer(vertLocation, 2, GL_FLOAT, false, 0, null);
-            vinfo.unbindBuffer();
-
-            currentShader.using();
-            currentShader.setUniform("projection", _projection);
-            currentShader.setUniform("color", color);
-            if(currentShader.getUniformLocation("model") != -1)
-                currentShader.setUniform("model", _model);
-
-            glDrawArrays(GL_TRIANGLE_FAN, 0, cast(int) points.length);
-
-            vinfo.unbindVertexArray();
+            shape = Shapef.Polygon(points);
         } else
         {
-            Shapef shape = Shapef.Multi([]);
-
-            int next = 0;
-            for (int i = 0; i < points.length; i++)
-            {
-                next = (i + 1 == points.length) ? 0 : i + 1;
-                shape.shapes ~= Shapef.Line(points[i], points[next]);
-            }
-
-            vinfo = generateVertex!(float)(shape);
-            vinfo.bindVertexArray();
-            vinfo.bindBuffer();
-            glEnableVertexAttribArray(vertLocation);
-            glVertexAttribPointer(vertLocation, 2, GL_FLOAT, false, 0, null);
-            vinfo.unbindBuffer();
-
-            currentShader.using();
-            currentShader.setUniform("projection", _projection);
-            currentShader.setUniform("color", color);
-            if(currentShader.getUniformLocation("model") != -1)
-                currentShader.setUniform("model", _model);
-
-            glDrawArrays(GL_LINES, 0, cast(int) vinfo.length / 2);
-
-            vinfo.unbindVertexArray();
+            shape = Shapef.Polygon(points ~ points[0]);
         }
+
+        VertexInfo!float vinfo = generateVertex!(float)(shape);
+
+        vinfo.bindVertexArray();
+        vinfo.bindBuffer();
+
+        currentShader.enableVertex("position");
+        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"));
+
+        vinfo.unbindBuffer();
+
+        currentShader.using();
+        setDefaultUniform(color);
+
+        if (isFill)
+            vinfo.draw(vinfo.shapeinfo.type, 1);
+        else
+            glDrawArrays(GL_LINE_LOOP, 0, 2 * cast(int) vinfo.shapeinfo.data.length);
+
+        currentShader.disableVertex("position");
+        vinfo.unbindVertexArray();
+        vinfo.deleting();
 
         resetShader();
         resetModelMatrix();
-        destroy(vinfo);
     }
 
     @property RenderType type()
@@ -1250,6 +1180,145 @@ override:
     @property uint[2] portSize()
     {
         return [pwidth, pheight];
+    }
+
+    @property int[2] cameraPosition()
+    {
+        return [xput, yput];
+    }
+
+    mixin PointToImpl!(PixelFormat.BGRA, 4);
+}
+
+version(Windows)
+class Canvas : ICanvas
+{
+    import core.sys.windows.windows;
+    import tida.color;
+    import std.exception : enforce;
+
+private:
+    PAINTSTRUCT paintstr;
+    HDC hdc;
+    HDC pdc;
+    HBITMAP bitmap;
+
+    tida.window.Window window;
+
+    ubyte[] buffer;
+    uint _width;
+    uint _height;
+    uint _pwidth;
+    uint _pheight;
+    int xput;
+    int yput;
+
+    Color!ubyte _background;
+    BlendMode bmode;
+    BlendFactor sfactor;
+    BlendFactor dfactor;
+
+    bool _isAlloc = true;
+
+public @trusted:
+    this(tida.window.Window window, bool isAlloc = true)
+    {
+        this.window = window;
+        _isAlloc = isAlloc;
+    }
+
+    void recreateBitmap()
+    {
+        if (bitmap !is null)
+            DeleteObject(bitmap);
+
+        if (hdc is null)
+            hdc = GetDC((cast(Window) window).handle);
+
+        bitmap = CreateBitmap(_width, _height, 1, 32, cast(LPBYTE) buffer);
+        enforce(bitmap, "[WINAPI] bitmap is not a create!");
+
+        if (pdc is null)
+            pdc = CreateCompatibleDC(hdc);
+
+        SelectObject(pdc, bitmap);
+    }
+
+override:
+    void allocatePlace(uint width, uint height)
+    {
+        _width = width;
+        _height = height;
+
+        buffer = new ubyte[](_width * _height * 4);
+    }
+
+    void viewport(uint width, uint height)
+    {
+        _pwidth = width;
+        _pheight = height;
+    }
+
+    void move(int x, int y)
+    {
+        xput = x;
+        yput = y;
+    }
+
+    void clearPlane(Color!ubyte color)
+    {
+        for (size_t i = 0; i < _width * _height * 4; i += 4)
+        {
+            buffer[i] = color.b;
+            buffer[i + 1] = color.g;
+            buffer[i + 2] = color.r;
+            buffer[i + 3] = color.Max;
+        }
+    }
+
+    void drawTo()
+    {
+        if (_isAlloc)
+        {
+            recreateBitmap();
+            BitBlt(hdc, 0, 0, _width, _height, pdc, 0, 0, SRCCOPY);
+        }
+    }
+
+    BlendMode blendMode()
+    {
+        return bmode;
+    }
+
+    void blendMode(BlendMode mode)
+    {
+        bmode = mode;
+    }
+
+    BlendFactor[2] blendOperation()
+    {
+        return [sfactor, dfactor];
+    }
+
+    void blendOperation(BlendFactor sfactor, BlendFactor dfactor)
+    {
+        this.sfactor = sfactor;
+        this.dfactor = dfactor;
+    }
+
+    @property ref ubyte[] data()
+    {
+        return buffer;
+    }
+
+    @property uint[2] size()
+    {
+        return [_width, _height];
+    }
+
+    @property uint[2] portSize()
+    {
+        return [_pwidth, _pheight];
     }
 
     @property int[2] cameraPosition()

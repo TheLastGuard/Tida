@@ -270,6 +270,7 @@ public @trusted:
         {
             if (e == OpenAL)
             {
+                initSoundlibrary();
                 _device = new Device();
                 _device.open();
             }
@@ -282,7 +283,8 @@ public @trusted:
     override void connectToWndMng()
     {
         this.hInstance = GetModuleHandle(null);
-        ShowWindow(GetConsoleWindow(), SW_HIDE);
+        debug {} else
+            ShowWindow(GetConsoleWindow(), SW_HIDE);
 
         enforce!Exception(this.hInstance, 
         "Failed to connect to window manager.");

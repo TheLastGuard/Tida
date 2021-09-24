@@ -21,6 +21,10 @@
 			"platforms": [
 				"windows"
 			],
+			"libs" : [
+				"user32",
+				"gdi32"
+			],
 			"targetType": "executable"
 		},
 		{
@@ -40,6 +44,10 @@
 			"name": "windows-lib",
 			"platforms": [
 				"windows"
+			],
+			"libs" : [
+				"user32",
+				"gdi32"
 			],
 			"targetType": "library"
 		}

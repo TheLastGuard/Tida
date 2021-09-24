@@ -566,6 +566,58 @@ public:
         return shape;
     }
 
+    static Shape!T RoundRectangleLine(  Vector!T begin,
+                                        Vector!T end,
+                                        T radius)
+    {
+        import std.math : cos, sin;
+        import tida.angle;
+
+        Shape!T shape;
+
+        shape.type = ShapeType.multi;
+
+        static if (isFloatingPoint!T)
+            immutable factor = 0.01;
+        else
+            immutable factor = 1;
+
+        immutable size = end - begin;
+
+        void rounded(vec!T c, float b, float e)
+        {
+            Vector!T currPoint;
+            for (T i = b; i <= e; i += factor)
+            {
+                T j = i.conv!(Degrees, Radians);
+                currPoint = begin + c + vec!T(cos(j), sin(j)) * radius;
+
+                i += factor;
+                j = i.conv!(Degrees, Radians);
+                shape.shapes ~= Shape!T.Line(   currPoint,
+                                                begin + c + vec!T(cos(j), sin(j)) * radius);
+            }
+        }
+
+        rounded(vec!T(radius, radius), 180, 270);
+        shape.shapes ~= Shape!T.Line(   begin + vec!T(radius, 0),
+                                        begin + vec!T(size.x - radius, 0));
+
+        rounded(vec!T(size.x - radius, radius), 270, 360);
+        shape.shapes ~= Shape!T.Line(   begin + vec!T(size.x, radius),
+                                        end - vec!T(0, radius));
+
+        rounded(vec!T(size.x - radius, size.y - radius), 0, 90);
+        shape.shapes ~= Shape!T.Line(   end - vec!T(radius, 0),
+                                        begin + vec!T(radius, size.y));
+
+        rounded(vec!T(radius, size.y - radius), 90, 180);
+        shape.shapes ~= Shape!T.Line(   begin + vec!T(0, size.y - radius),
+                                        begin + vec!T(0, radius));
+
+        return shape;
+    }
+
     /++
     Create a non-solid rectangle. 
 
@@ -580,10 +632,10 @@ public:
                                     Vector!T end)
     {
         return Shape!T.Multi([
-            Shape!T.Line(begin,begin + vec!T(end.x,0)),
-            Shape!T.Line(begin + vec!T(end.x,0),end),
-            Shape!T.Line(begin,begin + vec!T(0,end.y)),
-            Shape!T.Line(begin + vec!T(0,end.y),end)
+            Shape!T.Line(begin, vec!T(end.x, begin.y)),
+            Shape!T.Line(vec!T(end.x, begin.y), end),
+            Shape!T.Line(end, vec!T(begin.x, end.y)),
+            Shape!T.Line(vec!T(begin.x, end.y), begin)
         ], vec!T(0, 0));
     }
 
@@ -604,6 +656,32 @@ public:
         shape.type = ShapeType.circle;
         shape.begin = pos;
         shape.radius = r;
+
+        return shape;
+    }
+
+    static Shape!T CircleLine(Vector!T pos, T r)
+    {
+        import std.math : cos, sin;
+
+        static if (isFloatingPoint!T)
+            immutable factor = 0.25;
+        else
+            immutable factor = 1;
+
+        Shape!T shape;
+
+        shape.type = ShapeType.multi;
+        Vector!T currPoint;
+
+        for (T i = 0; i <= 360;)
+        {
+            currPoint = pos + vec!T(cos(i), sin(i)) * r;
+            i += factor;
+
+            shape.shapes ~= Shape.Line(currPoint, pos + vec!T(cos(i), sin(i)) * r);
+            i += factor;
+        }
 
         return shape;
     }

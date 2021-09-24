@@ -220,10 +220,66 @@ public @trusted:
 
     See_Also: $(HTTP https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBindAttribLocation.xhtml, glBindAttribLocation)
     +/
-    static if(isShaderProgram!Type)
+    static if (isShaderProgram!Type)
     void bindAttribLocation(uint index, string name)
     {
         glBindAttribLocation(glid, index, name.ptr);
+    }
+
+    /++
+    Enable or disable a generic vertex attribute array
+
+    Params:
+        name = Vertex attribute name.
+
+    See_Also: $(HTTP https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml, glEnableVertexAttribArray)
+    +/
+    static if (isShaderProgram!Type)
+    void enableVertex(string name)
+    {
+        glEnableVertexAttribArray(getAttribLocation(name));
+    }
+
+    /++
+    Enable or disable a generic vertex attribute array
+
+    Params:
+        id = Vertex identificator.
+
+    See_Also: $(HTTP https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml, glEnableVertexAttribArray)
+    +/
+    static if (isShaderProgram!Type)
+    void enableVertex(uint id)
+    {
+        glEnableVertexAttribArray(id);
+    }
+
+    /++
+    Enable or disable a generic vertex attribute array
+
+    Params:
+        name = Vertex attribute name.
+
+    See_Also: $(HTTP https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml, glEnableVertexAttribArray)
+    +/
+    static if (isShaderProgram!Type)
+    void disableVertex(string name)
+    {
+        glDisableVertexAttribArray(getAttribLocation(name));
+    }
+
+    /++
+    Enable or disable a generic vertex attribute array
+
+    Params:
+        id = Vertex identificator.
+
+    See_Also: $(HTTP https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml, glEnableVertexAttribArray)
+    +/
+    static if (isShaderProgram!Type)
+    void disableVertex(uint id)
+    {
+        glDisableVertexAttribArray(id);
     }
 
     /++
