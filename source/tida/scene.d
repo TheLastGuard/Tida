@@ -101,7 +101,7 @@ public:
         instance = Instance.
         threadID = In which thread to add execution.
     +/
-    final void add(T)(T instance,size_t threadID = 0)
+    final void add(T)(T instance, size_t threadID = 0)
     in(instance, "Instance is not a create!")
     do
     {
@@ -120,48 +120,17 @@ public:
     }
 
     /++
-    Creates and adds an instance to the scene.
-
-    Params:
-        Name = Name class.
-        threadID = In which thread to add execution.
-
-    Note:
-        There must be no arguments in the constructor.
-    +/
-    final void add(Name)(size_t threadID = 0)
-    {
-        static assert(isInstance!T, T.stringof ~ " is not a instance!");
-        auto instance = new Name();
-
-        add(instance, threadID);
-    }
-
-    /++
     Adds multiple instances at a time.
 
     Params:
         instances = Instances.
         threadID = In which thread to add execution.
     +/
-    final void add(Instance[] instances,size_t threadID = 0)
+    final void add(Instance[] instances, size_t threadID = 0)
     {
-        foreach(instance; instances) {
+        foreach (instance; instances)
+        {
             add(instance,threadID);
-        }
-    }
-
-    /++
-    Adds multiple instances at a time.
-
-    Params:
-        Names = Names instances.
-        threadID = In which thread to add execution.
-    +/
-    final void add(Names...)(size_t threadID = 0)
-    {
-        static foreach (Name; Names) {
-            add!Name(threadID);
         }
     }
 

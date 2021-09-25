@@ -208,7 +208,7 @@ public:
             sceneManager.callStep(0,renderer);
 
             renderer.clear();
-                sceneManager.callDraw(renderer);
+            sceneManager.callDraw(renderer);
             renderer.drawning();
 
             fps.control();

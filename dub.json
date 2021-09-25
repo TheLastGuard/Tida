@@ -68,11 +68,13 @@
 		"./addons/tiled",
 		"./addons/puppet",
 		"./addons/animobj",
+		"./addons/ui",
 		"./examples/simplewindow",
 		"./examples/simplerender",
 		"./examples/simplegame",
 		"./examples/simpletilemap",
 		"./examples/seabattle",
+		"./examples/simpleui",
 		"./instruments/init"
 	],
 	"versions": [

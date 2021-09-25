@@ -1,0 +1,8 @@
+{
+    "name" : "simpleui",
+    "targetType": "executable",
+    "dependencies" : {
+        "tida" : "*",
+        "tida:ui" : "*"
+    }
+}

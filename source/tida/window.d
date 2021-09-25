@@ -824,6 +824,7 @@ public:
     HWND handle;
     HDC dc;
     bool isClose = false;
+    bool isResize = false;
 
     this(uint w, uint h, string caption)
     {
@@ -845,6 +846,12 @@ public:
                     if (_wndptr is null || _wndptr.__vptr is null) return 0;
                     
                     _wndptr.sendCloseEvent();
+                    return 0;
+
+                case WM_SIZE:
+                    if (_wndptr is null || _wndptr.__vptr is null) return 0;
+
+                    _wndptr.isResize = true;
                     return 0;
 
                 default:

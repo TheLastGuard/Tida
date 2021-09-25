@@ -383,7 +383,10 @@ public:
 
     bool isResize()
     {
-        return this.msg.message == WM_SIZE;
+        bool isResize = window.isResize;
+        window.isResize = false;
+
+        return isResize;
     }
 
     uint[2] newSizeWindow()
