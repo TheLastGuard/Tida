@@ -164,9 +164,8 @@ public:
     void worldCollision() @trusted
     {
         import tida.collision;
-
-        auto collstragt = sceneManager.collisionFunctions;
-        auto coll = sceneManager.colliders;
+        import std.algorithm : canFind, each;
+        import std.range : empty;
 
         foreach(first; list())
         {
@@ -175,86 +174,73 @@ public:
                 if(first !is second && first.solid && second.solid) {
                     if(first.active && second.active)
                     {
-                        import std.algorithm : canFind, each;
-
                         if (
                             isCollide(  first.mask,
                                         second.mask,
                                         first.position,
                                         second.position)
-                        ) {
-                            if (first in collstragt)
-                                collstragt[first].each!(fun => fun(second));
-
-                            if (second in collstragt)
-                                collstragt[second].each!(fun => fun(first));
-
-                            if (first in coll)
-                            {
-                                foreach (cls; coll[first])
-                                {
-                                    if (cls.ev.name != "")
-                                    {
-                                        if (cls.ev.name == second.name)
-                                        {
-                                            if (cls.ev.tag != "")
-                                            {
-                                                if (second.tags.canFind(cls.ev.tag))
-                                                {
-                                                    cls.fun(second);
-                                                }
-                                            } else
-                                                cls.fun(second);
-                                        }
-                                    } else
-                                    {
-                                        if (cls.ev.tag != "")
-                                        {
-                                            if (second.tags.canFind(cls.ev.tag))
-                                            {
-                                                cls.fun(second);
-                                            }
-                                        } else
-                                        {
-                                            cls.fun(second);
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (second in coll)
-                            {
-                                foreach (cls; coll[second])
-                                {
-                                    if (cls.ev.name != "")
-                                    {
-                                        if (cls.ev.name == first.name)
-                                        {
-                                            if (cls.ev.tag != "")
-                                            {
-                                                if (first.tags.canFind(cls.ev.tag))
-                                                {
-                                                    cls.fun(first);
-                                                }
-                                            } else
-                                                cls.fun(first);
-                                        }
-                                    } else
-                                    {
-                                        if (first.tags.canFind(cls.ev.tag))
-                                        {
-                                            cls.fun(first);
-                                        }
-                                    }
-                                }
-                            }
-                        } else
+                        )
                         {
-                            if (first in collstragt)
-                                collstragt[first].each!(fun => fun(null));
+                            auto firstColliders = sceneManager.colliders()[first];
+                            auto secondColliders = sceneManager.colliders()[second];
 
-                            if (second in collstragt)
-                                collstragt[second].each!(fun => fun(null));
+                            auto firstFunctions = sceneManager.collisionFunctions()[first];
+                            auto secondFunctions = sceneManager.collisionFunctions()[second];
+
+                            firstFunctions.each!((fun) => fun(second));
+                            secondFunctions.each!((fun) => fun(first));
+
+                            foreach (e; firstColliders)
+                            {
+                                if (e.ev.name.empty)
+                                {
+                                    if (!e.ev.tag.empty)
+                                    {
+                                        if (second.tags.canFind(e.ev.tag))
+                                        {
+                                            e.fun(second);
+                                        }   
+                                    }
+                                } else
+                                {
+                                    if (e.ev.tag.empty)
+                                    {
+                                        e.fun(second);
+                                    } else
+                                    {
+                                        if (second.tags.canFind(e.ev.tag))
+                                        {
+                                            e.fun(second);
+                                        }
+                                    }
+                                }
+                            }
+
+                            foreach (e; secondColliders)
+                            {
+                                if (e.ev.name.empty)
+                                {
+                                    if (!e.ev.tag.empty)
+                                    {
+                                        if (first.tags.canFind(e.ev.tag))
+                                        {
+                                            e.fun(second);
+                                        }   
+                                    }
+                                } else
+                                {
+                                    if (e.ev.tag.empty)
+                                    {
+                                        e.fun(first);
+                                    } else
+                                    {
+                                        if (first.tags.canFind(e.ev.tag))
+                                        {
+                                            e.fun(first);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

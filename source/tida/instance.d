@@ -100,13 +100,13 @@ public:
     The position of the instance. Serves for collision, rendering, and
     other instance services.
     +/
-    Vector!float position;
+    Vector!float position = vec!float(0.0f, 0.0f);
 
     /++
     An auxiliary variable that remembers the position in the previous
     pass of the game loop.
     +/
-    Vector!float previous;
+    Vector!float previous = vec!float(0.0f, 0.0f);
 
     /++
     Collision mask. A mask is a kind of geometric shape (or several shapes)

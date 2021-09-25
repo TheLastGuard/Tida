@@ -619,6 +619,12 @@ public @safe:
         IOnAnyTriggerFunctions.remove(instance);
     }
 
+    template hasMatch(alias attrib, alias AttribType)
+    {
+        enum hasMatch = is(typeof(attrib) == AttribType) || is(attrib == AttribType) ||
+                        is(typeof(attrib) : AttribType) || is(attrib : AttribType);
+    }
+
     template hasAttrib(T, AttribType, string member)
     {
         alias same = __traits(getMember, T, member);
@@ -631,8 +637,11 @@ public @safe:
             {
                 static foreach (attrib; attributes)
                 {
-                    static if (is(attrib : AttribType))
+                    static if (hasMatch!(attrib, AttribType))
                     {
+                        static assert(isSafe!(same),
+                        "The function `" ~ member ~"` does not guarantee safe execution.");
+
                         enum hasAttrib = true;
                     }else
                     {
@@ -652,10 +661,11 @@ public @safe:
     template attributeIn(T, AttribType, string member)
     {
         alias same = __traits(getMember, T, member);
+        alias attributes = __traits(getAttributes, same);
 
         static foreach (attrib; attributes)
         {
-            static if (is(attrib : AttribType))
+            static if (hasMatch!(attrib, AttribType))
             {
                 enum attributeIn = attrib;
             }
@@ -739,7 +749,7 @@ public @safe:
             } else
             static if (hasAttrib!(T, Trigger, member))
             {
-                IOnTriggerFunctions[instance] ~= SRTrigger( attributeIn!(T, Collision, member),
+                IOnTriggerFunctions[instance] ~= SRTrigger( attributeIn!(T, Trigger, member),
                                                             &__traits(getMember, instance, member));
             } else
             static if (hasAttrib!(T, FunEvent!Destroy, member))
