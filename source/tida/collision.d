@@ -239,9 +239,6 @@ bool isCollide(	Shape!float first,
                 Shape!float second, 
                 Vecf firstPos = vecf(0,0),
                 Vecf secondPos = vecf(0,0)) @safe nothrow pure
-in(first.type != ShapeType.unknown  && second.type != ShapeType.unknown)
-in(first.type != ShapeType.triangle && second.type != ShapeType.triangle)
-do
 {
     import std.conv : to;
     import std.math : abs, sqrt;
