@@ -1,0 +1,44 @@
+# GitHub project verification, namely:
+# * Is the project going.
+# * Checking unit tests, if the previous point has been successfully completed.
+
+name: Tida - Build and testing project.
+
+# Checking on which branches the actions should take place.
+on:
+  push:
+    branches: [ master ]
+    
+  pull_request:
+    branches: [ master ]
+  
+# Directly, verification actions
+jobs:
+  build:
+    name: 'Build and test'
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        dc: [ dmd-latest, ldc-latest ]
+      
+    runs-on: ${{ matrix.os }}
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: 'Installing the latest D language compilers.'
+      uses: dlang-community/setup-dlang@v1.1.1
+      with:
+        compiler: ${{ matrix.dc }}
+        
+      
+    - name: 'Build project'
+      run: |
+        dub build
+        
+    - name: 'Unittest run'
+      run: |
+        dub test
