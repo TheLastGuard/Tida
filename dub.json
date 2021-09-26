@@ -46,12 +46,19 @@
 			"targetType": "library"
 		},
 		{
-			"name": "unittest",
+			"name": "unittest-windows",
 			"dependencies": {
 				"fluent-asserts": "~>0.14.0-alpha.9"
 			},
 			"libs": ["user32", "gdi32"]
-		}
+		},
+		{
+			"name": "unittest-posix",
+			"dependencies": {
+				"x11": "~>1.0.21",
+				"fluent-asserts": "~>0.14.0-alpha.9"
+			}
+		},
 	],
 	"copyright": "Copyright © 2020, TodNaz",
 	"dependencies": {
