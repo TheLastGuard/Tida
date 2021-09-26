@@ -14,6 +14,7 @@ License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
 module tida.vector;
 
 import std.traits;
+version(unittest) import fluent.asserts;
 
 /++
 Vector structure. May include any numeric data type available for vector arithmetic.
@@ -22,6 +23,7 @@ struct Vector(T)
 if (isNumeric!T && isMutable!T && isSigned!T)
 {
     import std.math : pow, sqrt;
+    import core.exception;
 
     alias Type = T;
 
@@ -49,6 +51,32 @@ public:
     {
         this.x = cast(T) arrvec[0];
         this.y = cast(T) arrvec[1];
+    }
+
+    void opIndexAssign(T value, size_t index)
+    {
+        if (index == 0)
+        {
+            this.x = value;
+        } else
+        if (index == 1)
+        {
+            this.y = value;
+        } else
+            throw new RangeError();
+    }
+
+    T opIndex(size_t index)
+    {
+        if (index == 0)
+        {
+            return this.x;
+        } else
+        if (index == 1)
+        {
+            return this.y;
+        } else
+            throw new RangeError();
     }
 
     void opOpAssign(string op)(Vector rhs)
@@ -101,16 +129,6 @@ public:
             static assert(null, "The `" ~ op ~ "` operator is not implemented.");
     }
 
-    unittest
-    {
-        Vector!double a = [3.0, 3.0];
-        a += Vector!double(3.0, 3.0);
-        assert(a == Vector!double(6.0, 6.0));
-
-        a /= 2;
-        assert(a == Vector!double(3.0, 3.0));
-    }
-
     /++
     Normalizes the vector.
     +/
@@ -146,22 +164,9 @@ inout:
         return this.x == other.x && this.y == other.y;
     }
 
-    unittest
-    {
-        Vector!real a = [3.0, 3.0];
-        assert(a == Vector!real(3.0, 3.0));
-    }
-
     int opCmp(Vector rhs)
     {
         return (x > rhs.x && y > rhs.y) ? 1 : -1;
-    }
-
-    unittest
-    {
-        Vector!real a = [3.0, 3.0];
-        assert(a > Vector!real(2.5, 1.1));
-        assert(a < Vector!real(4.1, 3.1));
     }
 
     Vector!T opBinary(string op)(Vector rhs)
@@ -221,14 +226,6 @@ inout:
             static assert(null, "The `" ~ op ~ "` operator is not implemented.");
     }
 
-    unittest
-    {
-        Vector!int a = [3, 3];
-
-        assert(a + Vector!int(3, 3) == Vector!int(6, 6));
-        assert(a ^^ 2 == Vector!int(9, 9));
-    }
-
     /++
     Vector length.
     +/
@@ -252,6 +249,34 @@ inout:
 
         return Vector!T(this.x * d, this.y * d);
     }
+}
+
+unittest
+{
+    vec!real([32, 64])
+        .should
+        .equal(Vector!real(32.0, 64.0));
+}
+
+unittest
+{
+    (vec!real(16.5, 18.1) + vec!real(15.5, 13.9))
+        .should.equal(vec!real(32.0, 32.0));
+
+    (vec!double(321.0, 131.48) - vec!double(100.0, 31.40))
+        .should.equal(vec!double(221.0, 100.08));
+
+    (vec!int(32, 32) * vec!int(2, 3))
+        .should.equal(vec!int(64, 96));
+
+    (vec!long(32, 32) * 4)
+        .should.equal(vec!long(128, 128));
+
+    (vec!short(128, 128) / vec!short(4, 2))
+        .should.equal(vec!short(32, 64));
+
+    (vec!short(128, 128) / 4)
+        .should.equal(vec!short(32, 32));
 }
 
 /++
@@ -322,6 +347,12 @@ if (isVectorFloatingPoint!(Vector!T))
 /// ditto
 alias isVecfNaN = isVectorNaN!float;
 
+unittest
+{
+    (vecfNaN.isVecfNaN).should.equal(true);
+    (vecf(0.0f, 0.0f)).should.not.equal(true);
+}
+
 /++
 Generates a buffer from vectors.
 
@@ -339,9 +370,9 @@ T[] generateArray(T)(Vector!T[] vectors) @safe nothrow pure
 
 unittest
 {
-    assert(vecfNaN.isVecfNaN);
-    assert(vecNaN!double.isVectorNaN);
-    assert(vecNaN!real.isVectorNaN);
+    [vec!int(16, 16), vec!int(32, 48), vec!int(48, 8)]
+        .generateArray
+        .should.equal([16, 16, 32, 48, 48, 8]);
 }
 
 inout(T) sqr(T)(inout(T) value) @safe nothrow pure
@@ -359,7 +390,13 @@ inout(Vector!T) abs(T)(inout(Vector!T) vec) @safe nothrow pure
 {
     import std.math : abs;
 
-    return Vector!T(abs(vector.x), abs(vector.y));
+    return Vector!T(abs(vec.x), abs(vec.y));
+}
+
+unittest
+{
+    abs(vec!long(-64, -32)).should.equal(vec!long(64, 32));
+    abs(vec!float(-128.5f, 19.0f)).should.equal(vec!float(128.5f, 19.0f));
 }
 
 /++
@@ -382,6 +419,15 @@ Average distance between vectors.
 inout(Vector!T) averateVectors(T)(inout(Vector!T) a, inout(Vector!T) b) @safe nothrow pure
 {
     return ((b - a) / 2) + ((a > b) ? b : a);
+}
+
+unittest
+{
+    (vec!long(32, 32).averateVectors(vec!long(64, 64)))
+        .should.equal(vec!long(48, 48));
+
+    (vec!real(48.0, 48.0).averateVectors(vec!real(128.0, 128.0)))
+        .should.equal(vec!real(88.0, 88.0));
 }
 
 /++
@@ -416,12 +462,17 @@ Example:
 assert(Vecf(32.5,32.5) == Vecf(33, 33));
 ---
 +/
-inout(Vector!T) round(T)(inout(Vector!T) vec) @safe nothrow
+inout(Vector!T) round(T)(inout(Vector!T) vec) @safe nothrow pure
 if (isVectorFloatingPoint!(Vector!T))
 {
-    import std.math : round;
+    import core.stdc.math : roundl;
 
-    return Vector!T(round(vec.x), round(vec.y));
+    return Vector!T(roundl(vec.x), roundl(vec.y));
+}
+
+unittest
+{
+    vec!real(31.4, 33.51).round.should.equal(vec!real(31.0, 34.0));
 }
 
 /++
@@ -435,10 +486,15 @@ Example:
 assert(vecf(32.5, 32.5) == vecf(32, 32));
 ---
 +/
-inout(Vector!T) floor(T)(inout(Vector!T) vec) @safe nothrow
+inout(Vector!T) floor(T)(inout(Vector!T) vec) @safe nothrow pure
 if (isVectorFloatingPoint!(Vector!T))
 {
     import std.math : floor;
 
     return Vector!T(floor(vec.x), floor(vec.y));
+}
+
+unittest
+{
+    vec!double(31.4, 33.51).floor.should.equal(vec!double(31.0, 33.0));
 }

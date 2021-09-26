@@ -19,6 +19,7 @@ import tida.shape;
 import tida.vector;
 import std.traits;
 import tida.color;
+version(unittest) import fluent.asserts;
 
 template glType(T)
 {
@@ -384,6 +385,23 @@ Vector!T[] generateBuffer(T)(Shape!T shape, Vector!T textureSize = vecNaN!T) @sa
     }
 
     return vertexs;
+}
+
+unittest
+{
+    immutable buffer = generateBuffer!(float)(
+        Shape!(float).Rectangle(vec!float(32.0f, 32.0f),
+                                vec!float(96.0f, 96.0f)));
+
+    immutable checkedBuffer =
+    [
+        vec!float(96.0f, 32.0f),
+        vec!float(96.0f, 96.0f),
+        vec!float(32.0f, 96.0f),
+        vec!float(32.0f, 32.0f)
+    ];
+
+    buffer.should.equal(checkedBuffer);
 }
 
 /// ditto

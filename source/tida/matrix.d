@@ -313,3 +313,27 @@ float[4][4] ortho(float left, float right, float bottom, float top, float zNear 
                     [ tRL,    tTB,   tFN,     1.0f]
                 ];
 }
+
+import tida.vector;
+
+/++
+Multiple matrix and vector.
++/
+Vector!float transform(Vector!float v, mat4 m) @safe nothrow pure
+{
+    Vector!float result = vec!(float)(0.0f, 0.0f);
+
+    for (size_t i = 0; i < 2; ++i)
+    {
+        float sum = 0.0f;
+
+        for (size_t j = 0; j < 2; ++j)
+        {
+            sum += m[i][j] * v[j];
+        }
+
+        result[i] = sum;
+    }
+
+    return result;
+}

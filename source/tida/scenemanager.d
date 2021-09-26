@@ -424,7 +424,7 @@ public @safe:
         _scenes[scene.name] = scene;
     }
 
-    protected
+    package(tida)
     {
         import std.container, std.range, std.traits;
         import tida.component : Component;
@@ -1485,4 +1485,54 @@ public @safe:
     {
         free();
     }
+}
+
+version(unittest) import fluent.asserts;
+
+unittest
+{
+    initSceneManager();
+
+    class A : Scene
+    {
+        this() @safe
+        {
+            name = "Test";
+        }
+    }
+
+    sceneManager.add(new A());
+    ("Test" in sceneManager.scenes).should.not.beNull;
+}
+
+unittest
+{
+    initSceneManager();
+
+    class A : Scene
+    {
+        @Event!Init
+        void onInit() @safe { }
+    }
+
+    A obj = new A();
+    sceneManager.add(obj);
+
+    (sceneManager.InitFunctions[obj][0].ptr).should.equal((&obj.onInit).ptr);
+}
+
+unittest
+{
+    initSceneManager();
+
+    class A : Scene
+    {
+        this() @safe
+        {
+            name = "Test";
+        }
+    }
+
+    sceneManager.add(new A());
+    sceneManager.hasScene("Test").should.equal(true);
 }

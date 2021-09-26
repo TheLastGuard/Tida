@@ -23,6 +23,8 @@ module tida.color;
 
 import std.traits;
 
+version(unittest) import fluent.asserts;
+
 enum CannotDetectAuto = 
 "The format cannot be detected automatically!";
 
@@ -48,6 +50,12 @@ template isValidFormat(int pixelformat)
                             pixelformat <= PixelFormat.max;
 }
 
+unittest
+{
+    isValidFormat!(PixelFormat.BGRA).should.equal(true);
+    isValidFormat!(30).should.not.equal(true);
+}
+
 /++
 Shows how many bytes are contained in a color unit.
 +/
@@ -64,6 +72,12 @@ template bytesPerColor(int pixelformat, T = ubyte)
     {
         enum bytesPerColor = 3 * T.sizeof;
     }
+}
+
+unittest
+{
+    bytesPerColor!(PixelFormat.RGBA).should.equal(4);
+    bytesPerColor!(PixelFormat.RGBA, int).should.equal(4 * 4);
 }
 
 T hexTo(T, R)(R hexData) @safe nothrow pure
@@ -113,6 +127,12 @@ if (isSomeString!R)
     }
 
     return result;
+}
+
+unittest
+{
+    hexTo!long("FF0000").should.equal(0xFF0000);
+    hexTo!long("0A0A1F").should.equal(0x0A0A1f);
 }
 
 /++
@@ -300,8 +320,8 @@ Color!C parseColor(int format = PixelFormat.Auto, C = ubyte, T)(T hex)
 
 unittest
 {
-    assert(parseColor(0xFFFFFF) == Color!ubyte(255, 255, 255));
-    assert(parseColor("#f9004c") == Color!ubyte(249, 0, 76));
+    parseColor(0xFFFFFF).should.equal(Color!ubyte(255, 255, 255));
+    parseColor("#f9004c").should.equal(Color!ubyte(249, 0, 76));
 }
 
 struct Color(T)
@@ -375,7 +395,7 @@ public:
             this = parseColor!(PixelFormat.Auto, T, R)(value);
     }
 
-    R to(R, int format)() inout
+    R to(R, int format = PixelFormat.RGBA)() inout
     {
         static if (isIntegral!R && !isFloatingPoint!T)
         {
@@ -402,7 +422,9 @@ public:
                 return "";
             else
             {
-                return cast(R) toBytes!format.toHexString;
+                import std.digest : toHexString;
+
+                return cast(R) toBytes!(format).toHexString;
             }
         }
     }
@@ -621,10 +643,13 @@ public:
 unittest
 {
     Color!ubyte color = "#f9004c";
-    assert(color == Color!ubyte(249, 0, 76));
+    color.should.equal(Color!ubyte(249, 0, 76));
 
     color = 0xf9004c;
-    assert(color == Color!ubyte(249, 0, 76));
+    color.should.equal(Color!ubyte(249, 0, 76));
+
+    color = Color!ubyte([249, 0, 76]);
+    color.should.equal(Color!ubyte(249, 0, 76));
 
 }
 
@@ -659,6 +684,16 @@ Color!ubyte[] fromColors(int format)(ubyte[] bytes) @safe nothrow pure
     }
 
     return result;
+}
+
+unittest
+{
+    [54, 13, 85, 255]
+        .fromColor!(PixelFormat.RGBA)
+        .should.equal(rgb(54, 13, 85));
+    [54, 13, 85, 255, 128, 54, 9, 255]
+        .fromColors!(PixelFormat.RGBA)
+        .should.equal([rgb(54, 13, 85), rgb(128, 54, 9)]);
 }
 
 /++
@@ -727,6 +762,17 @@ Color!To convert(From, To)(Color!From color) @safe nothrow pure
             );
         }
     }
+}
+
+unittest
+{
+    Color!ubyte(255, 255, 255, 255)
+        .convert!(ubyte, float)
+        .should.equal(Color!float(1.0f, 1.0f, 1.0f, 1.0f));
+
+    Color!float(1.0f, 1.0f, 1.0f, 1.0f)
+        .convert!(float, ubyte)
+        .should.equal(Color!ubyte(255, 255, 255, 255));
 }
 
 /++
@@ -1279,6 +1325,19 @@ do
             }
 
             return result;
+        }else
+        static if (format2 == PixelFormat.BGR)
+        {
+            import std.algorithm : reverse;
+
+            ubyte[] result;
+
+            for (size_t i = 0; i < pixels.length; i += 4)
+            {
+                result ~= pixels[i .. i + 3].reverse;
+            }
+
+            return result;
         }
     }else
     static if (format1 == PixelFormat.ARGB)
@@ -1357,4 +1416,13 @@ do
             return result;
         }
     }
+}
+
+unittest
+{
+    [255, 0, 0, 255].fromFormat!(PixelFormat.RGBA, PixelFormat.BGRA)
+        .should.equal([0, 0, 255, 255]);
+
+    [255, 0, 0, 255, 128, 0, 0, 255].fromFormat!(PixelFormat.RGBA, PixelFormat.BGR)
+        .should.equal([0, 0, 255, 0, 0, 128]);
 }

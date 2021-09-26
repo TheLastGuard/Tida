@@ -14,6 +14,7 @@ License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
 module tida.angle;
 
 import std.math : PI;
+version(unittest) import fluent.asserts;
 
 enum Radians = 0; /// Radians
 enum Degrees = 1; /// Degrees
@@ -213,12 +214,12 @@ float betweenAngle(float a, float b) @safe nothrow pure
 
 unittest
 {
-    assert(max!Radians.from!(Radians,Degrees) == max!Degrees);
-    assert(max!Degrees.from!(Degrees,Gons) == max!Gons);
-    assert(max!Gons.from!(Gons,Turns) == max!Turns);
+    max!Radians.from!(Radians,Degrees).should.equal(max!Degrees);
+    max!Degrees.from!(Degrees,Gons).should.equal(max!Gons);
+    max!Gons.from!(Gons,Turns).should.equal(max!Turns);
     
-    assert(rightAngle!Radians.from!(Radians,Degrees) == rightAngle!Degrees);
-    assert(rightAngle!Degrees.from!(Degrees,Gons) == rightAngle!Gons);
+    rightAngle!Radians.from!(Radians,Degrees).should.equal(rightAngle!Degrees);
+    rightAngle!Degrees.from!(Degrees,Gons).should.equal(rightAngle!Gons);
 }
 
 import tida.vector;

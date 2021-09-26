@@ -39,6 +39,8 @@ import tida.each;
 import tida.drawable;
 import tida.vector;
 
+version(unittest) import fluent.asserts;
+
 /++
 Checks if the data for the image is valid.
 
@@ -60,7 +62,7 @@ unittest
     uint simpleImageHeight = 32;
     ubyte[] data = new ubyte[](simpleImageWidth * simpleImageHeight * bytesPerColor!(PixelFormat.RGBA));
 
-    assert(validateImageData!(PixelFormat.RGBA)(data, simpleImageWidth, simpleImageHeight));
+    validateImageData!(PixelFormat.RGBA)(data, simpleImageWidth, simpleImageHeight).should.equal(true);
 }
 
 /++
@@ -492,6 +494,15 @@ public:
     }
 }
 
+unittest
+{
+    Image image = new Image(32, 32);
+
+    image.bytes!(PixelFormat.RGBA)
+        .validateImageData!(PixelFormat.RGBA)(image.width, image.height)
+        .should.equal(true);
+}
+
 /++
 Rotate the picture by the specified angle from the specified center.
 
@@ -819,5 +830,5 @@ unittest
         e = rgb(64, 64, 64);
     });
 
-    assert(image.getPixel(32, 32) == rgb(64, 64, 64));
+    image.getPixel(32, 32).should.equal(rgb(64, 64, 64));
 }

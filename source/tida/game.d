@@ -221,6 +221,7 @@ template GameRun(GameConfig config, T...)
     import tida.runtime;
     import tida.scenemanager;
 
+    version(unittest) {} else
     int main(string[] args)
     {
         TidaRuntime.initialize(args, AllLibrary);

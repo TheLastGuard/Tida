@@ -38,6 +38,7 @@ License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
 module tida.shape;
 
 import std.traits;
+version(unittest) import fluent.asserts;
 
 /++
 Shape type.
@@ -72,7 +73,6 @@ private:
     Vector!T _end;
 
 public:
-
     ShapeType type; /// Shape type
     Shape!T[] shapes; /++ A set of figures. Needed for the type when you need 
                         to make one shape from several. +/
@@ -121,7 +121,6 @@ public:
         return "Shape.Unknown()";
     }
 
-@safe nothrow pure:
     /++
     Converting a form to another form of its presentation.
 
@@ -156,7 +155,7 @@ public:
             if (type == ShapeType.multi)
             {
                 Vector!(T)[] temp;
-                foreach (shape; shapes) 
+                foreach (shape; shapes)
                 {
                     temp ~= this.to!R;
                 }
@@ -181,9 +180,14 @@ public:
                     }
                 }
             }
+        }else
+        static if (is(R : string))
+        {
+            return toString();
         }
     }
 
+@safe nothrow pure:
     /// The beginning of the figure.
     @property Vector!T begin() inout
     {
@@ -384,23 +388,6 @@ public:
         end = (vectorDirection(dir) * value);
     }
 
-    unittest
-    {
-        Shape!float line = Shape!float.Line(Vector!float(0,0), Vector!float(32, 32));
-        
-        line.length = line.length * 2;
-
-        assert(round(line.end) == Vector!float(64, 64));
-
-        line.length = line.length / 4;
-
-        assert(round(line.end) == Vector!float(16, 16));
-
-        line.length = line.length * 8;
-
-        assert(round(line.end) == Vector!float(128, 128));
-    }
-
     /++
     Resizes as a percentage.
 
@@ -417,14 +404,6 @@ public:
             end = end * k;
         else
             data.each!((ref e) => e = e * k);
-    }
-
-    unittest
-    {
-        Shape!real rec = Shape!real.Rectangle(Vector!real(32, 32), Vector!real(64, 64));
-        rec.scale(2);
-
-        assert(round(rec.end) == Vector!real(128, 128));
     }
 
     /++
@@ -744,6 +723,37 @@ public:
     {
         return Shape!T.Rectangle(pos,pos + vec!T(len, len));
     }
+}
+
+unittest
+{
+    auto rect = Shape!float.Rectangle(vec!float(32.0f, 32.0f), vec!float(64.0f, 64.0f));
+    rect.move(vec!float(32.0f, 32.0f));
+
+    rect
+        .should
+        .equal(Shape!float.Rectangle(vec!float(64.0f, 64.0f), vec!float(96.0f, 96.0f)));
+}
+
+unittest
+{
+    auto rect = Shape!float.Rectangle(vec!float(32.0f, 32.0f), vec!float(64.0f, 64.0f));
+    rect.width = 64;
+    rect.height = 64;
+
+    rect
+        .should
+        .equal(Shape!float.Rectangle(vec!float(32.0f, 32.0f), vec!float(96.0f, 96.0f)));
+}
+
+unittest
+{
+    auto rect = Shape!float.Rectangle(vec!float(32.0f, 32.0f), vec!float(64.0f, 64.0f));
+    rect.scale(2.0f);
+
+    rect
+        .should
+        .equal(Shape!float.Rectangle(vec!float(32.0f, 32.0f), vec!float(128.0f, 128.0f)));
 }
 
 import tida.vector;

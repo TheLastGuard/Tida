@@ -50,6 +50,13 @@
 				"gdi32"
 			],
 			"targetType": "library"
+		},
+		{
+			"name": "unittest",
+			"dependencies": {
+				"fluent-asserts": "~>0.14.0-alpha.9"
+			},
+			"libs": ["user32", "gdi32"]
 		}
 	],
 	"copyright": "Copyright © 2020, TodNaz",

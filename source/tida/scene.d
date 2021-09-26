@@ -471,6 +471,8 @@ public:
     }
 }
 
+version(unittest) import fluent.asserts;
+
 unittest
 {
     import tida.instance;
@@ -487,14 +489,14 @@ unittest
     auto b = new B();
     scene.add([a,b]);
 
-    assert(scene.getInstanceByClass!A == a);
-    assert(scene.getInstanceByClass!B == b);
+    scene.getInstanceByClass!A.should.equal(a);
+    scene.getInstanceByClass!B.should.equal(b);
 
-    assert(scene.getInstanceByName("A") == a);
-    assert(scene.getInstanceByName("B") == b);
+    scene.getInstanceByName("A").should.equal(a);
+    scene.getInstanceByName("B").should.equal(b);
 
-    assert(scene.getInstanceByNameTag("A", "A") == a);
-    assert(scene.getInstanceByNameTag("B", "B") == b);
+    scene.getInstanceByNameTag("A", "A").should.equal(a);
+    scene.getInstanceByNameTag("B", "B").should.equal(b);
 }
 
 unittest
@@ -514,5 +516,5 @@ unittest
 
     scene.add([a,b]);
 
-    assert(scene.getAssortedInstances == [b,a]);
+    scene.getAssortedInstances.should.equal([b,a]);
 }

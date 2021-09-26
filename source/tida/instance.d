@@ -334,3 +334,24 @@ package(tida):
         return components;
     }
 }
+
+version(unittest) import fluent.asserts;
+
+unittest
+{
+    import tida.scenemanager;
+    import tida.component;
+
+    initSceneManager();
+
+    class CComponent : Component { }
+
+    CComponent cmp = new CComponent();
+    cmp.name = "Cmp";
+
+    Instance instance = new Instance();
+    instance.add(cmp);
+
+    instance.cmp("Cmp").should.equal(cmp);
+    instance.cmp!(CComponent).should.equal(cmp);
+}
