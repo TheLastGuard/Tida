@@ -18,7 +18,7 @@ jobs:
     name: 'Build and test'
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest ]
+        os: [ ubuntu-latest ]
         dc: [ dmd-latest, ldc-latest ]
       
     runs-on: ${{ matrix.os }}
@@ -36,4 +36,4 @@ jobs:
         
     - name: 'Build & Unittest run'
       run: |
-        dub test
+        dub test --config=unittest-posix
