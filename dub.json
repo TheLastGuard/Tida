@@ -7,9 +7,6 @@
 			"dependencies": {
 				"x11": "~>1.0.21"
 			},
-			"libs": [
-				"Xrandr"
-			],
 			"name": "posix",
 			"platforms": [
 				"posix"
@@ -31,9 +28,6 @@
 			"dependencies": {
 				"x11": "~>1.0.21"
 			},
-			"libs": [
-				"Xrandr"
-			],
 			"name": "posix-lib",
 			"platforms": [
 				"posix"
