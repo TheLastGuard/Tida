@@ -78,6 +78,8 @@ unittest
 {
     bytesPerColor!(PixelFormat.RGBA).should.equal(4);
     bytesPerColor!(PixelFormat.RGBA, int).should.equal(4 * 4);
+    bytesPerColor!(PixelFormat.BGR, int).should.equal(3 * 4);
+    bytesPerColor!(PixelFormat.ARGB, long).should.equal(long.sizeof * 4);
 }
 
 T hexTo(T, R)(R hexData) @safe nothrow pure
@@ -133,6 +135,9 @@ unittest
 {
     hexTo!long("FF0000").should.equal(0xFF0000);
     hexTo!long("0A0A1F").should.equal(0x0A0A1f);
+    hexTo!int("3AF124").should.equal(0x3AF124);
+    hexTo!int("f1aB11").should.equal(0xf1aB11);
+    hexTo!int("fffff3a").should.equal(0xfffff3a);
 }
 
 /++
@@ -249,10 +254,10 @@ Color!C parseColor(int format = PixelFormat.Auto, C = ubyte, T)(T hex)
             assert(hex[cv .. $].length > 6,"This is not alpha-channel hex color!");
 
             return Color!C(
-                hex[cv + 6 .. cv + 8].hexTo!C,
+                hex[cv + 4 .. cv + 6].hexTo!C,
                 hex[cv + 2 .. cv + 4].hexTo!C,
                 hex[cv .. cv + 2].hexTo!C,
-                hex[cv + 6 .. cv + 8].hexTO!C
+                hex[cv + 6 .. cv + 8].hexTo!C
             );
         }else
         static if (format == PixelFormat.BGR) 
@@ -309,6 +314,9 @@ Color!C parseColor(int format = PixelFormat.Auto, C = ubyte, T)(T hex)
             result.b = (hex & 0XFF0000) >> 16;
             result.g = (hex & 0x00FF00) >> 8;
             result.r = (hex & 0x0000FF);
+            result.a = Color!C.Max;
+
+            return result;
         }else
         static if (format == PixelFormat.Auto) {
             return parseColor!(PixelFormat.RGB, C, T)(hex);
@@ -322,6 +330,16 @@ unittest
 {
     parseColor(0xFFFFFF).should.equal(Color!ubyte(255, 255, 255));
     parseColor("#f9004c").should.equal(Color!ubyte(249, 0, 76));
+    parseColor("#f9004cf9").should.equal(Color!ubyte(249, 0, 76, 249));
+    parseColor!(PixelFormat.RGBA)(0xc1f4a1b4)
+        .should.equal(Color!ubyte(193, 244, 161, 180));
+
+    parseColor!(PixelFormat.BGRA)("FF0000FF")
+        .should.equal(Color!ubyte(0, 0, 255, 255));
+    parseColor!(PixelFormat.ARGB)("f9ff00ff")
+        .should.equal(Color!ubyte(255, 0, 255, 249));
+    parseColor!(PixelFormat.BGR)(0xf900ff)
+        .should.equal(Color!ubyte(255, 0, 249, 255));
 }
 
 struct Color(T)
@@ -1376,6 +1394,19 @@ do
             }
 
             return result;
+        }else
+        static if (format2 == PixelFormat.BGR)
+        {
+            import std.algorithm : reverse;
+
+            ubyte[] result;
+
+            for (size_t i = 0; i < pixels.length; i += 4)
+            {
+                result ~= pixels[i + 1 .. i + 4].reverse;
+            }
+
+            return result;
         }
     }else
     static if (format1 == PixelFormat.BGRA)
@@ -1415,6 +1446,55 @@ do
 
             return result;
         }
+    }else
+    static if (format1 == PixelFormat.BGR)
+    {
+        import std.algorithm : reverse;
+
+        static if (format2 == PixelFormat.RGB)
+        {
+            ubyte[] result;
+
+            for (size_t i = 0; i < pixels.length; i += 3)
+            {
+                result ~= pixels[i .. i + 3].reverse;
+            }
+
+            return result;
+        }else
+        static if (format2 == PixelFormat.RGBA)
+        {
+            ubyte[] result;
+
+            for (size_t i = 0; i < pixels.length; i += 3)
+            {
+                result ~= pixels[i .. i + 3].reverse ~ 255;
+            }
+
+            return result;
+        }else
+        static if (format2 == PixelFormat.ARGB)
+        {
+            ubyte[] result;
+
+            for (size_t i = 0; i < pixels.length; i += 3)
+            {
+                result ~= 255 ~ pixels[i .. i + 3].reverse;
+            }
+
+            return result;
+        }else
+        static if (format2 == PixelFormat.BGRA)
+        {
+            ubyte[] result;
+
+            for (size_t i = 0; i < pixels.length; i += 3)
+            {
+                result ~= pixels[i .. i + 3] ~ 255;
+            }
+
+            return result;
+        }
     }
 }
 
@@ -1425,4 +1505,16 @@ unittest
 
     [255, 0, 0, 255, 128, 0, 0, 255].fromFormat!(PixelFormat.RGBA, PixelFormat.BGR)
         .should.equal([0, 0, 255, 0, 0, 128]);
+
+    [128, 32, 32].fromFormat!(PixelFormat.BGR, PixelFormat.RGBA)
+        .should.equal([32, 32, 128, 255]);
+
+    [128, 32, 32, 96].fromFormat!(PixelFormat.BGRA, PixelFormat.RGB)
+        .should.equal([32, 32, 128]);
+
+    [128, 32, 32].fromFormat!(PixelFormat.BGR, PixelFormat.RGB)
+        .should.equal([32, 32, 128]);
+
+    [128, 32, 32, 96].fromFormat!(PixelFormat.ARGB, PixelFormat.BGR)
+        .should.equal([96, 32, 32]);
 }
