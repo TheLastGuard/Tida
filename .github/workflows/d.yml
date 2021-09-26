@@ -34,11 +34,6 @@ jobs:
       with:
         compiler: ${{ matrix.dc }}
         
-      
-    - name: 'Build project'
-      run: |
-        dub build
-        
-    - name: 'Unittest run'
+    - name: 'Build & Unittest run'
       run: |
         dub test
