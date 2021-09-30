@@ -852,6 +852,8 @@ class TileMap : IDrawable
                 renderer.draw(lobj, vecf(0,0));
                 _opt_back = renderRead( renderer, vecf(0, 0), mapinfo.width * mapinfo.tilewidth, 
                                         mapinfo.height * mapinfo.tileheight);
+
+                _opt_back = _opt_back.flip!(XAxis);
                 _opt_back.toTexture;
 
                 ImageLayer imglayer = new ImageLayer();
