@@ -163,6 +163,11 @@ public:
         glVertexAttribPointer(location, 2, glType!T, false, sample * cast(int) T.sizeof, cast(void*) (T.sizeof * 2));
     }
 
+    void offsetAttribPointer(uint location, uint offset, uint sample) nothrow
+    {
+        glVertexAttribPointer(location, 2, glType!T, false, sample * cast(int) T.sizeof, cast(void*) (T.sizeof * offset));
+    }
+
     /// Define an array of generic vertex attribute data
     void colorAttribPointer(uint location, uint sample = 6) nothrow
     {

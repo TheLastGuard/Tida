@@ -1738,3 +1738,18 @@ IRenderer createRenderer(IWindow window) @trusted
 
     return new Software(window, true);
 }
+
+import tida.image;
+import tida.vector;
+
+Image renderRead(IRenderer render, Vecf position, int width, int height) @trusted
+{
+    import tida.gl;
+    import std.conv : to;
+
+    Image image = new Image(width, height);
+    glReadPixels(   position.x.to!int, position.y.to!int,
+                    width, height, GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) image.pixels);
+
+    return image;
+}

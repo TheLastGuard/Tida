@@ -86,10 +86,14 @@ override:
 
         if (draws !is null)
         {
-            mat = mulmat(renderer.currentModelMatrix, matrix);
-            renderer.currentModelMatrix = mat;
-            if(renderer.currentShader is null)
-                renderer.currentShader = shader;
+            if (renderer.type == RenderType.opengl)
+            {
+                mat = mulmat(renderer.currentModelMatrix, matrix);
+                renderer.currentModelMatrix = mat;
+
+                if(renderer.currentShader is null)
+                    renderer.currentShader = shader;
+            }
 
             draws.drawEx(   renderer,
                             this.position + position,
@@ -104,7 +108,8 @@ override:
         {
             foreach (e; skelet)
             {
-                renderer.currentModelMatrix = mat;
+                if (renderer.type == RenderType.opengl)
+                    renderer.currentModelMatrix = mat;
                 e.draw(renderer, position);
             }
         }

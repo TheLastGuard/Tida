@@ -221,22 +221,28 @@ float[4][4] eulerRotateMat(float roll, float pitch, float yaw) @safe nothrow pur
     immutable ct = [cos(roll), cos(pitch), cos(yaw)];
     immutable st = [sin(roll), sin(pitch), sin(yaw)];
 
+    xres[0][0] = ct[0];
+    xres[0][1] = st[0];
+    xres[1][0] = -st[0];
     xres[1][1] = ct[0];
-    xres[1][2] = -st[0];
-    xres[2][1] = st[0];
-    xres[2][2] = ct[0];
 
     yres[0][0] = ct[1];
-    yres[0][2] = st[1];
-    yres[2][0] = -st[1];
+    yres[0][2] = -st[1];
+    yres[2][0] = st[1];
     yres[2][2] = ct[1];
 
     zres[0][0] = ct[2];
-    zres[0][1] = -st[2];
-    zres[1][0] = st[2];
+    zres[0][1] = st[2];
+    zres[1][0] = -st[2];
     zres[1][1] = ct[2];
 
-    return mulmat(mulmat(xres, yres), zres);
+    mat4 result = identity();
+
+    result = mulmat(result, xres);
+    result = mulmat(result, yres);
+    result = mulmat(result, zres);
+
+    return result;
 }
 
 /++

@@ -78,6 +78,8 @@ private:
     uint glid = 0;
     uint _width = 0;
     uint _height = 0;
+    uint type = GL_TEXTURE_2D;
+    int activeid = GL_TEXTURE0;
 
 public:
     VertexInfo!float vertexInfo; /++    Information about the vertices of the
@@ -112,7 +114,7 @@ public:
     {
         for (int i = 0; i < parametrs.length; i += 2)
         {
-            glTexParameteri(GL_TEXTURE_2D, parametrs[i], parametrs[i + 1]);
+            glTexParameteri(type, parametrs[i], parametrs[i + 1]);
         }
     }
 
@@ -127,6 +129,7 @@ public:
     {
         import tida.color : fromFormat;
 
+        type = GL_TEXTURE_2D;
         _width = information.width;
         _height = information.height;
 
@@ -150,17 +153,66 @@ public:
         }
     }
 
+    void initializeArrayFromData(int format)(TextureInfo[] informations)
+    {
+        import tida.color : fromFormat;
+
+        _width = informations[0].width;
+        _height = informations[1].height;
+        type = GL_TEXTURE_2D_ARRAY_EXT;
+
+        ubyte[] data;
+
+        foreach (e; informations)
+        {
+            data ~= e.data.fromFormat!(format, PixelFormat.RGBA);
+        }
+
+        if (glid == 0)
+        {
+            glGenTextures(1, &glid);
+            glBindTexture(type, glid);
+
+            glTexStorage3D(type, 1, GL_RGBA, _width, _height, cast(int) informations.length);
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, cast(int) (_width * informations.length));
+            glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, cast(int) (_height * informations.length));
+
+            for (size_t i = 0; i < informations.length; ++i)
+            {
+                glTexSubImage3D(type,
+                                0, 0, 0,
+                                cast(int) i,
+                                _width,
+                                _height,
+                                1,
+                                GL_RGBA,
+                                GL_UNSIGNED_BYTE,
+                                cast(void*) (data.ptr + (i * (_width * _height) * 4)));
+            }
+
+            glTexParameteri(type, GL_TEXTURE_BASE_LEVEL, 0);
+            editParametrs(informations[0].params);
+
+            glBindTexture(type, 0);
+        }
+    }
+
+    void inActive(int id)
+    {
+        activeid = GL_TEXTURE0 + id;
+    }
+
     /// Bind the texture to the current render cycle.
     void bind()
     {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, glid);
+        glActiveTexture(activeid);
+        glBindTexture(type, glid);
     }
 
     /// Unbind the texture to the current render cycle.
-    static void unbind()
+    void unbind()
     {
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(type, 0);
     }
 
     enum deprecatedVertex =

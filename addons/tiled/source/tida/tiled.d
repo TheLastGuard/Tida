@@ -1,24 +1,24 @@
 /++
-    Module for loading maps in TMX format.
+Module for loading maps in TMX format.
 
-    > TMX and TSX are Tiled’s own formats for storing tile maps and tilesets, based on XML. 
-    > TMX provides a flexible way to describe a tile based map. It can describe maps with any tile size, 
-    > any amount of layers, any number of tile sets and it allows custom properties to be set on most elements. 
-    > Beside tile layers, it can also contain groups of objects that can be placed freely.
+> TMX and TSX are Tiled’s own formats for storing tile maps and tilesets, based on XML. 
+> TMX provides a flexible way to describe a tile based map. It can describe maps with any tile size, 
+> any amount of layers, any number of tile sets and it allows custom properties to be set on most elements. 
+> Beside tile layers, it can also contain groups of objects that can be placed freely.
 
-    To load and render tile maps, use the following:
-    ---
-    TimeMap tilemap = new TileMap();
-    tilemap.load("map.tmx");
-    ...
-    render.draw(tilemap, Vecf(32, 32)); // Draws the layers at the specified location 
-                                        // (including offset, of course).
-    ---
+To load and render tile maps, use the following:
+---
+TimeMap tilemap = new TileMap();
+tilemap.load("map.tmx");
+...
+render.draw(tilemap, Vecf(32, 32)); // Draws the layers at the specified location 
+                                    // (including offset, of course).
+---
 
-    $(HTTP https://doc.mapeditor.org/en/stable/reference/tmx-map-format/, TMX format documentation).
+$(HTTP https://doc.mapeditor.org/en/stable/reference/tmx-map-format/, TMX format documentation).
 
-    Authors implemetation: $(HTTP https://github.com/TodNaz, TodNaz)
-    License: $(HTTP https://opensource.org/licenses/MIT, MIT)
+Authors implemetation: $(HTTP https://github.com/TodNaz, TodNaz)
+License: $(HTTP https://opensource.org/licenses/MIT, MIT)
 +/
 module tida.tiled;
 
@@ -135,18 +135,33 @@ class Tileset
     }
 
     /// Prepares the atlas for a group of tiles.
-    void setup() @safe {
+    void setup() @safe
+    {
         image = new Image().load(imagesource);
-        foreach(i; 0 .. meta.columns)
+        foreach (i; 0 .. meta.columns)
         {
             data ~= image.strip(0, i * meta.tileheight, meta.tilewidth, meta.tileheight);
         }
 
-        foreach(e; data) e.toTexture();
+        foreach (e; data) e.toTexture();
+    }
+
+    void parse(R, int Type)(R element)
+    {
+        static if (Type == MapType.XML)
+        {
+            foreach (attrib; element.attributes)
+            {
+                if(attrib.name == "source") {
+                    imagesource = attrib.value;
+                }
+            }
+        }
     }
 
     /// Loading tileset information from a file.
-    void load() @trusted {
+    void load() @trusted
+    {
         auto xml = parseXML(cast(string) read(source));
 
         foreach(element; xml) {
@@ -436,6 +451,11 @@ class TileMap : IDrawable
         ImageLayer[] imagelayers; /// Image layer's.
     }
 
+    private
+    {
+        Image _opt_back;
+    }
+
     /++
         Loading data from memory.
 
@@ -451,10 +471,12 @@ class TileMap : IDrawable
             TileLayer currentLayer = null;
             ObjectGroup currentGroup = null;
             ImageLayer currentImage = null;
+            Tileset tset = null;
             
             bool isprop = false;
             bool dataelement = false;
             bool isimage = false;
+            bool istset = false;
 
             foreach(element; xml)
             {
@@ -485,9 +507,21 @@ class TileMap : IDrawable
                         foreach(attr; element.attributes) {
                             if(attr.name == "firstgid") temp.firstgid = attr.value.to!int;
                             if(attr.name == "source") temp.source = attr.value;
+                            if(attr.name == "tilewidth") temp.meta.tilewidth = attr.value.to!int;
+                            if(attr.name == "tileheight") temp.meta.tileheight = attr.value.to!int;
+                            if(attr.name == "tilecount") temp.meta.tilecount = attr.value.to!int;
+                            if(attr.name == "columns") temp.meta.columns = attr.value.to!int;
                         }
 
-                        temp.load();
+                        if (temp.source != "")
+                        {
+                            temp.load();
+                        } else
+                        {
+                            istset = true;
+                            tset = temp;
+                        }
+
                         tilesets ~= temp;
                     }else
                     if(element.name == "layer") {
@@ -552,6 +586,8 @@ class TileMap : IDrawable
                     if(element.name == "image") {
                         isimage = true;
                         if(currentImage !is null) currentImage.parse!(typeof(element), "image")(element);
+                        else
+                            if(tset !is null) tset.parse!(typeof(element), MapType.XML)(element);
                     }
                 }else
                 if(element.type == EntityType.elementEnd) {
@@ -575,6 +611,10 @@ class TileMap : IDrawable
                     }else
                     if(element.name == "image") {
                         isimage = false;
+                    }else
+                    if(element.name == "tileset") {
+                        tset = null;
+                        istset = false;
                     }
                 }else
                 if(element.type == EntityType.text) {
@@ -711,27 +751,36 @@ class TileMap : IDrawable
         IDrawable[] drawableSort;
     }
 
-    /// Prepare layers for work.
-    void setup() @safe
+    void sort() @safe
     {
         import std.algorithm : sort;
 
-        foreach(e; tilesets) {
-            e.setup();
-        }
-
-        foreach(e; layers) {
-            e.setup();
-        }
+        drawableSort = [];
 
         struct SortLayerStruct { IDrawable obj; int id; }
         SortLayerStruct[] list;
         foreach(e; layers) list ~= SortLayerStruct(e, e.id);
         foreach(e; imagelayers) list ~= SortLayerStruct(e, e.id);
 
-        sort!((a,b) => a.id > b.id)(list);
+        sort!((a,b) => a.id < b.id)(list);
 
         foreach(e; list) drawableSort ~= e.obj;
+    }
+
+    /// Prepare layers for work.
+    void setup() @safe
+    {
+        foreach(e; tilesets)
+        {
+            e.setup();
+        }
+
+        foreach(e; layers)
+        {
+            e.setup();
+        }
+
+        sort();
     }
 
     ///
@@ -763,8 +812,70 @@ class TileMap : IDrawable
         return image;
     }
 
+    /+
+        import tida.softimage;
+        import tida.shape;
+        import tida.game : renderer;
+
+        Color!ubyte previous = renderer.background;
+        renderer.background = mapinfo.backgroundColor;
+        renderer.clear();
+        foreach(e; drawableSort) renderer.draw(e, vecf(0,0));
+
+        _opt_back = renderRead( renderer, vecf(0, 0), mapinfo.width * mapinfo.tilewidth, 
+                                mapinfo.height * mapinfo.tileheight);
+        _opt_back.toTexture;
+
+        renderer.background = previous;
+        renderer.clear()
+    +/
+    void optimize() @safe
+    {
+        import tida.softimage;
+        import tida.shape;
+        import tida.game : renderer;
+        import std.algorithm : remove;
+
+        Color!ubyte previous = renderer.background;
+        renderer.background = rgba(0, 0, 0, 0);
+        renderer.clear();
+
+        foreach (e; drawableSort)
+        {
+            if ((cast(TileLayer) e) !is null)
+            {
+                renderer.draw(e, vecf(0, 0));
+                layers = layers.remove!(a => a is e);
+
+                TileLayer lobj = cast(TileLayer) e;
+
+                renderer.draw(lobj, vecf(0,0));
+                _opt_back = renderRead( renderer, vecf(0, 0), mapinfo.width * mapinfo.tilewidth, 
+                                        mapinfo.height * mapinfo.tileheight);
+                _opt_back.toTexture;
+
+                ImageLayer imglayer = new ImageLayer();
+                imglayer.offsetx = lobj.offsetx;
+                imglayer.offsety = lobj.offsety;
+                imglayer.image = _opt_back;
+                imglayer.id = lobj.id;
+                imagelayers ~= imglayer;
+
+                _opt_back = null;
+            }
+        }
+
+        sort();
+
+        renderer.background = previous;
+        renderer.clear();
+    }
+
     override void draw(IRenderer render, Vecf position) @safe
     {
-        foreach(e; drawableSort) render.draw(e, position);
+        foreach(e; drawableSort)
+        {
+            render.draw(e, position);
+        }
     }
 }

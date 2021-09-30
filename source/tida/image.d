@@ -217,7 +217,7 @@ public:
     {
         import std.conv : to;
 
-        if (_texture !is null)
+        if (_texture !is null && renderer.type == RenderType.opengl)
         {
             _texture.draw(renderer, position);
             return;
@@ -245,7 +245,7 @@ public:
         import std.conv : to;
         import tida.angle : rotate;
 
-        if (texture !is null)
+        if (texture !is null && renderer.type == RenderType.opengl)
         {
             texture.drawEx(renderer, position, angle, center, size, alpha, color);
             return;
