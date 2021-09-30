@@ -200,7 +200,8 @@ public:
                                         {
                                             e.fun(second);
                                         }   
-                                    }
+                                    }else
+                                        e.fun(second);
                                 } else
                                 {
                                     if (e.ev.tag.empty)
@@ -224,9 +225,10 @@ public:
                                     {
                                         if (first.tags.canFind(e.ev.tag))
                                         {
-                                            e.fun(second);
+                                            e.fun(first);
                                         }   
-                                    }
+                                    }else
+                                        e.fun(first);
                                 } else
                                 {
                                     if (e.ev.tag.empty)
