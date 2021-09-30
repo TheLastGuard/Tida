@@ -844,6 +844,7 @@ class TileMap : IDrawable
         {
             if ((cast(TileLayer) e) !is null)
             {
+                renderer.clear();
                 renderer.draw(e, vecf(0, 0));
                 layers = layers.remove!(a => a is e);
 
