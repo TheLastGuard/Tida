@@ -138,6 +138,11 @@ class Tileset
     void setup() @safe
     {
         image = new Image().load(imagesource);
+        //foreach (i; 0 .. meta.columns)
+        //{
+        //    data ~= image.strip(0, i * meta.tileheight, meta.tilewidth, meta.tileheight);
+        //}
+
         foreach (i; 0 .. meta.columns)
         {
             data ~= image.strip(0, i * meta.tileheight, meta.tilewidth, meta.tileheight);
@@ -199,7 +204,7 @@ struct LayerData
 
     string encoding; /// Encoding type.
     string compression; /// Compression type.
-    int[] datamap; /// Data of the tiles in the layer.
+    uint[] datamap; /// Data of the tiles in the layer.
 
     /++
         Reads data from an input stream with both XML and JSON data.
@@ -240,7 +245,7 @@ struct LayerData
                     import zstd;
                     import std.encoding;
 
-                    ubyte[] decoded = Base64.decode(data.text[4 .. $ - 3]);
+                    ubyte[] decoded = Base64.decode(data.text.strip);
 
                     if(compression == "zlib")
                     {
@@ -257,7 +262,8 @@ struct LayerData
             
                         immutable chunkLen = decoded.length / compressionlevel;
 
-                        for(int i = 0; i < decoded.length / chunkLen; i++) {
+                        for(int i = 0; i < decoded.length / chunkLen; i++)
+                        {
                             swapData ~= unc.decompress(decoded[(i * chunkLen) .. ((i + 1) * chunkLen)]); 
                         }
 
@@ -266,7 +272,7 @@ struct LayerData
 
                     for(int i = 0; i < decoded.length; i += 4)
                     {
-                        datamap ~= decoded[i .. i + 4].byteTo!int;
+                        datamap ~= decoded[i .. i + 4].byteTo!uint;
                     }
                 }
             }
@@ -307,7 +313,8 @@ struct LayerData
 
                     immutable chunkLen = decoded.length / compressionlevel;
 
-                    for(int i = 0; i < decoded.length / chunkLen; i++) {
+                    for(int i = 0; i < decoded.length / chunkLen; i++)
+                    {
                         swapData ~= unc.decompress(decoded[(i * chunkLen) .. ((i + 1) * chunkLen)]); 
                     }
 
@@ -798,7 +805,8 @@ class TileMap : IDrawable
         int currTileSet = 0;
         int countPrevious = 0;
 
-        while(image is null) {
+        while (image is null)
+        {
             if(currTileSet == this.tilesets.length) break;
 
             countPrevious += this.tilesets[currTileSet].data.length;
@@ -812,23 +820,6 @@ class TileMap : IDrawable
         return image;
     }
 
-    /+
-        import tida.softimage;
-        import tida.shape;
-        import tida.game : renderer;
-
-        Color!ubyte previous = renderer.background;
-        renderer.background = mapinfo.backgroundColor;
-        renderer.clear();
-        foreach(e; drawableSort) renderer.draw(e, vecf(0,0));
-
-        _opt_back = renderRead( renderer, vecf(0, 0), mapinfo.width * mapinfo.tilewidth, 
-                                mapinfo.height * mapinfo.tileheight);
-        _opt_back.toTexture;
-
-        renderer.background = previous;
-        renderer.clear()
-    +/
     void optimize() @safe
     {
         import tida.softimage;
