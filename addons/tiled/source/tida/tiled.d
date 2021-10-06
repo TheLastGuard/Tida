@@ -550,6 +550,7 @@ class TileMap : IDrawable
                             if (e.source == temp.source)
                             {
                                 needLoad = false;
+                                tilesets ~= e;
                                 break;
                             }
                         }
