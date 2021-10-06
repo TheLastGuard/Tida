@@ -463,6 +463,11 @@ class TileMap : IDrawable
         Image _opt_back;
     }
 
+    void bindExistsFrom(Tileset[] tilesets)
+    {
+        this.tilesets ~= tilesets; 
+    }
+
     /++
         Loading data from memory.
 
@@ -511,7 +516,8 @@ class TileMap : IDrawable
                     if(element.name == "tileset") {
                         Tileset temp = new Tileset();
 
-                        foreach(attr; element.attributes) {
+                        foreach(attr; element.attributes)
+                        {
                             if(attr.name == "firstgid") temp.firstgid = attr.value.to!int;
                             if(attr.name == "source") temp.source = attr.value;
                             if(attr.name == "tilewidth") temp.meta.tilewidth = attr.value.to!int;
@@ -529,12 +535,30 @@ class TileMap : IDrawable
                             tset = temp;
                         }
 
-                        tilesets ~= temp;
+                        bool needLoad = true;
+                        foreach (e; tilesets)
+                        {
+                            if (e.meta.name == temp.meta.name)
+                            {
+                                needLoad = false;
+                                break;
+                            }
+                        }
+
+                        if (needLoad)
+                        {
+                            tilesets ~= temp;
+                        } else
+                        {
+                            destroy(temp);
+                        }
                     }else
-                    if(element.name == "layer") {
+                    if(element.name == "layer")
+                    {
                         TileLayer layer = new TileLayer(this);
 
-                        foreach(attrib; element.attributes) {
+                        foreach(attrib; element.attributes)
+                        {
                             if(attrib.name == "name") layer.name = attrib.value;
                             if(attrib.name == "id") layer.id = attrib.value.to!int;
                             if(attrib.name == "width") layer.width = attrib.value.to!int;
