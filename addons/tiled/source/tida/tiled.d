@@ -35,6 +35,13 @@ import tida.color;
 import tida.vector;
 import tida.sprite;
 
+__gshared Tileset[] _tilesetStorage;
+
+ref Tileset[] tilesetStorage() @trusted
+{
+    return _tilesetStorage;
+}
+
 private T byteTo(T)(ubyte[] bytes) @trusted
 {
     T data = T.init;
@@ -173,7 +180,8 @@ class Tileset
             if(	element.type == EntityType.elementStart ||
                 element.type == EntityType.elementEmpty)
             {
-                if(element.name == "tileset") {
+                if(element.name == "tileset")
+                {
                     foreach(attrib; element.attributes) {
                         if(attrib.name == "version") meta.ver = attrib.value;
                         if(attrib.name == "tiledversion") meta.tiledver = attrib.value;
@@ -185,7 +193,8 @@ class Tileset
                     }
                 }
 
-                if(element.name == "image") {
+                if(element.name == "image")
+                {
                     foreach(attrib; element.attributes) {
                         if(attrib.name == "source") {
                             imagesource = attrib.value;
@@ -536,15 +545,15 @@ class TileMap : IDrawable
                         }
 
                         bool needLoad = true;
-                        foreach (e; tilesets)
+                        foreach (e; tilesetStorage)
                         {
-                            if (e.meta.name == temp.meta.name ||
-                                e.imagesource == temp.imagesource)
+                            if (e.source == temp.source)
                             {
                                 needLoad = false;
                                 break;
                             }
                         }
+               
 
                         if (needLoad)
                         {
@@ -552,6 +561,8 @@ class TileMap : IDrawable
                         } else
                         {
                             destroy(temp);
+                            tset = null;
+                            istset = false;
                         }
                     }else
                     if(element.name == "layer")
@@ -804,6 +815,7 @@ class TileMap : IDrawable
     {
         foreach(e; tilesets)
         {
+            tilesetStorage ~= e;
             e.setup();
         }
 
