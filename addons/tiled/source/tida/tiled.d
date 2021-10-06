@@ -538,7 +538,8 @@ class TileMap : IDrawable
                         bool needLoad = true;
                         foreach (e; tilesets)
                         {
-                            if (e.meta.name == temp.meta.name)
+                            if (e.meta.name == temp.meta.name ||
+                                e.imagesource == temp.imagesource)
                             {
                                 needLoad = false;
                                 break;
