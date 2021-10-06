@@ -139,6 +139,7 @@ class Tileset
 
         Image image; /// Atlas.
         Image[] data; /// Tiles.
+        bool isSetup = false;
     }
 
     /// Prepares the atlas for a group of tiles.
@@ -156,6 +157,8 @@ class Tileset
         }
 
         foreach (e; data) e.toTexture();
+
+        isSetup = true;
     }
 
     void parse(R, int Type)(R element)
@@ -817,7 +820,9 @@ class TileMap : IDrawable
         foreach(e; tilesets)
         {
             tilesetStorage ~= e;
-            e.setup();
+
+            if (!e.isSetup)
+                e.setup();
         }
 
         foreach(e; layers)
