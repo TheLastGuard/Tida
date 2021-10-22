@@ -25,6 +25,14 @@ enum
 }
 
 /++
+A template that checks if the type is a scene.
++/
+template isScene(T)
+{
+    enum isScene = is(T : Scene);
+}
+
+/++
 Scene object.
 +/
 class Scene
@@ -473,8 +481,6 @@ public:
     }
 }
 
-version(unittest) import fluent.asserts;
-
 unittest
 {
     import tida.instance;
@@ -491,14 +497,14 @@ unittest
     auto b = new B();
     scene.add([a,b]);
 
-    scene.getInstanceByClass!A.should.equal(a);
-    scene.getInstanceByClass!B.should.equal(b);
+    assert(scene.getInstanceByClass!A is (a));
+    assert(scene.getInstanceByClass!B is (b));
 
-    scene.getInstanceByName("A").should.equal(a);
-    scene.getInstanceByName("B").should.equal(b);
+    assert(scene.getInstanceByName("A") is (a));
+    assert(scene.getInstanceByName("B") is (b));
 
-    scene.getInstanceByNameTag("A", "A").should.equal(a);
-    scene.getInstanceByNameTag("B", "B").should.equal(b);
+    assert(scene.getInstanceByNameTag("A", "A") is (a));
+    assert(scene.getInstanceByNameTag("B", "B") is (b));
 }
 
 unittest
@@ -518,5 +524,5 @@ unittest
 
     scene.add([a,b]);
 
-    scene.getAssortedInstances.should.equal([b,a]);
+    assert(scene.getAssortedInstances == ([b,a]));
 }

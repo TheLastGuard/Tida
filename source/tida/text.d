@@ -16,8 +16,6 @@ import bindbc.freetype;
 import std.traits;
 import tida.drawable;
 
-version(unittest) import fluent.asserts;
-
 __gshared FT_Library _FTLibrary;
 
 /++
@@ -205,8 +203,7 @@ T cutFormat(T)(T symbols) @safe
 
 unittest
 {
-    "Hello, $<FF0000>World!".cutFormat
-        .should.equal("Hello, World!");
+    assert("Hello, $<FF0000>World!".cutFormat == ("Hello, World!"));
 }
 
 /++

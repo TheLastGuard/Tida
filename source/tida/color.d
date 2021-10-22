@@ -23,8 +23,6 @@ module tida.color;
 
 import std.traits;
 
-version(unittest) import fluent.asserts;
-
 enum CannotDetectAuto = 
 "The format cannot be detected automatically!";
 
@@ -52,8 +50,8 @@ template isValidFormat(int pixelformat)
 
 unittest
 {
-    isValidFormat!(PixelFormat.BGRA).should.equal(true);
-    isValidFormat!(30).should.not.equal(true);
+    assert(isValidFormat!(PixelFormat.BGRA));
+    assert(!isValidFormat!(30));
 }
 
 /++
@@ -76,10 +74,10 @@ template bytesPerColor(int pixelformat, T = ubyte)
 
 unittest
 {
-    bytesPerColor!(PixelFormat.RGBA).should.equal(4);
-    bytesPerColor!(PixelFormat.RGBA, int).should.equal(4 * 4);
-    bytesPerColor!(PixelFormat.BGR, int).should.equal(3 * 4);
-    bytesPerColor!(PixelFormat.ARGB, long).should.equal(long.sizeof * 4);
+    assert(bytesPerColor!(PixelFormat.RGBA));
+    assert(bytesPerColor!(PixelFormat.RGBA, int));
+    assert(bytesPerColor!(PixelFormat.BGR, int));
+    assert(bytesPerColor!(PixelFormat.ARGB, long));
 }
 
 T hexTo(T, R)(R hexData) @safe nothrow pure
@@ -133,11 +131,11 @@ if (isSomeString!R)
 
 unittest
 {
-    hexTo!long("FF0000").should.equal(0xFF0000);
-    hexTo!long("0A0A1F").should.equal(0x0A0A1f);
-    hexTo!int("3AF124").should.equal(0x3AF124);
-    hexTo!int("f1aB11").should.equal(0xf1aB11);
-    hexTo!int("fffff3a").should.equal(0xfffff3a);
+    assert(hexTo!long("FF0000") == (0xFF0000));
+    assert(hexTo!long("0A0A1F") == (0x0A0A1f));
+    assert(hexTo!int("3AF124") == (0x3AF124));
+    assert(hexTo!int("f1aB11") == (0xf1aB11));
+    assert(hexTo!int("fffff3a") == (0xfffff3a));
 }
 
 /++
@@ -328,18 +326,14 @@ Color!C parseColor(int format = PixelFormat.Auto, C = ubyte, T)(T hex)
 
 unittest
 {
-    parseColor(0xFFFFFF).should.equal(Color!ubyte(255, 255, 255));
-    parseColor("#f9004c").should.equal(Color!ubyte(249, 0, 76));
-    parseColor("#f9004cf9").should.equal(Color!ubyte(249, 0, 76, 249));
-    parseColor!(PixelFormat.RGBA)(0xc1f4a1b4)
-        .should.equal(Color!ubyte(193, 244, 161, 180));
+    assert(parseColor(0xFFFFFF) == (Color!ubyte(255, 255, 255)));
+    assert(parseColor("#f9004c") == (Color!ubyte(249, 0, 76)));
+    assert(parseColor("#f9004cf9") == (Color!ubyte(249, 0, 76, 249)));
 
-    parseColor!(PixelFormat.BGRA)("FF0000FF")
-        .should.equal(Color!ubyte(0, 0, 255, 255));
-    parseColor!(PixelFormat.ARGB)("f9ff00ff")
-        .should.equal(Color!ubyte(255, 0, 255, 249));
-    parseColor!(PixelFormat.BGR)(0xf900ff)
-        .should.equal(Color!ubyte(255, 0, 249, 255));
+    assert(parseColor!(PixelFormat.RGBA)(0xc1f4a1b4) == (Color!ubyte(193, 244, 161, 180)));
+    assert(parseColor!(PixelFormat.BGRA)("FF0000FF") == (Color!ubyte(0, 0, 255, 255)));
+    assert(parseColor!(PixelFormat.ARGB)("f9ff00ff") == (Color!ubyte(255, 0, 255, 249)));
+    assert(parseColor!(PixelFormat.BGR)(0xf900ff) == (Color!ubyte(255, 0, 249, 255)));
 }
 
 struct Color(T)
@@ -661,13 +655,13 @@ public:
 unittest
 {
     Color!ubyte color = "#f9004c";
-    color.should.equal(Color!ubyte(249, 0, 76));
+    assert(color == (Color!ubyte(249, 0, 76)));
 
     color = 0xf9004c;
-    color.should.equal(Color!ubyte(249, 0, 76));
+    assert(color == (Color!ubyte(249, 0, 76)));
 
     color = Color!ubyte([249, 0, 76]);
-    color.should.equal(Color!ubyte(249, 0, 76));
+    assert(color == (Color!ubyte(249, 0, 76)));
 
 }
 
@@ -706,12 +700,9 @@ Color!ubyte[] fromColors(int format)(ubyte[] bytes) @safe nothrow pure
 
 unittest
 {
-    [54, 13, 85, 255]
-        .fromColor!(PixelFormat.RGBA)
-        .should.equal(rgb(54, 13, 85));
-    [54, 13, 85, 255, 128, 54, 9, 255]
-        .fromColors!(PixelFormat.RGBA)
-        .should.equal([rgb(54, 13, 85), rgb(128, 54, 9)]);
+    assert([54, 13, 85, 255].fromColor!(PixelFormat.RGBA) == (rgb(54, 13, 85)));
+
+    assert([54, 13, 85, 255, 128, 54, 9, 255].fromColors!(PixelFormat.RGBA) == ([rgb(54, 13, 85), rgb(128, 54, 9)]));
 }
 
 /++
@@ -784,13 +775,11 @@ Color!To convert(From, To)(Color!From color) @safe nothrow pure
 
 unittest
 {
-    Color!ubyte(255, 255, 255, 255)
-        .convert!(ubyte, float)
-        .should.equal(Color!float(1.0f, 1.0f, 1.0f, 1.0f));
+    assert(Color!ubyte(255, 255, 255, 255)
+        .convert!(ubyte, float) == (Color!float(1.0f, 1.0f, 1.0f, 1.0f)));
 
-    Color!float(1.0f, 1.0f, 1.0f, 1.0f)
-        .convert!(float, ubyte)
-        .should.equal(Color!ubyte(255, 255, 255, 255));
+    assert(Color!float(1.0f, 1.0f, 1.0f, 1.0f)
+        .convert!(float, ubyte) == (Color!ubyte(255, 255, 255, 255)));
 }
 
 /++
@@ -1500,21 +1489,15 @@ do
 
 unittest
 {
-    [255, 0, 0, 255].fromFormat!(PixelFormat.RGBA, PixelFormat.BGRA)
-        .should.equal([0, 0, 255, 255]);
+    assert([255, 0, 0, 255].fromFormat!(PixelFormat.RGBA, PixelFormat.BGRA) == ([0, 0, 255, 255]));
 
-    [255, 0, 0, 255, 128, 0, 0, 255].fromFormat!(PixelFormat.RGBA, PixelFormat.BGR)
-        .should.equal([0, 0, 255, 0, 0, 128]);
+    assert([255, 0, 0, 255, 128, 0, 0, 255].fromFormat!(PixelFormat.RGBA, PixelFormat.BGR) == ([0, 0, 255, 0, 0, 128]));
 
-    [128, 32, 32].fromFormat!(PixelFormat.BGR, PixelFormat.RGBA)
-        .should.equal([32, 32, 128, 255]);
+    assert([128, 32, 32].fromFormat!(PixelFormat.BGR, PixelFormat.RGBA) == ([32, 32, 128, 255]));
 
-    [128, 32, 32, 96].fromFormat!(PixelFormat.BGRA, PixelFormat.RGB)
-        .should.equal([32, 32, 128]);
+    assert([128, 32, 32, 96].fromFormat!(PixelFormat.BGRA, PixelFormat.RGB) == ([32, 32, 128]));
 
-    [128, 32, 32].fromFormat!(PixelFormat.BGR, PixelFormat.RGB)
-        .should.equal([32, 32, 128]);
+    assert([128, 32, 32].fromFormat!(PixelFormat.BGR, PixelFormat.RGB) == ([32, 32, 128]));
 
-    [128, 32, 32, 96].fromFormat!(PixelFormat.ARGB, PixelFormat.BGR)
-        .should.equal([96, 32, 32]);
+    assert([128, 32, 32, 96].fromFormat!(PixelFormat.ARGB, PixelFormat.BGR) == ([96, 32, 32]));
 }

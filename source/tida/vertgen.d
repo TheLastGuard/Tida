@@ -19,8 +19,14 @@ import tida.shape;
 import tida.vector;
 import std.traits;
 import tida.color;
-version(unittest) import fluent.asserts;
 
+/++
+a template for translating a type into a type identifier that is 
+understandable for the OpenGL interface.
+
+Params:
+    T = Type;
++/
 template glType(T)
 {
     import tida.gl;
@@ -42,6 +48,8 @@ template glType(T)
     else
     static if (is(T : uint))
         enum glType = GL_UNSIGNED_INT;
+    else
+        static assert(null, "The `" ~ T.stringof ~ "` type cannot be translated into an interface that OpenGL understands.");
 }
 
 /++
@@ -406,7 +414,7 @@ unittest
         vec!float(32.0f, 32.0f)
     ];
 
-    buffer.should.equal(checkedBuffer);
+    assert(buffer == (checkedBuffer));
 }
 
 /// ditto

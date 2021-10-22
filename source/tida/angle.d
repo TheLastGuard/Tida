@@ -14,7 +14,6 @@ License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
 module tida.angle;
 
 import std.math : PI;
-version(unittest) import fluent.asserts;
 
 enum Radians = 0; /// Radians
 enum Degrees = 1; /// Degrees
@@ -69,7 +68,7 @@ template rightAngle(ubyte Type)
 {
     static if (Type == Radians)
     {
-        enum rightAngle = 0.5 * PI;
+        enum rightAngle = PI / 2;
     }else
     static if (Type == Degrees)
     {
@@ -179,6 +178,28 @@ float conv(ubyte What,ubyte In)(float value) @safe nothrow pure
 alias from = conv; // old name saved.
 
 /++
+Converts degrees to radians.
+
+Params:
+    value = The value is in degrees.
+
+Returns:
+    The value is in degrees.
++/
+alias degToRad = conv!(Degrees, Radians);
+
+/++
+Convert radians to degrees.
+
+Params:
+    value = The value is in radians.
+
+Returns:
+    The value is in degrees.
++/
+alias radToDeg = conv!(Radians, Degrees);
+
+/++
 Brings the angle back to normal.
 
 Params:
@@ -198,6 +219,13 @@ float minimize(ubyte Type)(float angle) @safe nothrow pure
     return angle - ((max!Type * cast(float) k) * sign);
 }
 
+unittest
+{
+    assert(minimize!Degrees(361) == 1);
+    assert(minimize!Degrees(470) == (470 - 360));
+    assert(minimize!Degrees(848) == 128);
+}
+
 /++
 Finds the angle between two angel's. Accepted in any angle change systems.
 
@@ -214,12 +242,12 @@ float betweenAngle(float a, float b) @safe nothrow pure
 
 unittest
 {
-    max!Radians.from!(Radians,Degrees).should.equal(max!Degrees);
-    max!Degrees.from!(Degrees,Gons).should.equal(max!Gons);
-    max!Gons.from!(Gons,Turns).should.equal(max!Turns);
+    assert(max!Radians.from!(Radians,Degrees) == (max!Degrees));
+    assert(max!Degrees.from!(Degrees,Gons) == (max!Gons));
+    assert(max!Gons.from!(Gons,Turns) == (max!Turns));
     
-    rightAngle!Radians.from!(Radians,Degrees).should.equal(rightAngle!Degrees);
-    rightAngle!Degrees.from!(Degrees,Gons).should.equal(rightAngle!Gons);
+    assert(rightAngle!Radians.from!(Radians,Degrees) == (rightAngle!Degrees));
+    assert(rightAngle!Degrees.from!(Degrees,Gons) == (rightAngle!Gons));
 }
 
 import tida.vector;

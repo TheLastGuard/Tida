@@ -335,8 +335,6 @@ package(tida):
     }
 }
 
-version(unittest) import fluent.asserts;
-
 unittest
 {
     import tida.scenemanager;
@@ -352,6 +350,6 @@ unittest
     Instance instance = new Instance();
     instance.add(cmp);
 
-    instance.cmp("Cmp").should.equal(cmp);
-    instance.cmp!(CComponent).should.equal(cmp);
+    assert(instance.cmp("Cmp") is (cmp));
+    assert(instance.cmp!(CComponent) is (cmp));
 }

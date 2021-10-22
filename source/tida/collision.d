@@ -11,7 +11,6 @@ License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
 +/
 module tida.collision;
 
-version(unittest) import fluent.asserts;
 import tida.shape, tida.vector;
 
 /++
@@ -436,21 +435,21 @@ bool isCollide(	Shape!float first,
 
 unittest
 {
-    isCollide(
-        Shapef.Rectangle(vecf(32,32),vecf(64,64)),
-        Shapef.Line(vecf(48,48),vecf(96,96))
-    ).should.equal(true);
+    assert(isCollide(
+            Shapef.Rectangle(vecf(32,32),vecf(64,64)),
+            Shapef.Line(vecf(48,48),vecf(96,96))
+        ));
 
 
-    isCollide(
+    assert(isCollide(
         Shapef.Rectangle(vecf(32,32),vecf(64,64)),
         Shapef.Rectangle(vecf(48,48),vecf(72,72))
-    ).should.equal(true);
+    ));
 
-    isCollide(
+    assert(isCollide(
         Shapef.Line(vecf(32,32),vecf(64,64)),
         Shapef.Line(vecf(64,32),vecf(32,64))
-    ).should.equal(true);
+    ));
 }
 
 /++
@@ -603,17 +602,21 @@ unittest
                         vecf(32, 112)
                     ];
 
-    (isPolygonAndPoint(first, vecf(33, 33))).should.equal(true);
-    (isPolygonAndLine(first, [vecf(16, 16), vecf(48, 48)])).should.equal(true);
-    (isPolygonAndRect(first, [vecf(16, 16), vecf(128, 128)])).should.equal(true);
-    (isPolygonAndCircle(first, vecf(128, 128), 64));
-    (isPolygonsCollision(first,   [
+    assert(isPolygonAndPoint(first, vecf(33, 33)));
+
+    assert(isPolygonAndLine(first, [vecf(16, 16), vecf(48, 48)]));
+
+    assert(isPolygonAndRect(first, [vecf(16, 16), vecf(128, 128)]));
+
+    assert(isPolygonAndCircle(first, vecf(128, 128), 64));
+
+    assert(isPolygonsCollision(first,   [
                                             vecf(48, 48),
                                             vecf(64, 64),
                                             vecf(32, 64),
                                             vecf(32, 32),
                                             vecf(32, 48)
-                                        ])).should.equal(true);
+                                        ]));
 }
 
 /++

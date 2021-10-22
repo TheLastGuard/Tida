@@ -383,6 +383,8 @@ public @safe:
     +/
     bool hasScene(Name)()
     {
+        static assert(isScene!Name, "`" ~ Name.stringof ~ "` is not a scene!");
+
         foreach (scene; scenes)
         {
             if ((cast(Name) scene) !is null)
@@ -416,6 +418,7 @@ public @safe:
     +/
     void add(T)(T scene)
     {
+        static assert(isScene!T, "`" ~ T.stringof ~ "` is not a scene!");
         exploreScene!T(scene);
 
         if (_ofbegin is null)
@@ -524,11 +527,18 @@ public @safe:
     +/
     void destroyEventSceneCall(T, R)(T scene, R instance) @trusted
     {
+        static assert(isScene!T, "`" ~ T.stringof ~ "` is not a scene!");
+        static assert(isInstance!R, "`" ~ R.stringof ~ "` is not a instance!");
+
         foreach(func; OnDestroyFunctions[scene]) func(instance);
     }
 
     package(tida) void componentExplore(T)(Instance instance, T component) @trusted
     {
+        import tida.component : isComponent;
+
+        static assert(isComponent!T, "`" ~ T.stringof ~ "` is not a component!");
+
         CStepFunctions[component] = [];
         CLeaveFunctions[component] = [];
         CEventHandleFunctions[component] = [];
@@ -1487,8 +1497,6 @@ public @safe:
     }
 }
 
-version(unittest) import fluent.asserts;
-
 unittest
 {
     initSceneManager();
@@ -1502,7 +1510,7 @@ unittest
     }
 
     sceneManager.add(new A());
-    ("Test" in sceneManager.scenes).should.not.beNull;
+    assert(("Test" in sceneManager.scenes) !is null);
 }
 
 unittest
@@ -1518,7 +1526,7 @@ unittest
     A obj = new A();
     sceneManager.add(obj);
 
-    (sceneManager.InitFunctions[obj][0].ptr).should.equal((&obj.onInit).ptr);
+    assert((sceneManager.InitFunctions[obj][0].ptr) == ((&obj.onInit).ptr));
 }
 
 unittest
@@ -1534,5 +1542,5 @@ unittest
     }
 
     sceneManager.add(new A());
-    sceneManager.hasScene("Test").should.equal(true);
+    assert(sceneManager.hasScene("Test"));
 }

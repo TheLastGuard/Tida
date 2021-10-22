@@ -16,8 +16,6 @@ import tida.vector;
 import std.algorithm : find, canFind, remove, reverse;
 import std.math : pow;
 
-version(unittest) import fluent.asserts;
-
 /++
 Finds a path at given coordinates in a grid using the A* algorithm.
 
@@ -151,5 +149,6 @@ unittest
                             [1, 1, 1, 1, 0, 1, 1]
                         ];
     auto result = findPath(grid, Vector!int(1, 1), Vector!int(5, 6));
-    result[$ - 1].should.equal(Vector!int(5, 6));
+    //result[$ - 1].should.equal(Vector!int(5, 6));
+    assert(result[$ - 1] == Vector!int(5, 6));
 }

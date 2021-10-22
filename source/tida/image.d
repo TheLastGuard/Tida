@@ -39,8 +39,6 @@ import tida.each;
 import tida.drawable;
 import tida.vector;
 
-version(unittest) import fluent.asserts;
-
 /++
 Checks if the data for the image is valid.
 
@@ -58,11 +56,11 @@ bool validateImageData(int format)(ubyte[] data, uint w, uint h) @safe nothrow p
 /// Let's check the performance:
 unittest
 {
-    uint simpleImageWidth = 32;
-    uint simpleImageHeight = 32;
+    immutable simpleImageWidth  = 32;
+    immutable simpleImageHeight = 32;
     ubyte[] data = new ubyte[](simpleImageWidth * simpleImageHeight * bytesPerColor!(PixelFormat.RGBA));
 
-    validateImageData!(PixelFormat.RGBA)(data, simpleImageWidth, simpleImageHeight).should.equal(true);
+    assert(validateImageData!(PixelFormat.RGBA)(data, simpleImageWidth, simpleImageHeight));
 }
 
 /++
@@ -498,9 +496,8 @@ unittest
 {
     Image image = new Image(32, 32);
 
-    image.bytes!(PixelFormat.RGBA)
-        .validateImageData!(PixelFormat.RGBA)(image.width, image.height)
-        .should.equal(true);
+    assert(image.bytes!(PixelFormat.RGBA)
+        .validateImageData!(PixelFormat.RGBA)(image.width, image.height));
 }
 
 /++
@@ -830,5 +827,5 @@ unittest
         e = rgb(64, 64, 64);
     });
 
-    image.getPixel(32, 32).should.equal(rgb(64, 64, 64));
+    assert(image.getPixel(32, 32) == (rgb(64, 64, 64)));
 }

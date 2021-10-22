@@ -14,7 +14,6 @@ License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
 module tida.vector;
 
 import std.traits;
-version(unittest) import fluent.asserts;
 
 /++
 Vector structure. May include any numeric data type available for vector arithmetic.
@@ -253,30 +252,7 @@ inout:
 
 unittest
 {
-    vec!real([32, 64])
-        .should
-        .equal(Vector!real(32.0, 64.0));
-}
-
-unittest
-{
-    (vec!real(16.5, 18.1) + vec!real(15.5, 13.9))
-        .should.equal(vec!real(32.0, 32.0));
-
-    (vec!double(321.0, 131.48) - vec!double(100.0, 31.40))
-        .should.equal(vec!double(221.0, 100.08));
-
-    (vec!int(32, 32) * vec!int(2, 3))
-        .should.equal(vec!int(64, 96));
-
-    (vec!long(32, 32) * 4)
-        .should.equal(vec!long(128, 128));
-
-    (vec!short(128, 128) / vec!short(4, 2))
-        .should.equal(vec!short(32, 64));
-
-    (vec!short(128, 128) / 4)
-        .should.equal(vec!short(32, 32));
+    assert(vec!real([32, 64]) == (Vector!real(32.0, 64.0)));
 }
 
 /++
@@ -349,8 +325,8 @@ alias isVecfNaN = isVectorNaN!float;
 
 unittest
 {
-    (vecfNaN.isVecfNaN).should.equal(true);
-    (vecf(0.0f, 0.0f)).should.not.equal(true);
+    assert(vecfNaN.isVecfNaN);
+    assert(!vecf(0.0f, 0.0f).isVecfNaN);
 }
 
 /++
@@ -370,9 +346,7 @@ T[] generateArray(T)(Vector!T[] vectors) @safe nothrow pure
 
 unittest
 {
-    [vec!int(16, 16), vec!int(32, 48), vec!int(48, 8)]
-        .generateArray
-        .should.equal([16, 16, 32, 48, 48, 8]);
+    assert([vec!int(16, 16), vec!int(32, 48), vec!int(48, 8)].generateArray == ([16, 16, 32, 48, 48, 8]));
 }
 
 inout(T) sqr(T)(inout(T) value) @safe nothrow pure
@@ -395,8 +369,8 @@ inout(Vector!T) abs(T)(inout(Vector!T) vec) @safe nothrow pure
 
 unittest
 {
-    abs(vec!long(-64, -32)).should.equal(vec!long(64, 32));
-    abs(vec!float(-128.5f, 19.0f)).should.equal(vec!float(128.5f, 19.0f));
+    assert(abs(vec!long(-64, -32)) == (vec!long(64, 32)));
+    assert(abs(vec!float(-128.5f, 19.0f)) == (vec!float(128.5f, 19.0f)));
 }
 
 /++
@@ -423,11 +397,9 @@ inout(Vector!T) averateVectors(T)(inout(Vector!T) a, inout(Vector!T) b) @safe no
 
 unittest
 {
-    (vec!long(32, 32).averateVectors(vec!long(64, 64)))
-        .should.equal(vec!long(48, 48));
+    assert(vec!long(32, 32).averateVectors(vec!long(64, 64)) == (vec!long(48, 48)));
 
-    (vec!real(48.0, 48.0).averateVectors(vec!real(128.0, 128.0)))
-        .should.equal(vec!real(88.0, 88.0));
+    assert(vec!real(48.0, 48.0).averateVectors(vec!real(128.0, 128.0)) == (vec!real(88.0, 88.0)));
 }
 
 /++
@@ -472,7 +444,7 @@ if (isVectorFloatingPoint!(Vector!T))
 
 unittest
 {
-    vec!real(31.4, 33.51).round.should.equal(vec!real(31.0, 34.0));
+    assert(vec!real(31.4, 33.51).round == (vec!real(31.0, 34.0)));
 }
 
 /++
@@ -496,5 +468,5 @@ if (isVectorFloatingPoint!(Vector!T))
 
 unittest
 {
-    vec!double(31.4, 33.51).floor.should.equal(vec!double(31.0, 33.0));
+    assert(vec!double(31.4, 33.51).floor == (vec!double(31.0, 33.0)));
 }

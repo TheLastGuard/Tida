@@ -38,7 +38,6 @@ License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
 module tida.shape;
 
 import std.traits;
-version(unittest) import fluent.asserts;
 
 /++
 Shape type.
@@ -723,37 +722,6 @@ public:
     {
         return Shape!T.Rectangle(pos,pos + vec!T(len, len));
     }
-}
-
-unittest
-{
-    auto rect = Shape!float.Rectangle(vec!float(32.0f, 32.0f), vec!float(64.0f, 64.0f));
-    rect.move(vec!float(32.0f, 32.0f));
-
-    rect
-        .should
-        .equal(Shape!float.Rectangle(vec!float(64.0f, 64.0f), vec!float(96.0f, 96.0f)));
-}
-
-unittest
-{
-    auto rect = Shape!float.Rectangle(vec!float(32.0f, 32.0f), vec!float(64.0f, 64.0f));
-    rect.width = 64;
-    rect.height = 64;
-
-    rect
-        .should
-        .equal(Shape!float.Rectangle(vec!float(32.0f, 32.0f), vec!float(96.0f, 96.0f)));
-}
-
-unittest
-{
-    auto rect = Shape!float.Rectangle(vec!float(32.0f, 32.0f), vec!float(64.0f, 64.0f));
-    rect.scale(2.0f);
-
-    rect
-        .should
-        .equal(Shape!float.Rectangle(vec!float(32.0f, 32.0f), vec!float(128.0f, 128.0f)));
 }
 
 import tida.vector;
