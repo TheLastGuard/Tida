@@ -103,7 +103,7 @@ fetch-clean:
 	if exist ".\\mp3decoder\\$(mp3decoder-lib)" del ".\\mp3decoder\\$(mp3decoder-lib)" 
 
 # Removes dependency folders. 
-fetch-remove:
+deps-remove:
 	if exist ".\bindbc-loader" del ".\bindbc-loader"
 	if exist ".\bindbc-opengl" del ".\bindbc-opengl"
 	if exist ".\bindbc-openal" del ".\bindbc-openal"
