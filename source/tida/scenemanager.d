@@ -1255,6 +1255,15 @@ public @safe:
         {
             current.worldCollision();
 
+            if (thread == 0)
+            if (current in StepFunctions)
+            {
+                foreach (fun; StepFunctions[current])
+                {
+                    fun();
+                }
+            }
+
             if (current in StepThreadFunctions)
             if (thread in StepThreadFunctions[current])
             {
