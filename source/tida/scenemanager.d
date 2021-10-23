@@ -900,69 +900,6 @@ public @safe:
                 IOnAnyTriggerFunctions[scene] ~= &__traits(getMember, scene, member);
             }
         }
-        //static foreach(member; __traits(allMembers, T))
-        //{
-        //    static foreach(attrib; __traits(getAttributes, __traits(getMember, scene, member)))
-        //    {
-        //        static if (is(attrib : FunEvent!Init))
-        //        {
-        //            InitFunctions[scene] ~= &__traits(getMember, scene, member);
-        //        }else
-        //        static if (is(attrib : FunEvent!Step))
-        //        {
-        //            StepFunctions[scene] ~= &__traits(getMember, scene, member);
-        //        }else
-        //        static if (is(attrib : FunEvent!Entry))
-        //        {
-        //            EntryFunctions[scene] ~= &__traits(getMember, scene, member);
-        //        }else
-        //        static if (is(attrib : FunEvent!Restart))
-        //        {
-        //            RestartFunctions[scene] ~= &__traits(getMember, scene, member);
-        //        }else
-        //        static if (is(attrib : FunEvent!Leave))
-        //        {
-        //            LeaveFunctions[scene] ~= &__traits(getMember, scene, member);
-        //        }else
-        //        static if (is(attrib : FunEvent!GameStart))
-        //        {
-        //            GameStartFunctions[scene] ~= &__traits(getMember, scene, member);
-        //        }else
-        //        static if (is(attrib : FunEvent!GameExit))
-        //        {
-        //            GameExitFunctions[scene] ~= &__traits(getMember, scene, member);
-        //        }else
-        //        static if (is(attrib : FunEvent!GameRestart))
-        //        {
-        //            GameRestartFunctions[scene] ~= &__traits(getMember, scene, member);
-        //        }else
-        //        static if (is(attrib : FunEvent!Input))
-        //        {
-        //            EventHandleFunctions[scene] ~= cast(FEEventHandle) &__traits(getMember, scene, member);
-        //        }else
-        //        static if (is(attrib : FunEvent!Draw))
-        //        {
-        //            DrawFunctions[scene] ~= cast(FEDraw) &__traits(getMember, scene, member);
-        //        }else
-        //        static if (is(attrib : FunEvent!GameError))
-        //        {
-        //            OnErrorFunctions[scene] ~= &__traits(getMember, scene, member);
-        //        }else
-        //        static if (is(attrib : FunEvent!Destroy))
-        //        {
-        //            OnDestroyFunctions[scene] ~= &__traits(getMember, scene, member);
-        //        }else
-        //        static if (attrib.stringof[0 .. 8] == "InThread")
-        //        {
-        //            StepThreadFunctions[scene][attrib.id] ~= &__traits(getMember, scene, member);
-        //        }else
-        //        static if (attrib.stringof[0 .. 7] == "Trigger")
-        //        {
-        //            OnTriggerFunctions[scene] ~= SRTrigger(attrib,
-        //            cast(FETrigger) &__traits(getMember, scene, member));
-        //        }
-        //    }
-        //}
     }
 
     public
@@ -1317,15 +1254,6 @@ public @safe:
         if (current !is null)
         {
             current.worldCollision();
-
-            if (thread == 0)
-            if (current in StepFunctions)
-            {
-                foreach (fun; StepFunctions[current])
-                {
-                    fun();
-                }
-            }
 
             if (current in StepThreadFunctions)
             if (thread in StepThreadFunctions[current])
