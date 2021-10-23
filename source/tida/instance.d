@@ -353,3 +353,64 @@ unittest
     assert(instance.cmp("Cmp") is (cmp));
     assert(instance.cmp!(CComponent) is (cmp));
 }
+
+debug import tida.color;
+
+debug template debugCollisionMask(Color!ubyte color = Color!ubyte(255, 0, 0))
+{
+    import tida.render;
+    import std.conv : to;
+
+    void __drawShapeConture(Vecf releative, Shapef shape, IRenderer render) @safe
+    {
+        switch (shape.type)
+        {
+            case ShapeType.point:
+                render.point(shape.begin + releative, color);
+            break;
+
+            case ShapeType.line:
+                render.line([   shape.begin + releative,
+                                shape.end + releative], color);
+            break;
+
+            case ShapeType.rectangle:
+                render.rectangle(   shape.begin + releative, 
+                                    shape.width.to!uint, 
+                                    shape.height.to!uint,
+                                    color,
+                                    false);
+            break;
+
+            case ShapeType.circle:
+                render.circle(shape.begin + releative, shape.radius, color, false);
+            break;
+
+            case ShapeType.triangle:
+                render.triangle([   shape.vertex!0 + releative, 
+                                    shape.vertex!1 + releative, 
+                                    shape.vertex!2 + releative], color, false);
+            break;
+
+            case ShapeType.polygon:
+                render.polygon(shape.begin + releative, shape.data, color, false);
+            break;
+
+            case ShapeType.multi:
+                foreach (sh; shape.shapes)
+                {
+                    __drawShapeConture(releative + shape.begin, sh, render);
+                }
+            break;
+
+            default:
+                return;
+        }   
+    }
+
+    @Event!Draw
+    void __debug_drawMask(IRenderer render) @safe
+    {
+        __drawShapeConture(position, mask, render);
+    }
+}

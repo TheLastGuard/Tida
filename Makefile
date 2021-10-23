@@ -1,10 +1,9 @@
-UNAME := $(shell uname)
-
-ifeq ($(UNAME), Linux)
-	makefile = posix.mak
+ifeq ($(OS), Windows_NT)
+	makefile = win64.mak
 else
-	ifeq ($(OS) Windows_NT)
-		makefile = win64.mak
+	UNAME := $(shell uname)
+	ifeq ($(UNAME), Linux)
+		makefile = posix.mak
 	endif
 endif
 

@@ -309,6 +309,12 @@ if (isVectorFloatingPoint!(Vector!T))
 /// ditto
 enum vecfNaN = vecNaN!float;
 
+/// Zero vector
+enum vecZero(T) = vec!T(0, 0);
+
+/// ditto
+enum vecfZero = vecZero!float;
+
 /++
 Checks if the vector is non-numeric.
 +/
