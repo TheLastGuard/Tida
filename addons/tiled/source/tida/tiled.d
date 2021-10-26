@@ -815,7 +815,7 @@ class TileMap : IDrawable
     }
 
     /// Prepare layers for work.
-    void setup() @safe
+    void setup() @trusted
     {
         import std.algorithm : canFind;
 
