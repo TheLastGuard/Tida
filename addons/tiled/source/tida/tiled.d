@@ -817,9 +817,12 @@ class TileMap : IDrawable
     /// Prepare layers for work.
     void setup() @safe
     {
+        import std.algorithm : canFind;
+
         foreach(e; tilesets)
         {
-            tilesetStorage ~= e;
+            if (!tilesetStorage.canFind(e))
+                tilesetStorage ~= e;
 
             if (!e.isSetup)
                 e.setup();
