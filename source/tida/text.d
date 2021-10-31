@@ -57,7 +57,7 @@ private:
     size_t _size;
 
 public:
-    FontSymbolInfo[uint][size_t] cache;
+    FontSymbolInfo[uint] cache;
 
 @trusted:
     /// Font face object.
@@ -83,9 +83,9 @@ public:
         import tida.vector;
         import tida.color;
 
-        if (index in cache[_size])
+        if (index in cache)
         {
-            return cache[_size][index];
+            return cache[index];
         } else
         {
             FontSymbolInfo syinfo;
@@ -117,7 +117,7 @@ public:
             syinfo.advance = vec!float(glyph.advance.x, glyph.advance.y);
             syinfo.image = image;
 
-            cache[_size][index] = syinfo;
+            cache[index] = syinfo;
 
             return syinfo;
         }
@@ -159,7 +159,6 @@ public:
         FT_Set_Pixel_Sizes(_face, 0, cast(int) size*2);
 
         this._size = size;
-        cache[_size] = [0: FontSymbolInfo()];
 
         return this;
     }
@@ -176,11 +175,6 @@ public:
 
         FT_Set_Char_Size(_face, 0, cast(int) _size*32, 300, 300);
         FT_Set_Pixel_Sizes(_face, 0, cast(int) size*2);
-
-        if (!(_size in cache))
-        {
-            cache[_size] = [0: FontSymbolInfo()];
-        }
     }
 
     /// Free memory
