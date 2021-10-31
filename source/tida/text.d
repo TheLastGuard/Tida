@@ -175,6 +175,8 @@ public:
 
         FT_Set_Char_Size(_face, 0, cast(int) _size*32, 300, 300);
         FT_Set_Pixel_Sizes(_face, 0, cast(int) size*2);
+
+        cache.clear();
     }
 
     /// Free memory
