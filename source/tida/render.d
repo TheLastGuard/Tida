@@ -260,24 +260,24 @@ interface IRenderer
 
     See_Also: `tida.graph.drawable`.
     +/
-    final void draw(IDrawable drawable, Vecf position) @safe
-    {
-        position -= camera.port.begin;
-        drawable.draw(this, position);
-    }
+    void draw(IDrawable drawable, Vecf position) @safe;
+    //{
+    //    position -= camera.port.begin;
+    //    drawable.draw(this, position);
+    //}
 
     /// ditto
-    final void drawEx(  IDrawableEx drawable, 
-                        Vecf position, 
-                        float angle,
-                        Vecf center,
-                        Vecf size,
-                        ubyte alpha,
-                        Color!ubyte color = rgb(255, 255, 255)) @safe
-    {
-        position -= camera.port.begin;
-        drawable.drawEx(this, position, angle, center, size, alpha, color);
-    }
+    void drawEx(    IDrawableEx drawable, 
+                    Vecf position, 
+                    float angle,
+                    Vecf center,
+                    Vecf size,
+                    ubyte alpha,
+                    Color!ubyte color = rgb(255, 255, 255)) @safe;
+    //{
+    //    position -= camera.port.begin;
+    //    drawable.drawEx(this, position, angle, center, size, alpha, color);
+    //}
 }
 
 /++
@@ -293,6 +293,7 @@ class GLRender : IRenderer
     import tida.vector;
     import tida.matrix;
     import tida.shape;
+    import tida.drawable;
 
     enum deprecatedVertex =
     "
@@ -403,6 +404,11 @@ public @trusted:
         this.reshape();
     }
 
+    @property Shader!Program[string] getShaders()
+    {
+        return shaders;
+    }
+
     @property mat4 projection()
     {
         return _projection;
@@ -461,6 +467,25 @@ public @trusted:
     }
 
 override:
+    void draw(IDrawable drawable, Vecf position) @safe
+    {
+        position -= camera.port.begin;
+        drawable.draw(this, position);
+    }
+
+    /// ditto
+    void drawEx(    IDrawableEx drawable, 
+                    Vecf position, 
+                float angle,
+                Vecf center,
+                Vecf size,
+                ubyte alpha,
+                Color!ubyte color = rgb(255, 255, 255)) @safe
+    {
+        position -= camera.port.begin;
+        drawable.drawEx(this, position, angle, center, size, alpha, color);
+    }
+
     void reshape()
     {
         import std.conv : to;
@@ -842,6 +867,544 @@ override:
     void resetShader()
     {
         current = null;
+    }
+}
+
+debug(GLDebug) class GLDebugRender : IRenderer
+{
+    import tida.vector;
+    import tida.color;
+    import tida.drawable;
+    import tida.shader;
+
+    public struct Operation
+    {
+        string name;
+        
+        IDrawable object;
+        IDrawableEx objectEx;
+        
+        Vecf size;
+        Vecf center;
+        float angle;
+        ubyte alpha;
+
+        Color!ubyte color;
+        bool isFill = true;
+
+        Shader!Program shader;
+        string shaderName;
+        float[4][4] matrix;
+
+        Vecf[] vertexs;
+        float radius;
+
+        BlendFactor sfactor;
+        BlendFactor dfactor;
+    }
+
+private:
+    GLRender render;
+    size_t frame;
+    Color!ubyte _background;
+
+public:
+    Operation[][] operations;
+
+@safe:
+    this(GLRender render)
+    {
+        this.render = render;    
+    }
+
+    string findShadername(Shader!Program shader)
+    {
+        auto shaders = render.getShaders();
+
+        foreach (key, value; shaders)
+        {
+            if (value is shader)
+                return key;
+        }
+
+        return "unknown";
+    }
+
+    string textReport() @safe
+    {
+        import std.conv : to;
+
+        string data;
+        size_t iframe = 0;
+
+        foreach (frame; operations)
+        {
+            iframe++;
+            data ~= "Frame " ~ iframe.to!string ~ ":\n";
+            foreach (operand; frame)
+            {
+                data ~= operand.name ~ ":\n";
+                data ~= "L color: " ~ operand.color.to!string ~ "\n";
+                data ~= "L isFill: " ~ operand.isFill.to!string ~ "\n";
+                data ~= "L shader: " ~ operand.shaderName ~ "\n";
+                data ~= "L matrix: " ~ operand.matrix.to!string ~ "\n";
+                data ~= "L vertexs: " ~ operand.vertexs.to!string ~ "\n\n";
+            }
+        }
+
+        return data;
+    }
+
+    void drawFrame(int idframe) @safe
+    {
+        auto frame = operations[idframe];
+
+        foreach (i; 0 .. cast(int) frame.length)
+            drawOperation(idframe, i);
+    }
+
+    void drawOperation(int idframe, int idoper) @safe
+    {
+        auto operation = operations[idframe][idoper];
+        
+        if (operation.object !is null)
+        {
+            render.draw(operation.object, operation.vertexs[0]);
+        } else
+        if (operation.objectEx !is null)
+        {
+            render.drawEx(operation.objectEx,   operation.vertexs[0], 
+                                                operation.angle, 
+                                                operation.center,
+                                                operation.size,
+                                                operation.alpha,
+                                                operation.color);
+        } else
+        {
+            switch (operation.name)
+            {
+                case "tida.render.GLRender.point":
+                    render.point(operation.vertexs[0], operation.color);
+                break;
+
+                case "tida.render.GLRender.line":
+                    render.line([operation.vertexs[0], operation.vertexs[1]], operation.color);
+                break;
+
+                case "tida.render.GLRender.rectangle": {
+                    uint width = cast(uint) (operation.vertexs[1].x - operation.vertexs[0].x);
+                    uint height = cast(uint) (operation.vertexs[1].y - operation.vertexs[0].y);
+
+                    render.rectangle(operation.vertexs[0], width, height, operation.color, operation.isFill);
+                }
+                break;
+
+                case "tida.render.GLRender.triangle": 
+                    render.triangle([operation.vertexs[0], operation.vertexs[1], operation.vertexs[2]],
+                                    operation.color, operation.isFill);
+                break;
+
+                case "tida.render.GLRender.circle":
+                    render.circle(operation.vertexs[0], operation.radius, operation.color, operation.isFill);
+                break;
+
+                case "tida.render.GLRender.roundrect": {
+                    uint width = cast(uint) (operation.vertexs[1].x - operation.vertexs[0].x);
+                    uint height = cast(uint) (operation.vertexs[1].y - operation.vertexs[0].y);
+
+                    render.roundrect(operation.vertexs[0], width, height, operation.radius, operation.color, operation.isFill);   
+                }
+                break;
+
+                case "tida.render.GLRender.polygon":
+                    render.polygon(operation.vertexs[0], operation.vertexs[1 .. $], operation.color, operation.isFill);
+                break;
+
+                default:
+                    return;
+            }
+        }
+    }
+
+override:
+    void draw(IDrawable drawable, Vecf position) @trusted
+    {
+        Operation operation;
+        operation.name = (cast(Object) drawable).toString;
+        operation.object = drawable;
+        operation.vertexs ~= position;
+        operation.shader = render.currentShader !is null ? 
+            render.currentShader : 
+            render.getShader("Default");
+        operation.shaderName = render.currentShader !is null ? 
+            findShadername(render.currentShader) :
+            "Default";
+
+        operations[frame - 1] ~=  operation;
+
+        render.draw(drawable, position);
+    }
+
+    /// ditto
+    void drawEx(    IDrawableEx drawable, 
+                    Vecf position, 
+                    float angle,
+                    Vecf center,
+                    Vecf size,
+                    ubyte alpha,
+                    Color!ubyte color = rgb(255, 255, 255)) @trusted
+    {
+        Operation operation;
+        operation.name = (cast(Object) drawable).toString;
+        operation.objectEx = drawable;
+        operation.vertexs ~= [position, position + (size.isVecfNaN ? vecfZero : size)];
+        operation.shader = render.currentShader !is null ? 
+            render.currentShader : 
+            render.getShader("Default");
+
+        operation.angle = angle;
+        operation.center = center;
+        operation.size = size;
+        operation.alpha = alpha;
+
+        operation.shaderName = render.currentShader !is null ? 
+            findShadername(render.currentShader) :
+            "Default";
+
+        operation.color = color;
+
+        operations[frame - 1] ~=  operation;
+
+        render.drawEx(drawable, position, angle, center, size, alpha, color);
+    }
+
+    void clear()
+    {
+        frame++;
+        operations.length += 1;
+
+        Operation operation;
+        operation.name = "tida.render.GLRender.clear";
+        operation.color = render.background;
+        operations[frame - 1] ~= operation;
+
+        render.clear();
+    }
+
+    void drawning()
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.drawning";
+        operations[frame - 1] ~= operation;
+
+        render.drawning();
+    }
+
+    void point(Vecf position, Color!ubyte color)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.point";
+        operation.color = color;
+        operation.shader = render.currentShader !is null ? 
+            render.currentShader : 
+            render.getShader("Default");
+
+        operation.shaderName = render.currentShader !is null ? 
+            findShadername(render.currentShader) :
+            "Default";
+
+        operation.vertexs ~= position;
+        operations[frame - 1] ~= operation;
+
+        render.point(position, color);                            
+    }
+    
+    void line(Vecf[2] points, Color!ubyte color)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.line";
+        operation.color = color;
+        operation.shader = render.currentShader !is null ? 
+            render.currentShader : 
+            render.getShader("Default");
+
+        operation.shaderName = render.currentShader !is null ? 
+            findShadername(render.currentShader) :
+            "Default";
+
+        operation.vertexs ~= [points[0], points[1]];
+        operations[frame - 1] ~= operation;
+
+        render.line(points, color);
+    }
+
+    void rectangle(Vecf position, uint width, uint height, Color!ubyte color, bool isFill)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.rectangle";
+        operation.color = color;
+        operation.shader = render.currentShader !is null ? 
+            render.currentShader : 
+            render.getShader("Default");
+
+        operation.shaderName = render.currentShader !is null ? 
+            findShadername(render.currentShader) :
+            "Default";
+
+        operation.vertexs ~= [position, position + vecf(width, height)];
+        operation.isFill = isFill;
+
+        operations[frame - 1] ~= operation;
+
+        render.rectangle(position, width, height, color, isFill);
+    }
+
+    void triangle(Vecf[3] points, Color!ubyte color, bool isFill)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.triangle";
+        operation.color = color;
+        operation.shader = render.currentShader !is null ? 
+            render.currentShader : 
+            render.getShader("Default");
+
+        operation.shaderName = render.currentShader !is null ? 
+            findShadername(render.currentShader) :
+            "Default";
+
+        operation.vertexs ~= [points[0], points[1], points[2]];
+        operation.isFill = isFill;
+
+        operations[frame - 1] ~= operation;
+
+        render.triangle(points, color, isFill);
+    }
+
+    void circle(Vecf position, float radius, Color!ubyte color, bool isFill)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.circle";
+        operation.color = color;
+        operation.shader = render.currentShader !is null ? 
+            render.currentShader : 
+            render.getShader("Default");
+
+        operation.shaderName = render.currentShader !is null ? 
+            findShadername(render.currentShader) :
+            "Default";
+
+        operation.vertexs ~= [position];
+        operation.isFill = isFill;
+        operation.radius = radius;
+
+        operations[frame - 1] ~= operation;
+
+        render.circle(position, radius, color, isFill);
+    }
+
+    void polygon(Vecf position, Vecf[] points, Color!ubyte color, bool isFill)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.polygon";
+        operation.color = color;
+        operation.shader = render.currentShader !is null ? 
+            render.currentShader : 
+            render.getShader("Default");
+
+        operation.shaderName = render.currentShader !is null ? 
+            findShadername(render.currentShader) :
+            "Default";
+
+        operation.vertexs ~= [position] ~ points;
+        operation.isFill = isFill;
+
+        operations[frame - 1] ~= operation;
+
+        render.polygon(position, points, color, isFill);
+    }
+
+    void roundrect(Vecf position, uint width, uint height, float radius, Color!ubyte color, bool isFill)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.line";
+        operation.color = color;
+        operation.shader = render.currentShader !is null ? 
+            render.currentShader : 
+            render.getShader("Default");
+
+        operation.shaderName = render.currentShader !is null ? 
+            findShadername(render.currentShader) :
+            "Default";
+
+        operation.vertexs ~= [position, position + vecf(width, height)];
+        operation.isFill = isFill;
+        operation.radius = radius;
+
+        operations[frame - 1] ~= operation;
+
+        render.roundrect(position, width, height, radius, color, isFill);
+    }
+
+    Shader!Program getShader(string name)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.getShader";
+        operation.shader = render.getShader(name);
+        operation.shaderName = name;
+
+        operations[frame - 1] ~= operation;
+
+        return render.getShader(name);
+    }
+
+    void setShader(string name, Shader!Program shader)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.setShader";
+        operation.shader = shader;
+        operation.shaderName = name;
+
+        operations[frame - 1] ~= operation;
+
+        render.setShader(name, shader);
+    }
+
+    @property RenderType type()
+    {
+        return RenderType.opengl;
+    }
+
+    @property void currentModelMatrix(float[4][4] matrix)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.currentModelMatrix[set]";
+        operation.matrix = matrix;
+
+        operations[frame - 1] ~= operation;
+
+        render.currentModelMatrix = matrix;
+    }
+
+    @property float[4][4] currentModelMatrix()
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.currentModeMatrix[get]";
+
+        operations[frame - 1] ~= operation;
+
+        return render.currentModelMatrix;
+    }
+
+    @property Camera camera()
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.camera[get]";
+
+        operations[frame - 1] ~= operation;
+
+        return render.camera;
+    }
+
+    @property void camera(Camera value)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.camera[set]";
+
+        operations[frame - 1] ~= operation;
+
+        render.camera = value;
+    }
+
+    @property void blendMode(BlendMode mode)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.blendMode[set]";
+
+        operations[frame - 1] ~= operation;
+
+        render.blendMode(mode);
+    }
+
+    @property void reshape()
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.reshape";
+        operation.matrix = render.projection;
+        operation.vertexs = [camera.port.begin, camera.port.end];
+
+        operations[frame - 1] ~= operation;
+
+        render.reshape();
+    }
+
+    @property Color!ubyte background()
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.background[get]";
+        operation.color = render.background;
+
+        operations[frame - 1] ~= operation;
+
+        return render.background;
+    }                            
+
+    @property void background(Color!ubyte color)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.background[set]";
+        operation.color = color;
+
+        operations[frame - 1] ~= operation;
+
+        render.background = color;
+    }
+
+    @property void currentShader(Shader!Program shader)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.currentShader[set]";
+        operation.shader = shader;
+        operation.shaderName = findShadername(shader);
+
+        operations[frame - 1] ~= operation;
+
+        render.currentShader = shader;
+    }
+
+    @property Shader!Program currentShader()
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.currentShader[get]";
+        operation.shader = render.currentShader;
+        operation.shaderName = findShadername(render.currentShader);
+
+        operations[frame - 1] ~= operation;
+
+        return render.currentShader;
+    }
+
+    void resetShader()
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.resetShader";
+        operation.shader = render.currentShader;
+        operation.shaderName = findShadername(render.currentShader);
+
+        operations[frame - 1] ~= operation;
+
+        render.resetShader();
+    }
+
+    void blendOperation(BlendFactor sfactor, BlendFactor dfactor)
+    {
+        Operation operation;
+        operation.name = "tida.render.GLRender.blendOperation";
+        operation.sfactor = sfactor;
+        operation.dfactor = dfactor;
+
+        operations[frame - 1] ~= operation;
+
+        render.blendOperation(sfactor, dfactor);
     }
 }
 
@@ -1336,6 +1899,7 @@ class Software : IRenderer
     import tida.color;
     import tida.vector;
     import tida.shape;
+    import tida.drawable;
 
 private:
     ICanvas canvas;
@@ -1671,6 +2235,25 @@ override:
     void blendOperation(BlendFactor sfactor, BlendFactor dfactor)
     {
         canvas.blendOperation(sfactor, dfactor);
+    }
+
+    void draw(IDrawable drawable, Vecf position) @safe
+    {
+        position -= camera.port.begin;
+        drawable.draw(this, position);
+    }
+
+    /// ditto
+    void drawEx(    IDrawableEx drawable, 
+                    Vecf position, 
+                float angle,
+                Vecf center,
+                Vecf size,
+                ubyte alpha,
+                Color!ubyte color = rgb(255, 255, 255)) @safe
+    {
+        position -= camera.port.begin;
+        drawable.drawEx(this, position, angle, center, size, alpha, color);
     }
 
     import tida.shader;

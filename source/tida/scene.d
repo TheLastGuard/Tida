@@ -7,6 +7,10 @@ also be programmable using events (see tida.localevent). It does not have
 properties that define behavior without functions, it can only contain
 instances that, through it, can refer to other instances.
 
+WARNING:
+Don't pass any arguments to the scene constructor. 
+This breaks the scene restart mechanism.
+
 Macros:
     LREF = <a href="#$1">$1</a>
     HREF = <a href="$1">$2</a>

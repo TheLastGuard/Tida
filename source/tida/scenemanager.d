@@ -85,7 +85,7 @@ public @safe:
                     contact such arrays for copies of the compliant ideal.
         rend   =    Renderer instance.
     +/
-    this(size_t thread,IRenderer rend)
+    this(size_t thread, IRenderer rend)
     {
         fps = new FPSManager();
 
@@ -148,6 +148,8 @@ previous - `previous` Contact precisely to the global object - `scenemanager`.
 final class SceneManager
 {
 private:
+    alias RecoveryDelegate = void delegate(ref Scene) @safe;
+
     Scene[string] _scenes;
     Scene _current;
     Scene _previous;
@@ -155,6 +157,7 @@ private:
     Scene _ofend;
     Scene _initable;
     Scene _restarted;
+    RecoveryDelegate[string] recovDelegates;
 
 public @safe:
     /// List scenes
@@ -206,24 +209,26 @@ public @safe:
     /++
     Restarting the game.
 
-    Please note that this does not affect memory,
-    the state of variables, etc., however, gives such a simulation,
-    therefore, create a corresponding event for resetting the state
-    when the game is restarted, if this is provided.
+    Please note that this function causes complete deletion and creation of all
+    scenes in the framework. Therefore, it is recommended to load all resources
+    through the resource manager so that when you restart all scenes of the
+    constructor of such scenes, the resources are not loaded again.
+
+    Also note that there are resources in the game that may not be reloaded by
+    this function. For this there is an event `GameRestart`, in it put the
+    implementation of the function that fixes such problems.
     +/
     void gameRestart() @trusted
     {
-        foreach (scene; scenes)
+        foreach (ref scene; scenes)
         {
-            if (!scene.isInit) continue;
-
             _restarted = scene;
 
             foreach (fun; GameRestartFunctions[scene]) fun();
             foreach (instance; scene.list())
                 foreach (fun; IGameRestartFunctions[instance]) fun();
 
-            scene.isInit = false;
+            recovDelegates[scene.name](scene);
 
             _restarted = null;
         }
@@ -423,6 +428,17 @@ public @safe:
 
         if (_ofbegin is null)
             _ofbegin = scene;
+
+        recovDelegates[scene.name] = (ref Scene bscene) @safe
+        {
+            bool isSceneBegin = (ofbegin is bscene);
+
+            bscene = new T();
+            exploreScene!T(cast(T) bscene);
+            _scenes[bscene.name] = bscene;
+
+            if (isSceneBegin) _ofbegin = bscene;
+        };
 
         _scenes[scene.name] = scene;
     }

@@ -224,6 +224,11 @@ public:
     float speed = 0.01f;
 
 @safe:
+	void reset() @safe
+	{
+		k = 0.0f;
+	}
+
 	/++
 	Object animation function. The input object receives an animation step from
 	which it can play any animation.
