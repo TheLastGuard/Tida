@@ -1454,7 +1454,7 @@ unittest
 {
     initSceneManager();
 
-    class A : Scene
+    static class A : Scene
     {
         this() @safe
         {
@@ -1470,7 +1470,7 @@ unittest
 {
     initSceneManager();
 
-    class A : Scene
+    static class A : Scene
     {
         @Event!Init
         void onInit() @safe { }
@@ -1486,7 +1486,7 @@ unittest
 {
     initSceneManager();
 
-    class A : Scene
+    static class A : Scene
     {
         this() @safe
         {
