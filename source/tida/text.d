@@ -31,6 +31,17 @@ void initFontLibrary()
     enforce!Exception(!FT_Init_FreeType(&_FTLibrary), "Not a initialize FreeType Library!");
 }
 
+struct FontSymbolInfo
+{
+    import tida.image;
+    import tida.vector;
+
+    int bitmapLeft;
+    int bitmapTop;
+    Vector!float advance;
+    Image image;
+}
+
 /++
 The object to load and use the font.
 +/
@@ -39,12 +50,16 @@ class Font
     import std.exception : enforce;
     import std.string : toStringz;
     import std.file : exists;
+    import tida.image;
 
 private:
     FT_Face _face;
     size_t _size;
 
-public @trusted:
+public:
+    FontSymbolInfo[uint] cache;
+
+@trusted:
     /// Font face object.
     @property FT_Face face()
     {
@@ -55,6 +70,57 @@ public @trusted:
     @property size_t size()
     {
         return _size;
+    }
+
+    auto charIndex(T)(T symbol, int flags)
+    {
+        FT_Load_Char(_face, symbol, flags);
+        return FT_Get_Char_Index(_face, symbol);
+    }
+
+    FontSymbolInfo renderSymbol(uint index, int fload, int frender)
+    {     
+        import tida.vector;
+        import tida.color;
+
+        if (index in cache)
+        {
+            return cache[index];
+        } else
+        {
+            FontSymbolInfo syinfo;
+            Image image;
+            FT_GlyphSlot glyph;
+
+            FT_Load_Glyph(_face, index, fload);
+            FT_Render_Glyph(_face.glyph, frender);
+
+            glyph = _face.glyph;
+            
+            if (glyph.bitmap.width > 0 && glyph.bitmap.rows > 0)
+            {
+                auto bitmap = glyph.bitmap;
+
+                image = new Image();
+                image.allocatePlace(bitmap.width, bitmap.rows);
+
+                auto pixels = image.pixels;
+
+                foreach(j; 0 .. bitmap.width * bitmap.rows)
+                {
+                    pixels[j] = rgba(255, 255, 255, bitmap.buffer[j]);
+                }
+            }
+
+            syinfo.bitmapLeft = glyph.bitmap_left;
+            syinfo.bitmapTop = glyph.bitmap_top;
+            syinfo.advance = vec!float(glyph.advance.x, glyph.advance.y);
+            syinfo.image = image;
+
+            cache[index] = syinfo;
+
+            return syinfo;
+        }
     }
 
     /++
@@ -377,34 +443,14 @@ public @trusted:
         {
             TypeChar!T s = text[i];
             Image image;
-            FT_GlyphSlot glyph;
 
-            FT_Load_Char(font.face, s, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
-            const glyphIndex = FT_Get_Char_Index(font.face, s);
-
-            FT_Load_Glyph(font.face, glyphIndex, FT_LOAD_DEFAULT);
-            FT_Render_Glyph(font.face.glyph, FT_RENDER_MODE_NORMAL);
-
-            glyph = font.face.glyph;
-
-            if (s != ' ' && glyph.bitmap.width > 0 && glyph.bitmap.rows > 0)
-            {
-                auto bitmap = glyph.bitmap;
-
-                image = new Image();
-                image.allocatePlace(bitmap.width,bitmap.rows);
-
-                auto pixels = image.pixels;
-
-                foreach(j; 0 .. bitmap.width * bitmap.rows)
-                {
-                    pixels[j] = rgba(255, 255, 255, bitmap.buffer[j]);
-                }
-            }
+            const glyphIndex = font.charIndex(s, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
+            auto syinfo = font.renderSymbol(glyphIndex, FT_LOAD_DEFAULT, FT_RENDER_MODE_NORMAL);
+            image = syinfo.image;
 
             symbols ~= new Symbol(image,
-                Vecf(glyph.bitmap_left, glyph.bitmap_top),
-                Vecf(glyph.advance.x, 0),
+                Vecf(syinfo.bitmapLeft, syinfo.bitmapTop),
+                Vecf(syinfo.advance.x, 0),
                 font.size,
                 color);
         }
