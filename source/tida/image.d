@@ -170,7 +170,7 @@ public:
         cWidth = Width new picture.
         cHeight = Hight new picture.
     +/
-    Image copy(int Type = WithoutParallel)(int x, int y, int cWidth, int cHeight) @trusted
+    Image copy(int x, int y, int cWidth, int cHeight) @trusted
     {
         import std.algorithm : map, joiner;
 
@@ -698,7 +698,7 @@ Image[] strip(Image image, int x, int y, int w, int h) @safe
     import std.range : iota, array;
 
     return iota(0, image.width / w)
-        .map!(e => image.copy(e, y, w, h))
+        .map!(e => image.copy(e * w, y, w, h))
         .array;
 }
 
