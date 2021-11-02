@@ -226,7 +226,10 @@ public @safe:
 
             foreach (fun; GameRestartFunctions[scene]) fun();
             foreach (instance; scene.list())
+            {
                 foreach (fun; IGameRestartFunctions[instance]) fun();
+                scene.instanceDestroy!InMemory(instance);
+            }
 
             recovDelegates[scene.name](scene);
 

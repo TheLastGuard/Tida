@@ -38,6 +38,7 @@ import tida.color;
 import tida.each;
 import tida.drawable;
 import tida.vector;
+import std.range : isInputRange, isBidirectionalRange, ElementType;
 
 /++
 Checks if the data for the image is valid.
@@ -61,6 +62,38 @@ unittest
     ubyte[] data = new ubyte[](simpleImageWidth * simpleImageHeight * bytesPerColor!(PixelFormat.RGBA));
 
     assert(validateImageData!(PixelFormat.RGBA)(data, simpleImageWidth, simpleImageHeight));
+}
+
+auto reversed(Range)(Range range) @trusted nothrow pure
+if (isBidirectionalRange!Range)
+{
+    import std.traits : isArray;
+
+    ElementType!Range[] elements;
+
+    foreach_reverse (e; range)
+    {
+        elements ~= e;
+    }
+
+    static if (is(Range == class))
+        return new Range(elements);
+    else
+    static if (isArray!Range)
+        return elements;
+    else
+        static assert(null, "It is unknown how to return the result.");
+}
+
+Image imageFrom(Range)(Range range, uint width, uint height) @trusted nothrow pure
+if (isInputRange!Range)
+{
+    import std.range : array;
+
+    Image image = new Image(width, height);
+    image.pixels = range.array;
+
+    return image;
 }
 
 /++
@@ -139,18 +172,12 @@ public:
     +/
     Image copy(int Type = WithoutParallel)(int x, int y, int cWidth, int cHeight) @trusted
     {
-        Image image = new Image();
-        image.allocatePlace(cWidth,cHeight);
+        import std.algorithm : map, joiner;
 
-        foreach (ix, iy; Coord!Type(x + cWidth, y + cHeight, x, y))
-        {
-            image.setPixel(
-                ix - x, iy - y,
-                this.getPixel(ix, iy)
-            );
-        }
-
-        return image;
+        return this.scanlines[y .. y + cHeight]
+            .map!(e => e[x .. x + cWidth])
+            .joiner
+            .imageFrom(cWidth, cHeight);
     }
 
     /++
@@ -294,6 +321,11 @@ public:
         this.allocatePlace(w, h);
     }
 
+    ref Color!ubyte opIndex(size_t x, size_t y)
+    {
+        return pixeldata[(width * y) + x];
+    }
+
     /// Image width.
     @property uint width()
     {
@@ -333,6 +365,22 @@ public:
     do
     {
         pixeldata = data;
+    }
+
+    Color!ubyte[] scanline(uint y)
+    in(y >= 0 && y < height)
+    {
+        return pixeldata[(width * y) .. (width * y) + width];
+    }
+
+    Color!ubyte[][] scanlines()
+    {
+        import std.range : iota, array;
+        import std.algorithm : map;
+
+        return iota(0, height)
+            .map!(e => scanline(e))
+            .array;
     }
 
     /++
@@ -500,6 +548,29 @@ unittest
         .validateImageData!(PixelFormat.RGBA)(image.width, image.height));
 }
 
+alias invert = (x, y, ref e) => e = e.inverted;
+alias grayscaled = (x, y, ref e) => e = e.toGrayscale;
+alias changeLightness(float factor) = (x, y, ref e) 
+{ 
+    immutable alpha = e.alpha;
+    e = (e * factor);
+    e.a = alpha;
+};
+
+template process(alias fun)
+{
+    void process(Image image) @safe nothrow pure
+    {
+        foreach (size_t index, ref Color!ubyte pixel; image.pixels)
+        {
+            immutable y = index / image.width;
+            immutable x = index - (y * image.width);
+
+            fun(x, y, pixel);
+        }
+    }
+}
+
 /++
 Rotate the picture by the specified angle from the specified center.
 
@@ -559,26 +630,40 @@ image
     .flip!YAxis;
 ---
 +/
-Image flip(int flipType)(Image img) @safe
-in(isValidAxis!flipType)
-do
+template flipImpl(int axis)
 {
-    Image image = img.dup();
-
-    static if (flipType == XAxis) {
-        foreach(x,y; Coord(img.width, img.height)) {
-            image.setPixel(img.width - x, y, img.getPixel(x, y));
-        }
-    }else
-    static if (flipType == YAxis)
+    static if (axis == XAxis)
     {
-        foreach(x,y; Coord(img.width, img.height)) {
-            image.setPixel(x, img.height - y, img.getPixel(x, y));
-        }
-    }
+        Image flipImpl(Image image) @trusted nothrow pure
+        {
+            import std.algorithm : joiner, map;
 
-    return image;
+            return image.scanlines
+                .map!(e => e.reversed)
+                .joiner
+                .imageFrom(image.width, image.height);
+
+        }
+    } else
+    static if (axis == YAxis)
+    {
+        Image flipImpl(Image image) @trusted nothrow pure
+        {
+            import std.algorithm : reverse, joiner;
+
+            return image
+                .scanlines
+                .reversed
+                .joiner
+                .imageFrom(image.width, image.height);
+        }   
+    }
 }
+
+alias flip = flipImpl;
+
+alias flipX = flipImpl!XAxis;
+alias flipY = flipImpl!YAxis;
 
 /++
 Save image in file.
@@ -609,14 +694,12 @@ Params:
 +/
 Image[] strip(Image image, int x, int y, int w, int h) @safe
 {
-    Image[] result;
+    import std.algorithm : map;
+    import std.range : iota, array;
 
-    for (int i = 0; i < image.width; i += w)
-    {
-        result ~= image.copy(i,y,w,h);
-    }
-
-    return result;
+    return iota(0, image.width / w)
+        .map!(e => image.copy(e, y, w, h))
+        .array;
 }
 
 /++
@@ -780,52 +863,4 @@ Image blur(int Type = WithoutParallel)(Image image, float[][] otherKernel) @trus
     }
 
     return result;
-}
-
-import tida.color : Color; 
-import tida.vector : Vector, Vecf, vecf;
-
-/++
-Image processing process. The function traverses the picture, giving the
-input delegate a pointer to the color and traversal position in the form
-of a vector.
-
-Params:
-    image = Image processing.
-    func = Function processing.
-
-Example:
----
-// Darkening the picture in the corners.
-myImage.process((ref e, position) {
-    e = e * (position.x / myImage.width * position.y / myImage.height);
-});
----
-+/
-Image process(int Type = WithoutParallel)(  Image image, 
-                                            void delegate(  ref Color!ubyte, 
-                                                            const Vecf) @safe func) @safe
-{
-    foreach(x, y; Coord!Type(image.width, image.height)) 
-    {
-        Color!ubyte color = image.getPixel(x, y);
-        func(color, vecf(x, y));
-        image.setPixel(x, y, color);
-    }
-
-    return image;
-}
-
-unittest
-{
-    import tida.color, tida.vector;
-
-    Image image = new Image(64, 64);
-    image.fill(rgba(128, 128, 128, 255));
-
-    image.process((ref e, position) {
-        e = rgb(64, 64, 64);
-    });
-
-    assert(image.getPixel(32, 32) == (rgb(64, 64, 64)));
 }

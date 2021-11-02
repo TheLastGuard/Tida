@@ -248,11 +248,32 @@ inout:
 
         return Vector!T(this.x * d, this.y * d);
     }
+
+    Vector!T negatived()
+    {
+        return Vector!T(-this.x, -this.y);
+    }
+
+    Vector!T positived()
+    {
+        return Vector!T(+this.x, +this.y);
+    }
+
+    template opUnary(string op)
+    if (op == "-" || op == "+")
+    {
+        static if (op == "+")
+            alias opUnary = positived;
+        else
+        static if (op == "-")
+            alias opUnary = negatived;
+    }
 }
 
 unittest
 {
     assert(vec!real([32, 64]) == (Vector!real(32.0, 64.0)));
+    assert(-vec!real(32, 32) == vec!real(-32, -32));
 }
 
 /++
@@ -343,11 +364,13 @@ Params:
 +/
 T[] generateArray(T)(Vector!T[] vectors) @safe nothrow pure
 {
-    T[] result;
-    foreach (e; vectors)
-        result ~= e.array;
+    import std.algorithm : map, joiner;
+    import std.range : array;
 
-    return result;
+    return vectors
+        .map!(e => e.array)
+        .joiner
+        .array;
 }
 
 unittest

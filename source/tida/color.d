@@ -588,7 +588,7 @@ public:
     {
         auto graycolor = toGrayscaleNumber();
 
-        return Color!T(graycolor, graycolor, graycolor, Max);
+        return Color!T(graycolor, graycolor, graycolor, alpha);
     }
 
     /// Will return the color opposite to itself.
