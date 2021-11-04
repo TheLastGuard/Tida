@@ -267,7 +267,6 @@ public:
     specified in the template, from memory.
 
     Params:
-        type = Type destroy.
         instance = Instance.
 
     Type:

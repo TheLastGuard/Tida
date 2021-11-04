@@ -88,16 +88,22 @@ void loadGLXLibrary() @trusted
 
     string[] recurseFindGLX(string path)
     {
+        import std.traits : ReturnType;
+
         string[] locateds;
+
+        ReturnType!dirEntries dirs;
 
         try
         {
-            auto dirs = dirEntries(path, SpanMode.depth);
+            dirs = dirEntries(path, SpanMode.depth);
 
             foreach(DirEntry e; parallel(dirs, 1))
             {
-                if(e.name.isDir) {
-                    if(!pathes.canFind(e.name)) {
+                if(e.name.isDir)
+                {
+                    if(!pathes.canFind(e.name))
+                    {
                         locateds ~= recurseFindGLX(e.name ~ "/");
                         pathes ~= e.name;
                     }
@@ -105,22 +111,33 @@ void loadGLXLibrary() @trusted
 
                 if(e.name.isFile)
                 {
-                    if(e.name.canFind("libglx.so")) {
+                    if (e.name.canFind("libglx.so"))
+                    {
                         locateds ~= e.name;
-                    }
-
-                    if(e.name.canFind("libGL.so")) {
-                        locateds ~= e.name;
+                    }else
+                    if (e.name.canFind("libGL.so"))
+                    {
+                        if (!e.name.canFind("libGL.so.1.7.0"))
+                            locateds ~= e.name;
                     }
                 }
             }
-        }catch(Exception e) {}
+        } catch (Exception e)
+        {
+            return locateds;
+        }
 
         return locateds;
     }
 
     string[] paths = recurseFindGLX("/usr/lib/");
 
+    version(X86_64)
+        paths ~= recurseFindGLX("/usr/lib/x86_64-linux-gnu/");
+    else
+    version(X86)
+        paths ~= recurseFindGLX("/usr/lib/i386-linux-gnu/");
+    
     bool isSucces = false;
     bool ErrorFind = false;
 
@@ -136,7 +153,8 @@ void loadGLXLibrary() @trusted
         if(path.exists)
         {
             glxLib = load(path.toStringz);
-            if(glxLib == invalidHandle) {
+            if(glxLib == invalidHandle)
+            {
                 continue;
             }
 

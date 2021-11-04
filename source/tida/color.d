@@ -163,6 +163,11 @@ Color!ubyte rgba(ubyte[] data) @safe nothrow pure
     return Color!ubyte(data);
 }
 
+Color!ubyte grayscale(ubyte value) @safe nothrow pure
+{
+    return Color!ubyte(value, value, value, Color!ubyte.Max);
+}
+
 /++
 Creates an RGBA color.
 
@@ -1247,7 +1252,7 @@ Returns:
 ubyte[] fromFormat(int format1, int format2)(ubyte[] pixels) @safe nothrow pure
 in
 {
-    assert(validateBytes!format1(pixels),"The input pixels data is incorrect!");
+    assert(validateBytes!format1(pixels), "The input pixels data is incorrect!");
 }
 out(r; validateBytes!format2(r), "The out pixels data is incorrect!")
 do
@@ -1255,7 +1260,8 @@ do
     static assert(isValidFormat!format1, CannotDetectAuto);
     static assert(isValidFormat!format2, CannotDetectAuto);
 
-    static if (format1 == format2) return pixels;
+    static if (format1 == format2)
+        return pixels;
 
     static if (format1 == PixelFormat.RGB)
     {
@@ -1263,9 +1269,9 @@ do
         {
             ubyte[] result;
 
-            for (size_t i = 3; i <= pixels.length; i += 3)
+            for (size_t i = 0; i < pixels.length; i += 3)
             {
-                result ~= pixels[0 .. i] ~ 255;
+                result ~= pixels[i .. i + 3] ~ 255;
             }
 
             return result;
@@ -1276,7 +1282,7 @@ do
 
             for (size_t i = 0; i < pixels.length; i += 3)
             {
-                result ~= pixels[0 .. i] ~ 255;
+                result ~= 255 ~ pixels[i .. i + 3];
             }
 
             return result;

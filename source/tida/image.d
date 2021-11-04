@@ -405,8 +405,10 @@ public:
         data = Image data.
     +/
     void bytes(int format = PixelFormat.RGBA)(ubyte[] data)
-    in(validateBytes!format(data))
-    in(validateImageData!format(data, _width, _height))
+    in(validateBytes!format(data), 
+    "The number of bytes is not a multiple of the sample of bytes in a pixel.")
+    in(validateImageData!format(data, _width, _height),
+    "The number of bytes is not a multiple of the image size.")
     do
     {
         pixels = data.fromColors!(format);
@@ -618,10 +620,6 @@ template isValidAxis(int axistype)
 
 /++
 Reverses the picture along the specified axis.
-
-Params:
-    flipType = Axis.
-    img = Image.
 
 Example:
 ---

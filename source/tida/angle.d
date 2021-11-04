@@ -180,22 +180,17 @@ alias from = conv; // old name saved.
 /++
 Converts degrees to radians.
 
-Params:
-    value = The value is in degrees.
-
-Returns:
-    The value is in degrees.
+See_Also:
+    $(LREF conv)
 +/
 alias degToRad = conv!(Degrees, Radians);
 
 /++
 Convert radians to degrees.
 
-Params:
-    value = The value is in radians.
 
-Returns:
-    The value is in degrees.
+See_Also:
+    $(LREF conv)
 +/
 alias radToDeg = conv!(Radians, Degrees);
 

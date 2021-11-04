@@ -268,7 +268,14 @@ private:
     XVisualInfo* visual;
     GLXFBConfig bestFbcs;
 
-public @trusted override:
+public @trusted:
+    @property XVisualInfo* getVisualInfo()
+    {
+        return visual;
+    }
+
+override:
+
     void setAttributes(GraphicsAttributes attributes)
     {
         import std.exception : enforce;
@@ -585,7 +592,12 @@ override:
     @property void context(IContext ctx)
     {
         this._context = ctx;
-        glXMakeCurrent(runtime.display, this.handle, (cast(Context) ctx)._context);
+
+        auto glxctx = (cast(Context) ctx)._context;
+        if (glxctx is null)
+            throw new Exception("Context is null!");
+
+        glXMakeCurrent(runtime.display, this.handle, glxctx);
     }
 
     @property IContext context()
@@ -1138,42 +1150,57 @@ void windowInitialize(int type = WithoutContext)(   Window window,
                                                     int posX, 
                                                     int posY) @trusted
 {
-    version(Posix) {
+    version(Posix)
+    {
         import tida.runtime;
         import x11.X, x11.Xlib, x11.Xutil;
 
-        scope XVisualInfo* vinfo = new XVisualInfo();
-        vinfo.visual = XDefaultVisual(runtime.display, runtime.displayID);
-        vinfo.depth = XDefaultDepth(runtime.display, runtime.displayID);
-        
-        window.createFromXVisual(vinfo);
+        static if (type == WithoutContext)
+        {
+            scope XVisualInfo* vinfo = new XVisualInfo();
+            vinfo.visual = XDefaultVisual(runtime.display, runtime.displayID);
+            vinfo.depth = XDefaultDepth(runtime.display, runtime.displayID);
+            
+            window.createFromXVisual(vinfo);
 
-        destroy(vinfo);
-    }
-    else
-        window.create(posX, posY);
-    
-    static if(type == WithContext)
-    {
-        GraphicsAttributes attribs = AttribBySizeOfTheColor!8;
-        attribs.glmajor = 4;
-        attribs.glminor = 5;
+            destroy(vinfo);
+        }else
+        {
+            GraphicsAttributes attribs = AttribBySizeOfTheColor!8;
+            attribs.glmajor = 4;
+            attribs.glminor = 5;   
 
-        Context context;
-        
-        void ctxCreate() {
+            Context context;
+            
             context = new Context();
             context.setAttributes(attribs);
-            context.create(window);
+            context.create(null);
+
+            window.createFromXVisual(context.getVisualInfo(), 100, 100);
+            window.context = context;
         }
 
-        try
+        window.show();
+    }
+    else
+    version(Windows)
+    {
+        window.create(posX, posY);
+    
+        static if(type == WithContext)
         {
-            ctxCreate();
-        } catch(Exception e)
-        {
-            attribs.glmajor = 3;
-            attribs.glminor = 3;
+            GraphicsAttributes attribs = AttribBySizeOfTheColor!8;
+            attribs.glmajor = 4;
+            attribs.glminor = 5;
+
+            Context context;
+            
+            void ctxCreate()
+            {
+                context = new Context();
+                context.setAttributes(attribs);
+                context.create(window);
+            }
 
             try
             {
@@ -1181,14 +1208,23 @@ void windowInitialize(int type = WithoutContext)(   Window window,
             } catch(Exception e)
             {
                 attribs.glmajor = 3;
-                attribs.glminor = 0;
-                
-                ctxCreate();
+                attribs.glminor = 3;
+
+                try
+                {
+                    ctxCreate();
+                } catch(Exception e)
+                {
+                    attribs.glmajor = 3;
+                    attribs.glminor = 0;
+                    
+                    ctxCreate();
+                }
             }
+
+            window.context = context;
         }
 
-        window.context = context;
+        window.show();
     }
-
-    window.show();
 }

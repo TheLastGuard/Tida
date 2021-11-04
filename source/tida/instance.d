@@ -280,7 +280,7 @@ public:
     Detaches a component from an instance by finding it by name.
 
     Params:
-        T = Component type.
+        name = Instance name.
     +/
     void dissconnect(string name)
     {
