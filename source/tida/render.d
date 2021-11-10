@@ -261,10 +261,6 @@ interface IRenderer
     See_Also: `tida.graph.drawable`.
     +/
     void draw(IDrawable drawable, Vecf position) @safe;
-    //{
-    //    position -= camera.port.begin;
-    //    drawable.draw(this, position);
-    //}
 
     /// ditto
     void drawEx(    IDrawableEx drawable, 
@@ -274,10 +270,6 @@ interface IRenderer
                     Vecf size,
                     ubyte alpha,
                     Color!ubyte color = rgb(255, 255, 255)) @safe;
-    //{
-    //    position -= camera.port.begin;
-    //    drawable.drawEx(this, position, angle, center, size, alpha, color);
-    //}
 }
 
 /++
@@ -526,6 +518,8 @@ override:
     {
         if (currentShader is null)
             currentShader = getShader("Default");
+            
+        vec -= camera.port.begin;
 
         Shapef shape = Shapef.Point(vec);
         VertexInfo!float vinfo = generateVertex!(float)(shape);
@@ -555,7 +549,9 @@ override:
         if (currentShader is null)
             currentShader = getShader("Default");
 
-        auto shape = Shapef.Line(points[0], points[1]);
+        auto shape = Shapef.Line(   points[0] - camera.port.begin, 
+                                    points[1] - camera.port.begin);
+                                    
         VertexInfo!float vinfo = generateVertex!(float)(shape);
 
         vinfo.bindBuffer();
@@ -582,6 +578,8 @@ override:
     {
         if (currentShader is null)
             currentShader = getShader("Default");
+
+        position -= camera.port.begin;
 
         Shapef shape;
 
@@ -626,6 +624,8 @@ override:
         if (currentShader is null)
             currentShader = getShader("Default");
 
+        position -= camera.port.begin;
+
         Shapef shape;
 
         if (isFill)
@@ -667,6 +667,8 @@ override:
         if (currentShader is null)
             currentShader = getShader("Default");
 
+        position -= camera.port.begin;
+
         Shapef shape;
 
         if (isFill)
@@ -707,6 +709,10 @@ override:
     {
         if (currentShader is null)
             currentShader = getShader("Default");
+
+        points[0] = points[0] - camera.port.begin;
+        points[1] = points[1] - camera.port.begin;
+        points[2] = points[2] - camera.port.begin;
 
         Shapef shape;
 
@@ -750,6 +756,8 @@ override:
 
         if (currentShader is null)
             currentShader = getShader("Default");
+            
+        position -= camera.port.begin;
 
         Shapef shape;
         points.each!((ref e) => e = position + e);

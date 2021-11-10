@@ -1,7 +1,17 @@
 /++
+<center><img src="https://code.dlang.org/packages/tida/logo?s=6141da3aa33a2f9463017230" width=128 height=128 /></center>
 
-next:
+Tida is a library for building 2D games in D language with an OOP system in 
+the form of Scene-Instance-Component (where Instance is equivalent to Entity).
+
+This page lists some modules according to the categories to which the modules 
+belong. Please note that addons are not included in the default documentation.
 $(TABLE
+    $(TSTR
+        $(TNAM Modules),
+        $(TNAM Description)
+    )
+
     $(STRNAME Technical modules.)
     $(TSTR
         $(ITEM 
@@ -87,8 +97,9 @@ $(TABLE
             $(HREF tida/instance.html, tida.instance)<br/>
             $(HREF tida/scene.html, tida.scene)<br/>
             $(HREF tida/scenemanager.html, tida.scenemanager)<br/>
+            $(HREF tida/localevent.html, tida.localevent)<br/>
             $(HREF tida/game.html, tida.game)<br/>
-            $(HREF tida/listener.html, tida.listener)<br/>
+            $(HREF tida/listener.html, tida.listener)
         )
         $(ITEM Such modules serve the purpose of providing a way to make the 
         game feel comfortable and well-behaved. With the help of scene modules, 
@@ -100,6 +111,30 @@ $(TABLE
         responsible for distributing the game life cycle and limiting 
         frames per second.)
     )
+    $(STRNAME Game auxiliary modules.)
+    $(TSTR
+        $(ITEM
+            $(HREF tida/algorithm.html, tida.algorithm)<br/>
+            $(HREF tida/animation.html, tida.animation)<br/>
+            $(HREF tida/collision.html, tida.collision)<br/>
+            $(HREF tida/loader.html, tida.loader)<br/>
+            $(HREF tida/text.html, tida.text)
+        )
+        $(ITEM Such modules help in building a two-dimensional game, such as 
+        collision detection, animation, pathfinding algorithms, 
+        resource allocation object and others.)
+    )
+
+    $(STRNAME Fundamental elements.)
+    $(TSTR
+        $(ITEM
+            $(HREF tida/window.html, tida.window)<br/>
+            $(HREF tida/event.html, tida.event)
+        )
+        $(ITEM Such modules are necessary when building a two-dimensional game, 
+        such as creating and managing a window and an object to track events 
+        such as input from devices.)
+    )
 )
 
 Macros:
@@ -110,6 +145,7 @@ Macros:
     TABLENAME = <caption>$0</caption>
     STRNAME = <tr class="leadingrow"><td colspan="2"><b><em>$(NBSP)$(NBSP)$(NBSP)$(NBSP)$0</em></b></td></tr>
     TSTR = <tr>$0</tr>
+    TNAM = <th>$0</th>
     ITEM = <td>$0</td>
 +/
 module tida;

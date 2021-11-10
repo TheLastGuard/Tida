@@ -1,5 +1,33 @@
 /++
-Module for loading a library of open graphics.
+Module for loading the library of open graphics, as well as some of its 
+extensions.
+
+Also, the module provides information about which version of the library 
+is used, provides a list of available extensions, and more.
+
+To load the library, you need the created graphics context. Therefore, 
+you need to create a window and embed a graphical context, 
+which is described $(HREF window.html, here). After that, 
+using the $(LREF loadGraphicsLibrary) function, the functions of 
+the open graphics library will be available.
+
+Example:
+---
+import tida.runtime;
+import tida.window;
+import tida.gl;
+
+int main(string[] args)
+{
+    ITidaRuntime.initialize(args, AllLibrary);
+    Window window = new Window(640, 480, "Example window");
+    window.windowInitialize!(WithContext)();
+    
+    loadGraphicsLibrary();
+    
+    return 0;
+}
+---
 
 Macros:
     LREF = <a href="#$1">$1</a>
@@ -16,11 +44,18 @@ public import bindbc.opengl;
 __gshared int[2] _glVersionSpecifed;
 __gshared string _glslVersion;
 
+/++
+A function that returns the version of the library in the form of two numbers: 
+a major version and a minor version.
++/
 @property int[2] glVersionSpecifed() @trusted
 {
     return _glVersionSpecifed;
 }
 
+/++
+Returns the maximum version of the shaders in the open graphics.
++/
 @property string glslVersion() @trusted
 {
     return _glslVersion;
@@ -30,15 +65,17 @@ __gshared string _glslVersion;
 The function loads the `OpenGL` libraries for hardware graphics acceleration.
 
 Throws:
-`Exception` if the library was not found or the context was not created to 
-implement hardware acceleration.
+$(HREF https://dlang.org/library/object.html#Exception, Exception) 
+if the library was not found or the context was not created to implement 
+hardware acceleration.
 +/
 void loadGraphicsLibrary() @trusted
 {
     import std.exception : enforce;
     import std.conv : to;
 
-    bool valid(GLSupport value) {
+    bool valid(GLSupport value)
+    {
         return value != GLSupport.noContext &&
                value != GLSupport.badLibrary &&
                value != GLSupport.noLibrary; 
@@ -55,12 +92,26 @@ void loadGraphicsLibrary() @trusted
 
 alias ExtList = string[];
 
+/++
+Available extensions that the framework can load with one function.
++/
 enum Extensions : string
 {
     textureCompression = "GL_ARB_texture_compression",
     textureArray = "GL_EXT_texture_array"
 }
 
+/++
+Checks if the extension specified in the argument is in the open graphics library.
+
+Params:
+    list =  List of extensions. Leave it blank (using the following: '[]') 
+            for the function to calculate all the extensions by itself.
+    name =  The name of the extension you need.
+
+Returns:
+    Extension search result. `False` if not found.
++/
 bool hasExtensions(ExtList list, string name) @trusted
 {
     import std.algorithm : canFind;
@@ -71,6 +122,9 @@ bool hasExtensions(ExtList list, string name) @trusted
     return list.canFind(name);
 }
 
+/++
+A function that provides a list of available extensions to use.
++/
 ExtList glExtensionsList() @trusted
 {
     import std.conv : to;
@@ -119,6 +173,13 @@ enum
     GL_COMPRESSED_TEXTURE_FORMATS_ARB = 0x86A3
 }
 
+/++
+Loads the extension `GL_ARB_texture_compression`, that is, 
+extensions for loading compressed textures.
+
+Returns:
+    Returns the result of loading. False if the download is not successful.
++/
 bool extTextureCompressionLoad() @trusted
 {
     import bindbc.opengl.util;
@@ -143,7 +204,7 @@ __gshared
 
 enum
 {
-    GL_TEXTURE_1D_ARRAY_EX = 0x8C18,
+    GL_TEXTURE_1D_ARRAY_EXT = 0x8C18,
     GL_TEXTURE_2D_ARRAY_EXT = 0x8C1A,
 
     GL_TEXTURE_BINDING_1D_ARRAY_EXT = 0x8C1C,
@@ -152,6 +213,13 @@ enum
     GL_COMPARE_REF_DEPTH_TO_TEXTURE_EXT = 0x884E
 }
 
+/++
+Loads the extension `GL_EXT_texture_array`, that is, extensions for 
+loading an array of textures.
+
+Returns:
+    Returns the result of loading. False if the download is not successful.
++/
 bool extTextureArrayLoad() @trusted
 {
     import bindbc.opengl.util;

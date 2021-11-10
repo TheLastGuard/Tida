@@ -1,27 +1,57 @@
 /++
-A module for connecting to the window manager and also loading the necessary 
-libraries, everything that does runtime, to which other objects can access 
-the necessary objects.
+Runtime is a fundamental module for building two-dimensional games. It is he 
+who connects to the window manager of the operating system, initializes the 
+sound device and loads the necessary libraries for the game. Also, it is able 
+to store program arguments in itself, in order to pass them later to 
+other functions.
 
-$(LREF runtime) Gives access to runtime. Before that, you need to initialize the 
-runtime with the $(HREF runtime/ITidaRuntime.initialize,ITidaRuntime.initialize)
-function if it has not been initialized earlier.
-
-The easiest way to initialize:
+How do I create a runtime?:
+Creating a runtime is quick and easy. There is a class, it has a static 
+method $(HREF ../tida/runtime/ITidaRuntime.initialize.html, initialize), which allocates memory, and then calls the internal 
+functions of the object to execute its functions. This is done 
+in the following way:
 ---
-void main(string[] args) {
+import tida;
+
+int main(string[] args)
+{
     TidaRuntime.initialize(args);
-    ...
+
+    return 0;
 }
 ---
+
+As you can see, the program arguments are passed to the function. 
+This is necessary in order to later use them outside the main function.
+
+Also, the second parameter can be a list of libraries to load. 
+All kinds of libraries that runtime can load are described in $(HREF #OpenAL, here).
+---
+import tida;
+
+int main(string[] args)
+{
+    TidaRuntime.initialize(args, [FreeType, OpenAL]);
+
+    return 0;
+}
+---
+
+Or you can use $(LREF AllLibrary) to say that you need to load everything, 
+or $(LREF WithoutLibrary) that you need to load nothing.
+
+Next, to take advantage of the runtime, you can refer to the $(LREF runtime) function, 
+which will give the runtime object as long as you can do something. 
+All actions are described in $(HREF ../tida/runtime/ITidaRuntime.html, ITidaRuntime).
 
 Macros:
     LREF = <a href="#$1">$1</a>
     HREF = <a href="$1">$2</a>
+    OBJECTREF = <a href="https://dlang.org/library/object.html#$1">$1</a>
 
-Authors: $(HREF https://github.com/TodNaz,TodNaz)
+Authors: $(HREF https://github.com/TodNaz, TodNaz)
 Copyright: Copyright (c) 2020 - 2021, TodNaz.
-License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
+License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE, MIT)
 +/
 module tida.runtime;
 
@@ -46,7 +76,18 @@ enum : int
 
 alias LibraryUnite = int; /// 
 
+/++
+An array of library indexes. Indicates that all libraries should be loaded, 
+when specified in the 
+$(HREF ../tida/runtime/ITidaRuntime.initialize.html, initialization) of the runtime.
++/
 enum AllLibrary = [OpenAL, FreeType, GLX];
+
+/++
+An array of only important libraries. Loads only the necessary libraries 
+(for connecting to the window manager) when specified in the 
+$(HREF ../tida/runtime/ITidaRuntime.initialize.html, initialization) of the runtime.
++/
 enum WithoutLibrary  = [GLX];
 
 /++
@@ -61,8 +102,8 @@ interface ITidaRuntime
 
     Params:
         libs =  What external libraries need to be loaded. 
-                (allLibrary to load all external libraries,
-                 WithoutLibrary in order not to load unnecessary 
+                (`AllLibrary` to load all external libraries,
+                 `WithoutLibrary` in order not to load unnecessary 
                  external libraries.)
 
     Throws:
@@ -99,24 +140,34 @@ interface ITidaRuntime
 
 @trusted:
     /++
-    Runtime initialization. It includes such stages as:
-    1. Loading external libraries.
-    2. Connection to the window manager.
-    3. Preparation of objects for work.
-
+    Static function to initialize the runtime. Allocates memory for runtime and 
+    executes its functions of accepting arguments, loading the necessary 
+    libraries and connecting to the window manager through its 
+    interface functions.
+    
+    An example of how to load individual libraries:
+    ---
+    import tida.runtime;
+    
+    int main(string[] args)
+    {
+        TidaRuntime.initialize(args, [FreeType, OpenAL]);
+        
+        return 0;
+    }
+    ---
+    
     Params:
-        arguments = Arguments given to the program.
-        libs = What external libraries need to be loaded. 
-                (allLibrary to load all external libraries,
-                 WithoutLibrary in order not to load unnecessary 
-                 external libraries.)
-
-    Throws:
-    $(OBJECTREF Exception) If the libraries were not installed on the machine
-    being started or they were damaged. And also if the connection to the 
-    window manager was not successful (for example, there is no such 
-    component in the OS or the connection to an unknown window manager 
-    is not supported).
+        arguments = Arguments that were nested in the main function. They will 
+                    be stored in the runtime memory from where they can be read. 
+                    Rantheim doesn't read such arguments.
+        libs      = List of libraries to download. Please note that this does 
+                    not affect libraries that the framework does not use. 
+                    Notable libraries are listed 
+                    $(HREF ../runtime.html#EGL, here).
+                    
+    Throws: $(OBJECTREF Exception) if during initialization the libraries 
+    were not loaded or the runner could not connect to the window manager.
     +/
     static final void initialize(   string[] arguments  = [], 
                                     LibraryUnite[] libs = AllLibrary)
@@ -194,7 +245,8 @@ public @trusted:
             if (e == FreeType)
                 initFontLibrary();
             else
-            if (e == GLX) {
+            if (e == GLX)
+            {
                 if (_session == SessionType.x11)
                     loadGLXLibrary();
             }

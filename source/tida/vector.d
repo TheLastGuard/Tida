@@ -1,15 +1,17 @@
 /++
-Module two-dimensional vectors.
+A module that describes how to work with a vector, as well as functions for 
+processing a vector for other needs.
 
-Mainly contains vector arithmetic functions as well as some traits.
+Please note that the vector works only with two-dimensional space, therefore, 
+the vector is calculated only along two axes.
 
 Macros:
     LREF = <a href="#$1">$1</a>
     HREF = <a href="$1">$2</a>
 
-Authors: $(HREF https://github.com/TodNaz,TodNaz)
+Authors: $(HREF https://github.com/TodNaz, TodNaz)
 Copyright: Copyright (c) 2020 - 2021, TodNaz.
-License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
+License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE, MIT)
 +/
 module tida.vector;
 
@@ -17,16 +19,21 @@ import std.traits;
 
 /++
 Vector structure. May include any numeric data type available for vector arithmetic.
+
+Example:
+---
+assert(vec!float(32, 32) + vecf(32, 32) == Vector!float[64, 64]);
+---
 +/
 struct Vector(T)
-if (isNumeric!T && isMutable!T && isSigned!T)
+if (isNumeric!T && isSigned!T)
 {
     import std.math : pow, sqrt;
     import core.exception;
 
+public:
     alias Type = T;
 
-public:
     T   x, /// X-axis position.
         y; /// Y-axis position. 
 
@@ -36,6 +43,7 @@ public:
     can be included in the vector's constructor.
     +/
     this(R)(R x, R y)
+    if (isImplicitlyConvertible!(R, T))
     {
         this.x = cast(T) x;
         this.y = cast(T) y;
@@ -52,28 +60,16 @@ public:
         this.y = cast(T) arrvec[1];
     }
 
-    void opIndexAssign(T value, size_t index)
+    void opIndexAssign(R)(R value, size_t index)
+    if (isImplicitlyConvertible!(R, T))
     {
         if (index == 0)
         {
-            this.x = value;
+            this.x = cast(R) value;
         } else
         if (index == 1)
         {
-            this.y = value;
-        } else
-            throw new RangeError();
-    }
-
-    T opIndex(size_t index)
-    {
-        if (index == 0)
-        {
-            return this.x;
-        } else
-        if (index == 1)
-        {
-            return this.y;
+            this.y = cast(R) value;
         } else
             throw new RangeError();
     }
@@ -139,6 +135,19 @@ public:
         this.y = y * d;
     }
 inout:
+    T opIndex(size_t index)
+    {
+        if (index == 0)
+        {
+            return this.x;
+        } else
+        if (index == 1)
+        {
+            return this.y;
+        } else
+            throw new RangeError();
+    }
+
     /++
     Converts a vector to an array.
     +/
@@ -195,7 +204,8 @@ inout:
             static assert(null, "The `" ~ op ~ "` operator is not implemented.");
     }
 
-    Vector!T opBinary(string op)(T num)
+    Vector!T opBinary(string op, R)(R num)
+    if (isImplicitlyConvertible!(R, T))
     {
         static if (op == "+")
         {
@@ -272,7 +282,7 @@ inout:
 
 unittest
 {
-    assert(vec!real([32, 64]) == (Vector!real(32.0, 64.0)));
+    assert(vec!real([32, 64]) == (vec!real(32.0, 64.0)));
     assert(-vec!real(32, 32) == vec!real(-32, -32));
 }
 
