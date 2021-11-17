@@ -22,15 +22,15 @@ class FPSManager
     import core.thread;
 
 private:
-    MonoTime currTime;
-    MonoTime lastTime;
-    long _deltatime;
-
+    MonoTime controlTime;
+    Duration _deltatime;
+    
     MonoTime startProgramTime;
-    bool isCountDownStartTime = false;
-    long cfps = 0;
-    long cpfps;
-    MonoTime ctime;
+    bool isFirstControl = true;
+    
+    MonoTime lastRenderTime;
+    long countFPS = 0;
+    long resultFPS = 0;
 
 public:
     /++
@@ -44,7 +44,7 @@ public:
     +/
     @property long fps() @safe
     {
-        return cpfps;
+        return resultFPS;
     }
 
     /++
@@ -58,7 +58,7 @@ public:
     /++
     Delta time.
     +/
-    @property long deltatime() @safe
+    @property Duration deltatime() @safe
     {
         return _deltatime;
     }
@@ -70,20 +70,20 @@ public:
     +/
     void countDown()
     {
-        if (!isCountDownStartTime)
+        if (isFirstControl)
         {
+            isFirstControl = false;
             startProgramTime = MonoTime.currTime;
-            isCountDownStartTime = true;
         }
-
-        lastTime = MonoTime.currTime;
-
-        if ((MonoTime.currTime - ctime).total!"msecs" > 1000)
+        
+        if (MonoTime.currTime - lastRenderTime > dur!"msecs"(1000))
         {
-            cpfps = cfps;
-            cfps = 0;
-            ctime = MonoTime.currTime;
+            resultFPS = countFPS;
+            countFPS = 0;
+            lastRenderTime = MonoTime.currTime;
         }
+        
+        controlTime = MonoTime.currTime;
     }
 
     /++
@@ -91,13 +91,14 @@ public:
     +/
     void control()
     {
-        cfps++;
-        currTime = MonoTime.currTime;
-        _deltatime = 1000 / maxFPS - (currTime - lastTime).total!"msecs";
-
-        if (_deltatime > 0)
+        countFPS++;
+        
+        immutable timePerFrame = dur!"msecs"(1000) / maxFPS;
+        _deltatime = MonoTime.currTime - controlTime;
+        
+        if (_deltatime < timePerFrame)
         {
-            Thread.sleep(dur!"msecs"(_deltatime));
+            Thread.sleep(timePerFrame - _deltatime);
         }
     }
 }

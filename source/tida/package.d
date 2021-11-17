@@ -1,4 +1,8 @@
 /++
+$(TOOLS
+    <a href="https://github.com/TodNaz/Tida/issues/new/choose" class="bugraf" title="Submit a bug to the list of problems in the official repository.">Report bug</a>
+)
+
 <center><img src="https://code.dlang.org/packages/tida/logo?s=6141da3aa33a2f9463017230" width=128 height=128 /></center>
 
 Tida is a library for building 2D games in D language with an OOP system in 
@@ -138,15 +142,20 @@ $(TABLE
 )
 
 Macros:
-    LREF = <a href="#$1">$1</a>
-    HREF = <a href="$1">$2</a>
+    LREF = <a href="#$1">$1</ a>
+    HREF = <a href="$1">$2</ a>
     B = <b>$0</b>
-    TABLE = <table>$0</table>
-    TABLENAME = <caption>$0</caption>
+    TABLE = <table class="def">$0</ table>
+    TABLENAME = <caption class="defcap">$0</ caption>
     STRNAME = <tr class="leadingrow"><td colspan="2"><b><em>$(NBSP)$(NBSP)$(NBSP)$(NBSP)$0</em></b></td></tr>
-    TSTR = <tr>$0</tr>
-    TNAM = <th>$0</th>
-    ITEM = <td>$0</td>
+    TSTR = <tr class="deftr">$0</tr>
+    TNAM = <th class="defth">$0</th>
+    ITEM = <td class="deftd">$0</td>
+    TOOLS = <div class="tools">$0</div>
+    
+Authors: $(HREF https://github.com/TodNaz, TodNaz)
+Copyright: Copyright (c) 2020 - 2021, TodNaz.
+License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE, MIT)
 +/
 module tida;
 

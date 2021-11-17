@@ -895,6 +895,8 @@ public:
         enforce!Exception(this.handle, "Window is not create!");
 
         dc = GetDC(this.handle);
+        
+        resize(this._widthInit, this._heightInit);
 
         _wndptr = this;
     }
@@ -902,6 +904,21 @@ public:
     void sendCloseEvent()
     {
         this.isClose = true;
+    }
+    
+    @property auto windowBorderSize() @trusted
+    {
+        if (_fullscreen || !_border)
+        {
+            return 0;
+        } else
+        {
+            RECT rcClient, rcWind;
+            GetClientRect(this.handle, &rcClient);
+            GetWindowRect(this.handle, &rcWind);
+            
+            return ((rcWind.bottom - rcWind.top) - rcClient.bottom) / 2;
+        }
     }
 
 override:
@@ -934,7 +951,7 @@ override:
         RECT rect;
         GetWindowRect(this.handle, &rect);
 
-        return rect.bottom - rect.top;
+        return rect.bottom - rect.top - windowBorderSize;
     }
 
     @property void fullscreen(bool value)
@@ -1002,6 +1019,11 @@ override:
 
     @property void border(bool value)
     {
+        int bs;
+        
+        if (border)
+            bs = windowBorderSize;
+    
         auto style = GetWindowLong(this.handle, GWL_STYLE);
 
         if (!value)
@@ -1090,8 +1112,14 @@ override:
     }
 
     void resize(uint w, uint h)
-    {
-        SetWindowPos(this.handle, null, x, y ,w, h, 0);
+    {   
+        RECT rcClient, rcWind;
+
+        GetClientRect(this.handle, &rcClient);
+        GetWindowRect(this.handle, &rcWind);
+        immutable offsetY = (rcWind.bottom - rcWind.top) - rcClient.bottom;
+        
+        SetWindowPos(this.handle, null, x, y, w, h + offsetY - 1, 0);
     }
 
     void move(int xposition, int yposition)

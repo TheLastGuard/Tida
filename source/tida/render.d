@@ -484,23 +484,21 @@ override:
 
         int yborder = 0;
 
-        version (Windows_Border)
         version (Windows)
         {
-            import core.sys.windows.windows;
-
-            if (window.border)
-            {
-                RECT crect, wrect;
-                GetClientRect((cast(Window) window).handle, &crect);
-                GetWindowRect((cast(Window) window).handle, &wrect);
-
-
-                yborder = -((wrect.bottom - wrect.top) - (crect.bottom - crect.top));
-            }
+            yborder = (cast(Window) window).windowBorderSize;
         }
+        
+        import std.stdio;
+        writeln(yborder);
 
-        glViewport(0, yborder, _camera.shape.end.x.to!int, _camera.shape.end.y.to!int);
+        glViewport(
+            -_camera.shape.begin.x.to!int,
+            -_camera.shape.begin.y.to!int - yborder, 
+            _camera.shape.end.x.to!int, 
+            _camera.shape.end.y.to!int
+        );
+        
         this._projection = ortho(0.0, _camera.port.end.x, _camera.port.end.y, 0.0, -1.0, 1.0);
     }
 

@@ -475,7 +475,7 @@ public @trusted:
     Params:
         T = string type.
         symbols = Text.
-        color = Default color.
+        defaultColor = Default color.
     +/
     Symbol[] toSymbolsFormat(T)(T symbols,
                                 Color!ubyte defaultColor = rgba(255,255,255,255))

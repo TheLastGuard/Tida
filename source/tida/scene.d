@@ -268,6 +268,7 @@ public:
 
     Params:
         instance = Instance.
+        isRemoveHandle = State remove function pointers in scene manager.
 
     Type:
         `InScene`  - Removes only from the scene, does not free memory.

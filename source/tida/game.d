@@ -121,11 +121,9 @@ public:
     {
         sceneManager.callGameStart();
 
-        _fps = new FPSManager();
-
         while (isGame)
         {
-            fps.countDown();
+            _fps.countDown();
 
             scope (failure)
             {
@@ -211,7 +209,7 @@ public:
             sceneManager.callDraw(renderer);
             renderer.drawning();
 
-            fps.control();
+            _fps.control();
         }
     }
 }
