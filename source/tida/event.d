@@ -38,6 +38,176 @@ enum MouseButton
     middle = 2 /// Middle mouse button
 }
 
+interface IJoystick
+{
+    import tida.vector;
+
+    @property Vector!int axis() @safe;
+    
+    @property int button() @safe;
+    
+    @property bool isButtonDown() @safe;
+    
+    @property bool isButtonUp() @safe;
+    
+    @property bool isAxisMove() @safe;
+    
+    final @property int buttonDown() @safe
+    {
+        return isButtonDown ? button : 0;
+    }
+    
+    final @property int buttonUp() @safe
+    {
+        return isButtonUp ? button : 0;
+    }
+    
+    final @property Vector!int axisMove() @safe
+    {
+        return isAxisMove ? axis : vecZero!int;
+    }
+}
+
+version(Windows)
+class Joystick : IJoystick
+{
+    import core.sys.windows.windows;
+    import tida.vector;
+
+private:
+    EventHandler event;   
+
+public:
+    int id; // identificator
+    int numAxes; // Max axes
+    int numButtons; // Max buttons
+    int[] axisMin; // Minimum axes values
+    int[] axisMax; // Maximum axes values
+    int[] axisOffset; // Axes offset values
+    float[] axisScale; // Axes scale values
+    
+    int[8] axesState; // Axes state
+    int[int] buttons;
+    
+    int[8] _axis;
+
+    static immutable(int[]) jid =
+    [
+        JOYSTICKID1,
+        JOYSTICKID2
+    ];
+    
+    static immutable(int[]) jbuttondown =
+    [
+        MM_JOY1BUTTONDOWN,
+        MM_JOY2BUTTONDOWN 
+    ];
+    
+    static immutable(int[]) jbuttonup = 
+    [
+        MM_JOY1BUTTONUP,
+        MM_JOY2BUTTONUP 
+    ];
+    
+    static immutable(int[]) jmove = 
+    [
+        MM_JOY1MOVE,
+        MM_JOY2MOVE
+    ];
+    
+    static immutable defAxisMin = -32768;
+    static immutable defAxisMax = 32767;
+    static immutable defAxisThreshold = (defAxisMax - defAxisMin) / 256;
+
+@safe:
+    this(int id, EventHandler event)
+    {
+        this.event = event;
+        this.id = id;
+    }
+    
+    @property Vector!float axisMovement()
+    {
+        immutable velocity = axis();
+        
+        return vec!float(
+            axis.x / (axisMax[0] + axisOffset[0] * axisScale[0]),
+            axis.y / (axisMax[1] + axisOffset[1] * axisScale[1])
+        );
+    }
+    
+override:
+    @property bool isButtonDown()
+    {
+        if (event.currJEvent !is null)
+            return event.currJEvent.type == EventHandler.JoystickEventType.buttonPressed;
+        else
+            return false;
+    }
+    
+    @property bool isButtonUp()
+    {
+        if (event.currJEvent !is null)
+            return event.currJEvent.type == EventHandler.JoystickEventType.buttonReleased;
+        else
+            return false;
+    }
+    
+    @property bool isAxisMove()
+    {
+        if (event.currJEvent !is null)
+            return event.currJEvent.type == EventHandler.JoystickEventType.axisMove;
+        else
+            return false;
+    }
+    
+    @property int button()
+    {
+        return event.currJEvent.value;
+    }
+    
+    @property Vector!int axis()
+    {
+        if (event.currJEvent is null)
+            return vecZero!int;
+            
+        return vec!int(
+            axesState[0],
+            axesState[1]
+        );
+    }
+}
+
+version(Posix)
+class Joystick
+{
+override:
+    @property Vector!int axis() @safe
+    {
+        return vecZero!int;
+    }
+    
+    @property int button() @safe
+    {
+        return 0;
+    }
+    
+    @property bool isButtonDown() @safe
+    {
+        return false;
+    }
+    
+    @property bool isButtonUp() @safe
+    {
+        return false;
+    }
+    
+    @property bool isAxisMove() @safe
+    {
+        return false;
+    }
+}
+
 /++
 Interface for cross-platform listening for events from the window manager.
 +/
@@ -160,6 +330,8 @@ interface IEventHandler
     User entered data.
     +/
     @property string inputChar();
+    
+    @property Joystick[] joysticks();
 
 @trusted:
     final int opApply(scope int delegate(ref int) dg)
@@ -293,6 +465,11 @@ override:
 
         return buf[0 .. count];
     }
+    
+    @property Joystick[] joysticks()
+    {
+        return [];
+    }
 }
 
 version(Windows)
@@ -303,9 +480,39 @@ class EventHandler : IEventHandler
 
 private:
     tida.window.Window window;
+    Joystick[] _joysticks;
 
 public:
     MSG msg;
+    
+    enum JoystickEventType
+    {
+        axisMove,
+        buttonPressed,
+        buttonReleased
+    }
+    
+    enum JoystickAxis
+    {
+        X = JOY_RETURNX,
+        Y = JOY_RETURNY,
+        Z = JOY_RETURNZ,
+        R = JOY_RETURNR,
+        U = JOY_RETURNU,
+        V = JOY_RETURNV
+    }
+    
+    struct JoystickEvent
+    {
+        int id;
+        JoystickEventType type;
+        int value;
+        
+        JoystickAxis axis;
+    }
+    
+    JoystickEvent[] jEvents;
+    JoystickEvent* currJEvent = null;
 
 @safe:
     this(tida.window.Window window)
@@ -314,12 +521,120 @@ public:
     }
 
 @trusted:
+    void joyPeek()
+    {
+        immutable flagsAxis = [
+            JOY_RETURNX,
+            JOY_RETURNY,
+            JOY_RETURNZ,
+            JOY_RETURNR,
+            JOY_RETURNU,
+            JOY_RETURNV
+        ];
+        
+        foreach (ref e; _joysticks)
+        {
+            JOYINFOEX joyInfo;
+            joyInfo.dwSize = joyInfo.sizeof;
+            joyInfo.dwFlags = JOY_RETURNALL;
+            
+            joyGetPosEx(Joystick.jid[e.id], &joyInfo);
+            
+            immutable axisPos = [
+                joyInfo.dwXpos,
+                joyInfo.dwYpos,
+                joyInfo.dwZpos,
+                joyInfo.dwRpos,
+                joyInfo.dwUpos,
+                joyInfo.dwVpos
+            ];
+            
+            foreach (i; 0 .. e.numAxes)
+            {
+                if (!(joyInfo.dwFlags & flagsAxis[i]))
+                    continue;
+                    
+                immutable int value = cast(int) (cast(float) (axisPos[i]) + e.axisOffset[i] * e.axisScale[i]);
+                immutable change = (value - e._axis[i]);
+                
+                if (change > -Joystick.defAxisThreshold &&
+                    change < Joystick.defAxisThreshold)
+                    continue;
+                
+                e._axis[i] = value;
+                e.axesState[i] = !(value < 300 && value > -300) ? value : 0;
+                
+                JoystickEvent jevent;
+                jevent.id = e.id;
+                jevent.type = JoystickEventType.axisMove;
+                jevent.axis = cast(JoystickAxis) flagsAxis[i];
+                jevent.value = !(value < 300 && value > -300) ? value : 0;
+                jEvents ~= jevent;
+            }
+            
+            if (joyInfo.dwFlags & JOY_RETURNBUTTONS)
+            {
+                foreach (i; 0 .. e.numButtons)
+                {
+                    int pressed = joyInfo.dwButtons & (1 << i);
+                
+                    if (pressed == 0)
+                    {
+                        if (1 << i in e.buttons)
+                        if (e.buttons[1 << i] != 0)
+                        {
+                            JoystickEvent jevent;
+                            jevent.id = e.id;
+                            jevent.type = JoystickEventType.buttonReleased;
+                            jevent.value = 1 << i;
+                            jEvents ~= jevent;
+                            e.buttons[1 << i] = 0;
+                        }
+                        
+                        continue;
+                    }
+                    
+                    if (1 << i in e.buttons)
+                    {
+                        if(e.buttons[1 << i] != 0)
+                            continue;
+                    }
+                     
+                    e.buttons[1 << i] = 1;   
+                    JoystickEvent jevent;
+                    jevent.id = e.id;
+                    jevent.type = JoystickEventType.buttonPressed;
+                    jevent.value = 1 << i;
+                    jEvents ~= jevent;
+                }
+            }
+        }
+    }
+
     bool nextEvent()
     {
         TranslateMessage(&this.msg); 
         DispatchMessage(&this.msg);
-
-        return PeekMessage(&this.msg, this.window.handle, 0, 0, PM_REMOVE) != 0;
+        
+        joyPeek();
+        if (PeekMessage(&this.msg, this.window.handle, 0, 0, PM_REMOVE) == 0)
+        {
+            if (jEvents.length == 0)
+            {
+                currJEvent = null;
+                return false;
+            }
+            else
+            {
+                currJEvent = &jEvents[0];
+                jEvents = jEvents[1 .. $];
+                
+                return true;
+            }
+        } else
+        {
+            return true;
+        }
     }
 
     bool isKeyDown()
@@ -417,6 +732,68 @@ public:
         string utftext = text.toUTF8;
 
         return [utftext[0]];
+    }
+    
+    @property Joystick[] joysticks() @trusted
+    {
+        if (_joysticks !is null)
+            return _joysticks;
+            
+        immutable numDevs = joyGetNumDevs();
+        if (numDevs == 0)
+            return [];
+        
+        foreach (i; 0 .. 2)
+        {
+            JOYINFOEX jInfo;
+            JOYCAPS jCaps;
+            
+            if (joyGetPosEx(Joystick.jid[i], &jInfo) == JOYERR_UNPLUGGED)
+            {
+                continue;   
+            }
+            
+            if (joySetCapture(window.handle, Joystick.jid[i], 0, true))
+            {
+                continue;
+            }
+            
+            joyGetDevCaps(Joystick.jid[i], &jCaps, jCaps.sizeof);
+            
+            auto jj =  new Joystick(i, this);
+            jj.numAxes = jCaps.wNumAxes;
+            jj.numButtons = jCaps.wNumButtons;
+            
+            immutable wAxisMin = [
+                jCaps.wXmin,
+                jCaps.wYmin,
+                jCaps.wZmin,
+                jCaps.wRmin,
+                jCaps.wUmin,
+                jCaps.wVmin
+            ];
+            
+            immutable wAxisMax = [
+                jCaps.wXmax,
+                jCaps.wYmax,
+                jCaps.wZmax,
+                jCaps.wRmax,
+                jCaps.wUmax,
+                jCaps.wVmax
+            ];
+                        
+            foreach (j; 0 .. jj.numAxes)
+            {
+                jj.axisMin ~= wAxisMin[i];
+                jj.axisMax ~= wAxisMax[i];
+                jj.axisOffset ~= Joystick.defAxisMin - wAxisMin[i];
+                jj.axisScale ~= (cast(float) Joystick.defAxisMax - cast(float) (Joystick.defAxisMin)) / (cast(float) wAxisMax[i] - cast(float) wAxisMin[i]);
+            }
+            
+            _joysticks ~= jj;
+        }
+        
+        return _joysticks;
     }
 }
 

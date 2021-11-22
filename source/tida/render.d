@@ -19,11 +19,69 @@ class Camera
     import  tida.vector,
             tida.shape;
 
+    struct CameraObject
+    {
+        Vector!float* position;
+        Vector!float size;
+    }
+
 private:
     Shape!float _port;
     Shape!float _shape;
+    CameraObject object;
+    float _trackDistance = 4.0f;
+    
 
 public @safe nothrow pure:
+    void bindObject(    ref Vector!float position, 
+                        Vector!float size = vecNaN!float)  @trusted
+    {
+        object.position = &position;
+        object.size = size.isVectorNaN ? vec!float(1, 1) : size;
+    }
+    
+    void bindObject(    Vector!float* position,
+                        Vector!float size = vecNaN!float)
+    {
+        object.position = position;
+        object.size = size.isVectorNaN ? vec!float(1, 1) : size;
+    }
+    
+    void followObject()
+    {
+        Vector!float velocity = vecZero!float;
+    
+        if (object.position.x < port.begin.x)
+        {
+            velocity.x = port.begin.x - object.position.x;
+        } else
+        if (object.position.x + object.size.x> port.begin.x + port.end.x)
+        {
+            velocity.x = (port.begin.x + port.end.x) - (object.position.x + object.size.x);
+        }
+        
+        if (object.position.y < port.begin.y)
+        {
+            velocity.y = port.begin.y - object.position.y;
+        } else
+        if (object.position.y + object.size.y > port.begin.y + port.end.y)
+        {
+            velocity.y = (port.begin.y + port.end.y) - (object.position.y + object.size.y);
+        }
+        
+        port = Shapef.Rectangle(port.begin - velocity, port.end);
+    }
+    
+    @property float trackDistance()
+    {
+        return _trackDistance;
+    }
+    
+    @property float trackDistance(float value)
+    {
+        return _trackDistance = value;
+    }
+
     /++
     The port is the immediate visible part in the "room". The entire area in 
     the world that must be covered in the field of view.
@@ -488,9 +546,6 @@ override:
         {
             yborder = (cast(Window) window).windowBorderSize;
         }
-        
-        import std.stdio;
-        writeln(yborder);
 
         glViewport(
             -_camera.shape.begin.x.to!int,

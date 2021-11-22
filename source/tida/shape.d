@@ -386,6 +386,68 @@ public:
 
         end = (vectorDirection(dir) * value);
     }
+    
+    @property Vector!T calculateSize()
+    {
+        switch (type)
+        {
+            case ShapeType.point:
+                return vec!T(1, 1);
+                
+            case ShapeType.line:
+                return abs(end - begin);
+                
+            case ShapeType.rectangle:
+                return abs(end - begin);
+                
+            case ShapeType.circle:
+                return (begin + vec!T(radius, radius) * 2) - begin;
+                
+            case ShapeType.triangle:
+            {
+                import std.algorithm : minElement, maxElement;
+                
+                immutable objs = [vertex!0, vertex!1, vertex!2];
+                immutable maxObj = objs.maxElement!"a.length";
+                immutable minObj = objs.minElement!"a.length";
+                
+                return maxObj - minObj;
+            }
+            
+            case ShapeType.roundrect:
+                return abs(end - begin);
+                
+            case ShapeType.polygon:
+            {
+                import std.algorithm : minElement, maxElement;
+                
+                immutable maxObj = data.maxElement!"a.length";
+                immutable minObj = data.minElement!"a.length";
+                
+                return maxObj - minObj;
+            }
+            
+            case ShapeType.multi:
+            {
+                import std.algorithm : sort;
+                import std.range : array;
+                
+                Shape!T[] rectangles;
+                
+                foreach (e; shapes)
+                {
+                    rectangles ~= Shape!T.Rectangle(e.begin, e.begin + e.calculateSize);
+                }
+                
+                rectangles.sort!((a, b) => a.x > b.x && a.y > b.y).array;
+                
+                return rectangles[0].end - rectangles[$ - 1].begin;
+            }
+        
+            default:
+                return vecZero!T;
+        }
+    }
 
     /++
     Resizes as a percentage.

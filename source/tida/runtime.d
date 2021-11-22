@@ -310,6 +310,9 @@ class TidaRuntime : ITidaRuntime
     import tida.sound : initSoundlibrary, Device;
     import tida.text : initFontLibrary;
 
+    pragma(lib, "opengl32.lib");
+    pragma(lib, "winmm.lib");
+    
 private:
     HINSTANCE hInstance;
     string[] arguments;

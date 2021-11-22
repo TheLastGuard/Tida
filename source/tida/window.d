@@ -275,7 +275,6 @@ public @trusted:
     }
 
 override:
-
     void setAttributes(GraphicsAttributes attributes)
     {
         import std.exception : enforce;
@@ -813,7 +812,27 @@ class Window : IWindow
     import std.exception : enforce;
     import core.sys.windows.windows;
 
-    pragma(lib, "opengl32.lib");
+    class WindowException : Exception
+    {
+        import std.conv : to;
+        
+        this(ulong errorID) @trusted
+        {
+            LPSTR messageBuffer = null;
+
+            size_t size = FormatMessageA(
+                FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                null, 
+                cast(uint) errorID, 
+                MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), 
+                cast(LPSTR) &messageBuffer, 
+                0, 
+                null);
+                            
+        
+            super("[WinAPI] " ~ messageBuffer.to!string);
+        }
+    }
 
 private:
     uint _widthInit;
@@ -849,7 +868,7 @@ public:
     void create(int posX, int posY)
     {
         import std.traits : Signed;
-
+    
         extern(Windows) auto _wndProc(HWND hWnd, uint message, WPARAM wParam, LPARAM lParam)
         {
             switch (message)
@@ -883,7 +902,7 @@ public:
         wc.lpszClassName = _title.toUTFz!(wchar*);
 
         RegisterClassEx(&wc);
-
+    
         this.handle = CreateWindow( _title.toUTFz!(wchar*), 
                                     _title.toUTFz!(wchar*),
                                     WS_CAPTION | WS_SYSMENU | WS_CLIPSIBLINGS | 
@@ -892,7 +911,8 @@ public:
                                     this._heightInit, null, null, 
                                     runtime.instance, null);
                  
-        enforce!Exception(this.handle, "Window is not create!");
+        if (this.handle is null)
+            throw new WindowException(GetLastError());
 
         dc = GetDC(this.handle);
         
