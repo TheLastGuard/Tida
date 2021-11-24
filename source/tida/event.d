@@ -43,6 +43,8 @@ interface IJoystick
     import tida.vector;
 
     @property Vector!int axis() @safe;
+
+    @property Vector!float axisMovement() @safe;
     
     @property int button() @safe;
     
@@ -51,7 +53,7 @@ interface IJoystick
     @property bool isButtonUp() @safe;
     
     @property bool isAxisMove() @safe;
-    
+
     final @property int buttonDown() @safe
     {
         return isButtonDown ? button : 0;
@@ -126,16 +128,6 @@ public:
         this.id = id;
     }
     
-    @property Vector!float axisMovement()
-    {
-        immutable velocity = axis();
-        
-        return vec!float(
-            axis.x / (axisMax[0] + axisOffset[0] * axisScale[0]),
-            axis.y / (axisMax[1] + axisOffset[1] * axisScale[1])
-        );
-    }
-    
 override:
     @property bool isButtonDown()
     {
@@ -163,7 +155,10 @@ override:
     
     @property int button()
     {
-        return event.currJEvent.value;
+        if (event.currJEvent !is null)
+            return event.currJEvent.value;
+        else
+            return -1;
     }
     
     @property Vector!int axis()
@@ -176,35 +171,131 @@ override:
             axesState[1]
         );
     }
+
+    @property Vector!float axisMovement()
+    {
+        immutable velocity = axis();
+        
+        return vec!float(
+            velocity.x / (axisMax[0] + axisOffset[0] * axisScale[0]),
+            velocity.y / (axisMax[1] + axisOffset[1] * axisScale[1])
+        );
+    }
 }
 
 version(Posix)
-class Joystick
+class Joystick : IJoystick
 {
+    import std.stdio : File;
+    import core.sys.posix.sys.ioctl;
+    import tida.vector;
+
+private:
+    int descriptor;
+
+public:
+    int id; // identificator
+    string name;
+    int numAxes; // Max axes
+    int numButtons; // Max buttons
+    int[8] _axis;
+
+    // linux/joystick.h
+    enum JSIOCGAXES = _IOR!ubyte('j', 0x11);
+    enum JSIOCGBUTTONS = _IOR!ubyte('j', 0x12);
+    enum JSIOCGNAME(T) = _IOC!T(_IOC_READ, 'j', 0x13); 
+
+    enum JS_EVENT_BUTTON = 0x01;    /* button pressed/released */
+    enum JS_EVENT_AXIS = 0x02;    /* joystick moved */
+    enum JS_EVENT_INIT = 0x80;    /* initial state of device */
+
+    struct js_event
+    {
+        uint time; /* event timestamp in milliseconds */
+        short value;    /* value */
+        ubyte type;  /* event type */
+        ubyte number;    /* axis/button number */
+
+        ubyte trueType() @safe nothrow pure
+        {
+            return type & ~JS_EVENT_INIT;
+        }
+    }
+
+    js_event* currJEvent;
+
+@safe:
+    package(tida) @property int fd()
+    {
+        return descriptor;
+    }
+
+    this(int descriptor, int id) @trusted
+    {
+        this.descriptor = descriptor;
+        this.id = id;
+
+        char[80] name;
+ 
+        ioctl(descriptor, JSIOCGAXES, &numAxes);
+        ioctl(descriptor, JSIOCGBUTTONS, &numButtons);
+        ioctl(descriptor, JSIOCGNAME!(char[80]), &name);
+    }
+
+    ~this() @trusted
+    {
+        import core.sys.posix.unistd;
+
+        close(descriptor);
+        descriptor = -2;
+    }
+
 override:
-    @property Vector!int axis() @safe
+    @property Vector!int axis()
     {
-        return vecZero!int;
+        return vec!int(_axis[0], _axis[1]);
     }
     
-    @property int button() @safe
+    @property Vector!float axisMovement()
     {
-        return 0;
+        immutable velocity = axis();
+        
+        return vec!float(
+            cast(float) velocity.x / 32767.0f,
+            cast(float) velocity.y / 32767.0f
+        );
+    }
+
+    @property int button()
+    {
+        if (currJEvent !is null)
+            return currJEvent.number;
+        else
+            return -1;
     }
     
-    @property bool isButtonDown() @safe
+    @property bool isButtonDown()
     {
-        return false;
+        if (currJEvent !is null)
+            return currJEvent.trueType == JS_EVENT_BUTTON && currJEvent.value == 1;
+        else
+            return false;
     }
     
-    @property bool isButtonUp() @safe
+    @property bool isButtonUp()
     {
-        return false;
+        if (currJEvent !is null)
+            return currJEvent.trueType == JS_EVENT_BUTTON && currJEvent.value == 0;
+        else
+            return false;
     }
     
-    @property bool isAxisMove() @safe
+    @property bool isAxisMove()
     {
-        return false;
+        if (currJEvent !is null)
+            return currJEvent.trueType == JS_EVENT_AXIS;
+        else
+            return false;
     }
 }
 
@@ -354,9 +445,17 @@ class EventHandler : IEventHandler
     import tida.window, tida.runtime;
 
 private:
+    struct JoystickEvent
+    {
+        int id;
+        Joystick.js_event data;
+    }
+
     tida.window.Window window;
     Atom destroyWindowEvent;
     _XIC* ic;
+    Joystick[] _joysticks;
+    JoystickEvent[] jevents;
 
 public:
     XEvent event;
@@ -375,17 +474,85 @@ public:
         XSetLocaleModifiers("@im=none");
     }
 
+    int joyHandle()
+    {
+        import core.sys.posix.unistd;
+
+        int count = 0;
+        foreach (ref e; _joysticks)
+        {
+            Joystick.js_event eEvent;
+            immutable bytes = read(e.fd(), &eEvent, Joystick.js_event.sizeof);
+
+            if (eEvent.type != 0 &&
+                ((eEvent.type & Joystick.JS_EVENT_INIT) != Joystick.JS_EVENT_INIT))
+            {
+                jevents ~= JoystickEvent(e.id, eEvent);
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    void validateJoysticks()
+    {
+        import std.algorithm : remove;
+        import core.sys.posix.fcntl;
+
+        foreach (size_t i, ref e; _joysticks)
+        {
+            if (fcntl(e.fd(), F_GETFD) == -1)
+            {
+                _joysticks = _joysticks.remove(i);
+            }
+        } 
+    }
+
 override:
     bool nextEvent()
     {
-        auto pen = XPending(runtime.display);
-        
+        joyHandle();
+        immutable pen = XPending(runtime.display);
+
         if (pen != 0) 
         {
             XNextEvent(runtime.display, &this.event);
-        }
 
-        return pen != 0;
+            return pen != 0;
+        } else
+        {
+            if (jevents.length != 0)
+            {
+                auto currEvent = &jevents[0];
+                jevents = jevents[1 .. $];
+
+                foreach (ref e; _joysticks)
+                {
+                    if (e.id == currEvent.id)
+                    {
+                        e.currJEvent = &currEvent.data;
+                        if (currEvent.data.trueType == Joystick.JS_EVENT_AXIS)
+                        {
+                            e._axis[currEvent.data.number] = e.currJEvent.value;
+                        }
+                    } else
+                    {
+                        e.currJEvent = null;
+                    }
+                }
+
+                return true;
+            } else
+            {
+                foreach (ref e; _joysticks)
+                {
+                    e.currJEvent = null;
+                }
+
+                return false;
+            }
+        }
     }
 
     bool isKeyDown()
@@ -468,7 +635,28 @@ override:
     
     @property Joystick[] joysticks()
     {
-        return [];
+        import core.sys.posix.fcntl;
+        import std.conv : to;
+
+        if (_joysticks.length != 0)
+        {
+            validateJoysticks();
+            return _joysticks;
+        }
+
+        foreach (i; 0 .. 2)
+        {
+            int fd = open(("/dev/input/js" ~ i.to!string).ptr, 0);
+            if (fd == -1)
+                continue;
+
+            immutable flags = fcntl(fd, F_GETFL, 0);
+            fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+
+            _joysticks ~= new Joystick(fd, i);
+        }
+
+        return _joysticks;
     }
 }
 
