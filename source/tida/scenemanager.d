@@ -134,6 +134,19 @@ void initSceneManager() @trusted
     _sceneManager = new SceneManager();
 }
 
+auto defaultCamera() @safe
+{
+    import tida.game : renderer, window;
+    import tida.shape;
+    import tida.vector;
+
+    auto camera = new Camera();
+    camera.shape = Shape!float.Rectangle(vec!float(0, 0), vec!float(window.width, window.height));
+    camera.port = camera.shape;
+            
+    return camera;
+}
+
 /++
 Class describing scene manager.
 
@@ -1042,6 +1055,10 @@ public @safe:
     in(hasScene(scene))
     do
     {
+        import tida.game : renderer, window;
+        import tida.shape;
+        import tida.vector;
+    
         _previous = current;
 
         if (current !is null)
@@ -1156,6 +1173,15 @@ public @safe:
         _initable = null;
 
         _current = scene;
+        
+        if (scene.camera !is null)
+        {
+            renderer.camera = scene.camera;
+        }
+        else
+        {
+            renderer.camera = defaultCamera();
+        }
     }
 
     /++
@@ -1273,6 +1299,9 @@ public @safe:
         if (current !is null)
         {
             current.worldCollision();
+            
+            if (current.camera !is null)
+                current.camera.followObject();
 
             if (thread == 0)
             if (current in StepFunctions)

@@ -41,8 +41,8 @@ enum MouseButton
 interface IJoystick
 {
     import tida.vector;
-
-    @property Vector!int axis() @safe;
+    
+    //@property Vector!int axless() @safe;
 
     @property Vector!float axisMovement() @safe;
     
@@ -53,6 +53,11 @@ interface IJoystick
     @property bool isButtonUp() @safe;
     
     @property bool isAxisMove() @safe;
+
+    @property Vector!int axis() @safe;
+    //{
+        //return vec!int(axless[0], axless[1]);
+    //}
 
     final @property int buttonDown() @safe
     {
@@ -91,7 +96,7 @@ public:
     int[8] axesState; // Axes state
     int[int] buttons;
     
-    int[8] _axis;
+    int[] _axis;
 
     static immutable(int[]) jid =
     [
@@ -129,6 +134,11 @@ public:
     }
     
 override:
+    //@property int[] axless()
+    //{
+        //return _axis;
+    //}
+
     @property bool isButtonDown()
     {
         if (event.currJEvent !is null)

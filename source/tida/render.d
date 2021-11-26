@@ -17,7 +17,8 @@ Camera control object in render,
 class Camera
 {
     import  tida.vector,
-            tida.shape;
+            tida.shape,
+            tida.instance;
 
     struct CameraObject
     {
@@ -47,26 +48,32 @@ public @safe nothrow pure:
         object.size = size.isVectorNaN ? vec!float(1, 1) : size;
     }
     
+    void bindObject(Instance instance)
+    {
+        object.position = &instance.position;
+        object.size = instance.mask.calculateSize();
+    }
+    
     void followObject()
     {
         Vector!float velocity = vecZero!float;
     
-        if (object.position.x < port.begin.x)
+        if (object.position.x < port.begin.x + _trackDistance)
         {
-            velocity.x = port.begin.x - object.position.x;
+            velocity.x = (port.begin.x + _trackDistance) - object.position.x;
         } else
-        if (object.position.x + object.size.x> port.begin.x + port.end.x)
+        if (object.position.x + object.size.x> port.begin.x + port.end.x - _trackDistance)
         {
-            velocity.x = (port.begin.x + port.end.x) - (object.position.x + object.size.x);
+            velocity.x = (port.begin.x + port.end.x - _trackDistance) - (object.position.x + object.size.x);
         }
         
-        if (object.position.y < port.begin.y)
+        if (object.position.y < port.begin.y + _trackDistance)
         {
-            velocity.y = port.begin.y - object.position.y;
+            velocity.y = (port.begin.y + _trackDistance) - object.position.y;
         } else
-        if (object.position.y + object.size.y > port.begin.y + port.end.y)
+        if (object.position.y + object.size.y > port.begin.y + port.end.y - _trackDistance)
         {
-            velocity.y = (port.begin.y + port.end.y) - (object.position.y + object.size.y);
+            velocity.y = (port.begin.y + port.end.y - _trackDistance) - (object.position.y + object.size.y);
         }
         
         port = Shapef.Rectangle(port.begin - velocity, port.end);
