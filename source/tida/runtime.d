@@ -249,6 +249,8 @@ public @trusted:
             {
                 if (_session == SessionType.x11)
                     loadGLXLibrary();
+                else
+                	throw new Exception("[Wayland] The creation of runtime via wayland is not implemented.");
             }
         }
     }

@@ -430,7 +430,7 @@ public @trusted:
 
         string vsource, fsource;
 
-        if (glslVersion == "1.10" || glslVersion == "1.20")
+        if (glslVersion == "1.10" || glslVersion == "1.20" || glslVersion == "1.30")
         {
             vsource = deprecatedVertex;
             fsource = deprecatedFragment;
