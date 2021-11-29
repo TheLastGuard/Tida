@@ -157,8 +157,7 @@ public:
         import std.algorithm : remove;
 
         threads[value].send(APIType.ThreadClose, 0);
-        receiveOnly!APIType;
-        
+
         foreach(i; value .. threads.length) 
         {
             threads[i].send(APIType.ThreadRebindThreadID, i - 1);
@@ -174,7 +173,6 @@ public:
         foreach (size_t i, ref e; threads)
         {
             sceneManager.threadAPI[i + 1] ~= APIResponse(APIType.ThreadClose, cast(uint) i);
-            receiveOnly!APIType;
         }
         
         sceneManager.callGameExit();
