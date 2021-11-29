@@ -26,7 +26,8 @@ Mistakes of using communication between the manager and the game cycle.
 enum APIError : uint
 {
     succes, /// Errors are not detected.
-    ThreadIsNotExists /// The stream with which it was necessary to interact - does not exist.
+    ThreadIsNotExists, /// The stream with which it was necessary to interact - does not exist.
+    UnkownResponse
 }
 
 /++
@@ -39,7 +40,9 @@ enum APIType : uint
     ThreadPause,
     ThreadResume,
     ThreadClose,
-    GameClose
+    GameClose,
+    ThreadClosed,
+    ThreadRebindThreadID
 }
 
 /++
@@ -49,75 +52,6 @@ struct APIResponse
 {
     uint code; /// Command thah should execute the game cycle.
     uint value; /// Value response
-}
-
-/++
-Thread for execution of steps for scenes and instances.
-+/
-class InstanceThread : Thread
-{
-private:
-    bool isJob = true;
-    bool isPause = false;
-    FPSManager fps;
-    Instance[] list;
-    size_t thread;
-    IRenderer rend;
-
-    void run()
-    {
-        while (isJob)
-        {
-            if (isPause) continue;
-            fps.countDown();
-
-            sceneManager.callStep(thread, rend);
-
-            fps.control();
-        }
-    }
-
-public @safe:
-
-    /++
-    Params:
-        thread =    Unique Identificator for Flow, namely, a place in the array for which it can
-                    contact such arrays for copies of the compliant ideal.
-        rend   =    Renderer instance.
-    +/
-    this(size_t thread, IRenderer rend)
-    {
-        fps = new FPSManager();
-
-        this.thread = thread;
-        this.rend = rend;
-
-        super(&run);
-    }
-
-    /// Replaces the idle identifier.
-    void rebindThreadID(size_t newID)
-    {
-        thread = newID;
-    }
-
-    /// Pause the work of the thread.
-    void pause()
-    {
-        isPause = true;
-    }
-
-    /// Continues thread work.
-    void resume()
-    {
-        isPause = false;
-    }
-
-    /// Completes the flow of the thread.
-    void exit()
-    {
-        isJob = false;
-    }
 }
 
 __gshared SceneManager _sceneManager;
@@ -580,42 +514,38 @@ public @safe:
 
         static foreach (member; __traits(allMembers, T))
         {
-            static foreach (attrib; __traits(getAttributes, __traits(getMember, component, member)))
+            static if (hasAttrib!(T, FunEvent!Init, member))
             {
-                static if (is(attrib : FunEvent!Init))
-                {
-                    auto fun = cast(FECInit) &__traits(getMember, component, member);
-                    fun(instance);
-                } else
-                static if (is(attrib : FunEvent!Step))
-                {
-                    CStepFunctions[component] ~= &__traits(getMember, component, member);
-                } else
-                static if (is(attrib : FunEvent!Leave))
-                {
-                    CLeaveFunctions[component] ~= &__traits(getMember, component, member);
-                } else
-                static if (is(attrib : FunEvent!Input))
-                {
-                    CEventHandleFunctions[component] ~= cast(FEEventHandle) &__traits(getMember, component, member);
-                } else
-                static if (is(attrib : FunEvent!Draw))
-                {
-                    CDrawFunctions[component] ~= cast(FEDraw) &__traits(getMember, component, member);
-                } else
-                static if (is(attrib : FunEvent!GameError))
-                {
-                    COnErrorFunctions[component] ~= &__traits(getMember, component, member);
-                } else
-                static if (attrib.stringof[0 .. 8] == "InThread")
-                {
-                    CStepThreadFunctions[instance][attrib.id] ~= &__traits(getMember, instance, member);
-                }else
-                static if (attrig.stringof[0 .. 7] == "Trigger")
-                {
-                    COnTriggerFunctions[component] ~= SRTrigger(attrib,
-                    cast(FETrigger) &__traits(getMember, component, member));
-                }
+                __traits(getMember, component, member)(instance);
+            } else
+            static if (hasAttrib!(T, FunEvent!Step, member))
+            {
+                CStepFunctions[component] ~= &__traits(getMember, component, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!Leave, member))
+            {
+                CLeaveFunctions[component] ~= &__traits(getMember, component, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!Input, member))
+            {
+                CEventHandleFunctions[component] ~= cast(FEEventHandle) &__traits(getMember, component, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!Draw, member))
+            {
+                CDrawFunctions[component] ~= cast(FEDraw) &__traits(getMember, component, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!GameError, member))
+            {
+                COnErrorFunctions[component] ~= &__traits(getMember, component, member);
+            } else
+            static if (hasAttrib!(T, StepThread, member))
+            {
+                CStepThreadFunctions[component][attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, instance, member);
+            }else
+            static if (hasAttrib!(T, Trigger, member))
+            {
+                COnTriggerFunctions[component] ~= SRTrigger(attrib,
+                cast(FETrigger) &__traits(getMember, component, member));
             }
         }
     }
@@ -805,6 +735,12 @@ public @safe:
             static if (hasAttrib!(T, FunEvent!AnyTrigger, member))
             {
                 IOnAnyTriggerFunctions[instance] ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!StepThread, member))
+            {
+                IStepThreadFunctions
+                    [scene]
+                    [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, scene, member);
             }
         }
     }
@@ -930,6 +866,12 @@ public @safe:
             static if (hasAttrib!(T, FunEvent!AnyTrigger, member))
             {
                 IOnAnyTriggerFunctions[scene] ~= &__traits(getMember, scene, member);
+            } else
+            static if (hasAttrib!(T, StepThread, member))
+            {
+                StepThreadFunctions
+                    [scene]
+                    [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, scene, member);
             }
         }
     }
@@ -942,6 +884,11 @@ public @safe:
         they are added to `apiError`.
         +/
         APIResponse[] api;
+        
+        /++
+        An array of pre-known commands to execute without chasing data for each thread.
+        +/
+        APIResponse[][size_t] threadAPI;
 
         /++
         An array of request errors associated with the request type.
@@ -1528,4 +1475,28 @@ unittest
 
     sceneManager.add(new A());
     assert(sceneManager.hasScene("Test"));
+}
+
+unittest
+{
+    import tida.component;
+
+    initSceneManager();
+    
+    static class A : Component
+    {
+        int trace = 0;
+    
+        @Event!Init
+        void onInit(Instance instance) @safe
+        {
+            trace++;
+        }
+    }
+    
+    Instance instance = new Instance();
+    A a;
+    instance.add(a = new A());
+    
+    assert(a.trace == 1);
 }

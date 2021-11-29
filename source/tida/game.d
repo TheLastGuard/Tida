@@ -22,6 +22,8 @@ import tida.listener;
 import tida.loader;
 import tida.gl;
 
+import std.concurrency;
+
 __gshared
 {
     IWindow _window;
@@ -54,6 +56,8 @@ __gshared
     return _listener;
 }
 
+struct ClosedThreadMessage { }
+
 /++
 Game initialization information.
 +/
@@ -71,11 +75,60 @@ public:
     string icon; /// Icon path.
 }
 
+private void workerThread(Tid owner, size_t id)
+{
+    bool isRun = true;
+    bool isPaused = false;
+    FPSManager threadFPS = new FPSManager();
+    
+    while (isRun)
+    {
+        threadFPS.countDown();
+        
+        if (id in sceneManager.threadAPI)
+        {   
+            import std.range : popFront, front, empty;  
+            while(!sceneManager.threadAPI[id].empty)
+            {
+                immutable response = sceneManager.threadAPI[id].front;
+                sceneManager.threadAPI[id].popFront();
+                
+                switch (response.code)
+                {
+                    case APIType.ThreadClose:
+                        isRun = 0;
+                        owner.send(APIType.ThreadClosed);
+                        return;
+                        
+                    case APIType.ThreadPause:
+                        isPaused = true;
+                    break;
+                    
+                    case APIType.ThreadResume:
+                        isPaused = false;
+                    break;
+                    
+                    default:
+                        continue;
+                }
+            }
+        }
+        
+        if (isPaused)
+            continue;
+        
+        sceneManager.callStep(id, null);
+        
+        threadFPS.control();
+    }
+}
+
 class Game
 {
 private:
     EventHandler event;
-    InstanceThread[] threads;
+    Tid[] threads;
+    
     bool isGame = true;
 
 public:
@@ -99,21 +152,31 @@ public:
         _listener = new Listener();
     }
 
-    void threadClose(uint value) @safe
+    void threadClose(uint value) @trusted
     {
         import std.algorithm : remove;
 
-        threads[value].exit();
-        foreach(i; value .. threads.length) threads[i].rebindThreadID(i - 1);
+        threads[value].send(APIType.ThreadClose, 0);
+        receiveOnly!APIType;
+        
+        foreach(i; value .. threads.length) 
+        {
+            threads[i].send(APIType.ThreadRebindThreadID, i - 1);
+        }
+        
         threads.remove(value);
     }
 
-    private void exit() @safe
+    private void exit() @trusted
     {
-        import std.algorithm : each;
-
         isGame = false;
-        threads.each!((e) { if(e !is null) e.exit(); });
+        
+        foreach (size_t i, ref e; threads)
+        {
+            sceneManager.threadAPI[i + 1] ~= APIResponse(APIType.ThreadClose, cast(uint) i);
+            receiveOnly!APIType;
+        }
+        
         sceneManager.callGameExit();
     }
 
@@ -128,6 +191,7 @@ public:
             scope (failure)
             {
                 sceneManager.callOnError();
+                exit();
             }
 
             while (event.nextEvent)
@@ -146,64 +210,51 @@ public:
 
             foreach (response; sceneManager.api)
             {
-                if (response.code == APIType.ThreadClose)
+                switch (response.code)
                 {
-                    if (response.value == 0)
+                    case APIType.ThreadCreate:
                     {
-                        exit();
-                        return;
-                    } else
+                        foreach (i; 0 .. response.value)
+                        {
+                            immutable id = threads.length == 0 ? i + 1 : threads.length + i;
+                            threads ~= spawn(&workerThread, thisTid, id);
+                        }
+                    }
+                    break;
+                    
+                    case APIType.ThreadPause, APIType.ThreadResume:
                     {
-                        if (response.value >= threads.length)
+                        if (response.value > threads.length)
                         {
                             sceneManager.apiError[response.code] = APIError.ThreadIsNotExists;
                             continue;
-                        } else
-                        {
-                            threadClose(response.value);
                         }
+                        
+                        sceneManager.threadAPI[response.value] ~= response;
                     }
-                }else
-                if (response.code == APIType.GameClose)
-                {
-                    result = response.value;
-                    exit();
-                    return;
-                } else
-                if (response.code == APIType.ThreadPause)
-                {
-                    if(response.value >= threads.length)
+                    break;
+                    
+                    case APIType.ThreadClose:
                     {
-                        sceneManager.apiError[response.code] = APIError.ThreadIsNotExists;
-                        continue;
-                    } else
-                    {
-                        threads[response.value].pause();
+                        if (response.value > threads.length)
+                        {
+                            sceneManager.apiError[response.code] = APIError.ThreadIsNotExists;
+                            continue;
+                        }
+                        
+                        sceneManager.threadAPI[response.value] ~= response;
                     }
-                } else
-                if (response.code == APIType.ThreadResume)
-                {
-                    if (response.value >= threads.length)
-                    {
-                        sceneManager.apiError[response.code] = APIError.ThreadIsNotExists;
-                        continue;
-                    } else
-                    {
-                        threads[response.value].resume();
-                    }
-                } else
-                if (response.code == APIType.ThreadCreate)
-                {
-                    auto thread = new InstanceThread(threads.length,renderer);
-                    threads ~= thread;
-
-                    thread.start();
+                    break;
+                    
+                    default:
+                        sceneManager.apiError[response.code] = APIError.UnkownResponse;
+                        break;
                 }
             }
 
             sceneManager.api = []; // GC, please, clear this
 
-            sceneManager.callStep(0,renderer);
+            sceneManager.callStep(0, renderer);
 
             renderer.clear();
             sceneManager.callDraw(renderer);
