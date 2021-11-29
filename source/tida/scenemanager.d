@@ -739,7 +739,7 @@ public @safe:
             static if (hasAttrib!(T, StepThread, member))
             {
                 IStepThreadFunctions
-                    [scene]
+                    [instance]
                     [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, scene, member);
             }
         }
