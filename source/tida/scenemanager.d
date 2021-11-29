@@ -740,7 +740,7 @@ public @safe:
             {
                 IStepThreadFunctions
                     [instance]
-                    [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, scene, member);
+                    [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, instance, member);
             }
         }
     }
