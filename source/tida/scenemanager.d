@@ -736,7 +736,7 @@ public @safe:
             {
                 IOnAnyTriggerFunctions[instance] ~= &__traits(getMember, instance, member);
             } else
-            static if (hasAttrib!(T, FunEvent!StepThread, member))
+            static if (hasAttrib!(T, StepThread, member))
             {
                 IStepThreadFunctions
                     [scene]
