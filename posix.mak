@@ -2,7 +2,7 @@
 
 # Project build method
 DC = dmd
-DFLAGSDEF = -version=GL_46 -version=Dynamic_GLX -m64
+DFLAGSDEF = -version=GL_46 -version=Dynamic_GLX -m64 -preview=shortenedMethods
 
 # Dependencies
 # Links to the dependency repository.
