@@ -183,34 +183,19 @@ public:
     }
 
     /// ID of the generated vertex array.
-    @property uint idVertexArray() nothrow inout
-    {
-        return vid;
-    }
+    @property uint idVertexArray() nothrow inout => vid;
 
     /// The identifier of the buffer in memory.
-    @property uint idBufferArray() nothrow inout
-    {
-        return bid;
-    }
+    @property uint idBufferArray() nothrow inout => bid;
 
     /// The identifier of the elements in memory.
-    @property uint idElementArray() nothrow inout
-    {
-        return eid;
-    }
+    @property uint idElementArray() nothrow inout => eid;
 
     /// Buffer length.
-    @property size_t length() nothrow inout
-    {
-        return blength;
-    }
+    @property size_t length() nothrow inout => blength;
 
     /// Element length
-    @property size_t elementLength() nothrow inout
-    {
-        return elength;
-    }
+    @property size_t elementLength() nothrow inout => elength;
 
     /++
     Outputs the rendering of the buffer.

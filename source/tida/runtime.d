@@ -276,27 +276,16 @@ public @trusted:
         this.arguments = arguments;
     }
 
-    @property override string[] mainArguments()
-    {
-        return this.arguments;
-    }
+    @property override string[] mainArguments() => this.arguments;
+    
+    @property Window rootWindow() => RootWindow(_display, _displayID);
 
-    @property Window rootWindow()
-    {
-        return RootWindow(_display, _displayID);
-    }
 @safe:
     /// An instance for contacting the manager's server.
-    @property Display* display()
-    {
-        return this._display;
-    }
+    @property Display* display() => this._display;
 
     /// Default screen number
-    @property int displayID()
-    {
-        return this._displayID;
-    }
+    @property int displayID() => this._displayID;
 
     ~this()
     {
@@ -357,14 +346,9 @@ public @trusted:
         this.arguments = arguments;
     }
 
-    @property override string[] mainArguments()
-    {
-        return this.arguments;
-    }
+    @property override string[] mainArguments() => this.arguments;
 
 @safe:
-    @property HINSTANCE instance()
-    {
-        return this.hInstance;
-    }
+    @property HINSTANCE instance() => this.hInstance;
+    
 }

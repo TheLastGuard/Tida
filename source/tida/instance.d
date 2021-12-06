@@ -187,7 +187,7 @@ public:
     Params:
         component = Component object.
     +/
-    void add(T)(T component)
+    final void add(T)(T component)
     {
         import tida.scenemanager;
         static assert(isComponent!T, T.stringof ~ " is not a component!");
@@ -205,7 +205,7 @@ public:
     Params:
         T = Component type.
     +/
-    void add(T)()
+    final void add(T)()
     {
         add(new T());
     }
@@ -216,7 +216,7 @@ public:
     Params:
         T = Component type.
     +/
-    T cmp(T)()
+    final T cmp(T)()
     {
         static assert(isComponent!T, T.stringof ~ " is not a component!");
 
@@ -237,7 +237,7 @@ public:
     Params:
         name = Component name.
     +/
-    Component cmp(string name)
+    final Component cmp(string name)
     {
         foreach (e; components)
         {
@@ -254,7 +254,7 @@ public:
     Params:
         T = Component type.
     +/
-    void dissconnect(T)()
+    final void dissconnect(T)()
     {
         import std.algorithm : remove;
         import tida.scenemanager;
@@ -282,7 +282,7 @@ public:
     Params:
         name = Instance name.
     +/
-    void dissconnect(string name)
+    final void dissconnect(string name)
     {
         import std.algorithm : remove;
         import tida.scenemanager;
@@ -302,7 +302,7 @@ public:
     /++
     Detaches absolutely all components in this instance.
     +/
-    void dissconnectAll() @trusted
+    final void dissconnectAll() @trusted
     {
         import tida.scenemanager;
         import std.algorithm : remove;
@@ -319,20 +319,11 @@ public:
     }
 
 package(tida):
-    Sprite spriteDraw()
-    {
-        return sprite;
-    }
+    Sprite spriteDraw() => sprite;
 
-    bool isDestroy()
-    {
-        return _destroy;
-    }
+    bool isDestroy() => _destroy;
 
-    Component[] getComponents()
-    {
-        return components;
-    }
+    Component[] getComponents() => components;
 }
 
 unittest

@@ -48,16 +48,10 @@ public:
     }
 
     /// Indicates whether the timer is in effect.
-    bool isActual()
-    {
-        return MonoTime.currTime - start < duration;
-    }
+    bool isActual() => MonoTime.currTime - start < duration;
 
     /// Shows the remaining time.
-    Duration remainder()
-    {
-        return MonoTime.currTime - start;
-    }
+    Duration remainder() => MonoTime.currTime - start;
 }
 
 /++

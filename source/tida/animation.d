@@ -61,18 +61,12 @@ public:
     /++
     The current position of the animation.
     +/
-    @property float numFrame() nothrow pure
-    {
-        return _current;
-    }
+    @property float numFrame() nothrow pure => _current;
 
     /++
     The current position of the animation.
     +/
-    @property void numFrame(float currFrame) nothrow pure
-    {
-        _current = currFrame;
-    }
+    @property float numFrame(float currFrame) nothrow pure => _current = currFrame;
 
     /++
     Starts the animation from the beginning.

@@ -68,10 +68,7 @@ public:
     /++
     Returns a list of instances.
     +/
-    @property final Instance[] list() nothrow
-    {
-        return instances;
-    }
+    @property final Instance[] list() nothrow => instances;
 
     /++
     Returns a buffer of instances from the thread.
@@ -79,10 +76,7 @@ public:
     Params:
         index = Thread id.
     +/
-    final Instance[] getThreadList(size_t index) nothrow
-    {
-        return bufferThread[index];
-    }
+    final Instance[] getThreadList(size_t index) nothrow => bufferThread[index];
 
     /++
     Is there such a thread buffer.
@@ -90,10 +84,7 @@ public:
     Params:
         index = Thread id.
     +/
-    final bool isThreadExists(size_t index) nothrow
-    {
-        return index < bufferThread.length;
-    }
+    final bool isThreadExists(size_t index) nothrow => index < bufferThread.length;
 
     /++
     Creates an instance buffer for the thread.

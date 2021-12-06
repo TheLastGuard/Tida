@@ -94,6 +94,8 @@ previous - `previous` Contact precisely to the global object - `scenemanager`.
 +/
 final class SceneManager
 {
+    import std.algorithm : canFind;
+
 private:
     alias RecoveryDelegate = void delegate(ref Scene) @safe;
 
@@ -105,13 +107,17 @@ private:
     Scene _initable;
     Scene _restarted;
     RecoveryDelegate[string] recovDelegates;
+    bool _thereGoto;
 
 public @safe:
+    /++
+    A state indicating whether an instance transition is in progress. 
+    Needed to synchronize the stream.
+    +/
+    @property bool isThereGoto() nothrow pure => _thereGoto;
+    
     /// List scenes
-    @property Scene[string] scenes() nothrow
-    {
-        return _scenes;
-    }
+    @property Scene[string] scenes() nothrow pure => scenes;
 
     /++
     The first added scene.
@@ -124,34 +130,22 @@ public @safe:
     sceneManager.gameRestart();
     ---
     +/
-    @property Scene ofbegin() nothrow
-    {
-        return _ofbegin;
-    }
+    @property Scene ofbegin() nothrow pure => _ofbegin;
 
     /++
     The last added scene.
     +/
-    @property Scene ofend() nothrow
-    {
-        return _ofend;
-    }
+    @property Scene ofend() nothrow pure => _ofend;
 
     /++
     The previous scene that was active.
     +/
-    @property Scene previous() nothrow
-    {
-        return _previous;
-    }
+    @property Scene previous() nothrow pure => _previous;
 
     /++
     A scene that restarts at the moment.
     +/
-    @property Scene restarted() nothrow
-    {
-        return _restarted;
-    }
+    @property Scene restarted() nothrow pure => _restarted;
 
     /++
     Restarting the game.
@@ -199,10 +193,7 @@ public @safe:
     See_Also:
         tida.scene.manager.SceneManager.initable
     +/
-    @property Scene current() nothrow
-    {
-        return _current;
-    }
+    @property Scene current() nothrow pure => _current;
 
     /++
     The reference to the scene, which is undergoing context change
@@ -211,10 +202,7 @@ public @safe:
     The use of such a link is permissible only in context transmission
     events, otherwise, it is possible to detect the scene leading nowhere.
     +/
-    @property Scene initable() nothrow
-    {
-        return _initable;
-    }
+    @property Scene initable() nothrow pure => _initable;
 
     /++
     The reference to the current stage, as if it is under initialization,
@@ -247,19 +235,7 @@ public @safe:
     }
     ---
     +/
-    @property Scene context()
-    {
-        if (_initable is null)
-        {
-            if (_restarted is null)
-            {
-                return _current;
-            } else
-                return _restarted;
-        } else
-            return _initable;
-
-    }
+    @property Scene context() nothrow pure => _initable is null ? (_restarted is null ? _current : _restarted) : _initable;
 
     /++
     Calls a trigger for the current scene, as well as its instances.
@@ -316,19 +292,7 @@ public @safe:
     Params:
         scene = Scene.
     +/
-    bool hasScene(Scene scene)
-    {
-        if (scene is null)
-            return false;
-
-        foreach (inscene; scenes)
-        {
-            if (scene is inscene)
-                return true;
-        }
-
-        return false;
-    }
+    bool hasScene(Scene scene) @trusted => _scenes.values.canFind(scene); 
 
     /++
     Checks for the existence of a scene by its original class.
@@ -336,18 +300,7 @@ public @safe:
     Params:
         Name = Class name.
     +/
-    bool hasScene(Name)()
-    {
-        static assert(isScene!Name, "`" ~ Name.stringof ~ "` is not a scene!");
-
-        foreach (scene; scenes)
-        {
-            if ((cast(Name) scene) !is null)
-                return true;
-        }
-
-        return false;
-    }
+    bool hasScene(Name)() => _scenes.values.canFind!(e => (cast(Name) e) !is null);
 
     /++
     Checks if there is a scene with the specified name.
@@ -355,15 +308,7 @@ public @safe:
     Params:
         name = Scene name.
     +/
-    bool hasScene(string name)
-    {
-        foreach (scene; scenes)
-        {
-            if (scene.name == name) return true;
-        }
-
-        return false;
-    }
+    bool hasScene(string name) => _scenes.values.canFind!(e => e.name == name);
 
     /++
     Adds a scene to the list.
@@ -550,25 +495,13 @@ public @safe:
         }
     }
 
-    package(tida) @property FEStep[][size_t][Instance] threadSteps()
-    {
-        return IStepThreadFunctions;
-    }
+    package(tida) @property FEStep[][size_t][Instance] threadSteps() => IStepThreadFunctions;
 
-    package(tida) @property SRCollider[][Instance] colliders()
-    {
-        return IColliderStructs;
-    }
+    package(tida) @property SRCollider[][Instance] colliders() => IColliderStructs;
 
-    package(tida) @property FECollision[][Instance] collisionFunctions()
-    {
-        return ICollisionFunctions;
-    }
+    package(tida) @property FECollision[][Instance] collisionFunctions() => ICollisionFunctions;
 
-    package(tida) @property FELeave[][Component] leaveComponents()
-    {
-        return CLeaveFunctions;
-    }
+    package(tida) @property FELeave[][Component] leaveComponents() => CLeaveFunctions;
 
     package(tida) void removeHandle(Scene scene, Instance instance) @trusted
     {
@@ -1007,6 +940,7 @@ public @safe:
         import tida.vector;
     
         _previous = current;
+        _thereGoto = true;
 
         if (current !is null)
         {
@@ -1129,6 +1063,8 @@ public @safe:
         {
             renderer.camera = defaultCamera();
         }
+        
+        _thereGoto = false;
     }
 
     /++

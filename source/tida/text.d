@@ -61,16 +61,10 @@ public:
 
 @trusted:
     /// Font face object.
-    @property FT_Face face()
-    {
-        return _face;
-    }
+    @property FT_Face face() => _face;
 
     /// Font size.
-    @property size_t size()
-    {
-        return _size;
-    }
+    @property size_t size() => _size;
 
     auto charIndex(T)(T symbol, int flags)
     {
@@ -287,10 +281,8 @@ int widthText(T)(T text, Font font) @safe
     import std.algorithm : reduce;
     static assert(isSomeString!T, T.stringof ~ " is not a string!");
 
-    text = cutFormat!T(text);
-
     return new Text(font)
-        .toSymbols!T(text)
+        .toSymbols!T(cutFormat!T(text))
         .widthSymbols;
 }
 
@@ -302,7 +294,7 @@ Params:
 +/
 int widthSymbols(Symbol[] text) @safe
 {
-    import std.algorithm : reduce;
+    import std.algorithm : fold;
     import std.conv : to;
 
     int width = int.init;
@@ -451,8 +443,8 @@ public @trusted:
             image = syinfo.image;
 
             symbols ~= new Symbol(image,
-                Vecf(syinfo.bitmapLeft, syinfo.bitmapTop),
-                Vecf(syinfo.advance.x, 0),
+                vecf(syinfo.bitmapLeft, syinfo.bitmapTop),
+                vecf(syinfo.advance.x, 0),
                 font.size,
                 color);
         }

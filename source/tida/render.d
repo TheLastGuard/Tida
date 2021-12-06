@@ -79,44 +79,26 @@ public @safe nothrow pure:
         port = Shapef.Rectangle(port.begin - velocity, port.end);
     }
     
-    @property float trackDistance()
-    {
-        return _trackDistance;
-    }
+    @property float trackDistance() => _trackDistance;
     
-    @property float trackDistance(float value)
-    {
-        return _trackDistance = value;
-    }
+    @property float trackDistance(float value) => _trackDistance = value;
 
     /++
     The port is the immediate visible part in the "room". The entire area in 
     the world that must be covered in the field of view.
     +/
-    @property Shape!float port()
-    {
-        return _port;
-    }
+    @property Shape!float port() => _port;
 
     /// ditto
-    @property void port(Shape!float value)
-    {
-        _port = value;
-    }
+    @property Shape!float port(Shape!float value) => _port = value;
 
     /++
     The size of the visible part in the plane of the window.
     +/
-    @property Shape!float shape()
-    {
-        return _shape;
-    }
+    @property Shape!float shape() => _shape;
 
     /// ditto
-    @property void shape(Shape!float value)
-    {
-        _shape = value;
-    }
+    @property Shape!float shape(Shape!float value) => _shape = value;
 
     /++
     Moves the visible field.

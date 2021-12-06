@@ -565,28 +565,16 @@ public:
     }
 
     /// Converts the color to black and white.
-    float toGrayscaleFloat() inout
-    {
-        return (rf * 0.299 + gf * 0.587 + bf * 0.144);
-    }
+    float toGrayscaleFloat() inout => (rf * 0.299 + gf * 0.587 + bf * 0.144);
 
     /// Whether the color is dark.
-    bool isDark()
-    {
-        return (toGrayscaleFloat < 0.5f);
-    }
+    bool isDark() => toGrayscaleFloat < 0.5f;
 
     /// Whether the color is light.
-    bool isLight()
-    {
-        return (toGrayscaleFloat > 0.5f);
-    }
+    bool isLight() => toGrayscaleFloat > 0.5f;
 
     /// Converts the color to black and white.
-    T toGrayscaleNumber() inout
-    {
-        return cast(T) (Max * toGrayscaleFloat());
-    }
+    T toGrayscaleNumber() inout => cast(T) (Max * toGrayscaleFloat());
 
     /// Converts the color to black and white.
     Color!T toGrayscale() inout
@@ -597,63 +585,52 @@ public:
     }
 
     /// Will return the color opposite to itself.
-    @property Color!T inverted() inout
-    { 
-        return Color!T(Max - r, Max - g, Max - b, a);
-    }
+    @property Color!T inverted() inout => Color!T(Max - r, Max - g, Max - b, a);
 
     /// Invert alpha value
-    @property T invertAlpha() inout
-    {
-        return Max - alpha;
-    }
+    @property T invertAlpha() inout => Max - alpha;
 
     /// Red value in the form of a range from 0 to 1.
-    @property float rf()  inout
-    {
-        return cast(float) r / cast(float) Max;
-    }
+    @property float rf()  inout => cast(float) r / cast(float) Max;
 
     /// ditto
-    @property void rf(float value)
+    @property float rf(float value)
     {
         this.r = cast(T) (Max * value);
+        
+        return value;
     }
 
     /// Green value in the form of a range from 0 to 1.
-    @property float gf() inout
-    {
-        return cast(float) g / cast(float) Max;
-    }
+    @property float gf() inout => cast(float) g / cast(float) Max;
 
     /// ditto
-    @property void gf(float value)
+    @property float gf(float value)
     {
         this.g = cast(T) (Max * value);
+        
+        return value;
     }
 
     /// Alpha value in the form of a range from 0 to 1.
-    @property float bf() inout
-    {
-        return cast(float) b / cast(float) Max;
-    }
+    @property float bf() inout => cast(float) b / cast(float) Max;
 
     /// ditto
-    @property void bf(float value)
+    @property float bf(float value)
     {
         this.b = cast(T) (Max * value);
+        
+        return value;
     }
 
     /// Returns a alpha value in the form of a range from 0 to 1.
-    @property float af() inout
-    {
-        return cast(float) a / cast(float) Max;
-    }
-
+    @property float af() inout => cast(float) a / cast(float) Max;
     /// ditto
-    @property void af(float value)
+    @property float af(float value)
     {
         this.a = cast(T) (Max * value);
+        
+        return value;
     }
 }
 

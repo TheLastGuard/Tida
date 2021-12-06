@@ -16,6 +16,7 @@ License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE, MIT)
 module tida.vector;
 
 import std.traits;
+import std.math;
 
 /++
 Vector structure. May include any numeric data type available for vector arithmetic.
@@ -28,7 +29,6 @@ assert(vec!float(32, 32) + vecf(32, 32) == Vector!float[64, 64]);
 struct Vector(T)
 if (isNumeric!T && isSigned!T)
 {
-    import std.math : pow, sqrt;
     import core.exception;
 
 public:
@@ -134,6 +134,7 @@ public:
         this.x = x * d;
         this.y = y * d;
     }
+    
 inout:
     T opIndex(size_t index)
     {
@@ -151,31 +152,13 @@ inout:
     /++
     Converts a vector to an array.
     +/
-    T[] array()
-    {
-        return [x, y];
-    }
+    T[] array() => [x, y];
 
-    bool opEquals(Vector a, Vector b)
-    {
-        if (a is b)
-            return true;
+    bool opEquals(Vector a, Vector b) => a is b || (a.x == b.x && a.y == b.y);
 
-        return a.x == b.x && a.y == b.y;
-    }
+    bool opEquals(Vector other) => this is other || (this.x == other.x && this.y == other.y);
 
-    bool opEquals(Vector other)
-    {
-        if (this is other)
-            return true;
-
-        return this.x == other.x && this.y == other.y;
-    }
-
-    int opCmp(Vector rhs)
-    {
-        return (x > rhs.x && y > rhs.y) ? 1 : -1;
-    }
+    int opCmp(Vector rhs) => (x > rhs.x && y > rhs.y) ? 1 : -1;
 
     Vector!T opBinary(string op)(Vector rhs)
     {
@@ -259,15 +242,9 @@ inout:
         return Vector!T(this.x * d, this.y * d);
     }
 
-    Vector!T negatived()
-    {
-        return Vector!T(-this.x, -this.y);
-    }
+    Vector!T negatived() => Vector!T(-this.x, -this.y);
 
-    Vector!T positived()
-    {
-        return Vector!T(+this.x, +this.y);
-    }
+    Vector!T positived() => Vector!T(+this.x, +this.y);
 
     template opUnary(string op)
     if (op == "-" || op == "+")
@@ -388,10 +365,7 @@ unittest
     assert([vec!int(16, 16), vec!int(32, 48), vec!int(48, 8)].generateArray == ([16, 16, 32, 48, 48, 8]));
 }
 
-inout(T) sqr(T)(inout(T) value) @safe nothrow pure
-{
-    return value * value;
-}
+inout(T) sqr(T)(inout(T) value) @safe nothrow pure => value * value;
 
 /++
 Construct the vector modulo.

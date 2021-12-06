@@ -188,10 +188,7 @@ public:
 
 @safe nothrow pure:
     /// The beginning of the figure.
-    @property Vector!T begin() inout
-    {
-        return _begin;
-    }
+    @property Vector!T begin() inout => _begin;
 
     /// The end of the figure.
     @property Vector!T end() inout
@@ -215,55 +212,34 @@ public:
     }
 
     /// The beginning of the figure.
-    @property void begin(Vector!T vec)
-    {
-        _begin = vec;
-    }
+    @property Vector!T begin(Vector!T vec) => _begin = vec;
 
     /// The end of the figure.
-    void end(Vector!T vec) @safe @property nothrow pure
+    @property Vector!T end(Vector!T vec) @safe nothrow pure
     in(type != ShapeType.point && type != ShapeType.circle && type != ShapeType.polygon,
         "This shape does not support end coordinates!")
     do
     {
-        _end = vec;
+        return _end = vec;
     }
 
     /// The beginning of the figure along the x-axis.
-    @property T x() inout
-    {
-        return begin.x;
-    }
+    @property T x() inout => begin.x;
 
     /// The beginning of the figure along the y-axis.
-    @property T y() inout
-    {
-        return begin.y;
-    }
+    @property T y() inout => begin.y;
 
     /// The beginning of the figure along the x-axis.
-    @property void x(T value)
-    {
-        begin.x = value;
-    }
+    @property T x(T value) => begin.x = value;
 
     /// The beginning of the figure along the y-axis.
-    @property void y(T value)
-    {
-        begin.x = value;
-    }
+    @property T y(T value) => begin.y = value;
     
     /// The end of the figure along the x-axis.
-    @property T endX() inout
-    {
-        return end.x;
-    }
+    @property T endX() inout => end.x;
 
     /// The end of the figure along the y-axis.
-    @property T endY()inout
-    {
-        return end.y;
-    }
+    @property T endY() inout => end.y;
 
     alias left = x; /// Rectangle left
     alias right = endX; /// Rectangle right
@@ -279,11 +255,11 @@ public:
     }
 
     /// ditto
-    @property void radius(T value)
+    @property T radius(T value)
     in(type == ShapeType.circle || type == ShapeType.roundrect,"This is not a circle!")
     do
     {
-        _radius = value;
+        return _radius = value;
     }
 
     /// The top of the triangle.
@@ -322,26 +298,27 @@ public:
     }
 
     /// Shape width
-    @property void width(T value)
+    @property T width(T value)
     in(type == ShapeType.rectangle || type == ShapeType.roundrect,"This is not a rectangle!")
     do
     {
         _end = begin + Vector!T(value,height);
+        
+        return value;
     }
 
     /// Shape height
-    @property void height(T value)
+    @property T height(T value)
     in(type == ShapeType.rectangle || type == ShapeType.roundrect,"This is not a rectangle!")
     do
     {
-        _end = begin + Vector!T(width,value);
+        _end = begin + Vector!T(width, value);
+        
+        return value;
     }
 
     /// The top of the triangle.
-    @property Vector!T[] vertexs() inout
-    {
-        return [begin,end,_trType];
-    }
+    @property Vector!T[] vertexs() inout => [begin, end, _trType];
 
     /// ditto
     @property void vertex(uint num)(Vector!T value)

@@ -65,16 +65,6 @@ public:
         return cast(T) object;
     }
 
-    string getPath()
-    {
-        return path;
-    }
-
-    string getName()
-    {
-        return name;
-    }
-
     void free()
     {
         destroy(object);
@@ -252,10 +242,10 @@ public @safe:
     {
         foreach (e; this.resources)
         {
-            if (e.getPath() == name)
+            if (e.path == name)
                 return e.get!T;
 
-            if (e.getName() == name)
+            if (e.name == name)
                 return e.get!T;
         }
 

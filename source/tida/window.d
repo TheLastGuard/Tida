@@ -396,15 +396,9 @@ public:
         XSetWMProtocols(runtime.display, this.handle, &wmAtom, 1);
     }
 
-    int getDepth()
-    {
-        return depth;
-    }
+    int getDepth() => depth;
 
-    Visual* getVisual()
-    {
-        return visual;
-    }
+    Visual* getVisual() => visual;
 
     ~this()
     {
@@ -467,10 +461,7 @@ override:
         this._fullscreen = value;
     }
 
-    @property bool fullscreen()
-    {
-        return this._fullscreen;
-    }
+    @property bool fullscreen() => this._fullscreen;
 
     @property void resizable(bool value)
     {
@@ -497,10 +488,7 @@ override:
         XSetWMNormalHints(runtime.display, this.handle, sh);
     }
 
-    @property bool resizable()
-    {
-        return this._resizable;
-    }
+    @property bool resizable() => this._resizable;
 
     @property void border(bool value)
     {
@@ -523,10 +511,7 @@ override:
         this._border = value;
     }
 
-    @property bool border()
-    {
-        return this._border;
-    }
+    @property bool border() => this._border;
 
     @property void title(string value)
     {
@@ -536,10 +521,7 @@ override:
         this._title = value;
     }
 
-    @property string title()
-    {
-        return this._title;
-    }
+    @property string title() => this._title;
 
     @property void alwaysOnTop(bool value)
     {
@@ -565,10 +547,7 @@ override:
         this._alwaysTop = value;
     }
 
-    @property bool alwaysOnTop()
-    {
-        return this._alwaysTop;
-    }
+    @property bool alwaysOnTop() => this._alwaysTop;
 
     void icon(Image iconimage)
     {
@@ -599,10 +578,7 @@ override:
         glXMakeCurrent(runtime.display, this.handle, glxctx);
     }
 
-    @property IContext context()
-    {
-        return this._context;
-    }
+    @property IContext context() => this._context;
 
     void resize(uint w, uint h)
     {
@@ -1013,10 +989,7 @@ override:
         this._fullscreen = value;
     }
 
-    @property bool fullscreen()
-    {
-        return this._fullscreen;
-    }
+    @property bool fullscreen() => this._fullscreen;
 
     @property void resizable(bool value)
     {
@@ -1032,10 +1005,7 @@ override:
         this._resizable = value;
     }
 
-    @property bool resizable()
-    {
-        return this._resizable;
-    }
+    @property bool resizable() => this._resizable;
 
     @property void border(bool value)
     {
@@ -1067,10 +1037,7 @@ override:
         this._border = value;
     }
 
-    @property bool border()
-    {
-        return this._border;
-    }
+    @property bool border() => this._border;
 
     @property void title(string value)
     {
@@ -1079,10 +1046,7 @@ override:
         this._title = value;
     }
 
-    @property string title()
-    {
-        return this._title;
-    }
+    @property string title() => this._title;
 
     @property void alwaysOnTop(bool value)
     {
@@ -1093,10 +1057,7 @@ override:
         this._alwaysTop = value;
     }
 
-    @property bool alwaysOnTop()
-    {
-        return this._alwaysTop;
-    }
+    @property bool alwaysOnTop() => this._alwaysTop;
 
     @property void icon(Image iconimage)
     {
@@ -1126,10 +1087,7 @@ override:
         this._context = ctx;
     }
 
-    @property IContext context()
-    {
-        return this._context;
-    }
+    @property IContext context() => this._context;
 
     void resize(uint w, uint h)
     {   

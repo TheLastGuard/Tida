@@ -117,7 +117,8 @@ private void workerThread(Tid owner, size_t id)
         if (isPaused)
             continue;
         
-        sceneManager.callStep(id, null);
+        if (!sceneManager.isThereGoto)
+            sceneManager.callStep(id, null);
         
         threadFPS.control();
     }
