@@ -117,7 +117,7 @@ public @safe:
     @property bool isThereGoto() nothrow pure => _thereGoto;
     
     /// List scenes
-    @property Scene[string] scenes() nothrow pure => scenes;
+    @property Scene[string] scenes() nothrow pure => _scenes;
 
     /++
     The first added scene.
