@@ -38,41 +38,81 @@ enum MouseButton
     middle = 2 /// Middle mouse button
 }
 
+/++
+Interaction interface and receiving information from the joystick.
++/
 interface IJoystick
 {
     import tida.vector;
     
-    //@property Vector!int axless() @safe;
-
-    @property Vector!float axisMovement() @safe;
+    enum maximumAxes = vec!float(32767, 32767);
     
+    /++
+    A method that returns the value of all axes of the controller. 
+    The maximum number of axes can be checked using the `.length` property:
+    ---
+    writeln("Axless count: ", joystick.axless.length);
+    ---
+    +/
+    @property int[] axless() @safe;
+    
+    /++
+    A method that returns the maximum number of buttons on the controller.
+    +/
+    @property uint maxButtons() @safe;
+    
+    /++
+    A method that returns the name of the controller.
+    +/
+    @property string name() @safe;
+    
+    /++
+    Method showing which button was pressed/released in the current event.
+    +/
     @property int button() @safe;
     
+    /++
+    Shows the state when any button was pressed.
+    +/
     @property bool isButtonDown() @safe;
     
+    /++
+    Shows the state when any button was released..
+    +/
     @property bool isButtonUp() @safe;
     
+    /++
+    Shows the state when any one of the axes has changed its state.
+    +/
     @property bool isAxisMove() @safe;
 
-    @property Vector!int axis() @safe;
-    //{
-        //return vec!int(axless[0], axless[1]);
-    //}
-
-    final @property int buttonDown() @safe
-    {
-        return isButtonDown ? button : 0;
-    }
+    /++
+    Shows the value of the first axis on the controller. 
+    The value ranges from -1.0 to 1.0.
+    +/
+    final @property Vector!float xy() @safe => vec!float(axless[0], axless[1]) / maximumAxes;
     
-    final @property int buttonUp() @safe
-    {
-        return isButtonUp ? button : 0;
-    }
+    /++
+    Shows the value of the second axis on the controller. 
+    The value ranges from -1.0 to 1.0.
+    +/
+    final @property Vector!float zr() @safe => vec!float(axless[2], axless[3]) / maximumAxes;
     
-    final @property Vector!int axisMove() @safe
-    {
-        return isAxisMove ? axis : vecZero!int;
-    }
+    /++
+    Shows the value of the third axis on the controller. 
+    The value ranges from -1.0 to 1.0.
+    +/
+    final @property Vector!float uv() @safe => vec!float(axless[4], axless[5]) / maximumAxes;
+    
+    /++
+    Shows the currently pressed key.
+    +/
+    final @property int buttonDown() @safe => isButtonDown ? button : -1;
+    
+    /++
+    Shows the currently released key.
+    +/
+    final @property int buttonUp() @safe => isButtonUp ? button : -1;
 }
 
 version(Windows)
@@ -92,8 +132,9 @@ public:
     int[] axisMax; // Maximum axes values
     int[] axisOffset; // Axes offset values
     float[] axisScale; // Axes scale values
+    string namely; 
     
-    int[8] axesState; // Axes state
+    int[] axesState; // Axes state
     int[int] buttons;
     
     int[] _axis;
@@ -134,10 +175,20 @@ public:
     }
     
 override:
-    //@property int[] axless()
-    //{
-        //return _axis;
-    //}
+    @property int[] axless()
+    {
+        return axisState;
+    }
+    
+    @property uint maxButtons()
+    {
+        return numButtons;
+    }
+    
+    @property string name()
+    {
+        return namely;
+    }
 
     @property bool isButtonDown()
     {
@@ -170,27 +221,6 @@ override:
         else
             return -1;
     }
-    
-    @property Vector!int axis()
-    {
-        if (event.currJEvent is null)
-            return vecZero!int;
-            
-        return vec!int(
-            axesState[0],
-            axesState[1]
-        );
-    }
-
-    @property Vector!float axisMovement()
-    {
-        immutable velocity = axis();
-        
-        return vec!float(
-            velocity.x / (axisMax[0] + axisOffset[0] * axisScale[0]),
-            velocity.y / (axisMax[1] + axisOffset[1] * axisScale[1])
-        );
-    }
 }
 
 version(Posix)
@@ -205,10 +235,12 @@ private:
 
 public:
     int id; // identificator
-    string name;
+    string namely;
+    
     int numAxes; // Max axes
     int numButtons; // Max buttons
-    int[8] _axis;
+    
+    int[] _axis;
 
     // linux/joystick.h
     enum JSIOCGAXES = _IOR!ubyte('j', 0x11);
@@ -242,14 +274,20 @@ public:
 
     this(int descriptor, int id) @trusted
     {
+        import std.conv : to;
+    
         this.descriptor = descriptor;
         this.id = id;
 
-        char[80] name;
+        char[80] __name;
  
         ioctl(descriptor, JSIOCGAXES, &numAxes);
         ioctl(descriptor, JSIOCGBUTTONS, &numButtons);
-        ioctl(descriptor, JSIOCGNAME!(char[80]), &name);
+        ioctl(descriptor, JSIOCGNAME!(char[80]), &__name);
+        
+        namely = __name.to!string;
+        
+        _axis = new int[](numAxes);
     }
 
     ~this() @trusted
@@ -261,19 +299,19 @@ public:
     }
 
 override:
-    @property Vector!int axis()
+    @property int[] axless()
     {
-        return vec!int(_axis[0], _axis[1]);
+        return _axis;
+    }
+
+    @property uint maxButtons()
+    {
+        return numButtons;
     }
     
-    @property Vector!float axisMovement()
+    @property string name()
     {
-        immutable velocity = axis();
-        
-        return vec!float(
-            cast(float) velocity.x / 32767.0f,
-            cast(float) velocity.y / 32767.0f
-        );
+        return namely;
     }
 
     @property int button()
@@ -432,6 +470,16 @@ interface IEventHandler
     +/
     @property string inputChar();
     
+    /++
+    Returns an array of the interface for controlling joysticks. 
+    If its length is zero, no joysticks were found.
+
+    It is checked once, if one controller has been disabled, then it is recommended 
+    to zero the array as shown below and call again to rescan the joysticks.
+    ---
+    event.joysticks.length = 0;
+    ---
+    +/
     @property Joystick[] joysticks();
 
 @trusted:
@@ -934,6 +982,8 @@ public:
     
     @property Joystick[] joysticks() @trusted
     {
+        import std.conv : to;
+    
         if (_joysticks !is null)
             return _joysticks;
             
@@ -961,6 +1011,8 @@ public:
             auto jj =  new Joystick(i, this);
             jj.numAxes = jCaps.wNumAxes;
             jj.numButtons = jCaps.wNumButtons;
+            jj.axisState = new int[](jj.numAxes);
+            jj.namely = jCaps.szPname.to!string;
             
             immutable wAxisMin = [
                 jCaps.wXmin,
