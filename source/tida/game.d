@@ -241,7 +241,10 @@ public:
                             continue;
                         }
                         
-                        sceneManager.threadAPI[response.value] ~= response;
+                        if (response.value == 0)
+                            exit();
+                        else
+                            sceneManager.threadAPI[response.value] ~= response;
                     }
                     break;
                     

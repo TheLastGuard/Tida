@@ -31,9 +31,31 @@ private:
     Shape!float _shape;
     CameraObject object;
     float _trackDistance = 4.0f;
+    Vector!float _sizeRoom = vecNaN!float;
     
 
 public @safe nothrow pure:
+    /// The allowed room size for camera scrolling.
+    @property Vector!float sizeRoom() => _sizeRoom;
+    
+    /// The allowed room size for camera scrolling.
+    @property Vector!float sizeRoom(Vector!float value) => _sizeRoom = value;
+    
+    /// A method to change the allowed size of a scrolling room for a camera.
+    void resizeRoom(Vector!float value)
+    {
+        _sizeRoom = value;
+    }
+
+    /++
+    A method for binding a specific object to a camera to track it.
+    
+    Params:
+        position =  The reference to the variable for which the tracking
+                    will be performed. We need a variable that will be 
+                    alive during the camera's tracking cycle.
+        size     =  The size of the object. (Each object is represented as a rectangle.)
+    +/
     void bindObject(    ref Vector!float position, 
                         Vector!float size = vecNaN!float)  @trusted
     {
@@ -41,6 +63,15 @@ public @safe nothrow pure:
         object.size = size.isVectorNaN ? vec!float(1, 1) : size;
     }
     
+    /++
+    A method for binding a specific object to a camera to track it.
+    
+    Params:
+        position =  The reference to the variable for which the tracking
+                    will be performed. We need a variable that will be 
+                    alive during the camera's tracking cycle.
+        size     =  The size of the object. (Each object is represented as a rectangle.)
+    +/
     void bindObject(    Vector!float* position,
                         Vector!float size = vecNaN!float)
     {
@@ -48,12 +79,22 @@ public @safe nothrow pure:
         object.size = size.isVectorNaN ? vec!float(1, 1) : size;
     }
     
+    /++
+    A method for binding a specific object to a camera to track it.
+    
+    Params:
+        instance =  An object in the scene that will be monitored by the camera. 
+                    The size is calculated from the object's touch mask.
+    +/
     void bindObject(Instance instance)
     {
         object.position = &instance.position;
         object.size = instance.mask.calculateSize();
     }
     
+    /++
+    A method that reproduces the process of tracking an object.
+    +/
     void followObject()
     {
         Vector!float velocity = vecZero!float;
@@ -76,11 +117,25 @@ public @safe nothrow pure:
             velocity.y = (port.begin.y + port.end.y - _trackDistance) - (object.position.y + object.size.y);
         }
         
-        port = Shapef.Rectangle(port.begin - velocity, port.end);
+        immutable preBegin = port.begin - velocity;
+        
+        if (!_sizeRoom.isVectorNaN)
+        {
+            if (preBegin.x > 0 &&
+                preBegin.x + port.end.x < _sizeRoom.x &&
+                preBegin.y > 0 &&
+                preBegin.y + port.end.y < _sizeRoom.y)
+            {
+                port = Shapef.Rectangle(preBegin, port.end);
+            }
+        } else
+            port = Shapef.Rectangle(preBegin, port.end);
     }
     
+    /// Distance between camera boundaries and subject for the scene to move the camera's view.
     @property float trackDistance() => _trackDistance;
     
+    /// Distance between camera boundaries and subject for the scene to move the camera's view.
     @property float trackDistance(float value) => _trackDistance = value;
 
     /++
