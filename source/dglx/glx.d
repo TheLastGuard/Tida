@@ -72,6 +72,12 @@ __gshared
     FglXIsDirect glXIsDirect;
 }
 
+static string[] glxDefaultPaths = [
+	"/usr/lib/libGLX.so",
+	"/usr/lib/libGL.so",
+	"/usr/lib/libGLX_nvidia.so"
+];
+
 /++
     Load GLX library, which should open context in x11 environment.
 
@@ -111,7 +117,7 @@ void loadGLXLibrary() @trusted
 
                 if(e.name.isFile)
                 {
-                    if (e.name.canFind("libglx.so"))
+                    if (e.name.canFind("libglx.so") || e.name.canFind("libGLX.so"))
                     {
                         locateds ~= e.name;
                     }else
@@ -130,13 +136,17 @@ void loadGLXLibrary() @trusted
         return locateds;
     }
 
-    string[] paths = recurseFindGLX("/usr/lib/");
+    string[] paths = recurseFindGLX("/usr/lib/") ~ glxDefaultPaths;
 
     version(X86_64)
+    {
         paths ~= recurseFindGLX("/usr/lib/x86_64-linux-gnu/");
+    }
     else
     version(X86)
+    {
         paths ~= recurseFindGLX("/usr/lib/i386-linux-gnu/");
+    }
     
     bool isSucces = false;
     bool ErrorFind = false;

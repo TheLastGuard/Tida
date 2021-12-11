@@ -61,6 +61,20 @@ Returns the maximum version of the shaders in the open graphics.
     return _glslVersion;
 }
 
+@property string glVendor() @trusted
+{
+	import std.conv : to;
+	
+	return glGetString(GL_VENDOR).to!string;
+}
+
+@property string glRenderer() @trusted
+{
+	import std.conv : to;
+	
+	return glGetString(GL_RENDERER).to!string;
+}
+
 /++
 The function loads the `OpenGL` libraries for hardware graphics acceleration.
 
@@ -98,7 +112,8 @@ Available extensions that the framework can load with one function.
 enum Extensions : string
 {
     textureCompression = "GL_ARB_texture_compression",
-    textureArray = "GL_EXT_texture_array"
+    textureArray = "GL_EXT_texture_array",
+    textureClear = "GL_ARB_clear_texture"
 }
 
 /++
@@ -213,6 +228,27 @@ enum
     GL_COMPARE_REF_DEPTH_TO_TEXTURE_EXT = 0x884E
 }
 
+alias FClearTexImage = void function (uint texture, int level,
+									  int format, int type,
+									  void* data);
+
+alias FClearTexSubImage = void function(uint texture, int level,
+			                            int xoffset, int yoffset, int zoffset,
+			                            int width, int height, int depth,
+			                            int format, int type,
+			                            void* data);
+									  
+__gshared
+{
+	FClearTexImage glClearTexImageARB;
+	FClearTexSubImage glClearTexSubImageARB;
+}
+
+enum
+{
+	GL_CLEAR_TEXTURE = 0x9365
+}
+
 /++
 Loads the extension `GL_EXT_texture_array`, that is, extensions for 
 loading an array of textures.
@@ -233,4 +269,22 @@ bool extTextureArrayLoad() @trusted
         return false;
 
     return true;
+}
+
+bool extTextureClearLoad() @trusted
+{
+	import bindbc.opengl.util;
+
+	if (!hasExtensions(null, Extensions.textureClear))
+		return false;
+	
+	if (!loadExtendedGLSymbol(cast(void**) &glClearTexImageARB,
+							  "glClearTexImage"))
+		return false;
+		
+	if (!loadExtendedGLSymbol(cast(void**) &glClearTexImageARB,
+							  "glClearTexSubImage"))
+		return false;
+		
+	return true;
 }
