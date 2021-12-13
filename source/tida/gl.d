@@ -159,7 +159,7 @@ ExtList glExtensionsList() @trusted
 }
 
 // Texture compressed
-alias FCompressedTexImage2DARB = void function(GLenum target,
+alias FCompressedTexImage2DARB = extern(C) void function(GLenum target,
                                                int level,
                                                GLenum internalformat,
                                                GLsizei width,
@@ -210,7 +210,7 @@ bool extTextureCompressionLoad() @trusted
 }
 
 // Texture array ext 
-alias FFramebufferTextureLayerEXT = void function();
+alias FFramebufferTextureLayerEXT = extern(C) void function();
 
 __gshared
 {
@@ -226,27 +226,6 @@ enum
     GL_TEXTURE_BINDING_2D_ARRAY_EXT = 0x8C1D,
     GL_MAX_ARRAY_TEXTURE_LAYERS_EXT = 0x88FF,
     GL_COMPARE_REF_DEPTH_TO_TEXTURE_EXT = 0x884E
-}
-
-alias FClearTexImage = void function (uint texture, int level,
-									  int format, int type,
-									  void* data);
-
-alias FClearTexSubImage = void function(uint texture, int level,
-			                            int xoffset, int yoffset, int zoffset,
-			                            int width, int height, int depth,
-			                            int format, int type,
-			                            void* data);
-									  
-__gshared
-{
-	FClearTexImage glClearTexImageARB;
-	FClearTexSubImage glClearTexSubImageARB;
-}
-
-enum
-{
-	GL_CLEAR_TEXTURE = 0x9365
 }
 
 /++
@@ -269,22 +248,4 @@ bool extTextureArrayLoad() @trusted
         return false;
 
     return true;
-}
-
-bool extTextureClearLoad() @trusted
-{
-	import bindbc.opengl.util;
-
-	if (!hasExtensions(null, Extensions.textureClear))
-		return false;
-	
-	if (!loadExtendedGLSymbol(cast(void**) &glClearTexImageARB,
-							  "glClearTexImage"))
-		return false;
-		
-	if (!loadExtendedGLSymbol(cast(void**) &glClearTexImageARB,
-							  "glClearTexSubImage"))
-		return false;
-		
-	return true;
 }

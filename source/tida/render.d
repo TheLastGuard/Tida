@@ -619,7 +619,9 @@ override:
         vec -= camera.port.begin;
 
         Shapef shape = Shapef.Point(vec);
-        VertexInfo!float vinfo = generateVertex!(float)(shape);
+        
+        scope vinfo = new VertexInfo!float();
+        vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
 
         vinfo.bindBuffer();
         vinfo.bindVertexArray();
@@ -630,12 +632,11 @@ override:
 
         setDefaultUniform(color);
 
-        vinfo.draw(vinfo.shapeinfo.type);
+        vinfo.draw(ShapeType.point);
 
         currentShader.disableVertex("position");
         vinfo.unbindBuffer();
         vinfo.unbindVertexArray();
-        vinfo.deleting();
 
         resetShader();
         resetModelMatrix();
@@ -649,7 +650,8 @@ override:
         auto shape = Shapef.Line(   points[0] - camera.port.begin, 
                                     points[1] - camera.port.begin);
                                     
-        VertexInfo!float vinfo = generateVertex!(float)(shape);
+        scope vinfo = new VertexInfo!float();
+        vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
 
         vinfo.bindBuffer();
         vinfo.bindVertexArray();
@@ -661,11 +663,10 @@ override:
 
         currentShader.using();
         setDefaultUniform(color);
-        vinfo.draw(vinfo.shapeinfo.type);
+        vinfo.draw(ShapeType.line);
 
         currentShader.disableVertex("position");
         vinfo.unbindVertexArray();
-        vinfo.deleting();
 
         resetShader();
         resetModelMatrix();
@@ -688,7 +689,13 @@ override:
             shape = Shapef.RectangleLine(position, position + vecf(width, height));
         }
 
-        VertexInfo!float vinfo = generateVertex!(float)(shape);
+		uint[] elems = [0 ,1, 2, 2, 3 ,0];
+
+        scope vinfo = new VertexInfo!float();
+        if (isFill)
+        	vinfo.bindFromBufferAndElem(generateBuffer(shape).generateArray, elems);
+        else
+        	vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
 
         vinfo.bindVertexArray();
         vinfo.bindBuffer();
@@ -703,15 +710,14 @@ override:
         setDefaultUniform(color);
 
         if (isFill)
-            vinfo.draw(vinfo.shapeinfo.type, 1);
+            vinfo.draw(ShapeType.rectangle, 1);
         else
             vinfo.draw(ShapeType.line, 4);
 
         currentShader.disableVertex("position");
         vinfo.unbindVertexArray();
         if (isFill) vinfo.unbindElementBuffer();
-        vinfo.deleting();
-
+        
         resetShader();
         resetModelMatrix();
     }
@@ -733,7 +739,8 @@ override:
             shape = Shapef.CircleLine(position, radius);
         }
 
-        VertexInfo!float vinfo = generateVertex!(float)(shape);
+        scope vinfo = new VertexInfo!float();
+        vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
 
         vinfo.bindVertexArray();
         vinfo.bindBuffer();
@@ -747,13 +754,12 @@ override:
         setDefaultUniform(color);
 
         if (isFill)
-            vinfo.draw(vinfo.shapeinfo.type, 1);
+            vinfo.draw(ShapeType.circle, 1);
         else
-            vinfo.draw(ShapeType.line, cast(int) vinfo.shapeinfo.shapes.length);
+            vinfo.draw(ShapeType.line, cast(int) shape.shapes.length);
 
         currentShader.disableVertex("position");
         vinfo.unbindVertexArray();
-        vinfo.deleting();
 
         resetShader();
         resetModelMatrix();
@@ -776,7 +782,8 @@ override:
             shape = Shapef.RoundRectangleLine(position,  position + vecf(width, height), radius);
         }
 
-        VertexInfo!float vinfo = generateVertex!(float)(shape);
+        scope vinfo = new VertexInfo!float();
+        vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
 
         vinfo.bindVertexArray();
         vinfo.bindBuffer();
@@ -790,14 +797,13 @@ override:
         setDefaultUniform(color);
 
         if (isFill)
-            vinfo.draw(vinfo.shapeinfo.type, 1);
+            vinfo.draw(ShapeType.roundrect, 1);
         else
-            vinfo.draw(ShapeType.line, cast(int) vinfo.shapeinfo.shapes.length);
+            vinfo.draw(ShapeType.line, cast(int) shape.shapes.length);
 
         currentShader.disableVertex("position");
         vinfo.unbindVertexArray();
-        vinfo.deleting();
-
+        
         resetShader();
         resetModelMatrix();
     }
@@ -821,7 +827,8 @@ override:
             shape = Shapef.TriangleLine(points);
         }
 
-        VertexInfo!float vinfo = generateVertex!(float)(shape);
+        scope vinfo = new VertexInfo!float();
+        vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
 
         vinfo.bindVertexArray();
         vinfo.bindBuffer();
@@ -835,13 +842,12 @@ override:
         setDefaultUniform(color);
 
         if (isFill)
-            vinfo.draw(vinfo.shapeinfo.type, 1);
+            vinfo.draw(ShapeType.triangle, 1);
         else
-            vinfo.draw(ShapeType.line, cast(int) vinfo.shapeinfo.shapes.length);
+            vinfo.draw(ShapeType.line, cast(int) shape.shapes.length);
 
         currentShader.disableVertex("position");
         vinfo.unbindVertexArray();
-        vinfo.deleting();
 
         resetShader();
         resetModelMatrix();
@@ -867,7 +873,8 @@ override:
             shape = Shapef.Polygon(points ~ points[0]);
         }
 
-        VertexInfo!float vinfo = generateVertex!(float)(shape);
+        scope vinfo = new VertexInfo!float();
+        vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
 
         vinfo.bindVertexArray();
         vinfo.bindBuffer();
@@ -881,13 +888,12 @@ override:
         setDefaultUniform(color);
 
         if (isFill)
-            vinfo.draw(vinfo.shapeinfo.type, 1);
+            vinfo.draw(ShapeType.polygon, 1);
         else
-            glDrawArrays(GL_LINE_LOOP, 0, 2 * cast(int) vinfo.shapeinfo.data.length);
+            glDrawArrays(GL_LINE_LOOP, 0, 2 * cast(int) shape.data.length);
 
         currentShader.disableVertex("position");
         vinfo.unbindVertexArray();
-        vinfo.deleting();
 
         resetShader();
         resetModelMatrix();

@@ -190,7 +190,11 @@ public:
     final void add(T)(T component)
     {
         import tida.scenemanager;
-        static assert(isComponent!T, T.stringof ~ " is not a component!");
+        
+        static if (is(T : Instance))
+            static assert(null, T.stringof ~ " is not a component! Maybe you meant `sceneManager.context.add`?");
+        else
+            static assert(isComponent!T, T.stringof ~ " is not a component!");
 
         components ~= component;
         if (component.name == "")

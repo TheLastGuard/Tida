@@ -316,6 +316,19 @@ public:
         return render.getShader("DefaultImage");
     }
 
+    void clear(Color!ubyte color) @trusted
+    {
+        import std.algorithm : fill;
+    
+        Color!ubyte[] data = new Color!ubyte[](width * height);
+        data.fill(color);
+        
+        bind();
+        glTexSubImage2D(    GL_TEXTURE_2D, 0, 0, 0, _width, _height, GL_RGBA,
+                            GL_UNSIGNED_BYTE, cast(void*) data);
+        unbind();
+    }
+
     void destroy()
     {
         glDeleteTextures(1, &glid);
