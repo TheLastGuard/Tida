@@ -248,6 +248,13 @@ public:
                     }
                     break;
                     
+                    case APIType.GameClose:
+                    {
+                    	result = response.value;
+                    	exit();
+                    }
+                    break;
+                    
                     default:
                         sceneManager.apiError[response.code] = APIError.UnkownResponse;
                         break;
