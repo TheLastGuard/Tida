@@ -85,7 +85,7 @@ static string[] glxDefaultPaths = [
 +/
 void loadGLXLibrary() @trusted
 {
-    import std.file : exists, dirEntries, SpanMode, DirEntry, isDir, isFile;
+    import std.file : exists, dirEntries, SpanMode, DirEntry, isDir, isFile, write, read;
     import std.string : toStringz;
     import std.algorithm : reverse, canFind;
     import std.parallelism : parallel;
@@ -136,16 +136,40 @@ void loadGLXLibrary() @trusted
         return locateds;
     }
 
-    string[] paths = recurseFindGLX("/usr/lib/") ~ glxDefaultPaths;
-
-    version(X86_64)
+    string[] paths;
+    
+    version (dglx_cachelib)
     {
-        paths ~= recurseFindGLX("/usr/lib/x86_64-linux-gnu/");
-    }
-    else
-    version(X86)
+    	if (exists(".dglxcachelib"))
+    	{
+    		paths ~= cast(string) read(".dglxcachelib");
+    	} else
+    	{
+	    	paths ~= recurseFindGLX("/usr/lib/") ~ glxDefaultPaths;
+	    	
+	    	version(X86_64)
+		    {
+		        paths ~= recurseFindGLX("/usr/lib/x86_64-linux-gnu/");
+		    }
+		    else
+		    version(X86)
+		    {
+		        paths ~= recurseFindGLX("/usr/lib/i386-linux-gnu/");
+	    	}
+	    }
+    } else
     {
-        paths ~= recurseFindGLX("/usr/lib/i386-linux-gnu/");
+    	paths ~= recurseFindGLX("/usr/lib/") ~ glxDefaultPaths;
+    	
+    	version(X86_64)
+	    {
+	        paths ~= recurseFindGLX("/usr/lib/x86_64-linux-gnu/");
+	    }
+	    else
+	    version(X86)
+	    {
+	        paths ~= recurseFindGLX("/usr/lib/i386-linux-gnu/");
+    	}
     }
     
     bool isSucces = false;
@@ -156,6 +180,11 @@ void loadGLXLibrary() @trusted
         bindSymbol(glxLib, ptr, name.toStringz);
 
         if(*ptr is null) throw new Exception("Not load library!");
+    }
+    
+    version(dglx_cachelib)
+    {
+    	string cachelib;
     }
 
     foreach(path; paths)
@@ -185,12 +214,23 @@ void loadGLXLibrary() @trusted
                 bindOrError(cast(void**) &glXIsDirect, "glXIsDirect");
 
                 isSucces = true;
+                
+                version (dglx_cachelib)
+                {
+                	cachelib = path;
+                }
+                
             }catch(Exception e)
             {
                 continue;
             }
             break;
         }
+    }
+    
+    version (dglx_cachelib)
+    {
+    	write (".dglxcachelib", cachelib);
     }
 
     if(!isSucces)

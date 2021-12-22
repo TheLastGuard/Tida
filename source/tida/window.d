@@ -384,7 +384,7 @@ public:
 
         windowAttribs.event_mask = ExposureMask | ButtonPressMask | KeyPressMask |
                                    KeyReleaseMask | ButtonReleaseMask | EnterWindowMask |
-                                   LeaveWindowMask | PointerMotionMask;
+                                   LeaveWindowMask | PointerMotionMask | StructureNotifyMask;
 
         this.handle = XCreateWindow (runtime.display, rootWindow, posX, posY, _widthInit, _heightInit, 0, depth,
                                 InputOutput, visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, 

@@ -17,6 +17,7 @@ enum
 {
     Vertex = 0, /// Vertex shader type
     Fragment, /// Fragment shader type
+    Geometry, /// Geometry shader type
     Program /// Program shader type
 }
 
@@ -41,7 +42,7 @@ Whether the shader type is valid to use.
 +/
 template isValidTypeShader(int type)
 {
-    enum isValidTypeShader = (type < 3);
+    enum isValidTypeShader = (type < 4);
 }
 
 /++
@@ -56,6 +57,8 @@ template glTypeShader(int type)
     else
     static if (type == Fragment)
         enum glTypeShader = GL_FRAGMENT_SHADER;
+    static if (type == Geometry)
+    	enum glTypeShader = GL_GEOMETRY_SHADER;
 }
 
 private string formatError(string error) @safe pure
@@ -156,7 +159,7 @@ public @trusted:
     +/
     static if (isShaderProgram!type)
     Shader!type attach(T)(T shader)
-    if (isShaderUnite!(T.Type) && (shader.Type == Vertex || shader.Type == Fragment))
+    if (isShaderUnite!(T.Type) && (shader.Type == Vertex || shader.Type == Fragment || shader.Type == Geometry))
     {
         static if (T.Type == Vertex)
             vertex = shader;

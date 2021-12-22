@@ -656,7 +656,9 @@ override:
 
     bool isResize()
     {
-        return this.event.type == ConfigureNotify;
+        return 	this.event.type == ConfigureNotify &&
+        		this.event.xconfigure.type == 22 &&
+        		!this.event.xconfigure.send_event;
     }
 
     uint[2] newSizeWindow()

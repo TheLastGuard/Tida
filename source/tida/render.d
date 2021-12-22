@@ -184,6 +184,15 @@ enum BlendMode
     withBlend /// With blending
 }
 
+interface ITarget
+{
+	void bind(IRenderer render) @safe;
+	
+	void unbind(IRenderer render) @safe;
+	
+	void drawning(IRenderer render) @safe;
+}
+
 /++
 An interface for rendering objects to a display or other storehouse of pixels.
 +/
@@ -196,6 +205,9 @@ interface IRenderer
             tida.matrix;
 
 @safe:
+	// null - default
+	void bindTarget(ITarget target) @safe;
+
     /// Updates the rendering surface if, for example, the window is resized.
     void reshape();
 
@@ -453,6 +465,7 @@ private:
     mat4 _model;
 
     bool _isModern = false;
+    ITarget _target;
 
 public @trusted:
     this(IWindow window)
@@ -609,6 +622,24 @@ override:
     @property Camera camera()
     {
         return _camera;
+    }
+    
+    void bindTarget(ITarget target) @safe
+    {
+    	if (target is null)
+    	{
+    		if (_target !is null)
+    			_target.unbind(this);
+    			
+    		_target = null;
+    		return;
+    	}
+    	
+    	if (_target !is null)
+    		_target.unbind(this);
+    		
+    	target.bind(this);
+    	_target = target;
     }
 
     void point(Vecf vec, Color!ubyte color)
@@ -922,7 +953,10 @@ override:
 
     void drawning()
     {
-        window.swapBuffers();
+    	if (_target is null)
+        	window.swapBuffers();
+     	else
+     		_target.drawning(this);
     }
 
     void blendMode(BlendMode mode)
@@ -1138,6 +1172,16 @@ public:
     }
 
 override:
+	void bindTarget(ITarget target) @trusted
+	{
+		Operation operation;
+        operation.name = "bindTarget";
+
+        operations[frame - 1] ~=  operation;
+
+        render.bindTarget(target);
+	}
+
     void draw(IDrawable drawable, Vecf position) @trusted
     {
         Operation operation;
@@ -2045,6 +2089,11 @@ override:
     @property RenderType type()
     {
         return RenderType.software; 
+    }
+    
+    void bindTarget(ITarget target) @safe
+    {
+    	assert(null, "Target not a support with software renderer!");
     }
 
     void reshape()

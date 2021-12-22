@@ -53,6 +53,15 @@ a major version and a minor version.
     return _glVersionSpecifed;
 }
 
+@property bool glGeometrySupport() @trusted
+{
+	ExtList extensions = glExtensionsList();
+	
+	return 	hasExtensions(extensions, Extensions.geometryShaderARB) ||
+			hasExtensions(extensions, Extensions.geometryShaderEXT) ||
+			hasExtensions(extensions, Extensions.geometryShaderNV);
+}
+
 /++
 Returns the maximum version of the shaders in the open graphics.
 +/
@@ -113,7 +122,10 @@ enum Extensions : string
 {
     textureCompression = "GL_ARB_texture_compression",
     textureArray = "GL_EXT_texture_array",
-    textureClear = "GL_ARB_clear_texture"
+    textureClear = "GL_ARB_clear_texture",
+    geometryShaderARB = "GL_ARB_geometry_shader4",
+    geometryShaderEXT = "GL_EXT_geometry_shader4",
+    geometryShaderNV = "GL_NV_geometry_shader4"
 }
 
 /++

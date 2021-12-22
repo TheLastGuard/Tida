@@ -39,6 +39,7 @@ import tida.each;
 import tida.drawable;
 import tida.vector;
 import std.range : isInputRange, isBidirectionalRange, ElementType;
+import tida.render;
 
 /++
 Checks if the data for the image is valid.
@@ -99,12 +100,11 @@ if (isInputRange!Range)
 /++
 Image description structure. (Colors are in RGBA format.)
 +/
-class Image : IDrawable, IDrawableEx
+class Image : IDrawable, IDrawableEx, ITarget
 {
     import std.algorithm : fill, map;
     import std.range : iota, array;
     import tida.vector;
-    import tida.render;
     import tida.texture;
 
 private:
@@ -235,6 +235,33 @@ public:
     Using the field, you can set the shape of the texture and its other parameters.
     +/
     @property Texture texture() nothrow pure @safe => _texture;
+
+	override void bind(IRenderer render) @safe
+	{
+		if (texture is null)
+			throw new Exception("The texture was not created to bind to the render!");
+			
+		texture.bind(render);
+	}
+	
+	override void unbind(IRenderer render) @safe
+	{
+		if (texture is null)
+			throw new Exception("The texture was not created to bind to the render!");
+			
+		texture.unbind(render);
+	}
+	
+	override void drawning(IRenderer render) @trusted
+	{
+		import tida.gl;
+		
+		if (texture is null)
+			throw new Exception("The texture was not created to bind to the render!");
+			
+		glReadPixels(   0, 0,
+                    	width, height, GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) pixels);
+	}
 
     override void draw(IRenderer renderer, Vecf position) @trusted
     {

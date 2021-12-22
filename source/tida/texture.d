@@ -16,6 +16,7 @@ module tida.texture;
 import std.traits;
 import tida.gl;
 import tida.drawable;
+import tida.render;
 
 enum MinFilter = GL_TEXTURE_MIN_FILTER; /// Min Filter
 enum MagFilter = GL_TEXTURE_MAG_FILTER; /// Mag Filter
@@ -65,10 +66,9 @@ struct TextureInfo
 /++
 A texture object for manipulating its data, properties, and parameters.
 +/
-class Texture : IDrawable, IDrawableEx
+class Texture : IDrawable, IDrawableEx, ITarget
 {
     import tida.vertgen;
-    import tida.render;
     import tida.shader;
     import tida.vector;
     import tida.color;
@@ -80,6 +80,8 @@ private:
     uint _height = 0;
     uint type = GL_TEXTURE_2D;
     int activeid = GL_TEXTURE0;
+    uint fbo;
+    uint rbo;
 
 public:
     VertexInfo!float vertexInfo; /++    Information about the vertices of the
@@ -329,6 +331,14 @@ public:
         unbind();
     }
 
+	void generateFrameBuffer() @trusted
+	{
+		glGenFramebuffers(1, &fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo); 
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glid, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
     void destroy()
     {
         glDeleteTextures(1, &glid);
@@ -338,8 +348,23 @@ public:
     {
         this.destroy();
     }
-
+    
 override:
+	void bind(IRenderer render) @trusted
+    {
+    	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    }
+    
+    void unbind(IRenderer render) @trusted
+    {
+    	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+    
+    void drawning(IRenderer render) @trusted
+    {
+    	return;
+    }
+
     void draw(IRenderer renderer, Vecf position)
     {
         Shader!Program shader = this.initShader(renderer);
