@@ -417,6 +417,50 @@ public @safe:
         SRTrigger[][Component] COnTriggerFunctions;
     }
 
+	void instanceCallDraws(Instance instance, IRenderer render) @safe
+	{
+		foreach (fun; IDrawFunctions[instance]) fun(render);
+	}
+	
+	void instanceCallStep(Instance instance) @safe
+	{
+		foreach (fun; IStepFunctions[instance]) fun();
+	}
+	
+	void instanceCallThreadStep(Instance instance, size_t threadID) @safe
+	{
+		foreach (fun; IStepThreadFunctions[instance][threadID]) fun();
+	}
+	
+	void instanceCallInit(Instance instance) @safe
+	{
+		foreach (fun; IInitFunctions[instance]) fun();
+	}
+	
+	void instanceCallRestart(Instance instance) @safe
+	{
+		foreach (fun; IRestartFunctions[instance]) fun();
+	}
+	
+	void instanceCallLeave(Instance instance) @safe
+	{
+		foreach (fun; ILeaveFunctions[instance]) fun();
+	}
+	
+	void instanceCallEntry(Instance instance) @safe
+	{
+		foreach (fun; IEntryFunctions[instance]) fun();
+	}
+	
+	void instanceCallTrigger(Instance instance, string triggerMessage) @safe
+	{
+		foreach (fun; IOnAnyTriggerFunctions[instance]) fun(triggerMessage);
+		
+		foreach (ev; IOnTriggerFunctions[instance])
+			if (ev.ev.name == triggerMessage)
+				ev.fun();
+	}
+
     /++
     Raise the event of destruction of the instance. (@FunEvent!Destroy)
 
