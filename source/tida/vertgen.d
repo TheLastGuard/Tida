@@ -208,8 +208,9 @@ public:
     {
         switch(type)
         {
-        	case ShapeType.point:
-        		glDrawArrays(GL_POINTS, 0, 1 * count);
+            case ShapeType.point:
+                glDrawArrays(GL_POINTS, 0, 1 * count);
+            break;
         
             case ShapeType.line:
                 glDrawArrays(GL_LINES, 0, 2 * count);

@@ -179,6 +179,9 @@ public:
         sceneManager.callGameExit();
     }
 
+    /++
+    Starts the game loop of the game.
+    +/
     void run() @trusted
     {
         sceneManager.callGameStart();
@@ -274,6 +277,9 @@ public:
     }
 }
 
+/++
+Game entry point template.
++/
 template GameRun(GameConfig config, T...)
 {
     import tida.runtime;

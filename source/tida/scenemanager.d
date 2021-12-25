@@ -417,32 +417,45 @@ public @safe:
         SRTrigger[][Component] COnTriggerFunctions;
     }
 
-	static auto getInstanceEvents(T)(T instance) @trusted
-	{
-		struct __EventsInstance
-		{
-			FEInit[] IInitFunctions;
-	        FEStep[] IStepFunctions;
-	        FEStep[][size_t] IStepThreadFunctions;
-	        FERestart[] IRestartFunctions;
-	        FEEntry[] IEntryFunctions;
-	        FELeave[] ILeaveFunctions;
-	        FEGameStart[] IGameStartFunctions;
-	        FEGameExit[] IGameExitFunctions;
-	        FEGameRestart[] IGameRestartFunctions;
-	        FEEventHandle[] IEventHandleFunctions;
-	        FEDraw[] IDrawFunctions;
-	        FEOnError[] IOnErrorFunctions;
-	        SRCollider[] IColliderStructs;
-	        FECollision[] ICollisionFunctions;
-	        SRTrigger[] IOnTriggerFunctions;
-	        FEDestroy[] IOnDestroyFunctions;
-	        FEATrigger[] IOnAnyTriggerFunctions;
-		}
-		
-		__EventsInstance events;
-		
-		static if (T.stringof != Instance.stringof)
+    struct EventsInstance
+    {
+        FEInit[] IInitFunctions;
+        FEStep[] IStepFunctions;
+        FEStep[][size_t] IStepThreadFunctions;
+        FERestart[] IRestartFunctions;
+        FEEntry[] IEntryFunctions;
+        FELeave[] ILeaveFunctions;
+        FEGameStart[] IGameStartFunctions;
+        FEGameExit[] IGameExitFunctions;
+        FEGameRestart[] IGameRestartFunctions;
+        FEEventHandle[] IEventHandleFunctions;
+        FEDraw[] IDrawFunctions;
+        FEOnError[] IOnErrorFunctions;
+        SRCollider[] IColliderStructs;
+        FECollision[] ICollisionFunctions;
+        SRTrigger[] IOnTriggerFunctions;
+        FEDestroy[] IOnDestroyFunctions;
+        FEATrigger[] IOnAnyTriggerFunctions;
+    }
+
+    /++
+    A function to receive events that were described inside 
+    the object's implementation.
+    
+    It is necessary if you need to manually call any functions 
+    without using the scene manager. (The object doesn't have to be added somewhere for the function to work).
+    
+    Params:
+        instance = Instance implementation object.
+        
+    Returns:
+        Returns a structure with the event fields that it could detect.
+    +/
+    static auto getInstanceEvents(T)(T instance) @trusted
+    {
+        EventsInstance events;
+        
+        static if (T.stringof != Instance.stringof)
         static foreach (member; __traits(allMembers, T))
         {
             static if (hasAttrib!(T, FunEvent!Init, member))
@@ -519,66 +532,128 @@ public @safe:
         }
         
         return events;
-	}
-	
-	unittest
-	{
-		static class A : Instance 
-	    {
-	        @Event!Init
-	        void onInit() @safe { }
-	        
-	        @Event!Draw
-	        void onDraw(IRenderer render) @safe { }
-	    }
-	    
-	    A a = new A();
-	    auto evs = SceneManager.getInstanceEvents(a);
-	}
+    }
+    
+    unittest
+    {
+        static class A : Instance 
+        {
+            @Event!Init
+            void onInit() @safe { }
+            
+            @Event!Draw
+            void onDraw(IRenderer render) @safe { }
+        }
+        
+        A a = new A();
+        auto evs = SceneManager.getInstanceEvents(a);
+    }
 
-	void instanceCallDraws(Instance instance, IRenderer render) @safe
-	{
-		foreach (fun; IDrawFunctions[instance]) fun(render);
-	}
-	
-	void instanceCallStep(Instance instance) @safe
-	{
-		foreach (fun; IStepFunctions[instance]) fun();
-	}
-	
-	void instanceCallThreadStep(Instance instance, size_t threadID) @safe
-	{
-		foreach (fun; IStepThreadFunctions[instance][threadID]) fun();
-	}
-	
-	void instanceCallInit(Instance instance) @safe
-	{
-		foreach (fun; IInitFunctions[instance]) fun();
-	}
-	
-	void instanceCallRestart(Instance instance) @safe
-	{
-		foreach (fun; IRestartFunctions[instance]) fun();
-	}
-	
-	void instanceCallLeave(Instance instance) @safe
-	{
-		foreach (fun; ILeaveFunctions[instance]) fun();
-	}
-	
-	void instanceCallEntry(Instance instance) @safe
-	{
-		foreach (fun; IEntryFunctions[instance]) fun();
-	}
-	
-	void instanceCallTrigger(Instance instance, string triggerMessage) @safe
-	{
-		foreach (fun; IOnAnyTriggerFunctions[instance]) fun(triggerMessage);
-		
-		foreach (ev; IOnTriggerFunctions[instance])
-			if (ev.ev.name == triggerMessage)
-				ev.fun();
-	}
+    /++
+    A function to call the render event of the instance.
+    
+    Params:
+        instance = Instance object.
+        render = Render object.
+    +/
+    void instanceCallDraws(Instance instance, IRenderer render) @safe
+    {
+        foreach (fun; IDrawFunctions[instance]) fun(render);
+    }
+    
+    /++
+    A function to call the input event of the instance.
+    
+    Params:
+        instance = Instance object.
+        event = Event handler object.
+    +/
+    void instanceCallDraws(Instance instance, EventHandler event) @safe
+    {
+        foreach (fun; IEventHandleFunctions[instance]) fun(event);
+    }
+    
+    /++
+    A function to call the step event of the instance.
+    
+    Params:
+        instance = Instance object.
+    +/
+    void instanceCallStep(Instance instance) @safe
+    {
+        foreach (fun; IStepFunctions[instance]) fun();
+    }
+    
+    /++
+    A function to call the threaded step event of the instance.
+    
+    Params:
+        instance = Instance object.
+        threadID = Thread identificator.
+    +/
+    void instanceCallThreadStep(Instance instance, size_t threadID) @safe
+    {
+        foreach (fun; IStepThreadFunctions[instance][threadID]) fun();
+    }
+    
+    /++
+    A function to call the initialize event of the instance.
+    
+    Params:
+        instance = Instance object.
+    +/
+    void instanceCallInit(Instance instance) @safe
+    {
+        foreach (fun; IInitFunctions[instance]) fun();
+    }
+    
+    /++
+    A function to call the restart event of the instance.
+    
+    Params:
+        instance = Instance object.
+    +/
+    void instanceCallRestart(Instance instance) @safe
+    {
+        foreach (fun; IRestartFunctions[instance]) fun();
+    }
+    
+    /++
+    A function to call the leave event of the instance.
+    
+    Params:
+        instance = Instance object.
+    +/
+    void instanceCallLeave(Instance instance) @safe
+    {
+        foreach (fun; ILeaveFunctions[instance]) fun();
+    }
+    
+    /++
+    A function to call the entry event of the instance.
+    
+    Params:
+        instance = Instance object.
+    +/
+    void instanceCallEntry(Instance instance) @safe
+    {
+        foreach (fun; IEntryFunctions[instance]) fun();
+    }
+    
+    /++
+    A function to call the trigger event of the instance.
+    
+    Params:
+        instance = Instance object.
+    +/
+    void instanceCallTrigger(Instance instance, string triggerMessage) @safe
+    {
+        foreach (fun; IOnAnyTriggerFunctions[instance]) fun(triggerMessage);
+        
+        foreach (ev; IOnTriggerFunctions[instance])
+            if (ev.ev.name == triggerMessage)
+                ev.fun();
+    }
 
     /++
     Raise the event of destruction of the instance. (@FunEvent!Destroy)
