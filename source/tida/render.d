@@ -186,11 +186,11 @@ enum BlendMode
 
 interface ITarget
 {
-	void bind(IRenderer render) @safe;
-	
-	void unbind(IRenderer render) @safe;
-	
-	void drawning(IRenderer render) @safe;
+    void bind(IRenderer render) @safe;
+    
+    void unbind(IRenderer render) @safe;
+    
+    void drawning(IRenderer render) @safe;
 }
 
 /++
@@ -205,8 +205,10 @@ interface IRenderer
             tida.matrix;
 
 @safe:
-	// null - default
-	void bindTarget(ITarget target) @safe;
+    // null - default
+    void bindTarget(ITarget target) @safe;
+    
+    @property ITarget currentTarget() @safe;
 
     /// Updates the rendering surface if, for example, the window is resized.
     void reshape();
@@ -626,20 +628,25 @@ override:
     
     void bindTarget(ITarget target) @safe
     {
-    	if (target is null)
-    	{
-    		if (_target !is null)
-    			_target.unbind(this);
-    			
-    		_target = null;
-    		return;
-    	}
-    	
-    	if (_target !is null)
-    		_target.unbind(this);
-    		
-    	target.bind(this);
-    	_target = target;
+        if (target is null)
+        {
+            if (_target !is null)
+                _target.unbind(this);
+                
+            _target = null;
+            return;
+        }
+        
+        if (_target !is null)
+            _target.unbind(this);
+            
+        target.bind(this);
+        _target = target;
+    }
+    
+    @property ITarget currentTarget() @safe
+    {
+        return _target;
     }
 
     void point(Vecf vec, Color!ubyte color)
@@ -720,13 +727,13 @@ override:
             shape = Shapef.RectangleLine(position, position + vecf(width, height));
         }
 
-		uint[] elems = [0 ,1, 2, 2, 3 ,0];
+        uint[] elems = [0 ,1, 2, 2, 3 ,0];
 
         scope vinfo = new VertexInfo!float();
         if (isFill)
-        	vinfo.bindFromBufferAndElem(generateBuffer(shape).generateArray, elems);
+            vinfo.bindFromBufferAndElem(generateBuffer(shape).generateArray, elems);
         else
-        	vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
+            vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
 
         vinfo.bindVertexArray();
         vinfo.bindBuffer();
@@ -953,10 +960,10 @@ override:
 
     void drawning()
     {
-    	if (_target is null)
-        	window.swapBuffers();
-     	else
-     		_target.drawning(this);
+        if (_target is null)
+            window.swapBuffers();
+        else
+            _target.drawning(this);
     }
 
     void blendMode(BlendMode mode)
@@ -1172,15 +1179,25 @@ public:
     }
 
 override:
-	void bindTarget(ITarget target) @trusted
-	{
-		Operation operation;
+    void bindTarget(ITarget target) @trusted
+    {
+        Operation operation;
         operation.name = "bindTarget";
 
         operations[frame - 1] ~=  operation;
 
         render.bindTarget(target);
-	}
+    }
+    
+    @property ITarget currentTarget() @trusted
+    {
+        Operation operation;
+        operation.name = "currentTarget";
+
+        operations[frame - 1] ~=  operation;
+
+        return render.currentTarget;
+    }
 
     void draw(IDrawable drawable, Vecf position) @trusted
     {
@@ -2093,7 +2110,12 @@ override:
     
     void bindTarget(ITarget target) @safe
     {
-    	assert(null, "Target not a support with software renderer!");
+        assert(null, "Target not a support with software renderer!");
+    }
+    
+    @property ITarget currentTarget() @safe
+    {
+        return null;
     }
 
     void reshape()
