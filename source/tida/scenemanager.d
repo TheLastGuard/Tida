@@ -417,6 +417,125 @@ public @safe:
         SRTrigger[][Component] COnTriggerFunctions;
     }
 
+	static auto getInstanceEvents(T)(T instance) @trusted
+	{
+		struct __EventsInstance
+		{
+			FEInit[] IInitFunctions;
+	        FEStep[] IStepFunctions;
+	        FEStep[][size_t] IStepThreadFunctions;
+	        FERestart[] IRestartFunctions;
+	        FEEntry[] IEntryFunctions;
+	        FELeave[] ILeaveFunctions;
+	        FEGameStart[] IGameStartFunctions;
+	        FEGameExit[] IGameExitFunctions;
+	        FEGameRestart[] IGameRestartFunctions;
+	        FEEventHandle[] IEventHandleFunctions;
+	        FEDraw[] IDrawFunctions;
+	        FEOnError[] IOnErrorFunctions;
+	        SRCollider[] IColliderStructs;
+	        FECollision[] ICollisionFunctions;
+	        SRTrigger[] IOnTriggerFunctions;
+	        FEDestroy[] IOnDestroyFunctions;
+	        FEATrigger[] IOnAnyTriggerFunctions;
+		}
+		
+		__EventsInstance events;
+		
+		static if (T.stringof != Instance.stringof)
+        static foreach (member; __traits(allMembers, T))
+        {
+            static if (hasAttrib!(T, FunEvent!Init, member))
+            {
+                events.IInitFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!Step, member))
+            {
+                events.IStepFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!Entry, member))
+            {
+                events.IEntryFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!Restart, member))
+            {
+                events.IRestartFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!Leave, member))
+            {
+                events.ILeaveFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!GameStart, member))
+            {
+                events.IGameStartFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!GameExit, member))
+            {
+                events.IGameExitFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!GameRestart, member))
+            {
+                events.IGameRestartFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!Input, member))
+            {
+                events.IEventHandleFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!Draw, member))
+            {
+                events.IDrawFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!GameError, member))
+            {
+                events.IOnErrorFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, Collision, member))
+            {
+                events.IColliderStructs ~= SRCollider(attributeIn!(T, Collision, member),
+                                                         &__traits(getMember, instance, member));
+            } else
+            static if (hasAttrib!(T, Trigger, member))
+            {
+                events.IOnTriggerFunctions ~= SRTrigger( attributeIn!(T, Trigger, member),
+                                                            &__traits(getMember, instance, member));
+            } else
+            static if (hasAttrib!(T, FunEvent!Destroy, member))
+            {
+                events.IOnDestroyFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!AnyCollision, member))
+            {
+                events.ICollisionFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, FunEvent!AnyTrigger, member))
+            {
+                events.IOnAnyTriggerFunctions ~= &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, StepThread, member))
+            {
+                events.IStepThreadFunctions
+                    [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, instance, member);
+            }
+        }
+        
+        return events;
+	}
+	
+	unittest
+	{
+		static class A : Instance 
+	    {
+	        @Event!Init
+	        void onInit() @safe { }
+	        
+	        @Event!Draw
+	        void onDraw(IRenderer render) @safe { }
+	    }
+	    
+	    A a = new A();
+	    auto evs = SceneManager.getInstanceEvents(a);
+	}
+
 	void instanceCallDraws(Instance instance, IRenderer render) @safe
 	{
 		foreach (fun; IDrawFunctions[instance]) fun(render);
