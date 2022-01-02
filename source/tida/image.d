@@ -86,6 +86,17 @@ if (isBidirectionalRange!Range)
         static assert(null, "It is unknown how to return the result.");
 }
 
+/++
+Converts a sequence of colors to a picture from the input range.
+
+Params:
+    range = Sequence of colors.
+    width = Image width.
+    height = Image height.
+    
+Returns:
+    A picture to be converted from a set of colors.
++/
 Image imageFrom(Range)(Range range, uint width, uint height) @trusted nothrow pure
 if (isInputRange!Range)
 {

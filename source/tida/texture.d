@@ -331,13 +331,13 @@ public:
         unbind();
     }
 
-	void generateFrameBuffer() @trusted
-	{
-		glGenFramebuffers(1, &fbo);
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo); 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glid, 0);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	}
+    void generateFrameBuffer() @trusted
+    {
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo); 
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glid, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 
     void destroy()
     {
@@ -350,19 +350,19 @@ public:
     }
     
 override:
-	void bind(IRenderer render) @trusted
+    void bind(IRenderer render) @trusted
     {
-    	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     }
     
     void unbind(IRenderer render) @trusted
     {
-    	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
     
     void drawning(IRenderer render) @trusted
     {
-    	return;
+        return;
     }
 
     void draw(IRenderer renderer, Vecf position)

@@ -628,19 +628,12 @@ override:
     
     void bindTarget(ITarget target) @safe
     {
-        if (target is null)
-        {
-            if (_target !is null)
-                _target.unbind(this);
-                
-            _target = null;
-            return;
-        }
-        
         if (_target !is null)
             _target.unbind(this);
             
-        target.bind(this);
+        if (target !is null)
+            target.bind(this);
+            
         _target = target;
     }
     

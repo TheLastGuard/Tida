@@ -53,6 +53,9 @@ a major version and a minor version.
     return _glVersionSpecifed;
 }
 
+/++
+Indicates whether the use of geometry shaders is supported on this device.
++/
 @property bool glGeometrySupport() @trusted
 {
 	ExtList extensions = glExtensionsList();
@@ -70,6 +73,13 @@ Returns the maximum version of the shaders in the open graphics.
     return _glslVersion;
 }
 
+/++
+Returns the company responsible for this GL implementation. 
+This name does not change from release to release. 
+
+See_Also:
+    $(HREF https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetString.xhtml, OpenGL Reference - glGetString)
++/
 @property string glVendor() @trusted
 {
 	import std.conv : to;
@@ -77,6 +87,14 @@ Returns the maximum version of the shaders in the open graphics.
 	return glGetString(GL_VENDOR).to!string;
 }
 
+/++
+Returns the name of the renderer. 
+This name is typically specific to a particular configuration of a hardware platform. 
+It does not change from release to release. 
+
+See_Also:
+    $(HREF https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetString.xhtml, OpenGL Reference - glGetString)
++/
 @property string glRenderer() @trusted
 {
 	import std.conv : to;
@@ -120,11 +138,54 @@ Available extensions that the framework can load with one function.
 +/
 enum Extensions : string
 {
+    /++
+    Compressing texture images can reduce texture memory utilization and
+    improve performance when rendering textured primitives.
+    
+    See_Also:
+        $(HREF https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_compression.txt, OpenGL reference "GL_ARB_texture_compression")
+    +/
     textureCompression = "GL_ARB_texture_compression",
+    
+    /++
+    This extension introduces the notion of one- and two-dimensional array
+    textures.  An array texture is a collection of one- and two-dimensional
+    images of identical size and format, arranged in layers.
+    
+    See_Also:
+        $(HREF https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_texture_array.txt, OpenGL reference "GL_EXT_texture_array")
+    +/
     textureArray = "GL_EXT_texture_array",
+    
+    /++
+    Texture objects are fundamental to the operation of OpenGL. They are
+    used as a source for texture sampling and destination for rendering
+    as well as being accessed in shaders for image load/store operations
+    It is also possible to invalidate the contents of a texture. It is
+    currently only possible to set texture image data to known values by
+    uploading some or all of a image array from application memory or by
+    attaching it to a framebuffer object and using the Clear or ClearBuffer
+    commands.
+    
+    See_Also:
+        $(HREF https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_clear_texture.txt, OpenGL reference "GL_ARB_clear_texture")
+    +/
     textureClear = "GL_ARB_clear_texture",
+    
+    /++
+    ARB_geometry_shader4 defines a new shader type available to be run on the
+    GPU, called a geometry shader. Geometry shaders are run after vertices are
+    transformed, but prior to color clamping, flat shading and clipping.
+    
+    See_Also:
+        $(HREF https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_geometry_shader4.txt, OpenGL reference "GL_ARB_geometry_shader4")
+    +/
     geometryShaderARB = "GL_ARB_geometry_shader4",
+    
+    /// ditto
     geometryShaderEXT = "GL_EXT_geometry_shader4",
+    
+    /// ditto
     geometryShaderNV = "GL_NV_geometry_shader4"
 }
 

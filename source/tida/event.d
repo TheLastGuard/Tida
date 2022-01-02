@@ -509,7 +509,7 @@ private:
         Joystick.js_event data;
     }
 
-    tida.window.Window window;
+    tida.window.Window[] windows;
     Atom destroyWindowEvent;
     _XIC* ic;
     Joystick[] _joysticks;
@@ -521,15 +521,31 @@ public:
 @trusted:
     this(tida.window.Window window)
     {   
-        this.window = window;
+        this.windows ~= window;
 
         this.destroyWindowEvent = XInternAtom(runtime.display, "WM_DELETE_WINDOW", 0);
 
         ic = XCreateIC( XOpenIM(runtime.display, null, null, null), 
                         XNInputStyle, XIMPreeditNothing | XIMStatusNothing, 
-                        XNClientWindow, this.window.handle, null);
+                        XNClientWindow, this.windows[0].handle, null);
         XSetICFocus(ic);
         XSetLocaleModifiers("@im=none");
+    }
+    
+    void appendWindow(tida.window.Window window)
+    {
+        this.windows ~= window;
+    }
+    
+    @property tida.window.IWindow windowEvent()
+    {
+        foreach (window; windows)
+        {
+            if (window.handle == this.event.xany.window)
+                return window;
+        }
+        
+        return null;
     }
 
     int joyHandle()
@@ -615,12 +631,12 @@ override:
 
     bool isKeyDown()
     {
-        return this.event.type == KeyPress;
+        return  this.event.type == KeyPress;
     }
 
     bool isKeyUp()
     {
-        return this.event.type == KeyRelease;
+        return  this.event.type == KeyRelease;
     }
 
     @property int key()
@@ -630,12 +646,12 @@ override:
 
     bool isMouseDown()
     {
-        return this.event.type == ButtonPress;
+        return  this.event.type == ButtonPress;
     }
 
     bool isMouseUp()
     {
-        return this.event.type == ButtonRelease;
+        return  this.event.type == ButtonRelease;
     }
 
     @property MouseButton mouseButton()
@@ -665,14 +681,14 @@ override:
     {
         XWindowAttributes attr;
         XGetWindowAttributes(   runtime.display, 
-                                (cast(tida.window.Window) this.window).handle, &attr);
+                                (cast(tida.window.Window) this.windows[0]).handle, &attr);
 
         return [attr.width, attr.height];
     }
 
     bool isQuit()
     {
-        return this.event.xclient.data.l[0] == this.destroyWindowEvent;
+        return  this.event.xclient.data.l[0] == this.destroyWindowEvent;
     }
 
     bool isInputText() 
