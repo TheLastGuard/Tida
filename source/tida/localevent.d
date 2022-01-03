@@ -97,8 +97,20 @@ enum
     GameError
 }
 
-struct FunEvent(int ev) {}
-alias Event = FunEvent;
+struct event
+{
+    int type;
+}
+
+deprecated("Use instead `@event(type)`")
+{
+    template FunEvent(int ev)
+    {
+        enum FunEvent = event(ev);
+    }
+    
+    alias Event = FunEvent;
+}
 
 /++
 Trigger flag. It is hung on a function where triggers with the selected

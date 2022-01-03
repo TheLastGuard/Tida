@@ -108,7 +108,7 @@ class PlayingField : Instance
         generateFieldGrid(grid);
     }
 
-    @Event!Input
+    @event(Input)
     void onEvent(EventHandler event) @safe
     {
         mousePosition = vecf(event.mousePosition[0], event.mousePosition[1]);
@@ -136,7 +136,7 @@ class PlayingField : Instance
                 mousePosition.y < position.y + (y * CellStateSize) + CellStateSize;   
     }
 
-    @Event!Draw
+    @event(Draw)
     void draw(IRenderer render) @safe
     {	
         for(int y = 0; y < grid.length; y++)
@@ -475,7 +475,7 @@ class SeaBattleMainScene : Scene
         }
     }
 
-    @Event!Input
+    @event(Input)
     void onEvent(EventHandler event) @safe
     {
         import std.random : uniform;
@@ -524,7 +524,7 @@ class SeaBattleMainScene : Scene
         }
     }
 
-    debug @Event!Draw
+    debug @event(Draw)
     void debugDraw(IRenderer render) @safe
     {
         import std.conv : to;

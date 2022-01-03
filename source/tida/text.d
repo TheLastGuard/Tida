@@ -15,6 +15,7 @@ module tida.text;
 import bindbc.freetype;
 import std.traits;
 import tida.drawable;
+import tida.color;
 
 __gshared FT_Library _FTLibrary;
 
@@ -61,10 +62,10 @@ public:
 
 @trusted:
     /// Font face object.
-    @property FT_Face face() => _face;
+    @property FT_Face face() nothrow pure => _face;
 
     /// Font size.
-    @property size_t size() => _size;
+    @property size_t size() nothrow pure => _size;
 
     auto charIndex(T)(T symbol, int flags)
     {
@@ -240,7 +241,7 @@ Cuts off formatting blocks.
 Params:
     symbols = Symbols.
 +/
-T cutFormat(T)(T symbols) @safe
+T cutFormat(T)(T symbols) @safe nothrow pure
 {
     static assert(isSomeString!T, T.stringof ~ " is not a string!");
     for(int i = 0; i < symbols.length; i++)
@@ -400,6 +401,17 @@ public @safe:
     }
 }
 
+Symbol fromSymInfo(Font font, FontSymbolInfo syInfo, Color!ubyte color) @safe
+{
+    import tida.vector;
+
+    return new Symbol(syInfo.image,
+        vec!float(syInfo.bitmapLeft, syInfo.bitmapTop),
+        vec!float(syInfo.advance.x, 0),
+        font.size,
+        color);
+}
+
 /++
 An object for rendering drawing symbols.
 +/
@@ -429,25 +441,18 @@ public @trusted:
     +/
     Symbol[] toSymbols(T)(T text, Color!ubyte color = rgb(0, 0, 0))
     {
+        import std.algorithm : map;
+        import std.range : array;
+
         static assert(isSomeString!T, T.stringof ~ " is not a string!");
 
         Symbol[] symbols;
 
-        for (size_t i = 0; i < text.length; ++i)
-        {
-            TypeChar!T s = text[i];
-            Image image;
-
-            const glyphIndex = font.charIndex(s, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
-            auto syinfo = font.renderSymbol(glyphIndex, FT_LOAD_DEFAULT, FT_RENDER_MODE_NORMAL);
-            image = syinfo.image;
-
-            symbols ~= new Symbol(image,
-                vecf(syinfo.bitmapLeft, syinfo.bitmapTop),
-                vecf(syinfo.advance.x, 0),
-                font.size,
-                color);
-        }
+        symbols = text
+            .map!(a => font.charIndex(a, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL))
+            .map!(a => font.renderSymbol(a, FT_LOAD_DEFAULT, FT_RENDER_MODE_NORMAL))
+            .map!(a => font.fromSymInfo(a, color))
+            .array;
 
         return symbols;
     }
