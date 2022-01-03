@@ -177,7 +177,7 @@ public:
 override:
     @property int[] axless()
     {
-        return axisState;
+        return axesState;
     }
     
     @property uint maxButtons()
@@ -1029,7 +1029,7 @@ public:
             auto jj =  new Joystick(i, this);
             jj.numAxes = jCaps.wNumAxes;
             jj.numButtons = jCaps.wNumButtons;
-            jj.axisState = new int[](jj.numAxes);
+            jj.axesState = new int[](jj.numAxes);
             jj.namely = jCaps.szPname.to!string;
             
             immutable wAxisMin = [
