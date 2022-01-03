@@ -293,7 +293,29 @@ public @trusted:
     }
 }
 
-version(Windows)
+/++
+Required to enable high performance on devices with nvidia optimus.
+
+If necessary, include the "WitoutHighNvidiaOptimus" version in the flags.
+
+See_Also:
+    https://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf
++/
+version (Windows)
+{
+    version (WitoutHighNvidiaOptimus)
+    {
+        // Nothing
+    } else
+    {
+        extern(C) 
+        {
+            export ulong NvOptimusEnablement = 0x00000001;
+        }
+    }
+}
+
+version (Windows)
 class TidaRuntime : ITidaRuntime
 {
     import core.sys.windows.windows;
@@ -303,7 +325,7 @@ class TidaRuntime : ITidaRuntime
 
     pragma(lib, "opengl32.lib");
     pragma(lib, "winmm.lib");
-    
+
 private:
     HINSTANCE hInstance;
     string[] arguments;
