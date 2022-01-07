@@ -775,7 +775,7 @@ public @safe:
                 } else
                 static if (attributeIn!(T, event, member).type == AnyCollision)
                 {
-                    IOnAnyCollisionFunctions[instance] ~= &__traits(getMember, instance, member);
+                    ICollisionFunctions[instance] ~= &__traits(getMember, instance, member);
                 } else
                 static if (attributeIn!(T, event, member).type == Destroy)
                 {
