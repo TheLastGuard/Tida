@@ -70,6 +70,11 @@ public:
     Shader!Program shader;
 
     /++
+    The color used for rendering. 
+    +/
+    Color!ubyte color = Color!ubyte(255, 255, 255, 255);
+
+    /++
     Sprite transformation matrix.
     +/
     float[4][4] matrix = identity();
@@ -101,7 +106,7 @@ override:
                             center,
                             !width || !height ? vecfNaN : vecf(width, height),
                             alpha,
-                            rgb(255, 255, 255));
+                            color);
         }
 
         if (skelet.length != 0)
