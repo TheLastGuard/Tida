@@ -358,7 +358,7 @@ public @safe:
                     render.currentShader = currShader;
 
                 render.drawEx(  s.image, position - vecf(0, s.position.y), 0.0f,
-                vecfNaN, vecfNaN, ubyte.max, s.color);
+                vecfNaN, vecfNaN, s.color.a, s.color);
             }
 
             position = position + vecf(s.advance.x.to!int >> 6, s.offsetY);
