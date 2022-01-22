@@ -583,8 +583,8 @@ override:
     }
 
     /// ditto
-    void drawEx(    IDrawableEx drawable, 
-                    Vecf position, 
+    void drawEx(IDrawableEx drawable, 
+                Vecf position, 
                 float angle,
                 Vecf center,
                 Vecf size,
@@ -603,7 +603,8 @@ override:
 
         version (Windows)
         {
-            yborder = (cast(Window) window).windowBorderSize;
+            if (_target is null)
+                yborder = (cast(Window) window).windowBorderSize;
         }
 
         glViewport(
@@ -2500,6 +2501,12 @@ IRenderer createRenderer(IWindow window) @trusted
 import tida.image;
 import tida.vector;
 
+/++
+Reads frame image data. Time consuming operation.
+
+Params:
+    render = 
++/
 Image renderRead(IRenderer render, Vecf position, int width, int height) @trusted
 {
     import tida.gl;
