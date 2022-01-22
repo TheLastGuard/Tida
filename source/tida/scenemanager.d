@@ -493,6 +493,27 @@ public @safe:
         }   
     }
 
+    struct InstanceEvents
+    {
+        FEInit[] IInitFunctions;
+        FEStep[] IStepFunctions;
+        FEStep[][size_t] IStepThreadFunctions;
+        FERestart[] IRestartFunctions;
+        FEEntry[] IEntryFunctions;
+        FELeave[] ILeaveFunctions;
+        FEGameStart[] IGameStartFunctions;
+        FEGameExit[] IGameExitFunctions;
+        FEGameRestart[] IGameRestartFunctions;
+        FEEventHandle[] IEventHandleFunctions;
+        FEDraw[] IDrawFunctions;
+        FEOnError[] IOnErrorFunctions;
+        SRCollider[] IColliderStructs;
+        FECollision[] ICollisionFunctions;
+        SRTrigger[] IOnTriggerFunctions;
+        FEDestroy[] IOnDestroyFunctions;
+        FEATrigger[] IOnAnyTriggerFunctions;
+    }
+
     /++
     A function to receive events that were described inside 
     the object's implementation.
@@ -506,9 +527,92 @@ public @safe:
     Returns:
         Returns a structure with the event fields that it could detect.
     +/
-    static auto getInstanceEvents(T)(T instance) @trusted
+    static InstanceEvents getInstanceEvents(T)(T instance) @trusted
     {
-        return 0;
+        import std.algorithm : canFind, remove;
+        static assert(isInstance!T, "`" ~ T.stringof ~ "` is not a instance!");
+
+        InstanceEvents events;
+
+        static foreach (member; __traits(allMembers, T))
+        {
+            static if (hasAttrib!(T, tida.localevent.event, member))
+            {
+                static if (attributeIn!(T, event, member).type == Init)
+                {
+                    events.IInitFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Restart)
+                {
+                    events.IRestartFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Entry)
+                {
+                    events.IEntryFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Leave)
+                {
+                    events.ILeaveFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Step)
+                {
+                    events.IStepFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == GameStart)
+                {
+                    events.IGameStartFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == GameExit)
+                {
+                    events.IGameExitFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == GameRestart)
+                {
+                    events.IGameRestartFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Input)
+                {
+                    events.IEventHandleFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Draw)
+                {
+                    events.IDrawFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == AnyTrigger)
+                {
+                    events.IOnAnyTriggerFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == AnyCollision)
+                {
+                    events.ICollisionFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Destroy)
+                {
+                    events.IOnDestroyFunctions ~= &__traits(getMember, instance, member);
+                } else
+                static if (attributeIn!(T, event, member).type == GameError)
+                {
+                    events.IOnErrorFunctions ~= &__traits(getMember, instance, member);
+                }
+            } else
+            static if (hasAttrib!(T, Trigger, member))
+            {
+                events.IOnTriggerFunctions ~= SRTrigger (attributeIn!(T, Trigger, member), 
+                                                        &__traits(getMember, instance, member));
+            } else
+            static if (hasAttrib!(T, StepThread, member))
+            {
+                events.IStepThreadFunctions
+                [attributeIn!(T, StepThread, member).id] = &__traits(getMember, instance, member);
+            } else
+            static if (hasAttrib!(T, Collision, member))
+            {
+                events.IColliderStructs ~= SRCollider(attributeIn!(T, Collision, member),
+                                                         &__traits(getMember, instance, member));
+            }
+        }
+
+        return events;
     }
     
     unittest
@@ -725,7 +829,7 @@ public @safe:
         ICollisionFunctions[instance] = [];
         IOnAnyTriggerFunctions[instance] = [];
 
-         static foreach (member; __traits(allMembers, T))
+        static foreach (member; __traits(allMembers, T))
         {
             static if (hasAttrib!(T, tida.localevent.event, member))
             {
