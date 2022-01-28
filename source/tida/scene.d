@@ -169,8 +169,10 @@ public:
         import tida.collision;
         import std.algorithm : canFind, each;
         import std.range : empty;
+        import std.parallelism : parallel;
 
-        foreach(first; list())
+        // EXPEREMENTAL
+        foreach(first; parallel(list()))
         {
             foreach(second; list())
             {
