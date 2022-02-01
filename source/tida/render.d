@@ -30,7 +30,7 @@ private:
     Shape!float _port;
     Shape!float _shape;
     CameraObject object;
-    float _trackDistance = 4.0f;
+    Vector!float _trackDistance = vec!float(4.0f, 4.0f);
     Vector!float _sizeRoom = vecNaN!float;
     
 
@@ -99,22 +99,22 @@ public @safe nothrow pure:
     {
         Vector!float velocity = vecZero!float;
     
-        if (object.position.x < port.begin.x + _trackDistance)
+        if (object.position.x < port.begin.x + _trackDistance.x)
         {
-            velocity.x = (port.begin.x + _trackDistance) - object.position.x;
+            velocity.x = (port.begin.x + _trackDistance.x) - object.position.x;
         } else
-        if (object.position.x + object.size.x> port.begin.x + port.end.x - _trackDistance)
+        if (object.position.x + object.size.x> port.begin.x + port.end.x - _trackDistance.x)
         {
-            velocity.x = (port.begin.x + port.end.x - _trackDistance) - (object.position.x + object.size.x);
+            velocity.x = (port.begin.x + port.end.x - _trackDistance.x) - (object.position.x + object.size.x);
         }
         
-        if (object.position.y < port.begin.y + _trackDistance)
+        if (object.position.y < port.begin.y + _trackDistance.y)
         {
-            velocity.y = (port.begin.y + _trackDistance) - object.position.y;
+            velocity.y = (port.begin.y + _trackDistance.y) - object.position.y;
         } else
-        if (object.position.y + object.size.y > port.begin.y + port.end.y - _trackDistance)
+        if (object.position.y + object.size.y > port.begin.y + port.end.y - _trackDistance.y)
         {
-            velocity.y = (port.begin.y + port.end.y - _trackDistance) - (object.position.y + object.size.y);
+            velocity.y = (port.begin.y + port.end.y - _trackDistance.y) - (object.position.y + object.size.y);
         }
         
         immutable preBegin = port.begin - velocity;
@@ -122,21 +122,25 @@ public @safe nothrow pure:
         if (!_sizeRoom.isVectorNaN)
         {
             if (preBegin.x > 0 &&
-                preBegin.x + port.end.x < _sizeRoom.x &&
-                preBegin.y > 0 &&
+                preBegin.x + port.end.x < _sizeRoom.x)
+            {
+                port = Shapef.Rectangle(vec!float(preBegin.x, port.begin.y), port.end);
+            }
+
+            if (preBegin.y > 0 &&
                 preBegin.y + port.end.y < _sizeRoom.y)
             {
-                port = Shapef.Rectangle(preBegin, port.end);
+                port = Shapef.Rectangle(vec!float(port.begin.x, preBegin.y), port.end);
             }
         } else
             port = Shapef.Rectangle(preBegin, port.end);
     }
     
     /// Distance between camera boundaries and subject for the scene to move the camera's view.
-    @property float trackDistance() => _trackDistance;
+    @property Vector!float trackDistance() => _trackDistance;
     
     /// Distance between camera boundaries and subject for the scene to move the camera's view.
-    @property float trackDistance(float value) => _trackDistance = value;
+    @property Vector!float trackDistance(Vector!float value) => _trackDistance = value;
 
     /++
     The port is the immediate visible part in the "room". The entire area in 

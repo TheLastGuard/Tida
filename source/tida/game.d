@@ -186,6 +186,25 @@ public:
     {
         sceneManager.callGameStart();
 
+        version (manualThreadControl)
+        {
+            // Manual support thread...
+        } else
+        {
+            foreach (i; 0 .. sceneManager.countStartThreads)
+            {
+                immutable id = threads.length == 0 ? i + 1 : threads.length + i;
+                threads ~= spawn(&workerThread, thisTid, id);
+            }
+
+            foreach (e; sceneManager.scenes)
+            {
+                e.initThread(sceneManager.countStartThreads);
+            }
+
+            sceneManager.countStartThreads = 0;
+        }
+
         while (isGame)
         {
             _fps.countDown();

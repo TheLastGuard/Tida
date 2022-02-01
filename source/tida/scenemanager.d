@@ -109,7 +109,11 @@ private:
     RecoveryDelegate[string] recovDelegates;
     bool _thereGoto;
 
+    bool updateThreads = false;
+
 public @safe:
+    size_t countStartThreads = 0;
+
     /++
     A state indicating whether an instance transition is in progress. 
     Needed to synchronize the stream.
@@ -603,7 +607,7 @@ public @safe:
             static if (hasAttrib!(T, StepThread, member))
             {
                 events.IStepThreadFunctions
-                [attributeIn!(T, StepThread, member).id] = &__traits(getMember, instance, member);
+                [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, instance, member);
             } else
             static if (hasAttrib!(T, Collision, member))
             {
@@ -801,7 +805,12 @@ public @safe:
             static if (hasAttrib!(T, StepThread, member))
             {
                 StepThreadFunctions[scene]
-                [attributeIn!(T, StepThread, member).id] = &__traits(getMember, scene, member);
+                [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, scene, member);
+
+                if (countStartThreads < attributeIn!(T, StepThread, member).id)
+                {
+                    countStartThreads = attributeIn!(T, StepThread, member).id;
+                }
             }
         }
     }
@@ -898,7 +907,12 @@ public @safe:
             static if (hasAttrib!(T, StepThread, member))
             {
                 IStepThreadFunctions[instance]
-                [attributeIn!(T, StepThread, member).id] = &__traits(getMember, instance, member);
+                [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, instance, member);
+
+                if (countStartThreads < attributeIn!(T, StepThread, member).id)
+                {
+                    countStartThreads = attributeIn!(T, StepThread, member).id;
+                }
             } else
             static if (hasAttrib!(T, Collision, member))
             {
