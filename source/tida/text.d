@@ -357,7 +357,7 @@ public @safe:
                 if (render.type != RenderType.software)
                     render.currentShader = currShader;
 
-                render.drawEx(  s.image, position - vecf(0, s.position.y), 0.0f,
+                s.image.drawEx(render, position - vecf(0, s.position.y), 0.0f,
                 vecfNaN, vecfNaN, s.color.a, s.color);
             }
 
@@ -392,7 +392,7 @@ public @safe:
                 if (render.type != RenderType.software)
                     render.currentShader = currShader;
 
-                render.drawEx(s.image, position, angle, center, vecfNaN, alpha,
+                s.image.drawEx(render, position, angle, center, vecfNaN, alpha,
                 s.color);
             }
 
