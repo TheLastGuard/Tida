@@ -582,8 +582,7 @@ public @trusted:
 override:
     void draw(IDrawable drawable, Vecf position) @safe
     {
-        position -= camera.port.begin;
-        drawable.draw(this, position);
+        drawable.draw(this, position - camera.port.begin);
     }
 
     /// ditto
@@ -595,8 +594,7 @@ override:
                 ubyte alpha,
                 Color!ubyte color = rgb(255, 255, 255)) @safe
     {
-        position -= camera.port.begin;
-        drawable.drawEx(this, position, angle, center, size, alpha, color);
+        drawable.drawEx(this, position - camera.port.begin, angle, center, size, alpha, color);
     }
 
     void reshape()
