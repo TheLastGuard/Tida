@@ -1002,7 +1002,7 @@ public:
     {
         import std.conv : to;
     
-        if (_joysticks !is null)
+        if (_joysticks.length != 0)
             return _joysticks;
             
         immutable numDevs = joyGetNumDevs();
@@ -1052,6 +1052,7 @@ public:
                         
             foreach (j; 0 .. jj.numAxes)
             {
+                jj._axis ~= 0;
                 jj.axisMin ~= wAxisMin[i];
                 jj.axisMax ~= wAxisMax[i];
                 jj.axisOffset ~= Joystick.defAxisMin - wAxisMin[i];
