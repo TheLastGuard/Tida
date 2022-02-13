@@ -36,10 +36,16 @@ private:
 
 public @safe nothrow pure:
     /// The allowed room size for camera scrolling.
-    @property Vector!float sizeRoom() => _sizeRoom;
+    @property Vector!float sizeRoom()
+    {
+        return _sizeRoom;
+    }
     
     /// The allowed room size for camera scrolling.
-    @property Vector!float sizeRoom(Vector!float value) => _sizeRoom = value;
+    @property Vector!float sizeRoom(Vector!float value)
+    {
+        return _sizeRoom = value;
+    }
     
     /// A method to change the allowed size of a scrolling room for a camera.
     void resizeRoom(Vector!float value)
@@ -137,27 +143,45 @@ public @safe nothrow pure:
     }
     
     /// Distance between camera boundaries and subject for the scene to move the camera's view.
-    @property Vector!float trackDistance() => _trackDistance;
+    @property Vector!float trackDistance()
+    {
+        return _trackDistance;
+    }
     
     /// Distance between camera boundaries and subject for the scene to move the camera's view.
-    @property Vector!float trackDistance(Vector!float value) => _trackDistance = value;
+    @property Vector!float trackDistance(Vector!float value)
+    {
+        return _trackDistance = value;
+    }
 
     /++
     The port is the immediate visible part in the "room". The entire area in 
     the world that must be covered in the field of view.
     +/
-    @property Shape!float port() => _port;
+    @property Shape!float port()
+    {
+        return _port;
+    }
 
     /// ditto
-    @property Shape!float port(Shape!float value) => _port = value;
+    @property Shape!float port(Shape!float value)
+    {
+        return _port = value;
+    }
 
     /++
     The size of the visible part in the plane of the window.
     +/
-    @property Shape!float shape() => _shape;
+    @property Shape!float shape()
+    {
+        return _shape;
+    }
 
     /// ditto
-    @property Shape!float shape(Shape!float value) => _shape = value;
+    @property Shape!float shape(Shape!float value)
+    {
+        return _shape = value;
+    }
 
     /++
     Moves the visible field.
@@ -2488,7 +2512,7 @@ IRenderer createRenderer(IWindow window) @trusted
 
     if (isOpenGLLoaded())
     {
-        GLSupport ver = loadedOpenGLVersion();
+        immutable ver = loadedOpenGLVersion();
         if (ver != GLSupport.gl11 && ver != GLSupport.gl12 &&
             ver != GLSupport.gl13 && ver != GLSupport.gl14 &&
             ver != GLSupport.gl15)
@@ -2507,7 +2531,10 @@ import tida.vector;
 Reads frame image data. Time consuming operation.
 
 Params:
-    render = 
+    render = render instance.
+    position = Begin position read.
+    width = frame width.
+    height = frame height.
 +/
 Image renderRead(IRenderer render, Vecf position, int width, int height) @trusted
 {

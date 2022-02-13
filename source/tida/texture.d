@@ -89,13 +89,22 @@ public:
 
 @trusted:
     /// Texture width
-    @property uint width() inout => _width;
+    @property uint width() inout
+    {
+        return _width;
+    }
 
     /// Texture height
-    @property uint height() inout => _height;
+    @property uint height() inout
+    {
+        return _height;
+    }
 
     /// The ID of the texture in the open graphics library.
-    @property uint id() inout => glid;
+    @property uint id() inout
+    {
+        return glid;
+    }
 
     /++
     Edits texture parameters based on an array of parameters.

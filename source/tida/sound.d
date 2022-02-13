@@ -38,10 +38,16 @@ private:
 
 public @trusted:
     /// Device object.
-    @property ALCdevice* device() => _device;
+    @property ALCdevice* device()
+    {
+        return _device;
+    }
 
     /// Context object.
-    @property ALCcontext* context() => _context;
+    @property ALCcontext* context()
+    {
+        return _context;
+    }
 
     /++
     Opens and prepares the device for work.

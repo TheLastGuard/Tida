@@ -188,7 +188,10 @@ public:
 
 @safe nothrow pure:
     /// The beginning of the figure.
-    @property Vector!T begin() inout => _begin;
+    @property Vector!T begin() inout
+    {
+        return _begin;
+    }
 
     /// The end of the figure.
     @property Vector!T end() inout
@@ -212,7 +215,10 @@ public:
     }
 
     /// The beginning of the figure.
-    @property Vector!T begin(Vector!T vec) => _begin = vec;
+    @property Vector!T begin(Vector!T vec)
+    {
+        return _begin = vec;
+    }
 
     /// The end of the figure.
     @property Vector!T end(Vector!T vec) @safe nothrow pure
@@ -224,22 +230,40 @@ public:
     }
 
     /// The beginning of the figure along the x-axis.
-    @property T x() inout => begin.x;
+    @property T x() inout
+    {
+        return begin.x;
+    }
 
     /// The beginning of the figure along the y-axis.
-    @property T y() inout => begin.y;
+    @property T y() inout
+    {
+        return begin.y;
+    }
 
     /// The beginning of the figure along the x-axis.
-    @property T x(T value) => begin.x = value;
+    @property T x(T value)
+    {
+        return begin.x = value;
+    }
 
     /// The beginning of the figure along the y-axis.
-    @property T y(T value) => begin.y = value;
+    @property T y(T value)
+    {
+        return begin.y = value;
+    }
     
     /// The end of the figure along the x-axis.
-    @property T endX() inout => end.x;
+    @property T endX() inout
+    {
+        return end.x;
+    }
 
     /// The end of the figure along the y-axis.
-    @property T endY() inout => end.y;
+    @property T endY() inout
+    {
+        return end.y;
+    }
 
     alias left = x; /// Rectangle left
     alias right = endX; /// Rectangle right
@@ -318,7 +342,10 @@ public:
     }
 
     /// The top of the triangle.
-    @property Vector!T[] vertexs() inout => [begin, end, _trType];
+    @property Vector!T[] vertexs() inout
+    {
+        return [begin, end, _trType];
+    }
 
     /// ditto
     @property void vertex(uint num)(Vector!T value)

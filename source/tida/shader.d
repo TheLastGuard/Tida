@@ -100,7 +100,10 @@ public @trusted:
     }
 
     /// Shader identificator
-    @property uint id() => glid;
+    @property uint id()
+    {
+        return glid;
+    }
 
     /++
     Binds the shader source directly to the shader itself into memory by compiling it.

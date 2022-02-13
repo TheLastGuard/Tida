@@ -62,10 +62,16 @@ public:
 
 @trusted:
     /// Font face object.
-    @property FT_Face face() nothrow pure => _face;
+    @property FT_Face face() nothrow pure
+    {
+        return _face;
+    }
 
     /// Font size.
-    @property size_t size() nothrow pure => _size;
+    @property size_t size() nothrow pure
+    {
+        return _size;
+    }
 
     auto charIndex(T)(T symbol, int flags)
     {

@@ -152,13 +152,25 @@ inout:
     /++
     Converts a vector to an array.
     +/
-    T[] array() => [x, y];
+    T[] array()
+    {
+        return [x, y];
+    }
 
-    bool opEquals(Vector a, Vector b) => a is b || (a.x == b.x && a.y == b.y);
+    bool opEquals(Vector a, Vector b)
+    {
+        return a is b || (a.x == b.x && a.y == b.y);
+    }
 
-    bool opEquals(Vector other) => this is other || (this.x == other.x && this.y == other.y);
+    bool opEquals(Vector other)
+    {
+        return this is other || (this.x == other.x && this.y == other.y);
+    }
 
-    int opCmp(Vector rhs) => (x > rhs.x && y > rhs.y) ? 1 : -1;
+    int opCmp(Vector rhs)
+    {
+        return (x > rhs.x && y > rhs.y) ? 1 : -1;
+    }
 
     Vector!T opBinary(string op)(Vector rhs)
     {
@@ -242,9 +254,15 @@ inout:
         return Vector!T(this.x * d, this.y * d);
     }
 
-    Vector!T negatived() => Vector!T(-this.x, -this.y);
+    Vector!T negatived()
+    {
+        return Vector!T(-this.x, -this.y);
+    }
 
-    Vector!T positived() => Vector!T(+this.x, +this.y);
+    Vector!T positived()
+    {
+        return Vector!T(+this.x, +this.y);
+    }
 
     template opUnary(string op)
     if (op == "-" || op == "+")
@@ -365,7 +383,10 @@ unittest
     assert([vec!int(16, 16), vec!int(32, 48), vec!int(48, 8)].generateArray == ([16, 16, 32, 48, 48, 8]));
 }
 
-inout(T) sqr(T)(inout(T) value) @safe nothrow pure => value * value;
+inout(T) sqr(T)(inout(T) value) @safe nothrow pure
+{
+    return value * value;
+}
 
 /++
 Construct the vector modulo.

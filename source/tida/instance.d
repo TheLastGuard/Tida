@@ -323,11 +323,20 @@ public:
     }
 
 package(tida):
-    Sprite spriteDraw() => sprite;
+    Sprite spriteDraw()
+    {
+        return sprite;
+    }
 
-    bool isDestroy() => _destroy;
+    bool isDestroy()
+    {
+        return _destroy;
+    }
 
-    Component[] getComponents() => components;
+    Component[] getComponents()
+    {
+        return components;
+    }
 }
 
 unittest

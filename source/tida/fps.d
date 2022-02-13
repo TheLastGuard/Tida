@@ -42,17 +42,26 @@ public:
     Shows how many frames were formed in a second.
     Please note that the counter is updated once per second.
     +/
-    @property long fps() @safe => resultFPS;
+    @property long fps() @safe
+    {
+        return resultFPS;
+    }
 
     /++
     Shows the running time of the program.
     +/
-    @property Duration timeJobProgram() @safe => MonoTime.currTime - startProgramTime;
+    @property Duration timeJobProgram() @safe
+    {
+        return MonoTime.currTime - startProgramTime;
+    }
 
     /++
     Delta time.
     +/
-    @property Duration deltatime() @safe => _deltatime;
+    @property Duration deltatime() @safe
+    {
+        return _deltatime;
+    }
 
 @trusted:
     /++

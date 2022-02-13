@@ -230,7 +230,10 @@ Params:
     
 Returns: Angle between two angel's.
 +/
-float betweenAngle(float a, float b) @safe nothrow pure => (a + b) / 2;
+float betweenAngle(float a, float b) @safe nothrow pure
+{
+    return (a + b) / 2;
+}
 
 unittest
 {

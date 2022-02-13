@@ -74,10 +74,11 @@ template bytesPerColor(int pixelformat, T = ubyte)
 
 unittest
 {
-    assert(bytesPerColor!(PixelFormat.RGBA));
-    assert(bytesPerColor!(PixelFormat.RGBA, int));
-    assert(bytesPerColor!(PixelFormat.BGR, int));
-    assert(bytesPerColor!(PixelFormat.ARGB, long));
+    assert(bytesPerColor!(PixelFormat.RGBA) == 4);
+    assert(bytesPerColor!(PixelFormat.RGBA, int) == 4 * int.sizeof);
+    assert(bytesPerColor!(PixelFormat.BGR, int) == 3 * int.sizeof);
+    assert(bytesPerColor!(PixelFormat.ARGB, long) == 4 * long.sizeof);
+    assert(bytesPerColor!(PixelFormat.RGB, float) == 3 * float.sizeof);
 }
 
 T hexTo(T, R)(R hexData) @safe nothrow pure
@@ -341,6 +342,9 @@ unittest
     assert(parseColor!(PixelFormat.BGR)(0xf900ff) == (Color!ubyte(255, 0, 249, 255)));
 }
 
+/++
+Color description structure.
++/
 struct Color(T)
 if (isIntegral!T || isFloatingPoint!T)
 {
@@ -565,16 +569,28 @@ public:
     }
 
     /// Converts the color to black and white.
-    float toGrayscaleFloat() inout => (rf * 0.299 + gf * 0.587 + bf * 0.144);
+    float toGrayscaleFloat() inout
+    {
+        return (rf * 0.299 + gf * 0.587 + bf * 0.144);
+    }
 
     /// Whether the color is dark.
-    bool isDark() => toGrayscaleFloat < 0.5f;
+    bool isDark() inout
+    {
+        return toGrayscaleFloat < 0.5f;
+    }
 
     /// Whether the color is light.
-    bool isLight() => toGrayscaleFloat > 0.5f;
+    bool isLight() inout
+    {
+        return toGrayscaleFloat > 0.5f;
+    }
 
     /// Converts the color to black and white.
-    T toGrayscaleNumber() inout => cast(T) (Max * toGrayscaleFloat());
+    T toGrayscaleNumber() inout
+    {
+        return cast(T) (Max * toGrayscaleFloat());
+    }
 
     /// Converts the color to black and white.
     Color!T toGrayscale() inout
@@ -585,13 +601,22 @@ public:
     }
 
     /// Will return the color opposite to itself.
-    @property Color!T inverted() inout => Color!T(Max - r, Max - g, Max - b, a);
+    @property Color!T inverted() inout
+    {
+        return Color!T(Max - r, Max - g, Max - b, a);
+    }
 
     /// Invert alpha value
-    @property T invertAlpha() inout => Max - alpha;
+    @property T invertAlpha() inout
+    {
+        return Max - alpha;
+    }
 
     /// Red value in the form of a range from 0 to 1.
-    @property float rf()  inout => cast(float) r / cast(float) Max;
+    @property float rf()  inout
+    {
+        return cast(float) r / cast(float) Max;
+    }
 
     /// ditto
     @property float rf(float value)
@@ -602,7 +627,10 @@ public:
     }
 
     /// Green value in the form of a range from 0 to 1.
-    @property float gf() inout => cast(float) g / cast(float) Max;
+    @property float gf() inout
+    {
+        return cast(float) g / cast(float) Max;
+    }
 
     /// ditto
     @property float gf(float value)
@@ -613,7 +641,10 @@ public:
     }
 
     /// Alpha value in the form of a range from 0 to 1.
-    @property float bf() inout => cast(float) b / cast(float) Max;
+    @property float bf() inout
+    {
+        return cast(float) b / cast(float) Max;
+    }
 
     /// ditto
     @property float bf(float value)
@@ -624,7 +655,10 @@ public:
     }
 
     /// Returns a alpha value in the form of a range from 0 to 1.
-    @property float af() inout => cast(float) a / cast(float) Max;
+    @property float af() inout
+    {
+        return cast(float) a / cast(float) Max;
+    }
     /// ditto
     @property float af(float value)
     {

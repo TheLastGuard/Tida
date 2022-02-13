@@ -118,10 +118,16 @@ public @safe:
     A state indicating whether an instance transition is in progress. 
     Needed to synchronize the stream.
     +/
-    @property bool isThereGoto() nothrow pure => _thereGoto;
+    @property bool isThereGoto() nothrow pure
+    {
+        return _thereGoto;
+    }
     
     /// List scenes
-    @property Scene[string] scenes() nothrow pure => _scenes;
+    @property Scene[string] scenes() nothrow pure
+    {
+        return _scenes;
+    }
 
     /++
     The first added scene.
@@ -134,22 +140,34 @@ public @safe:
     sceneManager.gameRestart();
     ---
     +/
-    @property Scene ofbegin() nothrow pure => _ofbegin;
+    @property Scene ofbegin() nothrow pure
+    {
+        return _ofbegin;
+    }
 
     /++
     The last added scene.
     +/
-    @property Scene ofend() nothrow pure => _ofend;
+    @property Scene ofend() nothrow pure
+    {
+        return _ofend;
+    }
 
     /++
     The previous scene that was active.
     +/
-    @property Scene previous() nothrow pure => _previous;
+    @property Scene previous() nothrow pure
+    {
+        return _previous;
+    }
 
     /++
     A scene that restarts at the moment.
     +/
-    @property Scene restarted() nothrow pure => _restarted;
+    @property Scene restarted() nothrow pure
+    {
+        return _restarted;
+    }
 
     /++
     Restarting the game.
@@ -197,7 +215,10 @@ public @safe:
     See_Also:
         tida.scene.manager.SceneManager.initable
     +/
-    @property Scene current() nothrow pure => _current;
+    @property Scene current() nothrow pure
+    {
+        return _current;
+    }
 
     /++
     The reference to the scene, which is undergoing context change
@@ -206,7 +227,10 @@ public @safe:
     The use of such a link is permissible only in context transmission
     events, otherwise, it is possible to detect the scene leading nowhere.
     +/
-    @property Scene initable() nothrow pure => _initable;
+    @property Scene initable() nothrow pure
+    {
+        return _initable;
+    }
 
     /++
     The reference to the current stage, as if it is under initialization,
@@ -239,7 +263,10 @@ public @safe:
     }
     ---
     +/
-    @property Scene context() nothrow pure => _initable is null ? (_restarted is null ? _current : _restarted) : _initable;
+    @property Scene context() nothrow pure
+    {
+        return _initable is null ? (_restarted is null ? _current : _restarted) : _initable;
+    }
 
     /++
     Calls a trigger for the current scene, as well as its instances.
@@ -296,7 +323,10 @@ public @safe:
     Params:
         scene = Scene.
     +/
-    bool hasScene(Scene scene) @trusted => _scenes.values.canFind(scene); 
+    bool hasScene(Scene scene) @trusted
+    {
+        return _scenes.values.canFind(scene);
+    }
 
     /++
     Checks for the existence of a scene by its original class.
@@ -304,7 +334,10 @@ public @safe:
     Params:
         Name = Class name.
     +/
-    bool hasScene(Name)() => _scenes.values.canFind!(e => (cast(Name) e) !is null);
+    bool hasScene(Name)()
+    {
+        return _scenes.values.canFind!(e => (cast(Name) e) !is null);
+    }
 
     /++
     Checks if there is a scene with the specified name.
@@ -312,7 +345,10 @@ public @safe:
     Params:
         name = Scene name.
     +/
-    bool hasScene(string name) => _scenes.values.canFind!(e => e.name == name);
+    bool hasScene(string name)
+    {
+        return _scenes.values.canFind!(e => e.name == name);
+    }
 
     /++
     Adds a scene to the list.
@@ -623,10 +659,10 @@ public @safe:
     {
         static class A : Instance 
         {
-            @Event!Init
+            @event(Init)
             void onInit() @safe { }
             
-            @Event!Draw
+            @event(Draw)
             void onDraw(IRenderer render) @safe { }
         }
         
@@ -922,13 +958,25 @@ public @safe:
         }
     }
 
-    package(tida) @property FEStep[][size_t][Instance] threadSteps() => IStepThreadFunctions;
+    package(tida) @property FEStep[][size_t][Instance] threadSteps()
+    {
+        return IStepThreadFunctions;
+    }
 
-    package(tida) @property SRCollider[][Instance] colliders() => IColliderStructs;
+    package(tida) @property SRCollider[][Instance] colliders()
+    {
+        return IColliderStructs;
+    }
 
-    package(tida) @property FECollision[][Instance] collisionFunctions() => ICollisionFunctions;
+    package(tida) @property FECollision[][Instance] collisionFunctions()
+    {
+        return ICollisionFunctions;
+    }
 
-    package(tida) @property FELeave[][Component] leaveComponents() => CLeaveFunctions;
+    package(tida) @property FELeave[][Component] leaveComponents()
+    {
+        return CLeaveFunctions;
+    }
 
     package(tida) void removeHandle(Scene scene, Instance instance) @trusted
     {
@@ -1575,7 +1623,7 @@ unittest
 
     static class A : Scene
     {
-        @Event!Init
+        @event(Init)
         void onInit() @safe { }
     }
 
@@ -1611,7 +1659,7 @@ unittest
     {
         int trace = 0;
     
-        @Event!Init
+        @event(Init)
         void onInit(Instance instance) @safe
         {
             trace++;

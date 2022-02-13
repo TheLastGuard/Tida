@@ -90,29 +90,44 @@ interface IJoystick
     Shows the value of the first axis on the controller. 
     The value ranges from -1.0 to 1.0.
     +/
-    final @property Vector!float xy() @safe => vec!float(axless[0], axless[1]) / maximumAxes;
+    final @property Vector!float xy() @safe
+    {
+        return vec!float(axless[0], axless[1]) / maximumAxes;
+    }
     
     /++
     Shows the value of the second axis on the controller. 
     The value ranges from -1.0 to 1.0.
     +/
-    final @property Vector!float zr() @safe => vec!float(axless[2], axless[3]) / maximumAxes;
+    final @property Vector!float zr() @safe
+    {
+        return vec!float(axless[2], axless[3]) / maximumAxes;
+    }
     
     /++
     Shows the value of the third axis on the controller. 
     The value ranges from -1.0 to 1.0.
     +/
-    final @property Vector!float uv() @safe => vec!float(axless[4], axless[5]) / maximumAxes;
+    final @property Vector!float uv() @safe
+    {
+        return vec!float(axless[4], axless[5]) / maximumAxes;
+    }
     
     /++
     Shows the currently pressed key.
     +/
-    final @property int buttonDown() @safe => isButtonDown ? button : -1;
+    final @property int buttonDown() @safe
+    {
+        return isButtonDown ? button : -1;
+    }
     
     /++
     Shows the currently released key.
     +/
-    final @property int buttonUp() @safe => isButtonUp ? button : -1;
+    final @property int buttonUp() @safe
+    {
+        return isButtonUp ? button : -1;
+    }
 }
 
 version(Windows)
