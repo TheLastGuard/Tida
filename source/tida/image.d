@@ -214,7 +214,23 @@ public:
         info.data = bytes!(PixelFormat.RGBA)();
 
         _texture.initializeFromData!(PixelFormat.RGBA)(info);
-        _texture.vertexInfo = generateVertex!(float)(shape, vecf(_width, _height));
+        _texture.vertexInfo = new VertexInfo!float();
+
+        BufferInfo!float bufferInfo;
+        {
+            auto buffer = generateBuffer!(float)(Shape!(float).Rectangle(
+                vec!float(0.0f, 0.0f),
+                vec!float(_width, _height)
+            ));
+
+            bufferInfo.append (buffer[0], 1.0f, 0.0f);
+            bufferInfo.append (buffer[1], 1.0f, 1.0f);
+            bufferInfo.append (buffer[2], 0.0f, 1.0f);
+            bufferInfo.append (buffer[3], 0.0f, 0.0f);
+        }
+
+        _texture.vertexInfo.bindFromInfo (bufferInfo, [0 ,1, 2, 2, 3 ,0]);
+        _texture.vertexInfo.shapeinfo = Shape!float.Rectangle(vec!float(), vec!float());
     }
 
     /++

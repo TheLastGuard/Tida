@@ -123,6 +123,14 @@ public:
         elength = element.length;
     }
 
+    void bindFromInfo(BufferInfo!T info, uint[] elements = []) @safe
+    {
+        if (elements.length != 0)
+            bindFromBufferAndElem (info.rawData, elements);
+        else
+            bindFromBuffer(info.rawData);
+    }
+
     /// Binds an array of vertices to the current render cycle.
     void bindVertexArray() nothrow
     {
@@ -275,6 +283,81 @@ public:
 }
 
 /++
+Figure description structure for binding and drawing.
++/
+struct BufferInfo(T)
+{
+    Vector!T[] vertexData; /// Vertices.
+
+    /// The remaining data.
+    /// Each element refers to a certain top.
+    T[][] attachData;
+
+    @property size_t length() @safe inout
+    {
+        return vertexData.length;
+    }
+
+    void append (Args...) (Vector!float vertex, Args attached) @safe
+    {
+        vertexData ~= vertex;
+
+        if (attached.length > attachData.length)
+            attachData.length = attached.length;
+
+        size_t i = 0;
+        foreach (e; attached)
+        {
+            attachData[i] ~= e;
+            i++;
+        }
+    }
+
+    @property T[] rawData() @safe
+    {
+        T[] result;
+
+        foreach (size_t i, e; vertexData)
+        {
+            result ~= e.array;
+
+            foreach (ae; attachData)
+                result ~= ae[i];
+        }
+
+        return result;
+    }
+}
+
+unittest
+{
+    BufferInfo!float buffInfo;
+                     // vertex -------  tex  color ----------
+    buffInfo.append (vec!float(32, 32), 0.0, 32.0, 32.0, 32.0);
+    buffInfo.append (vec!float(32, 32), 0.0, 32.0, 64.0, 128.0);
+
+    assert(
+        buffInfo.vertexData == [vec!float(32, 32), vec!float(32, 32)]
+    );
+
+    assert(
+        buffInfo.attachData ==  [
+                                    [0.0, 0.0],
+                                    [32.0, 32.0],
+                                    [32.0, 64.0],
+                                    [32.0, 128.0]
+                                ]
+    );
+
+    assert(
+        buffInfo.rawData == [
+            32.0, 32.0, 0.0, 32.0, 32.0, 32.0,
+            32.0, 32.0, 0.0, 32.0, 64.0, 128.0
+        ]
+    );
+}
+
+/++
 Generates the vertices of shapes to be rendered using hardware acceleration.
 
 Params:
@@ -283,7 +366,7 @@ Params:
     textureSize =   Texture size. If not specified, will not generate texture 
                     vertices for vertices.
 +/
-Vector!T[] generateBuffer(T)(Shape!T shape, Vector!T textureSize = vecNaN!T) @safe nothrow pure
+Vector!T[] generateBuffer(T)(Shape!T shape) @safe nothrow pure
 {
     import std.math : cos, sin;
 
@@ -387,20 +470,6 @@ Vector!T[] generateBuffer(T)(Shape!T shape, Vector!T textureSize = vecNaN!T) @sa
             return null;
     }
 
-    if (!isVectorNaN!T(textureSize))
-    {
-        auto vertDump = vertexs.dup;
-        vertexs.length = 0;
-
-        const clip = rectVertexs!T(vertDump);
-
-        foreach (e; vertDump) {
-            vertexs ~= [e,
-                        vec!T   ((e.x - clip.x) / clip.width,
-                                (e.y - clip.y) / clip.height)];
-        }
-    }
-
     return vertexs;
 }
 
@@ -426,7 +495,7 @@ VertexInfo!T generateVertex(T)(Shape!T shape, Vector!T textSize = vecNaN!T) @tru
 {
     T[] buffer;
 
-    buffer = generateBuffer!T(shape, textSize).generateArray;
+    buffer = generateBuffer!T(shape).generateArray;
 
     VertexInfo!T info = new VertexInfo!T();
 
