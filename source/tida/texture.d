@@ -467,7 +467,7 @@ override:
             shader.setUniform("model", model);
 
         if (shader.getUniformLocation("color") != -1)
-            shader.setUniform("color", rgba(255, 255, 255, alpha));
+            shader.setUniform("color", rgba(color.r, color.g, color.b, alpha));
 
         vertexInfo.draw (drawType);
 
