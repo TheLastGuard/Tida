@@ -59,245 +59,271 @@ class VertexInfo(T)
 if (isNumeric!T)
 {
     import tida.gl;
-    import tida.shape;
 
-private:
-    uint bid;
-    uint vid;
-    uint eid;
-
-    size_t blength;
-    size_t elength;
+package(tida):
+    uint id = 0;
 
 public:
-    Shape!T shapeinfo; /// Shape information
+    BufferInfo!(T) buffer = null;
+    ElementInfo!(uint) elements = null;
 
-@trusted:
-    /++
-    Enters data into a separate memory.
-
-    Params:
-        buffer = Binded buffer.
-    +/
-    void bindFromBuffer(T[] buffer)
+    this() @trusted
     {
-        glGenVertexArrays(1, &vid);
-        glGenBuffers(1, &bid);
-        glBindVertexArray(vid);
-
-        glBindBuffer(GL_ARRAY_BUFFER, bid);
-        glBufferData(GL_ARRAY_BUFFER, T.sizeof * buffer.length, buffer.ptr, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-
-        blength = buffer.length;
+        glGenVertexArrays(1, &id);
     }
 
-    /++
-    Enters data into a separate memory.
-
-    Params:
-        buffer = Binded buffer.
-        element = Binded element buffer.
-    +/
-    void bindFromBufferAndElem(T[] buffer, uint[] element)
+    void bind() @trusted
     {
-        glGenVertexArrays(1, &vid);
-        glGenBuffers(1, &bid);
-        glBindVertexArray(vid);
-
-        glBindBuffer(GL_ARRAY_BUFFER, bid);
-        glBufferData(GL_ARRAY_BUFFER, T.sizeof * buffer.length, buffer.ptr, GL_STATIC_DRAW);
-
-        glGenBuffers(1, &eid);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eid);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, uint.sizeof * buffer.length, element.ptr, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-
-        blength = buffer.length;
-        elength = element.length;
+        glBindVertexArray(id);
     }
 
-    void bindFromInfo(BufferInfo!T info, uint[] elements = []) @safe
-    {
-        if (elements.length != 0)
-            bindFromBufferAndElem (info.rawData, elements);
-        else
-            bindFromBuffer(info.rawData);
-    }
-
-    /// Binds an array of vertices to the current render cycle.
-    void bindVertexArray() nothrow
-    {
-        glBindVertexArray(vid);
-    }
-
-    /// Binds an buffer of vertices to the current render cycle.
-    void bindBuffer() nothrow
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, bid);
-    }
-
-    /// Binds an element buffer of vertices to the current render cycle.
-    void bindElementBuffer() nothrow
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eid);
-    }
-
-    /// Unbinds an buffer of vertices to the current render cycle.
-    static void unbindBuffer() nothrow
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
-
-    /// Unbinds an element buffer of vertices to the current render cycle.
-    static void unbindElementBuffer() nothrow
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    }
-
-    /// Unbinds an array of vertices to the current render cycle.
-    static void unbindVertexArray() nothrow
+    static void unbind() @trusted
     {
         glBindVertexArray(0);
     }
 
-    /// Define an array of generic vertex attribute data
-    void vertexAttribPointer(uint vertLocation, int sample = 2) nothrow
+    static void vertexAttribPointer(uint location, uint components, uint sample, uint offset) @trusted
     {
-        glVertexAttribPointer(vertLocation, 2, glType!T, false, sample * cast(int) T.sizeof, null);
+        glVertexAttribPointer(
+            location,
+            components,
+            glType!T,
+            false,
+            sample * cast(uint) T.sizeof,
+            cast(void*) (T.sizeof * offset)
+        );
     }
 
-    /// Define an array of generic vertex attribute data
-    void textureAttribPointer(uint location, int sample = 4) nothrow
+    static void positionAttribPointer(uint location, uint sample, uint offset = 0) @safe
     {
-        glVertexAttribPointer(location, 2, glType!T, false, sample * cast(int) T.sizeof, cast(void*) (T.sizeof * 2));
+        vertexAttribPointer(location, 2, sample, offset);
     }
 
-    void offsetAttribPointer(uint location, uint offset, uint sample) nothrow
+    static void colorAttibPointer(uint location, uint sample, uint offset = 2) @safe
     {
-        glVertexAttribPointer(location, 2, glType!T, false, sample * cast(int) T.sizeof, cast(void*) (T.sizeof * offset));
+        vertexAttribPointer(location, 4, sample, offset);
     }
 
-    /// Define an array of generic vertex attribute data
-    void colorAttribPointer(uint location, uint sample = 6) nothrow
+    static void enableVertex (uint location) @trusted
     {
-        glVertexAttribPointer(location, 4, glType!T, false, sample * cast(int) T.sizeof, cast(void*) (T.sizeof * 2));
+        glEnableVertexAttribArray(location);
     }
 
-    /// ID of the generated vertex array.
-    @property uint idVertexArray() nothrow inout
+    void draw (ShapeType drawType, uint count = 1) @trusted
     {
-        return vid;
-    }
-
-    /// The identifier of the buffer in memory.
-    @property uint idBufferArray() nothrow inout
-    {
-        return bid;
-    }
-
-    /// The identifier of the elements in memory.
-    @property uint idElementArray() nothrow inout
-    {
-        return eid;
-    }
-
-    /// Buffer length.
-    @property size_t length() nothrow inout
-    {
-        return blength;
-    }
-
-    /// Element length
-    @property size_t elementLength() nothrow inout
-    {
-        return elength;
-    }
-
-    /++
-    Outputs the rendering of the buffer.
-
-    Params:
-        type = Shape type
-        count = Count rendering shapes
-    +/
-    void draw(ShapeType type, int count = 1)
-    {
-        switch(type)
+        switch (drawType)
         {
             case ShapeType.point:
-                glDrawArrays(GL_POINTS, 0, 1 * count);
+            {
+                if (elements is null)
+                {
+                    glDrawArrays(GL_POINTS, 0, count);
+                }
+                else
+                {
+                    glDrawElements(
+                        GL_POINTS,
+                        cast(uint) elements.length,
+                        GL_UNSIGNED_INT,
+                        null
+                    );
+                }
+            }
             break;
-        
+
             case ShapeType.line:
-                glDrawArrays(GL_LINES, 0, 2 * count);
-            break;
-
-            case ShapeType.rectangle:
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
-            break;
-
-            case ShapeType.roundrect:
-                glDrawArrays(GL_TRIANGLES, 0, cast(uint) (blength / 2 * count));
-            break;
-
-            case ShapeType.circle:
-                glDrawArrays(GL_TRIANGLE_FAN, 0, cast(uint) (blength / 4 * count));
+            {
+                if (elements is null)
+                {
+                    glDrawArrays(GL_LINES, 0, 2 * count);
+                }
+                else
+                {
+                    glDrawElements(
+                        GL_LINES,
+                        cast(uint) elements.length,
+                        GL_UNSIGNED_INT,
+                        null
+                    );
+                }
+            }
             break;
 
             case ShapeType.triangle:
-                glDrawArrays(GL_TRIANGLES, 0, cast(uint) blength);
+            {
+                if (elements is null)
+                {
+                    glDrawArrays(GL_TRIANGLES, 0, 3 * count);
+                }
+                else
+                {
+                    glDrawElements(
+                        GL_TRIANGLES,
+                        cast(uint) elements.length,
+                        GL_UNSIGNED_INT,
+                        null
+                    );
+                }
+            }
+            break;
+
+            case ShapeType.rectangle:
+            {
+                if (elements is null)
+                {
+                    glDrawArrays(GL_TRIANGLES, 0, 6 * count);
+                }
+                else
+                {
+                    glDrawElements(
+                        GL_TRIANGLES,
+                        cast(uint) elements.length,
+                        GL_UNSIGNED_INT,
+                        null
+                    );
+                }
+            }
+            break;
+
+            case ShapeType.roundrect:
+            {
+                if (elements is null)
+                {
+                    glDrawArrays(GL_TRIANGLES, 0, cast(uint) buffer.length / (1 * count));
+                }
+                else
+                {
+                    glDrawElements(
+                        GL_TRIANGLES,
+                        cast(uint) elements.length,
+                        GL_UNSIGNED_INT,
+                        null
+                    );
+                }
+            }
+            break;
+
+            case ShapeType.circle:
+            {
+                if (elements is null)
+                {
+                    glDrawArrays(GL_TRIANGLE_FAN, 0, cast(uint) buffer.length / 4);
+                }
+                else
+                {
+                    glDrawElements(
+                        GL_TRIANGLE_FAN,
+                        cast(uint) elements.length,
+                        GL_UNSIGNED_INT,
+                        null
+                    );
+                }
+            }
             break;
 
             case ShapeType.polygon:
-                glDrawArrays(GL_TRIANGLE_FAN, 0, cast(uint) blength);
+            {
+                if (elements is null)
+                {
+                    glDrawArrays(GL_TRIANGLE_FAN, 0, cast(uint) buffer.length);
+                }
+                else
+                {
+                    glDrawElements(
+                        GL_TRIANGLE_FAN,
+                        cast(uint) elements.length,
+                        GL_UNSIGNED_INT,
+                        null
+                    );
+                }
+            }
             break;
 
+            case ShapeType.multi:
+                return;
+
+            case ShapeType.unknown:
+                return;
+
             default:
-                assert(null, "Unknown type!");
+                return;
         }
     }
 
-    /// Destroys vertex information.
-    void deleting()
+    void clear() @trusted
     {
-        if(idBufferArray != 0) glDeleteBuffers(1, &bid);
-        if(idVertexArray != 0) glDeleteVertexArrays(1, &vid);
-        if(idElementArray != 0) glDeleteBuffers(1, &eid);
-
-        bid = 0;
-        vid = 0;
-        eid = 0;
+        glDeleteVertexArrays(1, &id);
     }
 
-    ~this()
+    ~this() @trusted
     {
-        this.deleting();
+        clear();
     }
 }
 
 /++
 Figure description structure for binding and drawing.
 +/
-struct BufferInfo(T)
+class BufferInfo(T)
 {
+    import tida.gl;
+
+package(tida):
+    uint id = 0;
+    T[] contextData;
+
+public:
     Vector!T[] vertexData; /// Vertices.
 
     /// The remaining data.
     /// Each element refers to a certain top.
     T[][] attachData;
 
+    this() @safe
+    {
+        generateBuffer();
+    }
+
+    /// How many vertices are in the buffer
     @property size_t length() @safe inout
     {
         return vertexData.length;
     }
 
+    /// How much data to attach (to all vertices).
+    @property size_t attachDataLength() @safe inout
+    {
+        size_t result;
+
+        foreach (e; attachData)
+        {
+            result += e.length;
+        }
+
+        return result;
+    }
+
+    /// The final length of the buffer.
+    @property size_t rawLength() @safe inout
+    {
+        return length() + attachDataLength();
+    }
+
+    /++
+    The function of accepting a vertex to the buffer, along with its attached 
+    data (position, color, texture coordinates, etc.)
+
+    Params:
+        vertex = Vertex position.
+        attached = Enumerated data that can be attached to the node.
+
+    Example:
+    ---
+    //             vertex position --  color ------------
+    buffer.append (vec!float (32, 32), 1.0, 0.0, 0.0, 1.0);
+    buffer.append (vec!float (64, 64), 0.0, 1.0, 0.0, 0.5);
+    ---
+    +/
     void append (Args...) (Vector!float vertex, Args attached) @safe
     {
         vertexData ~= vertex;
@@ -313,6 +339,9 @@ struct BufferInfo(T)
         }
     }
 
+    /++
+    Issuance of the final data that should be obtained.
+    +/
     @property T[] rawData() @safe
     {
         T[] result;
@@ -327,11 +356,140 @@ struct BufferInfo(T)
 
         return result;
     }
+
+    /// Generate a buffer for the GPU.
+    void generateBuffer() @trusted
+    {
+        glGenBuffers(1, &id);
+    }
+
+    /// Copy data to GPU.
+    void attach() @trusted
+    {
+        contextData = rawData();
+
+        glBufferData(GL_ARRAY_BUFFER, T.sizeof * contextData.length, contextData.ptr, GL_STATIC_DRAW);
+    }
+
+    /// Move data to GPU.
+    void move() @trusted
+    {
+        contextData = rawData();
+
+        glBufferData(GL_ARRAY_BUFFER, T.sizeof * contextData.length, contextData.ptr, GL_STATIC_DRAW);
+        
+        contextData.length = 0;
+        vertexData.length = 0;
+        attachData.length = 0;
+    }
+
+    /// Bind opengl buffer.
+    void bind() @trusted
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, id);
+    }
+
+    /// Unbind opengl buffer.
+    static void unbind() @trusted
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    /// Delete opengl buffer.
+    void deleteBuffer() @trusted
+    {
+        glDeleteBuffers(1, &id);
+    }
+
+    /// Clear data.
+    void clear() @safe
+    {
+        if (id != 0)
+        {
+            deleteBuffer();
+        }
+
+        vertexData.length = 0;
+        attachData.length = 0;
+        contextData.length = 0;
+    }
+
+    ~this()
+    {
+        clear();
+    }
+}
+
+/++
+Vertex element data.
++/
+class ElementInfo(T)
+{
+    import tida.gl;
+
+package(tida):
+    uint id;
+
+public:
+    T[] data; /// Elements data
+
+    this() @safe
+    {
+        generateBuffer();
+    }
+
+    /// Elements length.
+    @property size_t length() @trusted
+    {
+        return data.length;
+    }
+
+    /// Bind opengl element buffer.
+    void bind() @trusted
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+    }
+
+    /// Unbind opengl element buffer.
+    static void unbind() @trusted
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+
+    /// Generate element buffer for GPU.
+    void generateBuffer() @trusted
+    {
+        glGenBuffers(1, &id);
+    }
+
+    /// Copy elements to GPU.
+    void attach() @trusted
+    {
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, T.sizeof * data.length, data.ptr, GL_STATIC_DRAW);
+    }
+
+    /// Delete opengl buffer.
+    void deleteBuffer() @trusted
+    {
+        glDeleteBuffers(1, &id);
+    }
+
+    /// Clear data.
+    void clear() @safe
+    {
+        deleteBuffer();
+        data.length = 0;
+    }
+
+    ~this() @trusted
+    {
+        clear();
+    }
 }
 
 unittest
 {
-    BufferInfo!float buffInfo;
+    BufferInfo!float buffInfo = new BufferInfo!float();
                      // vertex -------  tex  color ----------
     buffInfo.append (vec!float(32, 32), 0.0, 32.0, 32.0, 32.0);
     buffInfo.append (vec!float(32, 32), 0.0, 32.0, 64.0, 128.0);
@@ -455,8 +613,9 @@ Vector!T[] generateBuffer(T)(Shape!T shape) @safe nothrow pure
         break;
 
         case ShapeType.polygon:
-            vertexs = shape.data;
-            vertexs ~= shape.data[0];
+            foreach (e; shape.data)
+                vertexs ~= shape.begin + e;
+            vertexs ~= shape.begin + shape.data[0];
         break;
 
         case ShapeType.multi:
@@ -488,67 +647,4 @@ unittest
     ];
 
     assert(buffer == (checkedBuffer));
-}
-
-/// ditto
-VertexInfo!T generateVertex(T)(Shape!T shape, Vector!T textSize = vecNaN!T) @trusted
-{
-    T[] buffer;
-
-    buffer = generateBuffer!T(shape).generateArray;
-
-    VertexInfo!T info = new VertexInfo!T();
-
-    if (shape.type == ShapeType.rectangle)
-    {
-        uint[] elements = [0 ,1, 2, 2, 3 ,0];
-        info.bindFromBufferAndElem(buffer, elements);
-    }else
-    {
-        info.bindFromBuffer(buffer);
-    }
-
-    info.shapeinfo = shape;
-
-    destroy(buffer);
-
-    return info;
-}
-
-/// ditto
-VertexInfo!T generateVertexColor(T)(Shape!T shape, Color!ubyte[] colors) @trusted
-{
-    T[] buffer;
-    Color!float[] fcolors;
-
-    foreach (e; colors)
-        fcolors ~= e.convert!(ubyte, float);
-
-    buffer = generateBuffer!T(shape).generateArray;
-    T[] buffDump = buffer.dup;
-    buffer = [];
-
-    VertexInfo!T info = new VertexInfo!T();
-
-    size_t j = 0;
-    for (size_t i = 0; i < buffDump.length; i += 2)
-    {
-        buffer ~= buffDump[i .. i + 2] ~ fcolors[j].toBytes!(PixelFormat.RGBA);
-        j++;
-    }
-
-    if (shape.type == ShapeType.rectangle)
-    {
-        uint[] elements = [0 ,1, 2, 2, 3 ,0];
-        info.bindFromBufferAndElem(buffer, elements);
-    }else
-    {
-        info.bindFromBuffer(buffer);
-    }
-
-    info.shapeinfo = shape;
-
-    destroy(buffer);
-
-    return info;
 }

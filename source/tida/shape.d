@@ -502,6 +502,29 @@ public:
         return shape;
     }
 
+    static Shape!T PolygonLine( Vector!T[] points,
+                                Vector!T pos = vec!T(0,0))
+    {
+        Shape!T shape;
+
+        shape.type = ShapeType.multi;
+
+        int next = 0;
+        for(int current = 0; current < points.length; current++)
+        {
+            next = current + 1;
+
+            if (next == points.length) next = 0;
+            
+            shape.shapes ~= Shape!float.Line(
+                pos + points[current],
+                pos + points[next]
+            );
+        }
+
+        return shape;
+    }
+
     /++
     Collects several figures into one.
 

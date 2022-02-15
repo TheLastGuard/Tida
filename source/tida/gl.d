@@ -58,11 +58,11 @@ Indicates whether the use of geometry shaders is supported on this device.
 +/
 @property bool glGeometrySupport() @trusted
 {
-	ExtList extensions = glExtensionsList();
+    ExtList extensions = glExtensionsList();
 	
-	return 	hasExtensions(extensions, Extensions.geometryShaderARB) ||
-			hasExtensions(extensions, Extensions.geometryShaderEXT) ||
-			hasExtensions(extensions, Extensions.geometryShaderNV);
+    return 	hasExtensions(extensions, Extensions.geometryShaderARB) ||
+            hasExtensions(extensions, Extensions.geometryShaderEXT) ||
+            hasExtensions(extensions, Extensions.geometryShaderNV);
 }
 
 /++
@@ -71,6 +71,87 @@ Returns the maximum version of the shaders in the open graphics.
 @property string glslVersion() @trusted
 {
     return _glslVersion;
+}
+
+@property uint glError() @trusted
+{
+    return glGetError();
+}
+
+@property string glErrorMessage(immutable uint err) @trusted
+{
+    string error;
+
+    switch (err)
+    {
+        case GL_INVALID_ENUM:
+            error = "Invalid enum!";
+            break;
+
+        case GL_INVALID_VALUE:
+            error = "Invalid input value!";
+            break;
+
+        case GL_INVALID_OPERATION:
+            error = "Invalid operation!";
+            break;
+
+        case GL_STACK_OVERFLOW:
+            error = "Stack overflow!";
+            break;
+
+        case GL_STACK_UNDERFLOW:
+            error = "Stack underflow!";
+            break;
+
+        case GL_OUT_OF_MEMORY:
+            error = "Out of memory!";
+            break;
+
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            error = "Invalid framebuffer operation!";
+            break;
+
+        default:
+            error = "Unkown error!";
+    }
+
+    return error;
+}
+
+void checkGLError(
+    string file = __FILE__,
+    size_t line = __LINE__,
+    string func = __FUNCTION__
+) @safe
+{
+    immutable err = glError();
+    if (err != GL_NO_ERROR)
+    {
+        throw new Exception(
+            "In function `" ~ func ~ "` discovered error: `" ~ glErrorMessage(err) ~ "`.",
+            file,
+            line
+        );
+    }
+}
+
+void assertGLError(
+    lazy uint checked,
+    string file = __FILE__,
+    size_t line = __LINE__,
+    string func = __FUNCTION__
+) @safe
+{
+    immutable err = checked();
+    if (err != GL_NO_ERROR)
+    {
+        throw new Exception(
+            "In function `" ~ func ~ "` discovered error: `" ~ glErrorMessage(err) ~ "`.",
+            file,
+            line
+        );
+    }
 }
 
 /++
@@ -82,9 +163,9 @@ See_Also:
 +/
 @property string glVendor() @trusted
 {
-	import std.conv : to;
+    import std.conv : to;
 	
-	return glGetString(GL_VENDOR).to!string;
+    return glGetString(GL_VENDOR).to!string;
 }
 
 /++
@@ -97,9 +178,9 @@ See_Also:
 +/
 @property string glRenderer() @trusted
 {
-	import std.conv : to;
+    import std.conv : to;
 	
-	return glGetString(GL_RENDERER).to!string;
+    return glGetString(GL_RENDERER).to!string;
 }
 
 /++

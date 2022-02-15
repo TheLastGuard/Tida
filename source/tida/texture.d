@@ -21,6 +21,9 @@ import tida.render;
 enum MinFilter = GL_TEXTURE_MIN_FILTER; /// Min Filter
 enum MagFilter = GL_TEXTURE_MAG_FILTER; /// Mag Filter
 
+enum WrapS = GL_TEXTURE_WRAP_S;
+enum WrapT = GL_TEXTURE_WRAP_T;
+
 /// Texture filter method
 enum TextureFilter
 {
@@ -73,6 +76,7 @@ class Texture : IDrawable, IDrawableEx, ITarget
     import tida.vector;
     import tida.color;
     import tida.matrix;
+    import tida.shape;
 
 private:
     uint glid = 0;
@@ -86,6 +90,7 @@ private:
 public:
     VertexInfo!float vertexInfo; /++    Information about the vertices of the
                                         texture being drawn. +/
+    ShapeType drawType;
 
 @trusted:
     /// Texture width
@@ -378,30 +383,24 @@ override:
     {
         Shader!Program shader = this.initShader(renderer);
 
-        vertexInfo.bindVertexArray();
-        vertexInfo.bindBuffer();
-        if (vertexInfo.idElementArray != 0) vertexInfo.bindElementBuffer();
-
-        shader.enableVertex("position");
-        vertexInfo.vertexAttribPointer(shader.getAttribLocation("position"), 4);
-
-        shader.enableVertex("texCoord");
-        vertexInfo.textureAttribPointer(shader.getAttribLocation("texCoord"), 4);
-        vertexInfo.unbindBuffer();
-
         mat4 proj = (cast(GLRender) renderer).projection;
         mat4 model = identity();
 
         model = mulmat(model, renderer.currentModelMatrix);
         model = translate(model, position.x, position.y, 0.0f);
 
-        shader.using();
+        vertexInfo.bind();
+        if (vertexInfo.elements !is null)
+            vertexInfo.elements.bind();
 
+        shader.using();
         bind();
+
+        shader.enableVertex("position");
+        shader.enableVertex("texCoord");
 
         if (shader.getUniformLocation("projection") != -1)
             shader.setUniform("projection", proj);
-
 
         if (shader.getUniformLocation("model") != -1)
             shader.setUniform("model", model);
@@ -409,11 +408,11 @@ override:
         if (shader.getUniformLocation("color") != -1)
             shader.setUniform("color", rgba(255, 255, 255, 255));
 
-        vertexInfo.draw(vertexInfo.shapeinfo.type);
+        vertexInfo.draw (drawType);
 
-        vertexInfo.unbindBuffer();
-        if (vertexInfo.idElementArray != 0) vertexInfo.unbindElementBuffer();
-        vertexInfo.unbindVertexArray();
+        if (vertexInfo.elements !is null)
+            vertexInfo.elements.unbind();
+        vertexInfo.unbind();
         unbind();
 
         renderer.resetShader();
@@ -439,17 +438,6 @@ override:
         if (center.isVecfNaN)
             center = (vecf(width, height) * scaleFactor) / 2;
 
-        vertexInfo.bindVertexArray();
-        vertexInfo.bindBuffer();
-        if (vertexInfo.idElementArray != 0) vertexInfo.bindElementBuffer();
-
-        shader.enableVertex("position");
-        vertexInfo.vertexAttribPointer(shader.getAttribLocation("position"), 4);
-
-        shader.enableVertex("texCoord");
-        vertexInfo.textureAttribPointer(shader.getAttribLocation("texCoord"), 4);
-        vertexInfo.unbindBuffer();
-
         mat4 proj = (cast(GLRender) renderer).projection;
         mat4 model = identity();
 
@@ -462,25 +450,30 @@ override:
 
         model = translate(model, position.x, position.y, 0.0f);
 
-        shader.using();
+        vertexInfo.bind();
+        if (vertexInfo.elements !is null)
+            vertexInfo.elements.bind();
 
+        shader.using();
         bind();
+
+        shader.enableVertex("position");
+        shader.enableVertex("texCoord");
 
         if (shader.getUniformLocation("projection") != -1)
             shader.setUniform("projection", proj);
-
 
         if (shader.getUniformLocation("model") != -1)
             shader.setUniform("model", model);
 
         if (shader.getUniformLocation("color") != -1)
-            shader.setUniform("color", rgba(color.r, color.g, color.b, alpha));
+            shader.setUniform("color", rgba(255, 255, 255, alpha));
 
-        vertexInfo.draw(vertexInfo.shapeinfo.type);
+        vertexInfo.draw (drawType);
 
-        vertexInfo.unbindBuffer();
-        if (vertexInfo.idElementArray != 0) vertexInfo.unbindElementBuffer();
-        vertexInfo.unbindVertexArray();
+        if (vertexInfo.elements !is null)
+            vertexInfo.elements.unbind();
+        vertexInfo.unbind();
         unbind();
 
         renderer.resetShader();

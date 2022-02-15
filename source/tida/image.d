@@ -214,23 +214,48 @@ public:
         info.data = bytes!(PixelFormat.RGBA)();
 
         _texture.initializeFromData!(PixelFormat.RGBA)(info);
-        _texture.vertexInfo = new VertexInfo!float();
+        
+        auto vertexInfo = new VertexInfo!float();
+        auto buffer = new BufferInfo!float();
+        auto elements = new ElementInfo!uint();
 
-        BufferInfo!float bufferInfo;
-        {
-            auto buffer = generateBuffer!(float)(Shape!(float).Rectangle(
-                vec!float(0.0f, 0.0f),
-                vec!float(_width, _height)
-            ));
+        vertexInfo.buffer = buffer;
+        vertexInfo.elements = elements;
 
-            bufferInfo.append (buffer[0], 1.0f, 0.0f);
-            bufferInfo.append (buffer[1], 1.0f, 1.0f);
-            bufferInfo.append (buffer[2], 0.0f, 1.0f);
-            bufferInfo.append (buffer[3], 0.0f, 0.0f);
-        }
+        buffer.append (vecZero!float, 0.0f, 0.0f);
+        buffer.append (vec!float (width, 0), 1.0f, 0.0f);
+        buffer.append (vec!float (width, height), 1.0f, 1.0f);
+        buffer.append (vec!float (0, height), 0.0f, 1.0f);
 
-        _texture.vertexInfo.bindFromInfo (bufferInfo, [0 ,1, 2, 2, 3 ,0]);
-        _texture.vertexInfo.shapeinfo = Shape!float.Rectangle(vec!float(), vec!float());
+        elements.data = [0, 1, 3, 1, 3, 2];
+
+        buffer.bind();
+        vertexInfo.bind();
+        elements.bind();
+
+        elements.attach();
+        buffer.attach();
+
+        vertexInfo.vertexAttribPointer(
+            0,
+            2,
+            4,
+            0
+        );
+
+        vertexInfo.vertexAttribPointer(
+            1,
+            2,
+            4,
+            2
+        );
+
+        buffer.unbind();
+        elements.unbind();
+        vertexInfo.unbind();
+
+        _texture.vertexInfo = vertexInfo;
+        _texture.drawType = ShapeType.rectangle;
     }
 
     /++

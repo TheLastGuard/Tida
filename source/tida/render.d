@@ -676,25 +676,34 @@ override:
             
         vec -= camera.port.begin;
 
-        Shapef shape = Shapef.Point(vec);
-        
-        scope vinfo = new VertexInfo!float();
-        vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
+        scope vertexInfo = new VertexInfo!(float)();
+        scope buffer = new BufferInfo!float();
 
-        vinfo.bindBuffer();
-        vinfo.bindVertexArray();
-        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"));
+        buffer.append (vec);
+
+        buffer.bind();
+        vertexInfo.bind();
+        buffer.move();
+
+        vertexInfo.vertexAttribPointer(
+            currentShader.getAttribLocation("position"),
+            2,
+            2,
+            0
+        );
+        buffer.unbind();
+
+        debug (GLDebug) checkGLError();
 
         currentShader.using();
         currentShader.enableVertex("position");
 
         setDefaultUniform(color);
 
-        vinfo.draw(ShapeType.point);
+        vertexInfo.draw (ShapeType.point);
 
         currentShader.disableVertex("position");
-        vinfo.unbindBuffer();
-        vinfo.unbindVertexArray();
+        vertexInfo.unbind();
 
         resetShader();
         resetModelMatrix();
@@ -705,26 +714,35 @@ override:
         if (currentShader is null)
             currentShader = getShader("Default");
 
-        auto shape = Shapef.Line(   points[0] - camera.port.begin, 
-                                    points[1] - camera.port.begin);
-                                    
-        scope vinfo = new VertexInfo!float();
-        vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
+        scope vertexInfo = new VertexInfo!(float)();
+        scope buffer = new BufferInfo!float();
 
-        vinfo.bindBuffer();
-        vinfo.bindVertexArray();
+        buffer.append (points[0] - camera.port.begin);
+        buffer.append (points[1] - camera.port.begin);
 
-        currentShader.enableVertex("position");
-        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"));
+        buffer.bind();
+        vertexInfo.bind();
+        buffer.move();
 
-        vinfo.unbindBuffer();
+        vertexInfo.vertexAttribPointer(
+            currentShader.getAttribLocation("position"),
+            2,
+            2,
+            0
+        );
+        buffer.unbind();
+
+        debug (GLDebug) checkGLError();
 
         currentShader.using();
+        currentShader.enableVertex("position");
+
         setDefaultUniform(color);
-        vinfo.draw(ShapeType.line);
+
+        vertexInfo.draw (ShapeType.line);
 
         currentShader.disableVertex("position");
-        vinfo.unbindVertexArray();
+        vertexInfo.unbind();
 
         resetShader();
         resetModelMatrix();
@@ -736,46 +754,59 @@ override:
             currentShader = getShader("Default");
 
         position -= camera.port.begin;
+        
+        scope vertexInfo = new VertexInfo!(float)();
+        scope buffer = new BufferInfo!float();
+        scope elements = new ElementInfo!uint();
+        vertexInfo.elements = elements;
 
-        Shapef shape;
+        buffer.append (position);
+        buffer.append (position + vec!float (width, 0));
+        buffer.append (position + vec!float (width, height));
+        buffer.append (position + vec!float (0, height));
 
         if (isFill)
         {
-            shape = Shapef.Rectangle(position, position + vecf(width, height));
+            elements.data = [0, 1, 3, 1, 3, 2];
         } else
         {
-            shape = Shapef.RectangleLine(position, position + vecf(width, height));
+            elements.data = [0, 1, 1, 2, 2, 3, 3, 0];
         }
 
-        uint[] elems = [0 ,1, 2, 2, 3 ,0];
+        buffer.bind();
+        vertexInfo.bind();
+        elements.bind();
 
-        scope vinfo = new VertexInfo!float();
-        if (isFill)
-            vinfo.bindFromBufferAndElem(generateBuffer(shape).generateArray, elems);
-        else
-            vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
+        elements.attach();
+        buffer.move();
 
-        vinfo.bindVertexArray();
-        vinfo.bindBuffer();
-        if (isFill) vinfo.bindElementBuffer();
+        vertexInfo.vertexAttribPointer(
+            currentShader.getAttribLocation("position"),
+            2,
+            2,
+            0
+        );
+        buffer.unbind();
 
-        currentShader.enableVertex("position");
-        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"), 2);
-
-        vinfo.unbindBuffer();
+        debug (GLDebug) checkGLError();
 
         currentShader.using();
+        currentShader.enableVertex("position");
+
         setDefaultUniform(color);
 
         if (isFill)
-            vinfo.draw(ShapeType.rectangle, 1);
-        else
-            vinfo.draw(ShapeType.line, 4);
+        {
+            vertexInfo.draw (ShapeType.rectangle);
+        } else
+        {
+            vertexInfo.draw (ShapeType.line);
+        }
 
         currentShader.disableVertex("position");
-        vinfo.unbindVertexArray();
-        if (isFill) vinfo.unbindElementBuffer();
-        
+        elements.unbind();
+        vertexInfo.unbind();
+
         resetShader();
         resetModelMatrix();
     }
@@ -787,37 +818,45 @@ override:
 
         position -= camera.port.begin;
 
-        Shapef shape;
+        scope vertexInfo = new VertexInfo!(float)();
+        scope buffer = new BufferInfo!float();
+        vertexInfo.buffer = buffer;
 
-        if (isFill)
-        {
-            shape = Shapef.Circle(position, radius);
-        } else
-        {
-            shape = Shapef.CircleLine(position, radius);
-        }
+        auto shape = isFill ? 
+                Shape!float.Circle (position, radius) :
+                Shape!float.CircleLine (position, radius);
 
-        scope vinfo = new VertexInfo!float();
-        vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
+        buffer.vertexData = generateBuffer!float(shape);
 
-        vinfo.bindVertexArray();
-        vinfo.bindBuffer();
+        buffer.bind();
+        vertexInfo.bind();
+        buffer.attach();
 
-        currentShader.enableVertex("position");
-        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"));
+        vertexInfo.vertexAttribPointer(
+            currentShader.getAttribLocation("position"),
+            2,
+            2,
+            0
+        );
+        buffer.unbind();
 
-        vinfo.unbindBuffer();
+        debug (GLDebug) checkGLError();
 
         currentShader.using();
+        currentShader.enableVertex("position");
+
         setDefaultUniform(color);
 
         if (isFill)
-            vinfo.draw(ShapeType.circle, 1);
-        else
-            vinfo.draw(ShapeType.line, cast(int) shape.shapes.length);
+        {
+            vertexInfo.draw (ShapeType.circle);
+        } else
+        {
+            vertexInfo.draw (ShapeType.line, cast(uint) shape.shapes.length);
+        }
 
         currentShader.disableVertex("position");
-        vinfo.unbindVertexArray();
+        vertexInfo.unbind();
 
         resetShader();
         resetModelMatrix();
@@ -829,39 +868,47 @@ override:
             currentShader = getShader("Default");
 
         position -= camera.port.begin;
+        
+        scope vertexInfo = new VertexInfo!(float)();
+        scope buffer = new BufferInfo!float();
+        vertexInfo.buffer = buffer;
 
-        Shapef shape;
+        auto shape = isFill ? 
+                Shape!float.RoundRectangle (position, position + vec!float(width, height), radius) :
+                Shape!float.RoundRectangleLine (position, position + vec!float(width, height), radius);
 
-        if (isFill)
-        {
-            shape = Shapef.RoundRectangle(position, position + vecf(width, height), radius);
-        } else
-        {
-            shape = Shapef.RoundRectangleLine(position,  position + vecf(width, height), radius);
-        }
+        buffer.vertexData = generateBuffer!float(shape);
 
-        scope vinfo = new VertexInfo!float();
-        vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
+        buffer.bind();
+        vertexInfo.bind();
+        buffer.attach();
 
-        vinfo.bindVertexArray();
-        vinfo.bindBuffer();
+        vertexInfo.vertexAttribPointer(
+            currentShader.getAttribLocation("position"),
+            2,
+            2,
+            0
+        );
+        buffer.unbind();
 
-        currentShader.enableVertex("position");
-        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"));
-
-        vinfo.unbindBuffer();
+        debug (GLDebug) checkGLError();
 
         currentShader.using();
+        currentShader.enableVertex("position");
+
         setDefaultUniform(color);
 
         if (isFill)
-            vinfo.draw(ShapeType.roundrect, 1);
-        else
-            vinfo.draw(ShapeType.line, cast(int) shape.shapes.length);
+        {
+            vertexInfo.draw (ShapeType.roundrect);
+        } else
+        {
+            vertexInfo.draw (ShapeType.line, cast(uint) shape.shapes.length);
+        }
 
         currentShader.disableVertex("position");
-        vinfo.unbindVertexArray();
-        
+        vertexInfo.unbind();
+
         resetShader();
         resetModelMatrix();
     }
@@ -871,41 +918,43 @@ override:
         if (currentShader is null)
             currentShader = getShader("Default");
 
-        points[0] = points[0] - camera.port.begin;
-        points[1] = points[1] - camera.port.begin;
-        points[2] = points[2] - camera.port.begin;
+        scope vertexInfo = new VertexInfo!(float)();
+        scope buffer = new BufferInfo!float();
 
-        Shapef shape;
-
+        auto shape = Shape!float();
         if (isFill)
-        {
-            shape = Shapef.Triangle(points);
-        } else
-        {
-            shape = Shapef.TriangleLine(points);
-        }
+            shape = Shape!float.Triangle (points);
+        else
+            shape = Shape!float.TriangleLine (points);
 
-        scope vinfo = new VertexInfo!float();
-        vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
+        buffer.vertexData = generateBuffer!float(shape);
 
-        vinfo.bindVertexArray();
-        vinfo.bindBuffer();
+        buffer.bind();
+        vertexInfo.bind();
+        buffer.move();
 
-        currentShader.enableVertex("position");
-        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"));
+        vertexInfo.vertexAttribPointer(
+            currentShader.getAttribLocation("position"),
+            2,
+            2,
+            0
+        );
+        buffer.unbind();
 
-        vinfo.unbindBuffer();
+        debug (GLDebug) checkGLError();
 
         currentShader.using();
+        currentShader.enableVertex("position");
+
         setDefaultUniform(color);
 
         if (isFill)
-            vinfo.draw(ShapeType.triangle, 1);
+            vertexInfo.draw (ShapeType.triangle);
         else
-            vinfo.draw(ShapeType.line, cast(int) shape.shapes.length);
+            vertexInfo.draw (ShapeType.line, cast(uint) shape.shapes.length);
 
         currentShader.disableVertex("position");
-        vinfo.unbindVertexArray();
+        vertexInfo.unbind();
 
         resetShader();
         resetModelMatrix();
@@ -920,38 +969,45 @@ override:
             
         position -= camera.port.begin;
 
-        Shapef shape;
-        points.each!((ref e) => e = position + e);
+        scope vertexInfo = new VertexInfo!(float)();
+        scope buffer = new BufferInfo!float();
+        vertexInfo.buffer = buffer;
+
+        auto shape = Shape!float();
 
         if (isFill)
-        {
-            shape = Shapef.Polygon(points);
-        } else
-        {
-            shape = Shapef.Polygon(points ~ points[0]);
-        }
+            Shape!float.Polygon (points, position);
+        else
+            Shape!float.PolygonLine (points, position);
 
-        scope vinfo = new VertexInfo!float();
-        vinfo.bindFromBuffer(generateBuffer(shape).generateArray);
+        buffer.vertexData = generateBuffer!float(shape);
 
-        vinfo.bindVertexArray();
-        vinfo.bindBuffer();
+        buffer.bind();
+        vertexInfo.bind();
+        buffer.attach();
 
-        currentShader.enableVertex("position");
-        vinfo.vertexAttribPointer(currentShader.getAttribLocation("position"));
+        vertexInfo.vertexAttribPointer(
+            currentShader.getAttribLocation("position"),
+            2,
+            2,
+            0
+        );
+        buffer.unbind();
 
-        vinfo.unbindBuffer();
+        debug (GLDebug) checkGLError();
 
         currentShader.using();
+        currentShader.enableVertex("position");
+
         setDefaultUniform(color);
 
         if (isFill)
-            vinfo.draw(ShapeType.polygon, 1);
+            vertexInfo.draw (ShapeType.polygon);
         else
-            glDrawArrays(GL_LINE_LOOP, 0, 2 * cast(int) shape.data.length);
+            vertexInfo.draw (ShapeType.line, cast(uint) shape.shapes.length);
 
         currentShader.disableVertex("position");
-        vinfo.unbindVertexArray();
+        vertexInfo.unbind();
 
         resetShader();
         resetModelMatrix();
@@ -1042,7 +1098,7 @@ override:
     }
 }
 
-debug(GLDebug) class GLDebugRender : IRenderer
+debug (GLDebug) class GLDebugRender : IRenderer
 {
     import tida.vector;
     import tida.color;
@@ -1086,7 +1142,10 @@ public:
 @safe:
     this(GLRender render)
     {
-        this.render = render;    
+        this.render = render;
+
+        operations ~= [[]];
+        frame = 1;
     }
 
     string findShadername(Shader!Program shader)
