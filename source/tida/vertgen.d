@@ -487,34 +487,6 @@ public:
     }
 }
 
-unittest
-{
-    BufferInfo!float buffInfo = new BufferInfo!float();
-                     // vertex -------  tex  color ----------
-    buffInfo.append (vec!float(32, 32), 0.0, 32.0, 32.0, 32.0);
-    buffInfo.append (vec!float(32, 32), 0.0, 32.0, 64.0, 128.0);
-
-    assert(
-        buffInfo.vertexData == [vec!float(32, 32), vec!float(32, 32)]
-    );
-
-    assert(
-        buffInfo.attachData ==  [
-                                    [0.0, 0.0],
-                                    [32.0, 32.0],
-                                    [32.0, 64.0],
-                                    [32.0, 128.0]
-                                ]
-    );
-
-    assert(
-        buffInfo.rawData == [
-            32.0, 32.0, 0.0, 32.0, 32.0, 32.0,
-            32.0, 32.0, 0.0, 32.0, 64.0, 128.0
-        ]
-    );
-}
-
 /++
 Generates the vertices of shapes to be rendered using hardware acceleration.
 
