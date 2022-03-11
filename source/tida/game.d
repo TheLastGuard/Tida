@@ -197,15 +197,19 @@ public:
             // Manual support thread...
         } else
         {
-            foreach (i; 0 .. sceneManager.countStartThreads)
+            size_t countThreads = sceneManager.maxThreads;
+            if (sceneManager.countStartThreads > countThreads)
+                countThreads = sceneManager.countStartThreads;
+        
+            foreach (i; 0 .. countThreads)
             {
-                immutable id = threads.length == 0 ? i + 1 : threads.length + i;
+                immutable id = i + 1;
                 threads ~= spawn(&workerThread, thisTid, id);
             }
 
             foreach (e; sceneManager.scenes)
             {
-                e.initThread(sceneManager.countStartThreads);
+                e.initThread(countThreads);
             }
 
             sceneManager.countStartThreads = 0;
