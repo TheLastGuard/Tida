@@ -137,6 +137,8 @@ interface ITidaRuntime
     Accepts program arguments for subsequent operations with them.
     +/
     void acceptArguments(string[] arguments);
+    
+    uint[2] monitorSize();
 
 @trusted:
     /++
@@ -285,6 +287,12 @@ public @trusted:
     {
         return RootWindow(_display, _displayID);
     }
+    
+    uint[2] monitorSize()
+    {
+        auto screen = ScreenOfDisplay(_display, 0);
+        return [screen.width, screen.height];
+    }
 
 @safe:
     /// An instance for contacting the manager's server.
@@ -378,6 +386,16 @@ public @trusted:
     override void acceptArguments(string[] arguments)
     {
         this.arguments = arguments;
+    }
+    
+    override uint[2] monitorSize()
+    {
+        HDC hScreenDC = GetDC(GetDesktopWindow());
+        int width = GetDeviceCaps(hScreenDC, HORZRES);
+        int height = GetDeviceCaps(hScreenDC, VERTRES);
+        ReleaseDC(GetDesktopWindow(), hScreenDC);
+        
+        return [width, height];
     }
 
     @property override string[] mainArguments()
