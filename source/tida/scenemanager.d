@@ -73,9 +73,15 @@ auto defaultCamera() @safe
     import tida.game : renderer, window;
     import tida.shape;
     import tida.vector;
+    import tida.runtime;
 
     auto camera = new Camera();
-    camera.shape = Shape!float.Rectangle(vec!float(0, 0), vec!float(window.width, window.height));
+    camera.shape = Shape!float.Rectangle(
+        vecZero!float, 
+        window.fullscreen ? 
+            vec!float(runtime.monitorSize) :
+            vec!float(window.width, window.height)
+    );
     camera.port = camera.shape;
             
     return camera;
