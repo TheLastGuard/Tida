@@ -362,6 +362,11 @@ public @safe:
             T scene = new T();
             add!T(scene);
             
+            size_t countThreads = maxThreads;
+            if (countStartThreads > countThreads)
+                countThreads = countStartThreads;
+            scene.initThread(countThreads);
+            
             return scene;
         };
     }
