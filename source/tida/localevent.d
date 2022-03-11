@@ -150,3 +150,5 @@ struct StepThread
 public:
     size_t id;
 }
+
+struct stepThreadSafe {}

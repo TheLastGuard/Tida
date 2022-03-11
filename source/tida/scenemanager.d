@@ -113,6 +113,8 @@ private:
 
 public @safe:
     size_t countStartThreads = 0;
+    size_t maxThreads = 3;
+    size_t functionPerThread = 80;
 
     /++
     A state indicating whether an instance transition is in progress. 
@@ -771,6 +773,10 @@ public @safe:
         OnErrorFunctions[scene] = [];
         OnTriggerFunctions[scene] = [];
         OnDestroyFunctions[scene] = [];
+        StepThreadFunctions[scene] = [0:null];
+        
+        FEStep[]* minStepTh;
+        size_t minStepLen;
 
         static foreach (member; __traits(allMembers, T))
         {
@@ -847,6 +853,39 @@ public @safe:
                 {
                     countStartThreads = attributeIn!(T, StepThread, member).id;
                 }
+            } else
+            static if (hasAttrib!(T, stepThreadSafe, member))
+            {
+                import std.algorithm : maxElement;
+
+                if (StepThreadFunctions[scene].length != 1)
+                {       
+                    minStepLen = StepThreadFunctions[scene].values.maxElement!(a => a.length).length;
+                    foreach (key, value; StepThreadFunctions[scene])
+                    {
+                        if (value.length < minStepLen)
+                        {
+                            minStepTh = &StepThreadFunctions[scene][key];
+                            minStepLen = value.length;
+                        }
+                    }
+                } else
+                {
+                    foreach (i; 1 .. maxThreads + 1)
+                        StepThreadFunctions[scene][i] = [];
+                        
+                    minStepTh = &StepThreadFunctions[scene][maxThreads];
+                    minStepLen = StepThreadFunctions[scene][maxThreads].length;
+                }
+            
+                if (minStepLen > functionPerThread)
+                {
+                    StepFunctions[scene] ~= &__traits(getMember, scene, member);
+                }
+                else
+                {
+                    *minStepTh ~= &__traits(getMember, scene, member);
+                }
             }
         }
     }
@@ -873,6 +912,10 @@ public @safe:
         IOnDestroyFunctions[instance] = [];
         ICollisionFunctions[instance] = [];
         IOnAnyTriggerFunctions[instance] = [];
+        IStepThreadFunctions[instance] = [0:null];
+
+        FEStep[]* minStepTh;
+        size_t minStepLen;
 
         static foreach (member; __traits(allMembers, T))
         {
@@ -954,6 +997,39 @@ public @safe:
             {
                 IColliderStructs[instance] ~= SRCollider(attributeIn!(T, Collision, member),
                                                          &__traits(getMember, instance, member));
+            }else
+            static if (hasAttrib!(T, stepThreadSafe, member))
+            {
+                import std.algorithm : maxElement;
+
+                if (IStepThreadFunctions[instance].length != 1)
+                {       
+                    minStepLen = IStepThreadFunctions[instance].values.maxElement!(a => a.length).length;
+                    foreach (key, value; IStepThreadFunctions[instance])
+                    {
+                        if (value.length < minStepLen)
+                        {
+                            minStepTh = &IStepThreadFunctions[instance][key];
+                            minStepLen = value.length;
+                        }
+                    }
+                } else
+                {
+                    foreach (i; 1 .. maxThreads + 1)
+                        IStepThreadFunctions[instance][i] = [];
+                        
+                    minStepTh = &IStepThreadFunctions[instance][maxThreads];
+                    minStepLen = IStepThreadFunctions[instance][maxThreads].length;
+                }
+            
+                if (minStepLen > functionPerThread)
+                {
+                    IStepFunctions[instance] ~= &__traits(getMember, instance, member);
+                }
+                else
+                {
+                    *minStepTh ~= &__traits(getMember, instance, member);
+                }
             }
         }
     }
@@ -961,6 +1037,11 @@ public @safe:
     package(tida) @property FEStep[][size_t][Instance] threadSteps()
     {
         return IStepThreadFunctions;
+    }
+    
+    @property FEStep[][size_t][Scene] sceneThreadSteps()
+    {
+        return StepThreadFunctions;
     }
 
     package(tida) @property SRCollider[][Instance] colliders()

@@ -73,6 +73,9 @@ public:
     int positionWindowX = 100; /// Window position x-axis.
     int positionWindowY = 100; /// Window position y-axis.
     string icon; /// Icon path.
+    
+    size_t maxThreads = 3;
+    size_t functionPerThread = 80;
 }
 
 private void workerThread(Tid owner, size_t id)
@@ -151,6 +154,9 @@ public:
         _fps = new FPSManager();
         _loader = new Loader();
         _listener = new Listener();
+        
+        sceneManager.maxThreads = config.maxThreads;
+        sceneManager.functionPerThread = config.functionPerThread;
     }
 
     void threadClose(uint value) @trusted
@@ -237,7 +243,7 @@ public:
                     {
                         foreach (i; 0 .. response.value)
                         {
-                            immutable id = threads.length == 0 ? i + 1 : threads.length + i;
+                            immutable id = i + 1;
                             threads ~= spawn(&workerThread, thisTid, id);
                         }
                     }
