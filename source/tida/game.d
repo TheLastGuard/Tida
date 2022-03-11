@@ -306,6 +306,28 @@ public:
     }
 }
 
+template Lazy (T)
+if (isScene!T)
+{
+    struct Lazy
+    {
+        T scene;
+    }
+}
+
+template isLazy (T)
+{
+    import std.traits : TemplateOf;
+    
+    enum isLazy = __traits(isSame, TemplateOf!(T), Lazy);
+}
+
+template lazyScene (T)
+if (isLazy!T)
+{
+    alias lazyScene = typeof(T.scene);
+}
+
 /++
 Game entry point template.
 +/
@@ -322,7 +344,14 @@ template GameRun(GameConfig config, T...)
 
         static foreach (e; T)
         {
-            sceneManager.add(new e());
+            static if (isScene!e)
+            {
+                sceneManager.add(new e());
+            } else
+            static if (isLazy!e)
+            {
+                sceneManager.lazyAdd!(lazyScene!e);
+            }
         }
 
         debug(single)

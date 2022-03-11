@@ -471,8 +471,6 @@ override:
 
         vertexInfo.draw (drawType);
 
-		checkGLError();
-
         if (vertexInfo.elements !is null)
             vertexInfo.elements.unbind();
         vertexInfo.unbind();

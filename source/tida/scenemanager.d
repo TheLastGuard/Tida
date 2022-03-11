@@ -98,6 +98,7 @@ final class SceneManager
 
 private:
     alias RecoveryDelegate = void delegate(ref Scene) @safe;
+    alias LazyInfo = Scene delegate() @safe;
 
     Scene[string] _scenes;
     Scene _current;
@@ -107,6 +108,7 @@ private:
     Scene _initable;
     Scene _restarted;
     RecoveryDelegate[string] recovDelegates;
+    LazyInfo[string] lazySpawns;
     bool _thereGoto;
 
     bool updateThreads = false;
@@ -350,6 +352,18 @@ public @safe:
     bool hasScene(string name)
     {
         return _scenes.values.canFind!(e => e.name == name);
+    }
+
+    void lazyAdd(T)()
+    {
+        static assert(isScene!T, "`" ~ T.stringof ~ "` is not a scene!");
+        
+        lazySpawns[T.stringof] = {
+            T scene = new T();
+            add!T(scene);
+            
+            return scene;
+        };
     }
 
     /++
@@ -1216,6 +1230,17 @@ public @safe:
                 break;
             }
         }
+        
+        foreach (key, value; lazySpawns)
+        {
+            if (key == name)
+            {
+                auto scene = value();
+                lazySpawns.remove(key);
+                gotoin(scene);
+                return;
+            }
+        }
     }
 
     /++
@@ -1235,6 +1260,17 @@ public @safe:
             }
         }
 
+        foreach (key, value; lazySpawns)
+        {
+            if (key == Name.stringof)
+            {
+                auto scene = value();
+                lazySpawns.remove(key);
+                gotoin(scene);
+                return;
+            }
+        }
+
         throw new Exception("Not find this scene!");
     }
 
@@ -1249,8 +1285,6 @@ public @safe:
         scene = Scene heir.
     +/
     void gotoin(Scene scene) @trusted
-    in(hasScene(scene))
-    do
     {
         import tida.game : renderer, window;
         import tida.shape;
