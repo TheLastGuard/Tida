@@ -618,7 +618,7 @@ override:
                 ubyte alpha,
                 Color!ubyte color = rgb(255, 255, 255)) @safe
     {
-        drawable.drawEx(this, position + camera.port.begin, angle, center, size, alpha, color);
+        drawable.drawEx(this, position - camera.port.begin, angle, center, size, alpha, color);
     }
 
     void reshape()
