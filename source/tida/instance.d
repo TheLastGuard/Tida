@@ -412,7 +412,7 @@ debug template debugCollisionMask(Color!ubyte color = Color!ubyte(255, 0, 0))
         }   
     }
 
-    @Event!Draw
+    @event(Draw)
     void __debug_drawMask(IRenderer render) @safe
     {
         __drawShapeConture(position, mask, render);

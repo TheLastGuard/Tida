@@ -330,6 +330,15 @@ if (isLazy!T)
 
 /++
 Game entry point template.
+
+After the configuration indicates the list of scenes that do share in the game.
+If you need to designate the scene on the list, but not to highlight the memory
+of it first, it is possible to designate it, as lazy to load resources only
+when moving to it.
+
+Params:
+    config =    The input configuration describes what needs to be loaded,
+                what initial parameters should be.
 +/
 template GameRun(GameConfig config, T...)
 {

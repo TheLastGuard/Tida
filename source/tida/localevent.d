@@ -145,10 +145,26 @@ public:
     string tag; /// Component tag.
 }
 
+/++
+Attribute indicating in which thread you need to make an object step.
+
+Example:
+---
+@StepThread(2) void threadStep() @safe
+{
+    ...
+}
+---
++/
 struct StepThread
 {
 public:
     size_t id;
 }
 
+/++
+Attribute indicating that the flow function function
+(guarantees the programmer himself) and can be transferred to another
+stream to accelerate. Do not combine with the  @event(step).
++/
 struct stepThreadSafe {}

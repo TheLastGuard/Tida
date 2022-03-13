@@ -42,7 +42,11 @@ public:
 
 @safe:
     /++
+    Animation object constructor.
 
+    Params:
+        speed = Animation speed. How many ticks to skip for the next frame.
+        isRepeat = Whether to repeat the animation.
     +/
     this(float speed = 0.0f, bool isRepeat = false)
     {

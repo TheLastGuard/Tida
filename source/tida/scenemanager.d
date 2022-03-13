@@ -113,7 +113,10 @@ private:
     Scene _ofend;
     Scene _initable;
     Scene _restarted;
+
     RecoveryDelegate[string] recovDelegates;
+    LazyInfo[string] recovLazySpawns;
+
     LazyInfo[string] lazySpawns;
     bool _thereGoto;
 
@@ -360,21 +363,33 @@ public @safe:
         return _scenes.values.canFind!(e => e.name == name);
     }
 
+    /++
+    Function for lazy loading scenes. In the chalon only specifies the scene.
+    At the same time, it will be listed in the scene list, however,
+    its resources will not be loaded until the control goes to it.
+    After the context change, it does not need to be re-shipped.
+
+    Params:
+        T = Lazy scene.
+    +/
     void lazyAdd(T)()
     {
         static assert(isScene!T, "`" ~ T.stringof ~ "` is not a scene!");
-        
-        lazySpawns[T.stringof] = {
+
+        auto fun = {
             T scene = new T();
             add!T(scene);
-            
+
             size_t countThreads = maxThreads;
             if (countStartThreads > countThreads)
                 countThreads = countStartThreads;
             scene.initThread(countThreads);
-            
+
             return scene;
         };
+
+        lazySpawns[T.stringof] = fun;
+        recovLazySpawns[T.stringof] = fun;
     }
 
     /++
