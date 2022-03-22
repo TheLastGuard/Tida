@@ -360,13 +360,16 @@ public:
     +/
     final Instance getInstanceByName(string name) nothrow
     {
-        foreach (instance; list())
-        {
-            if (instance.name == name)
-                return instance;
-        }
+		synchronized
+		{
+			foreach (instance; list())
+			{
+				if (instance.name == name)
+					return instance;
+			}
 
-        return null;
+			return null;
+		}
     }
 
     /++
@@ -378,17 +381,20 @@ public:
     +/
     final Instance getInstanceByNameTag(string name, string tag) nothrow
     {
-        foreach (instance; list())
-        {
-            if (instance.name == name)
-            {
-                foreach (tage; instance.tags)
-                    if (tag == tage)
-                        return instance;
-            }
-        }
+		synchronized
+		{
+			foreach (instance; list())
+			{
+				if (instance.name == name)
+				{
+					foreach (tage; instance.tags)
+						if (tag == tage)
+							return instance;
+				}
+			}
 
-        return null;
+			return null;
+		}
     }
 
     /++
@@ -401,13 +407,16 @@ public:
     in(isInstance!T)
     do
     {
-        foreach (instance; list)
-        {
-            if ((cast(T) instance) !is null)
-                return cast(T) instance;
-        }
+		synchronized
+		{
+			foreach (instance; list)
+			{
+				if ((cast(T) instance) !is null)
+					return cast(T) instance;
+			}
 
-        return null;
+			return null;
+		}
     }
 
     import tida.shape, tida.vector;
@@ -423,16 +432,18 @@ public:
     {
         import tida.collision;
 
-        foreach (instance; list())
-        {
-            if (instance.solid)
-            if (isCollide(shape,instance.mask,position,instance.position))
-            {
-                return instance;
-            }
-        }
+		synchronized
+			foreach (instance; list())
+			{
+				if (instance.solid)
+				if (isCollide(shape,instance.mask,position,instance.position))
+				{
+					return instance;
+				}
+			}
 
-        return null;
+			return null;
+		}
     }
 
     /// ditto
@@ -440,18 +451,21 @@ public:
     {
         import tida.collision;
 
-        Instance[] result;
+		synchronized
+		{
+			Instance[] result;
 
-        foreach(instance; list())
-        {
-            if(instance.solid)
-            if(isCollide(shape,instance.mask,position,instance.position)) {
-                result ~= instance;
-                continue;
-            }
-        }
+			foreach(instance; list())
+			{
+				if(instance.solid)
+				if(isCollide(shape,instance.mask,position,instance.position)) {
+					result ~= instance;
+					continue;
+				}
+			}
 
-        return result;
+			return result;
+		}
     }
 
     /// Clear sorted list of instances.
