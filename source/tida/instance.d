@@ -418,3 +418,29 @@ debug template debugCollisionMask(Color!ubyte color = Color!ubyte(255, 0, 0))
         __drawShapeConture(position, mask, render);
     }
 }
+
+unittest
+{
+    import tida.component;
+    import tida.scenemanager;
+    import tida.localevent;
+
+    initSceneManager();
+
+    static class A : Component
+    {
+        int trace = 0;
+
+        @event(Init)
+        void onInit(Instance instance) @safe
+        {
+            trace++;
+        }
+    }
+
+    Instance instance = new Instance();
+    A a;
+    instance.add(a = new A());
+
+    assert(a.trace == 1);
+}

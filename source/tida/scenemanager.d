@@ -68,6 +68,13 @@ void initSceneManager() @trusted
     _sceneManager = new SceneManager();
 }
 
+version (unittest)
+{
+    auto defaultCamera() @safe
+    {
+        return null;
+    }
+} else
 auto defaultCamera() @safe
 {
     import tida.game : renderer, window;
@@ -330,6 +337,32 @@ public @safe:
         }
     }
 
+    unittest
+    {
+        enum onSaysHi = Trigger("onSaysHi");
+
+        initSceneManager();
+
+        static class Test : Scene
+        {
+            bool isSayHi = false;
+
+            @onSaysHi void onSayHi() @safe
+            {
+                isSayHi = true;
+            }
+        }
+
+        Test test;
+
+        sceneManager.add (test = new Test());
+        sceneManager.gotoin(test);
+
+        sceneManager.trigger("onSaysHi");
+
+        assert (test.isSayHi);
+    }
+
     /++
     Checks if the scene is in the scene list.
 
@@ -390,6 +423,28 @@ public @safe:
 
         lazySpawns[T.stringof] = fun;
         recovLazySpawns[T.stringof] = fun;
+    }
+
+    unittest
+    {
+        initSceneManager();
+
+        static class LazyScene : Scene
+        {
+            int a = 0;
+
+            this() @safe
+            {
+                a = 32;
+            }
+        }
+
+        sceneManager.lazyAdd!(LazyScene)();
+        assert(!sceneManager.hasScene!LazyScene);
+
+        sceneManager.gotoin!LazyScene;
+
+        assert(sceneManager.hasScene!LazyScene);
     }
 
     /++
@@ -696,20 +751,23 @@ public @safe:
 
         return events;
     }
-    
+
     unittest
     {
-        static class A : Instance 
+        static class A : Instance
         {
             @event(Init)
             void onInit() @safe { }
-            
+
             @event(Draw)
             void onDraw(IRenderer render) @safe { }
         }
-        
+
         A a = new A();
         auto evs = SceneManager.getInstanceEvents(a);
+
+        assert (evs.IInitFunctions[0] == &a.onInit);
+        assert (evs.IDrawFunctions[0] == &a.onDraw);
     }
 
     /++
@@ -1149,7 +1207,8 @@ public @safe:
 
         foreach(scene; scenes)
         {
-            if((cast(T) scene) !is null) {
+            if((cast(T) scene) !is null)
+            {
                 remove(scene);
                 return;
             }
@@ -1158,8 +1217,10 @@ public @safe:
 
     void remove(string name) @trusted
     {
-        foreach(scene; scenes) {
-            if(scene.name == name) {
+        foreach(scene; scenes)
+        {
+            if(scene.name == name)
+            {
                 remove(scene);
                 return;
             }
@@ -1431,16 +1492,22 @@ public @safe:
         _initable = null;
 
         _current = scene;
-        
-        if (scene.camera !is null)
+
+        version (unittest)
         {
-            renderer.camera = scene.camera;
-        }
-        else
+            // avoid
+        } else
         {
-            renderer.camera = defaultCamera();
+            if (scene.camera !is null)
+            {
+                renderer.camera = scene.camera;
+            }
+            else
+            {
+                renderer.camera = defaultCamera();
+            }
         }
-        
+
         _thereGoto = false;
     }
 
@@ -1510,6 +1577,33 @@ public @safe:
         }
     }
 
+    unittest
+    {
+        initSceneManager();
+
+        static class Test : Scene
+        {
+            int trigger = int.init;
+
+            this() @safe
+            {
+                name = "Test";
+            }
+        }
+
+        sceneManager.add (new Test());
+
+        sceneManager.gotoin("Test");
+
+        assert ((cast (Test) sceneManager.scenes["Test"]).trigger == 0);
+        (cast (Test) sceneManager.scenes["Test"]).trigger = 32;
+        assert ((cast (Test) sceneManager.scenes["Test"]).trigger == 32);
+
+        sceneManager.gameRestart();
+
+        assert ((cast (Test) sceneManager.scenes["Test"]).trigger == 0);
+    }
+
     /++
     Triggering an emergency event.
 
@@ -1558,17 +1652,19 @@ public @safe:
     {
         if (current !is null)
         {
-            current.worldCollision();
-            
-            if (current.camera !is null)
-                current.camera.followObject();
-
             if (thread == 0)
-            if (current in StepFunctions)
             {
-                foreach (fun; StepFunctions[current])
+                current.worldCollision();
+            
+                if (current.camera !is null)
+                    current.camera.followObject();
+
+                if (current in StepFunctions)
                 {
-                    fun();
+                    foreach (fun; StepFunctions[current])
+                    {
+                        fun();
+                    }
                 }
             }
 
@@ -1788,28 +1884,4 @@ unittest
 
     sceneManager.add(new A());
     assert(sceneManager.hasScene("Test"));
-}
-
-unittest
-{
-    import tida.component;
-
-    initSceneManager();
-    
-    static class A : Component
-    {
-        int trace = 0;
-    
-        @event(Init)
-        void onInit(Instance instance) @safe
-        {
-            trace++;
-        }
-    }
-    
-    Instance instance = new Instance();
-    A a;
-    instance.add(a = new A());
-    
-    assert(a.trace == 1);
 }
