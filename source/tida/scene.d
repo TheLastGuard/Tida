@@ -433,6 +433,7 @@ public:
         import tida.collision;
 
 		synchronized
+        {
 			foreach (instance; list())
 			{
 				if (instance.solid)
@@ -451,10 +452,10 @@ public:
     {
         import tida.collision;
 
+        Instance[] result;
+
 		synchronized
 		{
-			Instance[] result;
-
 			foreach(instance; list())
 			{
 				if(instance.solid)
@@ -463,9 +464,9 @@ public:
 					continue;
 				}
 			}
-
-			return result;
 		}
+
+        return result;
     }
 
     /// Clear sorted list of instances.
