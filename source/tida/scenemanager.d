@@ -547,9 +547,9 @@ public @safe:
         Returns a structure with the event fields that it could detect.
     +/
     InstanceEvents getInstanceEvents(T)(T instance) @trusted
+    if (isInstance!T)
     {
         import std.algorithm : canFind, remove;
-        static assert(isInstance!T, "`" ~ T.stringof ~ "` is not a instance!");
 
         InstanceEvents events;
 
@@ -956,7 +956,8 @@ public @safe:
     package(tida) void instanceExplore(T)(Scene scene, T instance) @trusted
     if (isInstance!T)
     {
-        instance.events = getInstanceEvents!T(instance);
+        if (instance.events != InstanceEvents.init)
+            instance.events = getInstanceEvents!T(instance);
     }
 
     package(tida) void removeHandle(Scene scene, Instance instance) @trusted
@@ -1198,7 +1199,7 @@ public @safe:
                 current.instanceDestroy!InScene(e, false);
 
                 if (scene.isThreadExists(threadID))
-                    scene.add(e,threadID);
+                    scene.add(e, threadID);
                 else
                     scene.add(e);
             }
