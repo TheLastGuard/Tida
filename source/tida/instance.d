@@ -337,7 +337,7 @@ public:
             {
                 cmp = components[i];
 
-                foreach(fun; sceneManager.leaveComponents[cmp]) fun();
+                foreach(fun; cmp.events.CLeaveFunctions) fun();
 
                 components = components.remove(i);
                 break;
@@ -360,7 +360,7 @@ public:
         {
             if (components[i].name == name)
             {
-                // foreach(fun; sceneManager.leaveComponents[components[i]]) fun();
+                foreach(fun; components[i].events.CLeaveFunctions) fun();
 
                 components = components.remove(i);
                 break;
@@ -380,7 +380,8 @@ public:
         {
             if (sceneManager !is null)
             {
-                //foreach(fun; sceneManager.leaveComponents[components[i]]) fun();
+                foreach(fun; components[i].events.CLeaveFunctions)
+                    fun();
             }
 
             components = components.remove(i);
