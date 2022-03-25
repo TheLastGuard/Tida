@@ -956,7 +956,7 @@ public @safe:
     package(tida) void instanceExplore(T)(Scene scene, T instance) @trusted
     if (isInstance!T)
     {
-        if (instance.events != InstanceEvents.init)
+        if (instance.events == InstanceEvents.init)
             instance.events = getInstanceEvents!T(instance);
     }
 
