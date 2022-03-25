@@ -36,6 +36,53 @@ template isScene(T)
     enum isScene = is(T : Scene);
 }
 
+struct SceneEvents
+{
+    import tida.event;
+    import tida.render;
+    import tida.localevent;
+    import tida.instance;
+
+    alias FEInit = void delegate() @safe;
+    alias FEStep = void delegate() @safe;
+    alias FERestart = void delegate() @safe;
+    alias FEEntry = void delegate() @safe;
+    alias FELeave = void delegate() @safe;
+    alias FEGameStart = void delegate() @safe;
+    alias FEGameExit = void delegate() @safe;
+    alias FEGameRestart = void delegate() @safe;
+    alias FEEventHandle = void delegate(EventHandler) @safe;
+    alias FEDraw = void delegate(IRenderer) @safe;
+    alias FEOnError = void delegate() @safe;
+    alias FECollision = void delegate(Instance) @safe;
+    alias FETrigger = void delegate() @safe;
+    alias FEDestroy = void delegate(Instance) @safe;
+    alias FEATrigger = void delegate(string) @safe;
+
+    struct SRTrigger
+    {
+        Trigger ev;
+        FETrigger fun;
+    }
+
+    FEInit[] InitFunctions;
+    FEStep[] StepFunctions;
+    FEStep[][size_t] StepThreadFunctions;
+    FERestart[] RestartFunctions;
+    FEEntry[] EntryFunctions;
+    FELeave[] LeaveFunctions;
+    FEGameStart[] GameStartFunctions;
+    FEGameExit[] GameExitFunctions;
+    FEGameRestart[] GameRestartFunctions;
+    FEEventHandle[] EventHandleFunctions;
+    FEDraw[] DrawFunctions;
+    FEOnError[] OnErrorFunctions;
+    SRTrigger[] OnTriggerFunctions;
+    FEDestroy[] OnDestroyFunctions;
+    FEATrigger[] OnAnyTriggerFunctions;
+    FECollision[] OnAnyCollisionFunctions;
+}
+
 /++
 Scene object.
 +/
@@ -58,6 +105,7 @@ protected:
 public:
     Camera camera; /// Camera scene
     string name = ""; /// Scene name
+    SceneEvents events;
 
 @safe:
     this() nothrow
@@ -195,11 +243,11 @@ public:
                                         second.position)
                         )
                         {
-                            auto firstColliders = sceneManager.colliders()[first];
-                            auto secondColliders = sceneManager.colliders()[second];
+                            auto firstColliders = first.colliders();
+                            auto secondColliders = second.colliders();
 
-                            auto firstFunctions = sceneManager.collisionFunctions()[first];
-                            auto secondFunctions = sceneManager.collisionFunctions()[second];
+                            auto firstFunctions = first.collisionFunctions();
+                            auto secondFunctions = second.collisionFunctions();
 
                             firstFunctions.each!((fun) => fun(second));
                             secondFunctions.each!((fun) => fun(first));

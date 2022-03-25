@@ -16,6 +16,7 @@ import tida.localevent;
 import tida.scene;
 import tida.render;
 import tida.instance;
+import tida.component;
 import tida.event;
 import tida.fps;
 import core.thread;
@@ -108,6 +109,7 @@ previous - `previous` Contact precisely to the global object - `scenemanager`.
 final class SceneManager
 {
     import std.algorithm : canFind;
+    import core.sync.mutex;
 
 private:
     alias RecoveryDelegate = void delegate(ref Scene) @safe;
@@ -129,10 +131,17 @@ private:
 
     bool updateThreads = false;
 
+    shared(Mutex) instanceMutex;
+
 public @safe:
     size_t countStartThreads = 0;
     size_t maxThreads = 3;
     size_t functionPerThread = 80;
+
+    this() @safe
+    {
+        instanceMutex = new shared Mutex;
+    }
 
     /++
     A state indicating whether an instance transition is in progress. 
@@ -207,10 +216,10 @@ public @safe:
         {
             _restarted = scene;
 
-            foreach (fun; GameRestartFunctions[scene]) fun();
+            foreach (fun; scene.events.GameRestartFunctions) fun();
             foreach (instance; scene.list())
             {
-                foreach (fun; IGameRestartFunctions[instance]) fun();
+                foreach (fun; instance.events.IGameRestartFunctions) fun();
                 scene.instanceDestroy!InMemory(instance);
             }
 
@@ -311,27 +320,21 @@ public @safe:
     {
         auto scene = this.context();
 
-        if (scene in OnTriggerFunctions)
+        foreach (fun; scene.events.OnTriggerFunctions)
         {
-            foreach (fun; OnTriggerFunctions[scene])
+            if (fun.ev.name == name)
             {
-                if (fun.ev.name == name)
-                {
-                    fun.fun();
-                }
+                fun.fun();
             }
         }
 
         foreach (instance; scene.list())
         {
-            if (instance in IOnTriggerFunctions)
+            foreach (fun; instance.events.IOnTriggerFunctions)
             {
-                foreach (fun; IOnTriggerFunctions[instance])
+                if (fun.ev.name == name)
                 {
-                    if (fun.ev.name == name)
-                    {
-                        fun.fun();
-                    }
+                    fun.fun();
                 }
             }
         }
@@ -475,108 +478,6 @@ public @safe:
         _scenes[scene.name] = scene;
     }
 
-    package(tida)
-    {
-        import std.container, std.range, std.traits;
-        import tida.component : Component;
-
-        alias FEInit = void delegate() @safe;
-        alias FEStep = void delegate() @safe;
-        alias FERestart = void delegate() @safe;
-        alias FEEntry = void delegate() @safe;
-        alias FELeave = void delegate() @safe;
-        alias FEGameStart = void delegate() @safe;
-        alias FEGameExit = void delegate() @safe;
-        alias FEGameRestart = void delegate() @safe;
-        alias FEEventHandle = void delegate(EventHandler) @safe;
-        alias FEDraw = void delegate(IRenderer) @safe;
-        alias FEOnError = void delegate() @safe;
-        alias FECollision = void delegate(Instance) @safe;
-        alias FETrigger = void delegate() @safe;
-        alias FEDestroy = void delegate(Instance) @safe;
-        alias FEATrigger = void delegate(string) @safe;
-
-        alias FECInit = void delegate(Instance) @safe;
-
-        struct SRCollider
-        {
-            Collision ev;
-            FECollision fun;
-        }
-
-        struct SRTrigger
-        {
-            Trigger ev;
-            FETrigger fun;
-        }
-
-        FEInit[][Scene] InitFunctions;
-        FEStep[][Scene] StepFunctions;
-        FEStep[][size_t][Scene] StepThreadFunctions;
-        FERestart[][Scene] RestartFunctions;
-        FEEntry[][Scene] EntryFunctions;
-        FELeave[][Scene] LeaveFunctions;
-        FEGameStart[][Scene] GameStartFunctions;
-        FEGameExit[][Scene] GameExitFunctions;
-        FEGameRestart[][Scene] GameRestartFunctions;
-        FEEventHandle[][Scene] EventHandleFunctions;
-        FEDraw[][Scene] DrawFunctions;
-        FEOnError[][Scene] OnErrorFunctions;
-        SRTrigger[][Scene] OnTriggerFunctions;
-        FEDestroy[][Scene] OnDestroyFunctions;
-        FEATrigger[][Scene] OnAnyTriggerFunctions;
-        FECollision[][Scene] OnAnyCollisionFunctions;
-
-        FEInit[][Instance] IInitFunctions;
-        FEStep[][Instance] IStepFunctions;
-        FEStep[][size_t][Instance] IStepThreadFunctions;
-        FERestart[][Instance] IRestartFunctions;
-        FEEntry[][Instance] IEntryFunctions;
-        FELeave[][Instance] ILeaveFunctions;
-        FEGameStart[][Instance] IGameStartFunctions;
-        FEGameExit[][Instance] IGameExitFunctions;
-        FEGameRestart[][Instance] IGameRestartFunctions;
-        FEEventHandle[][Instance] IEventHandleFunctions;
-        FEDraw[][Instance] IDrawFunctions;
-        FEOnError[][Instance] IOnErrorFunctions;
-        SRCollider[][Instance] IColliderStructs;
-        FECollision[][Instance] ICollisionFunctions;
-        SRTrigger[][Instance] IOnTriggerFunctions;
-        FEDestroy[][Instance] IOnDestroyFunctions;
-        FEATrigger[][Instance] IOnAnyTriggerFunctions;
-
-        FEStep[][Component] CStepFunctions;
-        FEStep[][size_t][Component] CStepThreadFunctions;
-        FELeave[][Component] CLeaveFunctions;
-        FEEventHandle[][Component] CEventHandleFunctions;
-        FEDraw[][Component] CDrawFunctions;
-        FEOnError[][Component] COnErrorFunctions;
-        SRTrigger[][Component] COnTriggerFunctions;
-        FEATrigger[][Component] COnAnyTriggerFunctions;
-        FECollision[][Component] COnAnyCollisionFunctions;
-    }
-
-    struct EventsInstance
-    {
-        FEInit[] IInitFunctions;
-        FEStep[] IStepFunctions;
-        FEStep[][size_t] IStepThreadFunctions;
-        FERestart[] IRestartFunctions;
-        FEEntry[] IEntryFunctions;
-        FELeave[] ILeaveFunctions;
-        FEGameStart[] IGameStartFunctions;
-        FEGameExit[] IGameExitFunctions;
-        FEGameRestart[] IGameRestartFunctions;
-        FEEventHandle[] IEventHandleFunctions;
-        FEDraw[] IDrawFunctions;
-        FEOnError[] IOnErrorFunctions;
-        SRCollider[] IColliderStructs;
-        FECollision[] ICollisionFunctions;
-        SRTrigger[] IOnTriggerFunctions;
-        FEDestroy[] IOnDestroyFunctions;
-        FEATrigger[] IOnAnyTriggerFunctions;
-    }
-
     template hasMatch(alias attrib, alias AttribType)
     {
         enum hasMatch = is(typeof(attrib) == AttribType) || is(attrib == AttribType) ||
@@ -585,6 +486,8 @@ public @safe:
 
     template hasAttrib(T, AttribType, string member)
     {
+        import std.traits : isFunction, isSafe;
+
         alias same = __traits(getMember, T, member);
 
         static if (isFunction!(same))
@@ -630,27 +533,6 @@ public @safe:
         }   
     }
 
-    struct InstanceEvents
-    {
-        FEInit[] IInitFunctions;
-        FEStep[] IStepFunctions;
-        FEStep[][size_t] IStepThreadFunctions;
-        FERestart[] IRestartFunctions;
-        FEEntry[] IEntryFunctions;
-        FELeave[] ILeaveFunctions;
-        FEGameStart[] IGameStartFunctions;
-        FEGameExit[] IGameExitFunctions;
-        FEGameRestart[] IGameRestartFunctions;
-        FEEventHandle[] IEventHandleFunctions;
-        FEDraw[] IDrawFunctions;
-        FEOnError[] IOnErrorFunctions;
-        SRCollider[] IColliderStructs;
-        FECollision[] ICollisionFunctions;
-        SRTrigger[] IOnTriggerFunctions;
-        FEDestroy[] IOnDestroyFunctions;
-        FEATrigger[] IOnAnyTriggerFunctions;
-    }
-
     /++
     A function to receive events that were described inside 
     the object's implementation.
@@ -664,12 +546,33 @@ public @safe:
     Returns:
         Returns a structure with the event fields that it could detect.
     +/
-    static InstanceEvents getInstanceEvents(T)(T instance) @trusted
+    InstanceEvents getInstanceEvents(T)(T instance) @trusted
     {
         import std.algorithm : canFind, remove;
         static assert(isInstance!T, "`" ~ T.stringof ~ "` is not a instance!");
 
         InstanceEvents events;
+
+        events.IInitFunctions = [];
+        events.IStepFunctions = [];
+        events.IEntryFunctions = [];
+        events.IRestartFunctions = [];
+        events.ILeaveFunctions = [];
+        events.IGameStartFunctions = [];
+        events.IGameExitFunctions = [];
+        events.IGameRestartFunctions = [];
+        events.IEventHandleFunctions = [];
+        events.IDrawFunctions = [];
+        events.IOnErrorFunctions = [];
+        events.IColliderStructs = [];
+        events.IOnTriggerFunctions = [];
+        events.IOnDestroyFunctions = [];
+        events.ICollisionFunctions = [];
+        events.IOnAnyTriggerFunctions = [];
+        events.IStepThreadFunctions = [0:null];
+
+        void delegate() @safe[]* minStepTh;
+        size_t minStepLen;
 
         static foreach (member; __traits(allMembers, T))
         {
@@ -734,18 +637,254 @@ public @safe:
             } else
             static if (hasAttrib!(T, Trigger, member))
             {
-                events.IOnTriggerFunctions ~= SRTrigger (attributeIn!(T, Trigger, member), 
+                events.IOnTriggerFunctions ~= InstanceEvents.SRTrigger (attributeIn!(T, Trigger, member),
                                                         &__traits(getMember, instance, member));
             } else
             static if (hasAttrib!(T, StepThread, member))
             {
                 events.IStepThreadFunctions
                 [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, instance, member);
+
+                if (countStartThreads < attributeIn!(T, StepThread, member).id)
+                {
+                    countStartThreads = attributeIn!(T, StepThread, member).id;
+                }
             } else
             static if (hasAttrib!(T, Collision, member))
             {
-                events.IColliderStructs ~= SRCollider(attributeIn!(T, Collision, member),
+                events.IColliderStructs ~= InstanceEvents.SRCollider(attributeIn!(T, Collision, member),
                                                          &__traits(getMember, instance, member));
+            }else
+            static if (hasAttrib!(T, stepThreadSafe, member))
+            {
+                import std.algorithm : maxElement;
+
+                if (events.IStepThreadFunctions.length != 1)
+                {       
+                    minStepLen = events.IStepThreadFunctions.values.maxElement!(a => a.length).length;
+                    foreach (key, value; events.IStepThreadFunctions)
+                    {
+                        if (value.length < minStepLen)
+                        {
+                            minStepTh = &events.IStepThreadFunctions[key];
+                            minStepLen = value.length;
+                        }
+                    }
+                } else
+                {
+                    foreach (i; 1 .. maxThreads + 1)
+                        events.IStepThreadFunctions[i] = [];
+                        
+                    minStepTh = &events.IStepThreadFunctions[maxThreads];
+                    minStepLen = events.IStepThreadFunctions[maxThreads].length;
+                }
+            
+                if (minStepLen > functionPerThread)
+                {
+                    events.IStepFunctions ~= &__traits(getMember, instance, member);
+                }
+                else
+                {
+                    *minStepTh ~= &__traits(getMember, instance, member);
+                }
+            }
+        }
+
+        return events;
+    }
+
+    ComponentEvents getComponentEvents(T)(Instance instance, T component) @safe
+    {
+        ComponentEvents events;
+
+        events.CStepFunctions = [];
+        events.CLeaveFunctions = [];
+        events.CEventHandleFunctions = [];
+        events.CDrawFunctions = [];
+        events.COnErrorFunctions = [];
+        events.COnTriggerFunctions = [];
+        events.COnAnyTriggerFunctions = [];
+
+        static foreach (member; __traits(allMembers, T))
+        {
+            static if (hasAttrib!(T, tida.localevent.event, member))
+            {
+                static if (attributeIn!(T, event, member).type == Init)
+                {
+                    events.CInitFunctions ~= ComponentEvents.FEInit(
+                        instance,
+                        &__traits(getMember, component, member)
+                    );
+                } else
+                static if (attributeIn!(T, event, member).type == Leave)
+                {
+                    events.CLeaveFunctions ~= &__traits(getMember, component, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Step)
+                {
+                    events.CStepFunctions ~= &__traits(getMember, component, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Input)
+                {
+                    events.CEventHandleFunctions ~= &__traits(getMember, component, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Draw)
+                {
+                    events.CDrawFunctions ~= &__traits(getMember, component, member);
+                } else
+                static if (attributeIn!(T, event, member).type == AnyTrigger)
+                {
+                    events.COnAnyTriggerFunctions ~= &__traits(getMember, component, member);
+                } else
+                static if (attributeIn!(T, event, member).type == AnyCollision)
+                {
+                    events.COnAnyCollisionFunctions ~= &__traits(getMember, component, member);
+                } else
+                static if (attributeIn!(T, event, member).type == GameError)
+                {
+                    events.COnErrorFunctions ~= &__traits(getMember, component, member);
+                }
+            } else
+            static if (hasAttrib!(T, Trigger, member))
+            {
+                events.COnTriggerFunctions ~= ComponentEvents.SRTrigger (attributeIn!(T, Trigger, member),
+                                                        &__traits(getMember, component, member));
+            }
+        }
+
+        return events;
+    }
+
+    SceneEvents getSceneEvents(T)(T scene) @safe
+    {
+        SceneEvents events;
+
+        events.InitFunctions = [];
+        events.StepFunctions = [];
+        events.EntryFunctions = [];
+        events.RestartFunctions = [];
+        events.LeaveFunctions = [];
+        events.GameStartFunctions = [];
+        events.GameExitFunctions = [];
+        events.GameRestartFunctions = [];
+        events.EventHandleFunctions = [];
+        events.DrawFunctions = [];
+        events.OnErrorFunctions = [];
+        events.OnTriggerFunctions = [];
+        events.OnDestroyFunctions = [];
+        events.StepThreadFunctions = [0:null];
+
+        void delegate() @safe[]* minStepTh;
+        size_t minStepLen;
+
+        static foreach (member; __traits(allMembers, T))
+        {
+            static if (hasAttrib!(T, tida.localevent.event, member))
+            {
+                static if (attributeIn!(T, event, member).type == Init)
+                {
+                    events.InitFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Restart)
+                {
+                    events.RestartFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Entry)
+                {
+                    events.EntryFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Leave)
+                {
+                    events.LeaveFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Step)
+                {
+                    events.StepFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == GameStart)
+                {
+                    events.GameStartFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == GameExit)
+                {
+                    events.GameExitFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == GameRestart)
+                {
+                    events.GameRestartFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Input)
+                {
+                    events.EventHandleFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Draw)
+                {
+                    events.DrawFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == AnyTrigger)
+                {
+                    events.OnAnyTriggerFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == AnyCollision)
+                {
+                    events.OnAnyCollisionFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == Destroy)
+                {
+                    events.OnDestroyFunctions ~= &__traits(getMember, scene, member);
+                } else
+                static if (attributeIn!(T, event, member).type == GameError)
+                {
+                    events.OnErrorFunctions ~= &__traits(getMember, scene, member);
+                }
+            } else
+            static if (hasAttrib!(T, Trigger, member))
+            {
+                events.OnTriggerFunctions ~= SceneEvents.SRTrigger (attributeIn!(T, Trigger, member),
+                                                        &__traits(getMember, scene, member));
+            } else
+            static if (hasAttrib!(T, StepThread, member))
+            {
+                events.StepThreadFunctions
+                [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, scene, member);
+
+                if (countStartThreads < attributeIn!(T, StepThread, member).id)
+                {
+                    countStartThreads = attributeIn!(T, StepThread, member).id;
+                }
+            } else
+            static if (hasAttrib!(T, stepThreadSafe, member))
+            {
+                import std.algorithm : maxElement;
+
+                if (events.StepThreadFunctions.length != 1)
+                {
+                    minStepLen = events.StepThreadFunctions.values.maxElement!(a => a.length).length;
+                    foreach (key, value; events.StepThreadFunctions)
+                    {
+                        if (value.length < minStepLen)
+                        {
+                            minStepTh = &events.StepThreadFunctions[key];
+                            minStepLen = value.length;
+                        }
+                    }
+                } else
+                {
+                    foreach (i; 1 .. maxThreads + 1)
+                        events.StepThreadFunctions[i] = [];
+
+                    minStepTh = &events.StepThreadFunctions[maxThreads];
+                    minStepLen = events.StepThreadFunctions[maxThreads].length;
+                }
+
+                if (minStepLen > functionPerThread)
+                {
+                    events.StepFunctions ~= &__traits(getMember, scene, member);
+                }
+                else
+                {
+                    *minStepTh ~= &__traits(getMember, scene, member);
+                }
             }
         }
 
@@ -754,6 +893,8 @@ public @safe:
 
     unittest
     {
+        initSceneManager();
+
         static class A : Instance
         {
             @event(Init)
@@ -764,7 +905,7 @@ public @safe:
         }
 
         A a = new A();
-        auto evs = SceneManager.getInstanceEvents(a);
+        auto evs = sceneManager.getInstanceEvents(a);
 
         assert (evs.IInitFunctions[0] == &a.onInit);
         assert (evs.IDrawFunctions[0] == &a.onDraw);
@@ -777,9 +918,10 @@ public @safe:
         instance = Instance.
     +/
     void destroyEventCall(T)(T instance) @trusted
+    if (isInstance!T)
     {
-        static assert(isInstance!T, "`" ~ T.stringof ~ "` is not a instance!");
-        foreach(func; IOnDestroyFunctions[instance]) func(instance);
+        foreach(func; instance.events.IOnDestroyFunctions)
+            func(instance);
     }
 
     /++
@@ -794,388 +936,32 @@ public @safe:
         static assert(isScene!T, "`" ~ T.stringof ~ "` is not a scene!");
         static assert(isInstance!R, "`" ~ R.stringof ~ "` is not a instance!");
 
-        foreach(func; OnDestroyFunctions[scene]) func(instance);
+        foreach(func; scene.events.OnDestroyFunctions) func(instance);
     }
 
     package(tida) void componentExplore(T)(Instance instance, T component) @trusted
+    if (isComponent!T)
     {
-        import tida.component : isComponent;
+        component.events = getComponentEvents!T(instance, component);
 
-        static assert(isComponent!T, "`" ~ T.stringof ~ "` is not a component!");
-
-        CStepFunctions[component] = [];
-        CLeaveFunctions[component] = [];
-        CEventHandleFunctions[component] = [];
-        CDrawFunctions[component] = [];
-        COnErrorFunctions[component] = [];
-        COnTriggerFunctions[component] = [];
-        COnAnyTriggerFunctions[component] = [];
-
-        static foreach (member; __traits(allMembers, T))
-        {
-            static if (hasAttrib!(T, tida.localevent.event, member))
-            {
-                static if (attributeIn!(T, event, member).type == Init)
-                {
-                    __traits(getMember, component, member)(instance);
-                } else
-                static if (attributeIn!(T, event, member).type == Leave)
-                {
-                    CLeaveFunctions[component] ~= &__traits(getMember, component, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Step)
-                {
-                    CStepFunctions[component] ~= &__traits(getMember, component, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Input)
-                {
-                    CEventHandleFunctions[component] ~= &__traits(getMember, component, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Draw)
-                {
-                    CDrawFunctions[component] ~= &__traits(getMember, component, member);
-                } else
-                static if (attributeIn!(T, event, member).type == AnyTrigger)
-                {
-                    COnAnyTriggerFunctions[component] ~= &__traits(getMember, component, member);
-                } else
-                static if (attributeIn!(T, event, member).type == AnyCollision)
-                {
-                    COnAnyCollisionFunctions[component] ~= &__traits(getMember, component, member);
-                } else
-                static if (attributeIn!(T, event, member).type == GameError)
-                {
-                    COnErrorFunctions[component] ~= &__traits(getMember, component, member);
-                }
-            } else
-            static if (hasAttrib!(T, Trigger, member))
-            {
-                COnTriggerFunctions[component] ~= SRTrigger (attributeIn!(T, Trigger, member), 
-                                                        &__traits(getMember, component, member));
-            }
-        }
+        foreach (fun; component.events.CInitFunctions)
+            fun.fun (fun.instance);
     }
 
     private void exploreScene(T)(T scene) @trusted
     {
-        InitFunctions[scene] = [];
-        StepFunctions[scene] = [];
-        EntryFunctions[scene] = [];
-        RestartFunctions[scene] = [];
-        LeaveFunctions[scene] = [];
-        GameStartFunctions[scene] = [];
-        GameExitFunctions[scene] = [];
-        GameRestartFunctions[scene] = [];
-        EventHandleFunctions[scene] = [];
-        DrawFunctions[scene] = [];
-        OnErrorFunctions[scene] = [];
-        OnTriggerFunctions[scene] = [];
-        OnDestroyFunctions[scene] = [];
-        StepThreadFunctions[scene] = [0:null];
-        
-        FEStep[]* minStepTh;
-        size_t minStepLen;
-
-        static foreach (member; __traits(allMembers, T))
-        {
-            static if (hasAttrib!(T, tida.localevent.event, member))
-            {
-                static if (attributeIn!(T, event, member).type == Init)
-                {
-                    InitFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Restart)
-                {
-                    RestartFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Entry)
-                {
-                    EntryFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Leave)
-                {
-                    LeaveFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Step)
-                {
-                    StepFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == GameStart)
-                {
-                    GameStartFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == GameExit)
-                {
-                    GameExitFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == GameRestart)
-                {
-                    GameRestartFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Input)
-                {
-                    EventHandleFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Draw)
-                {
-                    DrawFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == AnyTrigger)
-                {
-                    OnAnyTriggerFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == AnyCollision)
-                {
-                    OnAnyCollisionFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Destroy)
-                {
-                    OnDestroyFunctions[scene] ~= &__traits(getMember, scene, member);
-                } else
-                static if (attributeIn!(T, event, member).type == GameError)
-                {
-                    OnErrorFunctions[scene] ~= &__traits(getMember, scene, member);
-                }
-            } else
-            static if (hasAttrib!(T, Trigger, member))
-            {
-                OnTriggerFunctions[scene] ~= SRTrigger (attributeIn!(T, Trigger, member), 
-                                                        &__traits(getMember, scene, member));
-            } else
-            static if (hasAttrib!(T, StepThread, member))
-            {
-                StepThreadFunctions[scene]
-                [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, scene, member);
-
-                if (countStartThreads < attributeIn!(T, StepThread, member).id)
-                {
-                    countStartThreads = attributeIn!(T, StepThread, member).id;
-                }
-            } else
-            static if (hasAttrib!(T, stepThreadSafe, member))
-            {
-                import std.algorithm : maxElement;
-
-                if (StepThreadFunctions[scene].length != 1)
-                {       
-                    minStepLen = StepThreadFunctions[scene].values.maxElement!(a => a.length).length;
-                    foreach (key, value; StepThreadFunctions[scene])
-                    {
-                        if (value.length < minStepLen)
-                        {
-                            minStepTh = &StepThreadFunctions[scene][key];
-                            minStepLen = value.length;
-                        }
-                    }
-                } else
-                {
-                    foreach (i; 1 .. maxThreads + 1)
-                        StepThreadFunctions[scene][i] = [];
-                        
-                    minStepTh = &StepThreadFunctions[scene][maxThreads];
-                    minStepLen = StepThreadFunctions[scene][maxThreads].length;
-                }
-            
-                if (minStepLen > functionPerThread)
-                {
-                    StepFunctions[scene] ~= &__traits(getMember, scene, member);
-                }
-                else
-                {
-                    *minStepTh ~= &__traits(getMember, scene, member);
-                }
-            }
-        }
+        scene.events = getSceneEvents!T(scene);
     }
 
     package(tida) void instanceExplore(T)(Scene scene, T instance) @trusted
+    if (isInstance!T)
     {
-        import std.algorithm : canFind, remove;
-        static assert(isInstance!T, "`" ~ T.stringof ~ "` is not a instance!");
-        if (instance in IInitFunctions) return;
-
-        IInitFunctions[instance] = [];
-        IStepFunctions[instance] = [];
-        IEntryFunctions[instance] = [];
-        IRestartFunctions[instance] = [];
-        ILeaveFunctions[instance] = [];
-        IGameStartFunctions[instance] = [];
-        IGameExitFunctions[instance] = [];
-        IGameRestartFunctions[instance] = [];
-        IEventHandleFunctions[instance] = [];
-        IDrawFunctions[instance] = [];
-        IOnErrorFunctions[instance] = [];
-        IColliderStructs[instance] = [];
-        IOnTriggerFunctions[instance] = [];
-        IOnDestroyFunctions[instance] = [];
-        ICollisionFunctions[instance] = [];
-        IOnAnyTriggerFunctions[instance] = [];
-        IStepThreadFunctions[instance] = [0:null];
-
-        FEStep[]* minStepTh;
-        size_t minStepLen;
-
-        static foreach (member; __traits(allMembers, T))
-        {
-            static if (hasAttrib!(T, tida.localevent.event, member))
-            {
-                static if (attributeIn!(T, event, member).type == Init)
-                {
-                    IInitFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Restart)
-                {
-                    IRestartFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Entry)
-                {
-                    IEntryFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Leave)
-                {
-                    ILeaveFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Step)
-                {
-                    IStepFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == GameStart)
-                {
-                    IGameStartFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == GameExit)
-                {
-                    IGameExitFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == GameRestart)
-                {
-                    IGameRestartFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Input)
-                {
-                    IEventHandleFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Draw)
-                {
-                    IDrawFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == AnyTrigger)
-                {
-                    IOnAnyTriggerFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == AnyCollision)
-                {
-                    ICollisionFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == Destroy)
-                {
-                    IOnDestroyFunctions[instance] ~= &__traits(getMember, instance, member);
-                } else
-                static if (attributeIn!(T, event, member).type == GameError)
-                {
-                    IOnErrorFunctions[instance] ~= &__traits(getMember, instance, member);
-                }
-            } else
-            static if (hasAttrib!(T, Trigger, member))
-            {
-                IOnTriggerFunctions[instance] ~= SRTrigger (attributeIn!(T, Trigger, member), 
-                                                        &__traits(getMember, instance, member));
-            } else
-            static if (hasAttrib!(T, StepThread, member))
-            {
-                IStepThreadFunctions[instance]
-                [attributeIn!(T, StepThread, member).id] ~= &__traits(getMember, instance, member);
-
-                if (countStartThreads < attributeIn!(T, StepThread, member).id)
-                {
-                    countStartThreads = attributeIn!(T, StepThread, member).id;
-                }
-            } else
-            static if (hasAttrib!(T, Collision, member))
-            {
-                IColliderStructs[instance] ~= SRCollider(attributeIn!(T, Collision, member),
-                                                         &__traits(getMember, instance, member));
-            }else
-            static if (hasAttrib!(T, stepThreadSafe, member))
-            {
-                import std.algorithm : maxElement;
-
-                if (IStepThreadFunctions[instance].length != 1)
-                {       
-                    minStepLen = IStepThreadFunctions[instance].values.maxElement!(a => a.length).length;
-                    foreach (key, value; IStepThreadFunctions[instance])
-                    {
-                        if (value.length < minStepLen)
-                        {
-                            minStepTh = &IStepThreadFunctions[instance][key];
-                            minStepLen = value.length;
-                        }
-                    }
-                } else
-                {
-                    foreach (i; 1 .. maxThreads + 1)
-                        IStepThreadFunctions[instance][i] = [];
-                        
-                    minStepTh = &IStepThreadFunctions[instance][maxThreads];
-                    minStepLen = IStepThreadFunctions[instance][maxThreads].length;
-                }
-            
-                if (minStepLen > functionPerThread)
-                {
-                    IStepFunctions[instance] ~= &__traits(getMember, instance, member);
-                }
-                else
-                {
-                    *minStepTh ~= &__traits(getMember, instance, member);
-                }
-            }
-        }
-    }
-
-    package(tida) @property FEStep[][size_t][Instance] threadSteps()
-    {
-        return IStepThreadFunctions;
-    }
-    
-    @property FEStep[][size_t][Scene] sceneThreadSteps()
-    {
-        return StepThreadFunctions;
-    }
-
-    package(tida) @property SRCollider[][Instance] colliders()
-    {
-        return IColliderStructs;
-    }
-
-    package(tida) @property FECollision[][Instance] collisionFunctions()
-    {
-        return ICollisionFunctions;
-    }
-
-    package(tida) @property FELeave[][Component] leaveComponents()
-    {
-        return CLeaveFunctions;
+        instance.events = getInstanceEvents!T(instance);
     }
 
     package(tida) void removeHandle(Scene scene, Instance instance) @trusted
     {
-        IInitFunctions.remove(instance);
-        IStepFunctions.remove(instance);
-        IEntryFunctions.remove(instance);
-        IRestartFunctions.remove(instance);
-        ILeaveFunctions.remove(instance);
-        IGameStartFunctions.remove(instance);
-        IGameExitFunctions.remove(instance);
-        IGameRestartFunctions.remove(instance);
-        IEventHandleFunctions.remove(instance);
-        IDrawFunctions.remove(instance);
-        IOnErrorFunctions.remove(instance);
-        IColliderStructs.remove(instance);
-        ICollisionFunctions.remove(instance);
-        IOnTriggerFunctions.remove(instance);
-        IOnDestroyFunctions.remove(instance);
-        IStepThreadFunctions.remove(instance);
-        IOnAnyTriggerFunctions.remove(instance);
+        // TODO: Implement this
     }
 
     /++
@@ -1382,22 +1168,16 @@ public @safe:
 
         if (current !is null)
         {
-            if (current in LeaveFunctions)
+            foreach (fun; scene.events.LeaveFunctions)
             {
-                foreach (fun; LeaveFunctions[current])
-                {
-                    fun();
-                }
+                fun();
             }
 
             foreach (instance; current.list())
             {
-                if (instance in ILeaveFunctions)
+                foreach (fun; instance.events.ILeaveFunctions)
                 {
-                    foreach (fun; ILeaveFunctions[instance])
-                    {
-                        fun();
-                    }
+                    fun();
                 }
             }
         }
@@ -1428,64 +1208,46 @@ public @safe:
 
         if (!scene.isInit)
         {
-            if (scene in InitFunctions)
+            foreach (fun; scene.events.InitFunctions)
             {
-                foreach (fun; InitFunctions[scene])
-                {
-                    fun();
-                }
+                fun();
             }
 
             foreach (instance; scene.list())
             {
-                if (instance in IInitFunctions)
+                foreach (fun; instance.events.IInitFunctions)
                 {
-                    foreach (fun; IInitFunctions[instance])
-                    {
-                        fun();
-                    }
+                    fun();
                 }
             }
 
             scene.isInit = true;
         }else
         {
-            if (scene in RestartFunctions)
+            foreach (fun; scene.events.RestartFunctions)
             {
-                foreach (fun; RestartFunctions[scene])
-                {
-                    fun();
-                }
+                fun();
             }
 
             foreach (instance; scene.list())
             {
-                if (instance in IRestartFunctions)
+                foreach (fun; instance.events.IRestartFunctions)
                 {
-                    foreach (fun; IRestartFunctions[instance])
-                    {
-                        fun();
-                    }
+                    fun();
                 }
             }
         }
 
-        if (scene in EntryFunctions)
+        foreach(fun; scene.events.EntryFunctions)
         {
-            foreach(fun; EntryFunctions[scene])
-            {
-                fun();
-            }
+            fun();
         }
 
         foreach (instance; scene.list())
         {
-            if (instance in IEntryFunctions)
+            foreach (fun; instance.events.IEntryFunctions)
             {
-                foreach (fun; IEntryFunctions[instance])
-                {
-                    fun();
-                }
+                fun();
             }
         }
 
@@ -1521,24 +1283,18 @@ public @safe:
     {
         foreach (scene; scenes)
         {
-            if (scene in GameStartFunctions)
+            foreach (fun; scene.events.GameStartFunctions)
             {
-                foreach (fun; GameStartFunctions[scene])
-                {
-                    fun();
-                }
+                fun();
             }
 
             foreach (instance; scene.list())
             {
                 if (instance.active && !instance.onlyDraw)
                 {
-                    if (instance in IGameStartFunctions)
+                    foreach (fun; instance.events.IGameStartFunctions)
                     {
-                        foreach (fun; IGameStartFunctions[instance])
-                        {
-                            fun();
-                        }
+                        fun();
                     }
                 }
             }
@@ -1553,24 +1309,18 @@ public @safe:
     {
         foreach (scene; scenes)
         {
-            if (scene in GameExitFunctions)
+            foreach (fun; scene.events.GameExitFunctions)
             {
-                foreach (fun; GameExitFunctions[scene])
-                {
-                    fun();
-                }
+                fun();
             }
 
             foreach (instance; scene.list())
             {
                 if (instance.active && !instance.onlyDraw)
                 {
-                    if (instance in IGameExitFunctions)
+                    foreach (fun; instance.events.IGameExitFunctions)
                     {
-                        foreach (fun; IGameExitFunctions[instance])
-                        {
-                            fun();
-                        }
+                        fun();
                     }
                 }
             }
@@ -1616,24 +1366,18 @@ public @safe:
     {
         if (current !is null)
         {
-            if (current in OnErrorFunctions)
+            foreach (fun; current.events.OnErrorFunctions)
             {
-                foreach (fun; OnErrorFunctions[current])
-                {
-                    fun();
-                }
+                fun();
             }
 
             foreach (instance; current.list())
             {
                 if (instance.active && !instance.onlyDraw)
                 {
-                    if (instance in IOnErrorFunctions)
+                    foreach (fun; instance.events.IOnErrorFunctions)
                     {
-                        foreach (fun; IOnErrorFunctions[instance])
-                        {
-                            fun();
-                        }
+                        fun();
                     }
                 }
             }
@@ -1659,19 +1403,15 @@ public @safe:
                 if (current.camera !is null)
                     current.camera.followObject();
 
-                if (current in StepFunctions)
+                foreach (fun; current.events.StepFunctions)
                 {
-                    foreach (fun; StepFunctions[current])
-                    {
-                        fun();
-                    }
+                    fun();
                 }
             }
 
-            if (current in StepThreadFunctions)
-            if (thread in StepThreadFunctions[current])
+            if (thread in current.events.StepThreadFunctions)
             {
-                foreach (fun; StepThreadFunctions[current][thread])
+                foreach (fun; current.events.StepThreadFunctions[thread])
                     fun();
             }
 
@@ -1686,43 +1426,36 @@ public @safe:
 
                 if (!instance.active || instance.onlyDraw) continue;
 
-                if (instance in IStepFunctions)
+                foreach (fun; instance.events.IStepFunctions)
                 {
-                    foreach (fun; IStepFunctions[instance])
-                    {
-                        fun();
-                    }
+                    fun();
                 }
 
                 foreach (component; instance.getComponents())
                 {
-                    if (component in CStepFunctions)
+                    foreach (fun; component.events.CStepFunctions)
                     {
-                        foreach (fun; CStepFunctions[component])
-                        {
-                            fun();
-                        }
+                        fun();
                     }
                 }
             }
 
             foreach(instance; current.list())
             {
-                if (!instance.active || instance.onlyDraw) continue;
+                if (!instance.active || instance.onlyDraw) 
+                    continue;
 
-                if (instance in IStepThreadFunctions)
-                if (thread in IStepThreadFunctions[instance])
+                if (thread in instance.events.IStepThreadFunctions)
                 {
-                    foreach (fun; IStepThreadFunctions[instance][thread])
+                    foreach (fun; instance.events.IStepThreadFunctions[thread])
                         fun();
                 }
 
                 foreach (component; instance.getComponents())
                 {
-                    if (component in CStepThreadFunctions)
-                    if (thread in CStepThreadFunctions[component])
+                    if (thread in component.events.CStepThreadFunctions)
                     {
-                        foreach(fun; CStepThreadFunctions[component][thread])
+                        foreach(fun; component.events.CStepThreadFunctions[thread])
                         {
                             fun();
                         }
@@ -1742,34 +1475,25 @@ public @safe:
     {
         if (current !is null)
         {
-            if (current in EventHandleFunctions)
+            foreach (fun; current.events.EventHandleFunctions)
             {
-                foreach (fun; EventHandleFunctions[current])
-                {
-                    fun(event);
-                }
+                fun(event);
             }
 
             foreach (instance; current.list())
             {
                 if (instance.active && !instance.onlyDraw)
                 {
-                    if (instance in IEventHandleFunctions)
+                    foreach(fun; instance.events.IEventHandleFunctions)
                     {
-                        foreach(fun; IEventHandleFunctions[instance])
-                        {
-                            fun(event);
-                        }
+                        fun(event);
                     }
 
                     foreach (component; instance.getComponents())
                     {
-                        if (component in CEventHandleFunctions)
+                        foreach(fun; component.events.CEventHandleFunctions)
                         {
-                            foreach(fun; CEventHandleFunctions[component])
-                            {
-                                fun(event);
-                            }
+                            fun(event);
                         }
                     }
                 }
@@ -1789,12 +1513,9 @@ public @safe:
 
         if (current !is null)
         {
-            if (current in DrawFunctions)
+            foreach (fun; current.events.DrawFunctions)
             {
-                foreach (fun; DrawFunctions[current])
-                {
-                    fun(render);
-                }
+                fun(render);
             }
 
             foreach (instance; current.getAssortedInstances())
@@ -1803,22 +1524,16 @@ public @safe:
                 {
                     render.draw(instance.spriteDraw(), instance.position);
 
-                    if (instance in IDrawFunctions)
+                    foreach (fun; instance.events.IDrawFunctions)
                     {
-                        foreach (fun; IDrawFunctions[instance])
-                        {
-                            fun(render);
-                        }
+                        fun(render);
                     }
 
                     foreach (component; instance.getComponents())
                     {
-                        if (component in CDrawFunctions)
+                        foreach (fun; component.events.CDrawFunctions)
                         {
-                            foreach (fun; CDrawFunctions[component])
-                            {
-                                fun(render);
-                            }
+                            fun(render);
                         }
                     }
                 }
@@ -1867,7 +1582,7 @@ unittest
     A obj = new A();
     sceneManager.add(obj);
 
-    assert((sceneManager.InitFunctions[obj][0].ptr) == ((&obj.onInit).ptr));
+    assert((obj.events.InitFunctions[0].ptr) == ((&obj.onInit).ptr));
 }
 
 unittest

@@ -54,6 +54,59 @@ template isInstance(T)
     enum isInstance = is(T : Instance);
 }
 
+struct InstanceEvents
+{
+    import tida.event;
+    import tida.render;
+    import tida.localevent;
+
+    alias FEInit = void delegate() @safe;
+    alias FEStep = void delegate() @safe;
+    alias FERestart = void delegate() @safe;
+    alias FEEntry = void delegate() @safe;
+    alias FELeave = void delegate() @safe;
+    alias FEGameStart = void delegate() @safe;
+    alias FEGameExit = void delegate() @safe;
+    alias FEGameRestart = void delegate() @safe;
+    alias FEEventHandle = void delegate(EventHandler) @safe;
+    alias FEDraw = void delegate(IRenderer) @safe;
+    alias FEOnError = void delegate() @safe;
+    alias FECollision = void delegate(Instance) @safe;
+    alias FETrigger = void delegate() @safe;
+    alias FEDestroy = void delegate(Instance) @safe;
+    alias FEATrigger = void delegate(string) @safe;
+
+    struct SRCollider
+    {
+        Collision ev;
+        FECollision fun;
+    }
+
+    struct SRTrigger
+    {
+        Trigger ev;
+        FETrigger fun;
+    }
+
+    FEInit[] IInitFunctions;
+    FEStep[] IStepFunctions;
+    FEStep[][size_t] IStepThreadFunctions;
+    FERestart[] IRestartFunctions;
+    FEEntry[] IEntryFunctions;
+    FELeave[] ILeaveFunctions;
+    FEGameStart[] IGameStartFunctions;
+    FEGameExit[] IGameExitFunctions;
+    FEGameRestart[] IGameRestartFunctions;
+    FEEventHandle[] IEventHandleFunctions;
+    FEDraw[] IDrawFunctions;
+    FEOnError[] IOnErrorFunctions;
+    SRCollider[] IColliderStructs;
+    FECollision[] ICollisionFunctions;
+    SRTrigger[] IOnTriggerFunctions;
+    FEDestroy[] IOnDestroyFunctions;
+    FEATrigger[] IOnAnyTriggerFunctions;
+}
+
 /++
 Instance object. Can be created for a render unit as well as for legacy
 with a programmable model.
@@ -80,6 +133,18 @@ protected:
     bool _destroy = false;
 
 public:
+    InstanceEvents events;
+
+    @property auto colliders() @safe
+    {
+        return events.IColliderStructs;
+    }
+
+    @property auto collisionFunctions() @safe
+    {
+        return events.ICollisionFunctions;
+    }
+
     /++
     The name of the instance, by which you can later identify
     the collided or other events.
@@ -295,7 +360,7 @@ public:
         {
             if (components[i].name == name)
             {
-                foreach(fun; sceneManager.leaveComponents[components[i]]) fun();
+                // foreach(fun; sceneManager.leaveComponents[components[i]]) fun();
 
                 components = components.remove(i);
                 break;
@@ -315,7 +380,7 @@ public:
         {
             if (sceneManager !is null)
             {
-                foreach(fun; sceneManager.leaveComponents[components[i]]) fun();
+                //foreach(fun; sceneManager.leaveComponents[components[i]]) fun();
             }
 
             components = components.remove(i);
