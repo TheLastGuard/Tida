@@ -408,6 +408,8 @@ override:
         if (shader.getUniformLocation("color") != -1)
             shader.setUniform("color", rgba(255, 255, 255, 255));
 
+        debug (GLError) checkGLError();
+
         vertexInfo.draw (drawType);
 
         if (vertexInfo.elements !is null)
@@ -468,6 +470,8 @@ override:
 
         if (shader.getUniformLocation("color") != -1)
             shader.setUniform("color", rgba(color.r, color.g, color.b, alpha));
+
+        debug (GLError) checkGLError();
 
         vertexInfo.draw (drawType);
 
