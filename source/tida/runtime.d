@@ -95,6 +95,8 @@ The interface of interaction between the program and the window manager.
 +/
 interface ITidaRuntime
 {
+    import tida.sound : Device;
+
 @safe:
     /++
     A function for loading external libraries that are needed when implementing
@@ -137,7 +139,9 @@ interface ITidaRuntime
     Accepts program arguments for subsequent operations with them.
     +/
     void acceptArguments(string[] arguments);
-    
+
+    @property Device device() @safe;
+
     uint[2] monitorSize();
 
 @trusted:
@@ -229,6 +233,11 @@ public @trusted:
             stderr.writeln(SessionWarning);
         }
 
+    }
+
+    override Device device() @safe
+    {
+        return _device;
     }
 
     override void loadExternalLibraries(LibraryUnite[] libs)
@@ -366,6 +375,11 @@ public @trusted:
             if (e == FreeType)
                 initFontLibrary();
         }
+    }
+
+    override Device device() @safe
+    {
+        return _device;
     }
 
     override void connectToWndMng()

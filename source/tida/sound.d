@@ -14,6 +14,7 @@ module tida.sound;
 
 import bindbc.openal;
 import std.exception : enforce;
+import tida.runtime;
 
 /++
 Function to load a library of sound and music playback.
@@ -36,6 +37,8 @@ private:
     ALCdevice* _device;
     ALCcontext* _context;
 
+    uint[] sources;
+
 public @trusted:
     /// Device object.
     @property ALCdevice* device()
@@ -47,6 +50,26 @@ public @trusted:
     @property ALCcontext* context()
     {
         return _context;
+    }
+
+    void allocSource(ref uint source) @safe
+    {
+        sources ~= source;
+    }
+
+    void destroySource(ref uint source)
+    {
+        import std.algorithm : remove;
+
+        alDeleteSources(1, &source);
+        sources = sources.remove!(a => a == source);
+    }
+
+    /// Stops all sound sources
+    void stopAll() @trusted
+    {
+        foreach (source; sources)
+            alSourceStop(source);
     }
 
     /++
@@ -132,7 +155,7 @@ public @trusted:
     /// Allocates space for the source.
     void allocateSource()
     {
-        alGenSources(1, &_source);
+        runtime.device.allocSource(_source);
 
         alSourcef(_source, AL_PITCH, 1.0f);
         alSourcef(_source, AL_GAIN, 1.0f);
@@ -165,6 +188,11 @@ public @trusted:
     void inSourceBindBuffer()
     {
         alSourcei(_source, AL_BUFFER, _buffer);
+    }
+
+    void destroy()
+    {
+        runtime.device.destroySource(_source);
     }
 
     /++
@@ -354,6 +382,19 @@ public @trusted:
         sound.inSourceBindBuffer();
 
         return sound;
+    }
+
+    ~this()
+    {
+        destroy();
+    }
+
+    /++
+    Stops all sound sources
+    +/
+    static void stopAll() @trusted
+    {
+        runtime.device.stopAll();
     }
 }
 
