@@ -394,6 +394,8 @@ override:
             vertexInfo.elements.bind();
 
         shader.using();
+
+        glActiveTexture(GL_TEXTURE0);
         bind();
 
         shader.enableVertex("position");
@@ -407,6 +409,9 @@ override:
 
         if (shader.getUniformLocation("color") != -1)
             shader.setUniform("color", rgba(255, 255, 255, 255));
+
+        if (shader.getUniformLocation("size") != -1)
+            shader.setUniform("size", vec!float(width, height));
 
         debug (GLError) checkGLError();
 
@@ -457,6 +462,8 @@ override:
             vertexInfo.elements.bind();
 
         shader.using();
+
+        glActiveTexture(GL_TEXTURE0);
         bind();
 
         shader.enableVertex("position");
@@ -470,6 +477,9 @@ override:
 
         if (shader.getUniformLocation("color") != -1)
             shader.setUniform("color", rgba(color.r, color.g, color.b, alpha));
+
+        if (shader.getUniformLocation("size") != -1)
+            shader.setUniform("size", vec!float(width, height));
 
         debug (GLError) checkGLError();
 

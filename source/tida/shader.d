@@ -343,6 +343,20 @@ public @trusted:
     }
 
     /++
+        Sends a float value to the uniform.
+
+        Params:
+            name = The name of the uniform variable.
+            value = Variable value.
+    +/
+    static if (isShaderProgram!Type)
+    void setUniform(string name, Vector!float value)
+    {
+        auto uid = glGetUniformLocation(glid, name.ptr);
+        glUniform2f(uid, value.x, value.y);
+    }
+
+    /++
         Passes a 4-by-4 variable matrix to the uniform.
 
         Params:

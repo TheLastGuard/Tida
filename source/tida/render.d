@@ -699,6 +699,8 @@ override:
         currentShader.enableVertex("position");
 
         setDefaultUniform(color);
+        if (currentShader.getUniformLocation("size") != -1)
+            currentShader.setUniform("size", tida.vector.vec!float(1, 1));
 
         vertexInfo.draw (ShapeType.point);
 
@@ -738,6 +740,8 @@ override:
         currentShader.enableVertex("position");
 
         setDefaultUniform(color);
+        if (currentShader.getUniformLocation("size") != -1)
+            currentShader.setUniform("size", abs(points[1] - points[0]));
 
         vertexInfo.draw (ShapeType.line);
 
@@ -794,6 +798,8 @@ override:
         currentShader.enableVertex("position");
 
         setDefaultUniform(color);
+        if (currentShader.getUniformLocation("size") != -1)
+            currentShader.setUniform("size", vec!float(width, height));
 
         if (isFill)
         {
@@ -846,6 +852,8 @@ override:
         currentShader.enableVertex("position");
 
         setDefaultUniform(color);
+        if (currentShader.getUniformLocation("size") != -1)
+            currentShader.setUniform("size", vec!float(radius * 2, radius * 2));
 
         if (isFill)
         {
@@ -897,6 +905,8 @@ override:
         currentShader.enableVertex("position");
 
         setDefaultUniform(color);
+        if (currentShader.getUniformLocation("size") != -1)
+            currentShader.setUniform("size", vec!float(width, height));
 
         if (isFill)
         {
@@ -947,6 +957,8 @@ override:
         currentShader.enableVertex("position");
 
         setDefaultUniform(color);
+        if (currentShader.getUniformLocation("size") != -1)
+            currentShader.setUniform("size", abs(points[2] - points[0]));
 
         if (isFill)
             vertexInfo.draw (ShapeType.triangle);
@@ -1000,6 +1012,8 @@ override:
         currentShader.enableVertex("position");
 
         setDefaultUniform(color);
+        if (currentShader.getUniformLocation("size") != -1)
+            currentShader.setUniform("size", vec!float(1, 1));
 
         if (isFill)
             vertexInfo.draw (ShapeType.polygon);
