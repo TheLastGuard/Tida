@@ -328,6 +328,29 @@ if (isLazy!T)
     alias lazyScene = typeof(T.scene);
 }
 
+template LazyGroup(T...)
+{
+    struct LazyGroup
+    {
+        alias Groups = T;
+    }
+}
+
+template isLazyGroup (T)
+{
+    import std.traits : TemplateOf;
+
+    enum isLazyGroup = __traits(isSame, TemplateOf!(T), LazyGroup);
+}
+
+template lazyGroupScenes (T)
+if (isLazyGroup!T)
+{
+    import std.traits : TemplateArgsOf;
+
+    alias lazyGroupScenes = TemplateArgsOf!T;
+}
+
 /++
 Game entry point template.
 
@@ -360,6 +383,10 @@ template GameRun(GameConfig config, T...)
             static if (isLazy!e)
             {
                 sceneManager.lazyAdd!(lazyScene!e);
+            } else
+            static if (isLazyGroup!e)
+            {
+                sceneManager.lazyGroupAdd!(lazyGroupScenes!e);
             }
         }
 
@@ -378,6 +405,7 @@ template GameRun(GameConfig config, T...)
             sceneManager.inbegin();
 
         game.run();
+
         return game.result;
     }
 }

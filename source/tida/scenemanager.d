@@ -114,6 +114,13 @@ final class SceneManager
 private:
     alias RecoveryDelegate = void delegate(ref Scene) @safe;
     alias LazyInfo = Scene delegate() @safe;
+    alias LazyGroupFunction = Scene[string] delegate() @safe;
+
+    struct LazyGroupInfo
+    {
+        string[] names;
+        LazyGroupFunction spawnFunction;
+    }
 
     Scene[string] _scenes;
     Scene _current;
@@ -127,6 +134,8 @@ private:
     LazyInfo[string] recovLazySpawns;
 
     LazyInfo[string] lazySpawns;
+    LazyGroupInfo[] lazyGroupSpawns;
+
     bool _thereGoto;
 
     bool updateThreads = false;
@@ -409,9 +418,8 @@ public @safe:
         T = Lazy scene.
     +/
     void lazyAdd(T)()
+    if (isScene!T)
     {
-        static assert(isScene!T, "`" ~ T.stringof ~ "` is not a scene!");
-
         auto fun = {
             T scene = new T();
             add!T(scene);
@@ -426,6 +434,43 @@ public @safe:
 
         lazySpawns[T.stringof] = fun;
         recovLazySpawns[T.stringof] = fun;
+    }
+
+    void lazyGroupAdd(T...)()
+    {
+        size_t countThreads = 0;
+
+        auto fun = {
+            Scene[string] rtScenes;
+
+            static foreach (SceneType; T)
+            {
+                static assert(isScene!SceneType, "It not a Scene!");
+
+                mixin("
+                SceneType __scene" ~ SceneType.stringof ~ " = new SceneType();
+                add!SceneType(__scene" ~ SceneType.stringof ~ ");
+
+                countThreads = maxThreads;
+                if (countStartThreads > countThreads)
+                    countThreads = countStartThreads;
+
+                __scene" ~ SceneType.stringof ~ ".initThread(countThreads);
+
+                rtScenes[SceneType.stringof] = __scene" ~ SceneType.stringof ~ ";
+                ");
+            }
+
+            return rtScenes;
+        };
+
+        string[] names;
+        static foreach (SceneType; T)
+        {
+            names ~= SceneType.stringof;
+        }
+
+        this.lazyGroupSpawns ~= LazyGroupInfo(names, fun);
     }
 
     unittest
@@ -1096,6 +1141,8 @@ public @safe:
     +/
     void gotoin(string name)
     {
+        import std.algorithm : remove;
+
         foreach (inscene; scenes)
         {
             if(inscene.name == name)
@@ -1112,6 +1159,19 @@ public @safe:
                 auto scene = value();
                 lazySpawns.remove(key);
                 gotoin(scene);
+                return;
+            }
+        }
+
+        foreach (i; 0 .. lazyGroupSpawns.length)
+        {
+            auto e = lazyGroupSpawns[i];
+
+            if (e.names.canFind(name))
+            {
+                lazyGroupSpawns = remove(lazyGroupSpawns, i);
+                auto lazyScenes = e.spawnFunction();
+                gotoin(lazyScenes[name]);
                 return;
             }
         }
