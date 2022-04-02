@@ -205,6 +205,8 @@ public @trusted:
     {
         import std.path;
 
+        allocateSource();
+
         switch (path.extension)
         {
             case ".wav":
