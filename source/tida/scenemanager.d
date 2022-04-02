@@ -375,6 +375,31 @@ public @safe:
         assert (test.isSayHi);
     }
 
+    void globalTrigger(string name) @trusted
+    {
+        foreach (scene; scenes)
+        {
+            foreach (fun; scene.events.OnTriggerFunctions)
+            {
+                if (fun.ev.name == name)
+                {
+                    fun.fun();
+                }
+            }
+
+            foreach (instance; scene.list())
+            {
+                foreach (fun; instance.events.IOnTriggerFunctions)
+                {
+                    if (fun.ev.name == name)
+                    {
+                        fun.fun();
+                    }
+                }
+            }
+        }
+    }
+
     /++
     Checks if the scene is in the scene list.
 
