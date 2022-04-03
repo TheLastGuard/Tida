@@ -52,8 +52,9 @@ public @trusted:
         return _context;
     }
 
-    void allocSource(ref uint source) @safe
+    void allocSource(ref uint source) @trusted
     {
+        alGenSources(1, &source);
         sources ~= source;
     }
 
