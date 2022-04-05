@@ -375,6 +375,13 @@ public @safe:
         assert (test.isSayHi);
     }
 
+    /++
+    Challenge the trigger in all scenes and copies that will be there.
+    It is the call that goes from everyone, and not the current scene
+
+    Params:
+        name = Trigger name.
+    +/
     void globalTrigger(string name) @trusted
     {
         foreach (scene; scenes)
@@ -398,6 +405,46 @@ public @safe:
                 }
             }
         }
+    }
+
+    unittest
+    {
+        enum onSaysHi = Trigger("onSaysHi");
+
+        initSceneManager();
+
+        static class Test : Scene
+        {
+            bool isSayHi = false;
+
+            @onSaysHi void onSayHi() @safe
+            {
+                isSayHi = true;
+            }
+        }
+
+        static class Test2 : Scene
+        {
+            bool isSayHi = false;
+
+            @onSaysHi void onSayHi() @safe
+            {
+                isSayHi = true;
+            }
+        }
+
+        Test test;
+        Test2 test2;
+
+        sceneManager.add (test = new Test());
+        sceneManager.add (test2 = new Test2());
+        sceneManager.inbegin();
+
+        sceneManager.trigger("onSaysHi");
+        assert (!test2.isSayHi);
+
+        sceneManager.globalTrigger("onSaysHi");
+        assert (test2.isSayHi);
     }
 
     /++
@@ -447,6 +494,9 @@ public @safe:
     {
         auto fun = {
             T scene = new T();
+            if (scene.name == [])
+                scene.name = T.stringof;
+
             add!T(scene);
 
             size_t countThreads = maxThreads;
@@ -459,43 +509,6 @@ public @safe:
 
         lazySpawns[T.stringof] = fun;
         recovLazySpawns[T.stringof] = fun;
-    }
-
-    void lazyGroupAdd(T...)()
-    {
-        size_t countThreads = 0;
-
-        auto fun = {
-            Scene[string] rtScenes;
-
-            static foreach (SceneType; T)
-            {
-                static assert(isScene!SceneType, "It not a Scene!");
-
-                mixin("
-                SceneType __scene" ~ SceneType.stringof ~ " = new SceneType();
-                add!SceneType(__scene" ~ SceneType.stringof ~ ");
-
-                countThreads = maxThreads;
-                if (countStartThreads > countThreads)
-                    countThreads = countStartThreads;
-
-                __scene" ~ SceneType.stringof ~ ".initThread(countThreads);
-
-                rtScenes[SceneType.stringof] = __scene" ~ SceneType.stringof ~ ";
-                ");
-            }
-
-            return rtScenes;
-        };
-
-        string[] names;
-        static foreach (SceneType; T)
-        {
-            names ~= SceneType.stringof;
-        }
-
-        this.lazyGroupSpawns ~= LazyGroupInfo(names, fun);
     }
 
     unittest
@@ -520,6 +533,107 @@ public @safe:
         assert(sceneManager.hasScene!LazyScene);
     }
 
+    void lazyGroupAdd(T...)()
+    {
+        size_t countThreads = 0;
+
+        auto fun = () @trusted {
+            Scene[string] rtScenes;
+
+            static foreach (SceneType; T)
+            {
+                static assert(isScene!SceneType, "It not a Scene!");
+
+                mixin("
+                SceneType __scene" ~ SceneType.stringof ~ " = new SceneType();
+                if (__scene" ~ SceneType.stringof ~ ".name.length == 0)
+                    __scene" ~ SceneType.stringof ~ ".name = \"" ~ SceneType.stringof ~ "\";
+
+                add(__scene" ~ SceneType.stringof ~ ");
+
+                countThreads = maxThreads;
+                if (countStartThreads > countThreads)
+                    countThreads = countStartThreads;
+
+                __scene" ~ SceneType.stringof ~ ".initThread(countThreads);
+
+                rtScenes[\"" ~ SceneType.stringof ~ "\"] = __scene" ~ SceneType.stringof ~ ";
+                ");
+            }
+
+            return rtScenes;
+        };
+
+        string[] names;
+        static foreach (SceneType; T)
+        {
+            names ~= SceneType.stringof;
+        }
+
+        this.lazyGroupSpawns ~= LazyGroupInfo(names, fun);
+    }
+
+    unittest
+    {
+        initSceneManager();
+
+        static class LazyScene1 : Scene
+        {
+            int a = 0;
+
+            this() @safe
+            {
+                a = 32;
+            }
+        }
+
+        static class LazyScene2 : Scene
+        {
+            int a = 0;
+
+            this() @safe
+            {
+                a = 48;
+            }
+        }
+
+        static class LazyScene3 : Scene
+        {
+            int a = 0;
+
+            this() @safe
+            {
+                a = 64;
+            }
+        }
+
+        static class LazyScene4 : Scene
+        {
+            int a = 0;
+
+            this() @safe
+            {
+                a = 98;
+            }
+        }
+
+        sceneManager.lazyGroupAdd!(LazyScene1, LazyScene2);
+        sceneManager.lazyGroupAdd!(LazyScene3, LazyScene4);
+
+        assert(!sceneManager.hasScene!LazyScene1);
+        assert(!sceneManager.hasScene!LazyScene3);
+
+        sceneManager.gotoin!LazyScene2;
+
+        assert(sceneManager.hasScene!LazyScene1);
+        assert(!sceneManager.hasScene!LazyScene3);
+
+        sceneManager.gotoin!LazyScene4;
+
+        assert(sceneManager.hasScene!LazyScene1);
+        assert(sceneManager.hasScene!LazyScene3);
+    }
+
     /++
     Adds a scene to the list.
 
@@ -530,6 +644,9 @@ public @safe:
     {
         static assert(isScene!T, "`" ~ T.stringof ~ "` is not a scene!");
         exploreScene!T(scene);
+
+        if (scene.name == "")
+            scene.name = T.stringof;
 
         if (_ofbegin is null)
             _ofbegin = scene;
@@ -1049,6 +1166,9 @@ public @safe:
     void add(T)() @trusted
     {
         auto scene = new T();
+        if (scene.name == "")
+            scene.name = T.stringof;
+
         add!T(scene);
     }
 
@@ -1210,6 +1330,8 @@ public @safe:
     +/
     void gotoin(Name)()
     {
+        import std.algorithm : remove;
+
         foreach (s; scenes)
         {
             if ((cast(Name) s) !is null)
@@ -1226,6 +1348,19 @@ public @safe:
                 auto scene = value();
                 lazySpawns.remove(key);
                 gotoin(scene);
+                return;
+            }
+        }
+
+        foreach (i; 0 .. lazyGroupSpawns.length)
+        {
+            auto e = lazyGroupSpawns[i];
+
+            if (e.names.canFind(Name.stringof))
+            {
+                lazyGroupSpawns = remove(lazyGroupSpawns, i);
+                auto lazyScenes = e.spawnFunction();
+                gotoin(lazyScenes[Name.stringof]);
                 return;
             }
         }
