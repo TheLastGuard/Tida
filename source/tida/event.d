@@ -484,6 +484,8 @@ interface IEventHandler
     User entered data.
     +/
     @property string inputChar();
+
+    @property wstring inputWChar();
     
     /++
     Returns an array of the interface for controlling joysticks. 
@@ -723,7 +725,22 @@ override:
 
         return buf[0 .. count];
     }
-    
+
+    @property wstring inputWChar()
+    {
+        import std.utf : toUTF16;
+
+        int count;
+        string buf = new string(20);
+        KeySym ks;
+        Status status = 0;
+
+        count = Xutf8LookupString(  this.ic, cast(XKeyPressedEvent*) &this.event.xkey,
+                                    cast(char*) buf.ptr, 20, &ks, &status);
+
+        return buf[0 .. count].toUTF16;
+    }
+
     @property Joystick[] joysticks()
     {
         import core.sys.posix.fcntl;
@@ -1011,6 +1028,11 @@ public:
         string utftext = text.toUTF8;
 
         return [utftext[0]];
+    }
+
+    wstring inputWChar()
+    {
+        return [cast(wchar) msg.wParam];
     }
     
     @property Joystick[] joysticks() @trusted
