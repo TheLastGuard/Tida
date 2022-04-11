@@ -247,19 +247,24 @@ Cuts off formatting blocks.
 Params:
     symbols = Symbols.
 +/
-T cutFormat(T)(T symbols) @safe nothrow pure
+inout(T) cutFormat(T)(inout T symbols) @safe /*nothrow*/ /*pure*/
+if (isSomeString!T)
 {
-    static assert(isSomeString!T, T.stringof ~ " is not a string!");
+    T result;
+    int previous = 0;
+
     for(int i = 0; i < symbols.length; i++)
     {
         if(symbols[i] == '$')
         {
-            if(symbols[i+1] == '<') {
+            if(symbols[i+1] == '<')
+            {
                 __symEachCutter: for(int j = i; j < symbols.length; j++)
                 {
                     if(symbols[j] == '>')
                     {
-                        symbols = symbols[0 .. i] ~ symbols[j + 1 .. $];
+                        result = result ~ symbols[previous .. i];
+                        previous = j + 1;
                         break __symEachCutter;
                     }
                 }
@@ -267,7 +272,9 @@ T cutFormat(T)(T symbols) @safe nothrow pure
         }
     }
 
-    return symbols;
+    result ~= symbols[previous .. $];
+
+    return result;
 }
 
 unittest
@@ -283,7 +290,7 @@ Params:
     text = Text.
     font = Font.
 +/
-int widthText(T)(T text, Font font) @safe
+inout(int) widthText(T)(T text, Font font) @safe
 {
     import std.algorithm : reduce;
     static assert(isSomeString!T, T.stringof ~ " is not a string!");
@@ -299,7 +306,7 @@ Shows the width of the displayed characters.
 Params:
     text = Displayed characters.
 +/
-int widthSymbols(Symbol[] text) @safe
+inout(int) widthSymbols(inout Symbol[] text) @safe
 {
     import std.algorithm : fold;
     import std.conv : to;
@@ -307,7 +314,7 @@ int widthSymbols(Symbol[] text) @safe
     int width = int.init;
 
     foreach(s; text)
-        width += s.advance.x.to!int >> 6;
+        width += (cast(int) s.advance.x) >> 6;
 
     return width;
 }
