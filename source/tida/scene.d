@@ -162,10 +162,10 @@ public:
         threadID = In which thread to add execution.
     +/
     final void add(T)(T instance, size_t threadID = 0)
+    if (isInstance!T)
     in(instance, "Instance is not a create!")
     do
     {
-        static assert(isInstance!T, T.stringof ~ " is not a instance!");
         if (threadID >= bufferThread.length) threadID = 0;
 
         this.instances ~= instance;
@@ -173,6 +173,9 @@ public:
         instance.threadid = threadID;
 
         bufferThread[threadID] ~= instance;
+
+        if (instance.name.length == 0)
+            instance.name = T.stringof;
 
         sceneManager.instanceExplore!T(this, instance);
 
@@ -194,6 +197,14 @@ public:
         }
     }
 
+    final void add(T...)(T args)
+    {
+        foreach (instance; args)
+        {
+            add(instance);
+        }
+    }
+
     /++
     Returns a assorted list of instances.
     +/
@@ -210,7 +221,8 @@ public:
     +/
     final bool hasInstance(Instance instance) nothrow
     {
-        foreach(ins; instances) {
+        foreach(ins; instances)
+        {
             if(instance is ins)
                 return true;
         }
@@ -227,12 +239,15 @@ public:
         import std.algorithm : canFind, each;
         import std.range : empty;
 
-        // EXPEREMENTAL
         foreach(first; list())
         {
+            if (!first.solid)
+                continue;
+
             foreach(second; list())
             {
-                if(first !is second && first.solid && second.solid) {
+                if(first !is second && first.solid && second.solid)
+                {
                     if(first.active && second.active)
                     {
                         if (
@@ -242,8 +257,8 @@ public:
                                         second.position)
                         )
                         {
-                            auto firstColliders = first.colliders();
-                            auto secondColliders = second.colliders();
+                            //auto firstColliders = first.colliders();
+                            //auto secondColliders = second.colliders();
 
                             auto firstFunctions = first.collisionFunctions();
                             auto secondFunctions = second.collisionFunctions();
@@ -251,59 +266,41 @@ public:
                             firstFunctions.each!((fun) => fun(second));
                             secondFunctions.each!((fun) => fun(first));
 
-                            foreach (e; firstColliders)
+                            void checkColliders(Instance origin, Instance cls) @safe
                             {
-                                if (e.ev.name.empty)
+                                foreach (cd; origin.colliders())
                                 {
-                                    if (!e.ev.tag.empty)
+                                    if (cd.ev.name.empty)
                                     {
-                                        if (second.tags.canFind(e.ev.tag))
+                                        if (!cd.ev.tag.empty)
                                         {
-                                            e.fun(second);
-                                        }   
-                                    }else
-                                        e.fun(second);
-                                } else
-                                {
-                                    if (e.ev.tag.empty)
-                                    {
-                                        e.fun(second);
+                                            if (cls.tags.canFind(cd.ev.tag))
+                                            {
+                                                cd.fun(cls);
+                                            }
+                                        }
                                     } else
                                     {
-                                        if (second.tags.canFind(e.ev.tag))
+                                        if (cd.ev.tag.empty)
                                         {
-                                            e.fun(second);
+                                            if (cd.ev.name == cls.name)
+                                            {
+                                                cd.fun(cls);
+                                            }
+                                        } else
+                                        {
+                                            if (cd.ev.name == cls.name &&
+                                                cls.tags.canFind(cd.ev.tag))
+                                            {
+                                                cd.fun(cls);
+                                            }
                                         }
                                     }
                                 }
                             }
 
-                            foreach (e; secondColliders)
-                            {
-                                if (e.ev.name.empty)
-                                {
-                                    if (!e.ev.tag.empty)
-                                    {
-                                        if (first.tags.canFind(e.ev.tag))
-                                        {
-                                            e.fun(first);
-                                        }   
-                                    }else
-                                        e.fun(first);
-                                } else
-                                {
-                                    if (e.ev.tag.empty)
-                                    {
-                                        e.fun(first);
-                                    } else
-                                    {
-                                        if (first.tags.canFind(e.ev.tag))
-                                        {
-                                            e.fun(first);
-                                        }
-                                    }
-                                }
-                            }
+                            checkColliders(first, second);
+                            checkColliders(second, first);
                         }
                     }
                 }
@@ -417,6 +414,55 @@ public:
 
             return null;
         }
+    }
+
+    /++
+    Returns an instances by name.
+
+    Params:
+        name = Instance name.
+    +/
+    final Instance[] getInstancesByName(string name) nothrow
+    {
+        import std.algorithm : find;
+
+        Instance[] finded;
+
+        foreach (e; list())
+        {
+            if (e.name == name)
+            {
+                finded ~= e;
+            }
+        }
+
+        return finded;
+    }
+
+    @trusted unittest
+    {
+        initSceneManager();
+
+        Scene test = new Scene();
+
+        Instance a = new Instance();
+        a.name = "bread1";
+
+        Instance b = new Instance();
+        b.name = "bread3";
+
+        Instance c = new Instance();
+        c.name = "bread1";
+
+        Instance d = new Instance();
+        d.name = "bread3";
+
+        Instance e = new Instance();
+        e.name = "bread1";
+
+        test.add(a, b, c, d, e);
+
+        assert(test.getInstancesByName("bread1").length == 3);
     }
 
     /++
