@@ -168,3 +168,8 @@ Attribute indicating that the flow function function
 stream to accelerate. Do not combine with the  @event(step).
 +/
 struct stepThreadSafe {}
+
+struct args(T...)
+{
+    alias members = T;
+}

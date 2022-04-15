@@ -110,6 +110,7 @@ final class SceneManager
 {
     import std.algorithm : canFind;
     import core.sync.mutex;
+    import std.variant;
 
 private:
     alias RecoveryDelegate = void delegate(ref Scene) @safe;
@@ -120,6 +121,24 @@ private:
     {
         string[] names;
         LazyGroupFunction spawnFunction;
+    }
+
+    struct UserData
+    {
+        void* data = null;
+        size_t length = 0;
+
+        this(T)(T value) @trusted
+        {
+            data = cast(void*) &value;
+            length = T.sizeof;
+        }
+
+        T get(T)() @trusted
+        in (T.sizeof == length)
+        {
+            return *(cast(T*) data);
+        }
     }
 
     Scene[string] _scenes;
@@ -141,6 +160,8 @@ private:
     bool updateThreads = false;
 
     shared(Mutex) instanceMutex;
+
+    UserData[] gotoUserData;
 
 public @safe:
     size_t countStartThreads = 0;
@@ -673,11 +694,11 @@ public @safe:
 
     template hasAttrib(T, AttribType, string member)
     {
-        import std.traits : isFunction, isSafe;
+        import std.traits : isFunction, isSafe, getUDAs;
 
         alias same = __traits(getMember, T, member);
 
-        static if (isFunction!(same))
+        static if (isFunction!(same) && isSafe!(same))
         {
             alias attributes = __traits(getAttributes, same);
 
@@ -691,11 +712,14 @@ public @safe:
                         "The function `" ~ member ~"` does not guarantee safe execution.");
 
                         enum hasAttrib = true;
-                    }else
-                    {
-                        enum hasAttrib = false;
+                        enum found = true;
                     }
-                }        
+                }
+
+                static if (!__traits(compiles, found))
+                {
+                    enum hasAttrib = false;
+                }
             } else
             {
                 enum hasAttrib = false;
@@ -737,6 +761,7 @@ public @safe:
     if (isInstance!T)
     {
         import std.algorithm : canFind, remove;
+        import std.traits : getUDAs, TemplateArgsOf, Parameters;
 
         InstanceEvents events;
 
@@ -767,15 +792,54 @@ public @safe:
             {
                 static if (attributeIn!(T, event, member).type == Init)
                 {
-                    events.IInitFunctions ~= &__traits(getMember, instance, member);
+                    static if (getUDAs!(__traits(getMember, instance, member), args).length != 0)
+                    {
+                        events.IInitFunctions ~= InstanceEvents.FEEntry.create!(
+                            getUDAs!(__traits(getMember, instance, member), args)[0].members
+                        )(cast(void delegate() @safe) &__traits(getMember, instance, member));
+                    } else
+                    {
+                        static assert (
+                            Parameters!(__traits(getMember, instance, member)).length == 0,
+                            "An initialization event cannot have any arguments. To do this, add an attribute `@args!(params...)`"
+                        );
+
+                        events.InitFunctions ~= InstanceEvents.FEEntry.create(cast(void delegate() @safe) &__traits(getMember, instance, member));
+                    }
                 } else
                 static if (attributeIn!(T, event, member).type == Restart)
                 {
-                    events.IRestartFunctions ~= &__traits(getMember, instance, member);
+                    static if (getUDAs!(__traits(getMember, instance, member), args).length != 0)
+                    {
+                        events.IRestartFunctions ~= InstanceEvents.FEEntry.create!(
+                            getUDAs!(__traits(getMember, instance, member), args)[0].members
+                        )(cast(void delegate() @safe) &__traits(getMember, instance, member));
+                    } else
+                    {
+                        static assert (
+                            Parameters!(__traits(getMember, instance, member)).length == 0,
+                            "An restart event cannot have any arguments. To do this, add an attribute `@args!(params...)`"
+                        );
+
+                        events.IRestartFunctions ~= InstanceEvents.FEEntry.create(cast(void delegate() @safe) &__traits(getMember, instance, member));
+                    }
                 } else
                 static if (attributeIn!(T, event, member).type == Entry)
                 {
-                    events.IEntryFunctions ~= &__traits(getMember, instance, member);
+                    static if (getUDAs!(__traits(getMember, instance, member), args).length != 0)
+                    {
+                        events.IEntryFunctions ~= InstanceEvents.FEEntry.create!(
+                            getUDAs!(__traits(getMember, instance, member), args)[0].members
+                        )(cast(void delegate() @safe) &__traits(getMember, instance, member));
+                    } else
+                    {
+                        static assert (
+                            Parameters!(__traits(getMember, instance, member)).length == 0,
+                            "An entry event cannot have any arguments. To do this, add an attribute `@args!(params...)`"
+                        );
+
+                        events.IEntryFunctions ~= InstanceEvents.FEEntry.create(cast(void delegate() @safe) &__traits(getMember, instance, member));
+                    }
                 } else
                 static if (attributeIn!(T, event, member).type == Leave)
                 {
@@ -942,8 +1006,10 @@ public @safe:
         return events;
     }
 
-    SceneEvents getSceneEvents(T)(T scene) @safe
+    SceneEvents getSceneEvents(T)(T scene) @trusted
     {
+        import std.traits : hasUDA, getUDAs, TemplateArgsOf, Parameters;
+
         SceneEvents events;
 
         events.InitFunctions = [];
@@ -970,15 +1036,54 @@ public @safe:
             {
                 static if (attributeIn!(T, event, member).type == Init)
                 {
-                    events.InitFunctions ~= &__traits(getMember, scene, member);
+                    static if (getUDAs!(__traits(getMember, scene, member), args).length != 0)
+                    {
+                        events.InitFunctions ~= SceneEvents.FEEntry.create!(
+                            getUDAs!(__traits(getMember, scene, member), args)[0].members
+                        )(cast(void delegate() @safe) &__traits(getMember, scene, member));
+                    } else
+                    {
+                        static assert (
+                            Parameters!(__traits(getMember, scene, member)).length == 0,
+                            "An initialization event cannot have any arguments. To do this, add an attribute `@args!(params...)`"
+                        );
+
+                        events.InitFunctions ~= SceneEvents.FEEntry.create(cast(void delegate() @safe) &__traits(getMember, scene, member));
+                    }
                 } else
                 static if (attributeIn!(T, event, member).type == Restart)
                 {
-                    events.RestartFunctions ~= &__traits(getMember, scene, member);
+                    static if (getUDAs!(__traits(getMember, scene, member), args).length != 0)
+                    {
+                        events.RestartFunctions ~= SceneEvents.FEEntry.create!(
+                            getUDAs!(__traits(getMember, scene, member), args)[0].members
+                        )(cast(void delegate() @safe) &__traits(getMember, scene, member));
+                    } else
+                    {
+                        static assert (
+                            Parameters!(__traits(getMember, scene, member)).length == 0,
+                            "An restart event cannot have any arguments. To do this, add an attribute `@args!(params...)`"
+                        );
+
+                        events.RestartFunctions ~= SceneEvents.FEEntry.create(&__traits(getMember, scene, member));
+                    }
                 } else
                 static if (attributeIn!(T, event, member).type == Entry)
                 {
-                    events.EntryFunctions ~= &__traits(getMember, scene, member);
+                    static if (getUDAs!(__traits(getMember, scene, member), args).length != 0)
+                    {
+                        events.EntryFunctions ~= SceneEvents.FEEntry.create!(
+                            getUDAs!(__traits(getMember, scene, member), args)[0].members
+                        )(cast(void delegate() @safe) &__traits(getMember, scene, member));
+                    } else
+                    {
+                        static assert (
+                            Parameters!(__traits(getMember, scene, member)).length == 0,
+                            "An entry event cannot have any arguments. To do this, add an attribute `@args!(params...)`"
+                        );
+
+                        events.EntryFunctions ~= SceneEvents.FEEntry.create(&__traits(getMember, scene, member));
+                    }
                 } else
                 static if (attributeIn!(T, event, member).type == Leave)
                 {
@@ -1084,17 +1189,17 @@ public @safe:
 
         static class A : Instance
         {
-            @event(Init)
-            void onInit() @safe { }
+            @event(AnyTrigger)
+            void onInit(string member) @safe { }
 
             @event(Draw)
             void onDraw(IRenderer render) @safe { }
         }
 
         A a = new A();
-        auto evs = sceneManager.getInstanceEvents(a);
+        InstanceEvents evs = sceneManager.getInstanceEvents(a);
 
-        assert (evs.IInitFunctions[0] == &a.onInit);
+        assert (evs.IOnAnyTriggerFunctions[0] == &a.onInit);
         assert (evs.IDrawFunctions[0] == &a.onDraw);
     }
 
@@ -1284,7 +1389,7 @@ public @safe:
     Params:
         name = Scene name.
     +/
-    void gotoin(string name)
+    void gotoin(T...)(string name, T args)
     {
         import std.algorithm : remove;
 
@@ -1292,7 +1397,7 @@ public @safe:
         {
             if(inscene.name == name)
             {
-                gotoin(inscene);
+                gotoin(inscene, args);
                 break;
             }
         }
@@ -1303,7 +1408,7 @@ public @safe:
             {
                 auto scene = value();
                 lazySpawns.remove(key);
-                gotoin(scene);
+                gotoin(scene, args);
                 return;
             }
         }
@@ -1316,7 +1421,7 @@ public @safe:
             {
                 lazyGroupSpawns = remove(lazyGroupSpawns, i);
                 auto lazyScenes = e.spawnFunction();
-                gotoin(lazyScenes[name]);
+                gotoin(lazyScenes[name], args);
                 return;
             }
         }
@@ -1328,7 +1433,7 @@ public @safe:
     Params:
         Name = Scene.
     +/
-    void gotoin(Name)()
+    void gotoin(Name, T...)(T args)
     {
         import std.algorithm : remove;
 
@@ -1336,7 +1441,7 @@ public @safe:
         {
             if ((cast(Name) s) !is null)
             {
-                gotoin(s);
+                gotoin(s, args);
                 return;
             }
         }
@@ -1347,7 +1452,7 @@ public @safe:
             {
                 auto scene = value();
                 lazySpawns.remove(key);
-                gotoin(scene);
+                gotoin(scene, args);
                 return;
             }
         }
@@ -1360,7 +1465,7 @@ public @safe:
             {
                 lazyGroupSpawns = remove(lazyGroupSpawns, i);
                 auto lazyScenes = e.spawnFunction();
-                gotoin(lazyScenes[Name.stringof]);
+                gotoin(lazyScenes[Name.stringof], args);
                 return;
             }
         }
@@ -1378,7 +1483,7 @@ public @safe:
     Params:
         scene = Scene heir.
     +/
-    void gotoin(Scene scene) @trusted
+    void gotoin(T...)(Scene scene, T args) @trusted
     {
         import tida.game : renderer, window;
         import tida.shape;
@@ -1431,14 +1536,14 @@ public @safe:
         {
             foreach (fun; scene.events.InitFunctions)
             {
-                fun();
+                fun(args);
             }
 
             foreach (instance; scene.list())
             {
                 foreach (fun; instance.events.IInitFunctions)
                 {
-                    fun();
+                    fun(args);
                 }
             }
 
@@ -1447,28 +1552,28 @@ public @safe:
         {
             foreach (fun; scene.events.RestartFunctions)
             {
-                fun();
+                fun(args);
             }
 
             foreach (instance; scene.list())
             {
                 foreach (fun; instance.events.IRestartFunctions)
                 {
-                    fun();
+                    fun(args);
                 }
             }
         }
 
         foreach(fun; scene.events.EntryFunctions)
         {
-            fun();
+            fun(args);
         }
 
         foreach (instance; scene.list())
         {
             foreach (fun; instance.events.IEntryFunctions)
             {
-                fun();
+                fun(args);
             }
         }
 
@@ -1803,7 +1908,7 @@ unittest
     A obj = new A();
     sceneManager.add(obj);
 
-    assert((obj.events.InitFunctions[0].ptr) == ((&obj.onInit).ptr));
+    assert((obj.events.InitFunctions[0].func.ptr) == ((&obj.onInit).ptr));
 }
 
 unittest
@@ -1820,4 +1925,134 @@ unittest
 
     sceneManager.add(new A());
     assert(sceneManager.hasScene("Test"));
+}
+
+unittest
+{
+    initSceneManager();
+
+    struct Data
+    {
+        int first;
+        string second;
+    }
+
+    static class A : Scene
+    {
+        bool state = false;
+
+        this() @safe
+        {
+            name = "A";
+        }
+
+        @event(Entry) void onEntry() @safe
+        {
+            state = true;
+        }
+    }
+
+    static class B : Scene
+    {
+        int first;
+        Data second;
+
+        this() @safe
+        {
+            name = "B";
+        }
+
+        @args!(int, Data)
+        @event(Init) void onInit(int first, Data second) @safe
+        {
+            this.first = first;
+            this.second = second;
+        }
+    }
+
+    A a;
+    B b;
+
+    sceneManager.add (a = new A());
+    sceneManager.add (b = new B());
+
+    sceneManager.gotoin ("A");
+    assert (a.state == true);
+
+    sceneManager.gotoin ("B", 7, Data(9, "test"));
+    assert (b.first == 7 && b.second == Data(9, "test"));
+}
+
+unittest
+{
+    initSceneManager();
+
+    struct Data
+    {
+        int first;
+        string second;
+    }
+
+    static class A : Scene
+    {
+        bool state = false;
+
+        this() @safe
+        {
+            name = "A";
+        }
+
+        @event(Entry) void onEntry() @safe
+        {
+            state = true;
+        }
+    }
+
+    static class B : Scene
+    {
+        int first;
+        Data second;
+
+        this() @safe
+        {
+            name = "B";
+        }
+
+        @args!(int, Data)
+        @event(Init) void onInit(int first, Data second) @safe
+        {
+            this.first = first;
+            this.second = second;
+        }
+    }
+
+    static class C : Instance
+    {
+        Data data;
+
+        this() @safe
+        {
+            name = "C";
+        }
+
+        @args!(int, Data)
+        @event(Init) void onInit(int first, Data second) @safe
+        {
+            this.data = second;
+        }
+    }
+
+    A a;
+    B b;
+    C c;
+
+    sceneManager.add (a = new A());
+    sceneManager.add (b = new B());
+
+    b.add (c = new C());
+
+    sceneManager.gotoin ("A");
+
+    sceneManager.gotoin ("B", 7, Data(9, "test"));
+    assert (c.data == Data(9, "test"));
 }

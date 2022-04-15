@@ -60,11 +60,52 @@ struct InstanceEvents
     import tida.render;
     import tida.localevent;
 
-    alias FEInit = void delegate() @safe;
-    alias FEStep = void delegate() @safe;
-    alias FERestart = void delegate() @safe;
-    alias FEEntry = void delegate() @safe;
+    struct FEEntry
+    {
+        void delegate() @safe func;
+        size_t argsLength;
+
+        static FEEntry create(T...)(void delegate() @safe func) @trusted
+        {
+            FEEntry entry;
+            entry.func = func;
+            entry.appendArguments!T();
+
+            return entry;
+        }
+
+        void appendArguments(T...)() @trusted
+        {
+            static foreach (Arg; T)
+            {
+                argsLength += Arg.sizeof;
+            }
+        }
+
+        bool validArgs(T...)(T args) @trusted
+        {
+            size_t length;
+            foreach (arg; args)
+            {
+                length += arg.sizeof;
+            }
+
+            return length == argsLength;
+        }
+
+        void opCall(T...)(T args) @trusted
+        in (validArgs(args))
+        {
+            void delegate(T) @safe callFunction = cast(void delegate(T) @safe) func;
+            callFunction(args);
+        }
+    }
+
+    alias FEInit = FEEntry;
+    alias FERestart = FEEntry;
+
     alias FELeave = void delegate() @safe;
+    alias FEStep = void delegate() @safe;
     alias FEGameStart = void delegate() @safe;
     alias FEGameExit = void delegate() @safe;
     alias FEGameRestart = void delegate() @safe;
@@ -89,6 +130,7 @@ struct InstanceEvents
     }
 
     FEInit[] IInitFunctions;
+
     FEStep[] IStepFunctions;
     FEStep[][size_t] IStepThreadFunctions;
     FERestart[] IRestartFunctions;
@@ -233,8 +275,6 @@ public:
     this()
     {
         sprite = new Sprite();
-
-        name = typeid(this).stringof;
     }
 
     /++
