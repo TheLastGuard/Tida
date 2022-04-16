@@ -110,7 +110,6 @@ final class SceneManager
 {
     import std.algorithm : canFind;
     import core.sync.mutex;
-    import std.variant;
 
 private:
     alias RecoveryDelegate = void delegate(ref Scene) @safe;
@@ -121,24 +120,6 @@ private:
     {
         string[] names;
         LazyGroupFunction spawnFunction;
-    }
-
-    struct UserData
-    {
-        void* data = null;
-        size_t length = 0;
-
-        this(T)(T value) @trusted
-        {
-            data = cast(void*) &value;
-            length = T.sizeof;
-        }
-
-        T get(T)() @trusted
-        in (T.sizeof == length)
-        {
-            return *(cast(T*) data);
-        }
     }
 
     Scene[string] _scenes;
@@ -160,8 +141,6 @@ private:
     bool updateThreads = false;
 
     shared(Mutex) instanceMutex;
-
-    UserData[] gotoUserData;
 
 public @safe:
     size_t countStartThreads = 0;
@@ -1494,7 +1473,7 @@ public @safe:
 
         if (current !is null)
         {
-            foreach (fun; scene.events.LeaveFunctions)
+            foreach (fun; current.events.LeaveFunctions)
             {
                 fun();
             }
