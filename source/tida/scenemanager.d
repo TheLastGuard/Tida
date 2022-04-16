@@ -783,7 +783,7 @@ public @safe:
                             "An initialization event cannot have any arguments. To do this, add an attribute `@args!(params...)`"
                         );
 
-                        events.InitFunctions ~= InstanceEvents.FEEntry.create(cast(void delegate() @safe) &__traits(getMember, instance, member));
+                        events.IInitFunctions ~= InstanceEvents.FEEntry.create(cast(void delegate() @safe) &__traits(getMember, instance, member));
                     }
                 } else
                 static if (attributeIn!(T, event, member).type == Restart)
