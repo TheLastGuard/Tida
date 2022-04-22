@@ -110,6 +110,10 @@ private void workerThread(Tid owner, size_t id)
                     case APIType.ThreadResume:
                         isPaused = false;
                     break;
+
+                    case APIType.ThreadRebindThreadID:
+                        id = response.value;
+                    break;
                     
                     default:
                         continue;
