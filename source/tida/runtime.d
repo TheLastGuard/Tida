@@ -235,7 +235,7 @@ public @trusted:
 
     }
 
-    override Device device() @safe
+    override @property Device device()
     {
         return _device;
     }

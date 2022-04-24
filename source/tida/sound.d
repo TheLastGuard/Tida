@@ -29,10 +29,21 @@ void initSoundlibrary() @trusted
 }
 
 /++
+Sound manager. It is a device from where you can adjust the position
+of the listener and other operations.
++/
+Device soundManager() @safe
+{
+    return runtime.device;
+}
+
+/++
 Audio playback context. Some global parameters of sound and music are set from it.
 +/
 class Device
 {
+    import tida.vector;
+
 private:
     ALCdevice* _device;
     ALCcontext* _context;
@@ -74,6 +85,24 @@ public @trusted:
     }
 
     /++
+    The position of the main listener in space.
+    +/
+    @property void position(Vector!float value)
+    {
+        alListener3f(AL_POSITION, value.x, value.y, 0.0f);
+    }
+
+    /// ditto
+    @property Vector!float position()
+    {
+        float[3] pos;
+
+        alGetListenerfv(AL_POSITION, &pos[0]);
+
+        return vec!float(pos[0 .. 2]);
+    }
+
+    /++
     Opens and prepares the device for work.
 
     Throws:
@@ -104,6 +133,12 @@ public @trusted:
         alcMakeContextCurrent(null);
         alcDestroyContext(context);
         alcCloseDevice(device);
+    }
+
+    ~this() @safe
+    {
+        stopAll();
+        close();
     }
 }
 
@@ -230,6 +265,23 @@ public @trusted:
     }
 
     /++
+    The position of the sound in the plane.
+    +/
+    @property void position(Vector!float value)
+    {
+        alSource3f(_source, AL_POSITION, value.x, value.y, 0.0f);
+    }
+
+    /// ditto
+    @property Vector!float position()
+    {
+        float[3] pos;
+        alGetSourcefv(_source, AL_POSITION, &pos[0]);
+
+        return vec!float(pos[0 .. 2]);
+    }
+
+    /++
     Sound source volume control.
 
     Params:
@@ -325,7 +377,7 @@ public @trusted:
     }
 
     /// ditto
-    @property void currentDuration(Duration duration) @disable
+    @property void currentDuration(Duration duration)
     {
         int chn;
         int bits;
@@ -335,12 +387,11 @@ public @trusted:
         alGetBufferi(_buffer, AL_BITS, &bits);
         alGetBufferi(_buffer, AL_FREQUENCY, &fq);
 
-        float offset = (duration.total!"seconds") / ((32 / chn * bits) / fq);
-        alSourcef(_source, AL_SAMPLE_OFFSET, offset);
+        alSourcef(_source, AL_SEC_OFFSET, duration.total!"seconds");
     }
 
-    /// Sound distance effect (range 0 .. 1)
-    @property void distance(float value)
+    /// Sound gain effect (range 0 .. 1)
+    @property void gain(float value)
     {
         alSourcef(_source, AL_GAIN, value);
     }
