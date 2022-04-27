@@ -2343,10 +2343,11 @@ override:
     void circle(Vecf position, float radius, Color!ubyte color, bool isFill)
     {
         import tida.image, tida.each;
+        import std.algorithm : fill;
 
         int rad = cast(int) radius;
         Image buffer = new Image(rad * 2, rad * 2);
-        buffer.fill(rgba(255,255,255,0));
+        buffer.pixels.fill(rgba(255,255,255,0));
 
         int x = 0;
         int y = rad;

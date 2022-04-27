@@ -46,7 +46,7 @@ struct SceneEvents
     struct FEEntry
     {
         void delegate() @safe func;
-        size_t argsLength;
+        string[] __types;
 
         static FEEntry create(T...)(void delegate() @safe func) @trusted
         {
@@ -61,21 +61,38 @@ struct SceneEvents
         {
             static foreach (Arg; T)
             {
-                this.argsLength += Arg.sizeof;
+                __types ~= Arg.stringof;
             }
         }
 
         bool validArgs(T...)(T args) @trusted
         {
-            import std.stdio;
+            import std.traits : AllImplicitConversionTargets;
+            import std.algorithm : canFind;
 
-            size_t length;
-            foreach (arg; args)
+            size_t countConv = 0;
+            string[][] newTypes;
+
+            static foreach (Arg; T)
             {
-                length += arg.sizeof;
+                newTypes.length += 1;
+                newTypes[$ - 1] ~= Arg.stringof;
+                static foreach (Imip; AllImplicitConversionTargets!Arg)
+                {
+                    newTypes[$ - 1] ~= Imip.stringof;
+                }
             }
 
-            return length == argsLength;
+            if (newTypes.length != __types.length)
+                return false;
+
+            foreach (i; 0 .. __types.length)
+            {
+                if (newTypes[i].canFind(__types[i]))
+                    countConv++;
+            }
+
+            return countConv == __types.length;
         }
 
         void opCall(T...)(T args) @trusted
@@ -105,7 +122,64 @@ struct SceneEvents
     struct SRTrigger
     {
         Trigger ev;
-        FETrigger fun;
+        FETrigger func;
+
+        string[] __types;
+
+        static SRTrigger create(T...)(Trigger ev, void delegate() @safe func) @trusted
+        {
+            SRTrigger trigg;
+            trigg.func = func;
+            trigg.appendArguments!T();
+            trigg.ev = ev;
+
+            return trigg;
+        }
+
+        void appendArguments(T...)() @trusted
+        {
+            static foreach (Arg; T)
+            {
+                __types ~= Arg.stringof;
+            }
+        }
+
+        bool validArgs(T...)(T args) @trusted
+        {
+            import std.traits : AllImplicitConversionTargets;
+            import std.algorithm : canFind;
+
+            size_t countConv = 0;
+            string[][] newTypes;
+
+            static foreach (Arg; T)
+            {
+                newTypes.length += 1;
+                newTypes[$ - 1] ~= Arg.stringof;
+                static foreach (Imip; AllImplicitConversionTargets!Arg)
+                {
+                    newTypes[$ - 1] ~= Imip.stringof;
+                }
+            }
+
+            if (newTypes.length != __types.length)
+                return false;
+
+            foreach (i; 0 .. __types.length)
+            {
+                if (newTypes[i].canFind(__types[i]))
+                    countConv++;
+            }
+
+            return countConv == __types.length;
+        }
+
+        void opCall(T...)(T args) @trusted
+        in (validArgs(args))
+        {
+            void delegate(T) @safe callFunction = cast(void delegate(T) @safe) func;
+            callFunction(args);
+        }
     }
 
     FEInit[] InitFunctions;

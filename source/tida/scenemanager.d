@@ -325,7 +325,7 @@ public @safe:
     Params:
         name = Trigger name.
     +/
-    void trigger(string name) @trusted
+    void trigger(T...)(string name, T args) @trusted
     {
         auto scene = this.context();
 
@@ -333,7 +333,7 @@ public @safe:
         {
             if (fun.ev.name == name)
             {
-                fun.fun();
+                fun(args);
             }
         }
 
@@ -343,7 +343,7 @@ public @safe:
             {
                 if (fun.ev.name == name)
                 {
-                    fun.fun();
+                    fun(args);
                 }
             }
         }
@@ -352,16 +352,24 @@ public @safe:
     unittest
     {
         enum onSaysHi = Trigger("onSaysHi");
+        enum onSayWho = Trigger("onSayWho");
 
         initSceneManager();
 
         static class Test : Scene
         {
             bool isSayHi = false;
+            string msg;
 
             @onSaysHi void onSayHi() @safe
             {
                 isSayHi = true;
+            }
+
+            @onSayWho @args!(string)
+            void onSays(string message) @safe
+            {
+                msg = message;
             }
         }
 
@@ -371,8 +379,10 @@ public @safe:
         sceneManager.gotoin(test);
 
         sceneManager.trigger("onSaysHi");
-
         assert (test.isSayHi);
+
+        sceneManager.trigger("onSayWho", "test001");
+        assert (test.msg == "test001");
     }
 
     /++
@@ -382,7 +392,7 @@ public @safe:
     Params:
         name = Trigger name.
     +/
-    void globalTrigger(string name) @trusted
+    void globalTrigger(T...)(string name, T args) @trusted
     {
         foreach (scene; scenes)
         {
@@ -390,7 +400,7 @@ public @safe:
             {
                 if (fun.ev.name == name)
                 {
-                    fun.fun();
+                    fun(args);
                 }
             }
 
@@ -400,7 +410,7 @@ public @safe:
                 {
                     if (fun.ev.name == name)
                     {
-                        fun.fun();
+                        fun(args);
                     }
                 }
             }
@@ -867,8 +877,22 @@ public @safe:
             } else
             static if (hasAttrib!(T, Trigger, member))
             {
-                events.IOnTriggerFunctions ~= InstanceEvents.SRTrigger (attributeIn!(T, Trigger, member),
-                                                        &__traits(getMember, instance, member));
+                static if (getUDAs!(__traits(getMember, instance, member), args).length != 0)
+                {
+                    events.OnTriggerFunctions ~= InstanceEvents.SRTrigger.create!
+                        (getUDAs!(__traits(getMember, instance, member), args)[0].members)
+                                    (
+                                        attributeIn!(T, Trigger, member),
+                                        cast(void delegate() @safe) &__traits(getMember, scene, member)
+                                    );
+                } else
+                {
+                    events.OnTriggerFunctions ~= InstanceEvents.SRTrigger.create
+                                    (
+                                        attributeIn!(T, Trigger, member),
+                                        &__traits(getMember, instance, member)
+                                    );
+                }
             } else
             static if (hasAttrib!(T, StepThread, member))
             {
@@ -1111,8 +1135,22 @@ public @safe:
             } else
             static if (hasAttrib!(T, Trigger, member))
             {
-                events.OnTriggerFunctions ~= SceneEvents.SRTrigger (attributeIn!(T, Trigger, member),
-                                                        &__traits(getMember, scene, member));
+                static if (getUDAs!(__traits(getMember, scene, member), args).length != 0)
+                {
+                    events.OnTriggerFunctions ~= SceneEvents.SRTrigger.create!
+                        (getUDAs!(__traits(getMember, scene, member), args)[0].members)
+                                    (
+                                        attributeIn!(T, Trigger, member),
+                                        cast(void delegate() @safe) &__traits(getMember, scene, member)
+                                    );
+                } else
+                {
+                    events.OnTriggerFunctions ~= SceneEvents.SRTrigger.create
+                                    (
+                                        attributeIn!(T, Trigger, member),
+                                        &__traits(getMember, scene, member)
+                                    );
+                }
             } else
             static if (hasAttrib!(T, StepThread, member))
             {
