@@ -879,7 +879,7 @@ public @safe:
             {
                 static if (getUDAs!(__traits(getMember, instance, member), args).length != 0)
                 {
-                    events.OnTriggerFunctions ~= InstanceEvents.SRTrigger.create!
+                    events.IOnTriggerFunctions ~= InstanceEvents.SRTrigger.create!
                         (getUDAs!(__traits(getMember, instance, member), args)[0].members)
                                     (
                                         attributeIn!(T, Trigger, member),
@@ -887,7 +887,7 @@ public @safe:
                                     );
                 } else
                 {
-                    events.OnTriggerFunctions ~= InstanceEvents.SRTrigger.create
+                    events.IOnTriggerFunctions ~= InstanceEvents.SRTrigger.create
                                     (
                                         attributeIn!(T, Trigger, member),
                                         &__traits(getMember, instance, member)
