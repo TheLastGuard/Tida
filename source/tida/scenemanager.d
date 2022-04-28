@@ -1096,7 +1096,7 @@ public @safe:
                 } else
                 static if (attributeIn!(T, event, member).type == Step)
                 {
-                    static if (getUDAs!(__traits(getMember, instance, member), threadSafe).length != 0)
+                    static if (getUDAs!(__traits(getMember, scene, member), threadSafe).length != 0)
                     {
                         import std.algorithm : maxElement;
 
