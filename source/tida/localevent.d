@@ -167,7 +167,7 @@ Attribute indicating that the flow function function
 (guarantees the programmer himself) and can be transferred to another
 stream to accelerate. Do not combine with the  @event(step).
 +/
-struct stepThreadSafe {}
+struct threadSafe {}
 
 struct args(T...)
 {

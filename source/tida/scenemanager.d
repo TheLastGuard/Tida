@@ -836,7 +836,42 @@ public @safe:
                 } else
                 static if (attributeIn!(T, event, member).type == Step)
                 {
-                    events.IStepFunctions ~= &__traits(getMember, instance, member);
+                    static if (getUDAs!(__traits(getMember, instance, member), threadSafe).length != 0)
+                    {
+                        import std.algorithm : maxElement;
+
+                        if (events.IStepThreadFunctions.length != 1)
+                        {
+                            minStepLen = events.IStepThreadFunctions.values.maxElement!(a => a.length).length;
+                            foreach (key, value; events.IStepThreadFunctions)
+                            {
+                                if (value.length < minStepLen)
+                                {
+                                    minStepTh = &events.IStepThreadFunctions[key];
+                                    minStepLen = value.length;
+                                }
+                            }
+                        } else
+                        {
+                            foreach (i; 1 .. maxThreads + 1)
+                                events.IStepThreadFunctions[i] = [];
+
+                            minStepTh = &events.IStepThreadFunctions[maxThreads];
+                            minStepLen = events.IStepThreadFunctions[maxThreads].length;
+                        }
+
+                        if (minStepLen > functionPerThread)
+                        {
+                            events.IStepFunctions ~= &__traits(getMember, instance, member);
+                        }
+                        else
+                        {
+                            *minStepTh ~= &__traits(getMember, instance, member);
+                        }
+                    } else
+                    {
+                        events.IStepFunctions ~= &__traits(getMember, instance, member);
+                    }
                 } else
                 static if (attributeIn!(T, event, member).type == GameStart)
                 {
@@ -908,39 +943,6 @@ public @safe:
             {
                 events.IColliderStructs ~= InstanceEvents.SRCollider(attributeIn!(T, Collision, member),
                                                          &__traits(getMember, instance, member));
-            }else
-            static if (hasAttrib!(T, stepThreadSafe, member))
-            {
-                import std.algorithm : maxElement;
-
-                if (events.IStepThreadFunctions.length != 1)
-                {       
-                    minStepLen = events.IStepThreadFunctions.values.maxElement!(a => a.length).length;
-                    foreach (key, value; events.IStepThreadFunctions)
-                    {
-                        if (value.length < minStepLen)
-                        {
-                            minStepTh = &events.IStepThreadFunctions[key];
-                            minStepLen = value.length;
-                        }
-                    }
-                } else
-                {
-                    foreach (i; 1 .. maxThreads + 1)
-                        events.IStepThreadFunctions[i] = [];
-                        
-                    minStepTh = &events.IStepThreadFunctions[maxThreads];
-                    minStepLen = events.IStepThreadFunctions[maxThreads].length;
-                }
-            
-                if (minStepLen > functionPerThread)
-                {
-                    events.IStepFunctions ~= &__traits(getMember, instance, member);
-                }
-                else
-                {
-                    *minStepTh ~= &__traits(getMember, instance, member);
-                }
             }
         }
 
@@ -1094,7 +1096,42 @@ public @safe:
                 } else
                 static if (attributeIn!(T, event, member).type == Step)
                 {
-                    events.StepFunctions ~= &__traits(getMember, scene, member);
+                    static if (getUDAs!(__traits(getMember, instance, member), threadSafe).length != 0)
+                    {
+                        import std.algorithm : maxElement;
+
+                        if (events.StepThreadFunctions.length != 1)
+                        {
+                            minStepLen = events.StepThreadFunctions.values.maxElement!(a => a.length).length;
+                            foreach (key, value; events.StepThreadFunctions)
+                            {
+                                if (value.length < minStepLen)
+                                {
+                                    minStepTh = &events.StepThreadFunctions[key];
+                                    minStepLen = value.length;
+                                }
+                            }
+                        } else
+                        {
+                            foreach (i; 1 .. maxThreads + 1)
+                                events.StepThreadFunctions[i] = [];
+
+                            minStepTh = &events.StepThreadFunctions[maxThreads];
+                            minStepLen = events.StepThreadFunctions[maxThreads].length;
+                        }
+
+                        if (minStepLen > functionPerThread)
+                        {
+                            events.StepFunctions ~= &__traits(getMember, scene, member);
+                        }
+                        else
+                        {
+                            *minStepTh ~= &__traits(getMember, scene, member);
+                        }
+                    } else
+                    {
+                        events.StepFunctions ~= &__traits(getMember, scene, member);
+                    }
                 } else
                 static if (attributeIn!(T, event, member).type == GameStart)
                 {
@@ -1160,39 +1197,6 @@ public @safe:
                 if (countStartThreads < attributeIn!(T, StepThread, member).id)
                 {
                     countStartThreads = attributeIn!(T, StepThread, member).id;
-                }
-            } else
-            static if (hasAttrib!(T, stepThreadSafe, member))
-            {
-                import std.algorithm : maxElement;
-
-                if (events.StepThreadFunctions.length != 1)
-                {
-                    minStepLen = events.StepThreadFunctions.values.maxElement!(a => a.length).length;
-                    foreach (key, value; events.StepThreadFunctions)
-                    {
-                        if (value.length < minStepLen)
-                        {
-                            minStepTh = &events.StepThreadFunctions[key];
-                            minStepLen = value.length;
-                        }
-                    }
-                } else
-                {
-                    foreach (i; 1 .. maxThreads + 1)
-                        events.StepThreadFunctions[i] = [];
-
-                    minStepTh = &events.StepThreadFunctions[maxThreads];
-                    minStepLen = events.StepThreadFunctions[maxThreads].length;
-                }
-
-                if (minStepLen > functionPerThread)
-                {
-                    events.StepFunctions ~= &__traits(getMember, scene, member);
-                }
-                else
-                {
-                    *minStepTh ~= &__traits(getMember, scene, member);
                 }
             }
         }
