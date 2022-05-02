@@ -145,13 +145,15 @@ public:
 @trusted:
     this(GameConfig config)
     {
-        _window = new Window(config.windowWidth, config.windowHeight, config.windowTitle);
+        _window = new Window(config.windowWidth, config.windowHeight, "");
         (cast(Window) _window).windowInitialize!(WithContext)(config.positionWindowX,config.positionWindowY);
         loadGraphicsLibrary();
         _renderer = createRenderer(_window);
         _renderer.background = config.background;
         if (config.icon != "")
             _window.icon = new Image().load(config.icon);
+
+        _window.title = config.windowTitle;
 
         initSceneManager();
         event = new EventHandler((cast(Window) window));

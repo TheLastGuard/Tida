@@ -73,9 +73,9 @@ __gshared
 }
 
 static string[] glxDefaultPaths = [
-	"/usr/lib/libGLX.so",
-	"/usr/lib/libGL.so",
-	"/usr/lib/libGLX_nvidia.so"
+    "/usr/lib/libGLX.so",
+    "/usr/lib/libGL.so",
+    "/usr/lib/libGLX_nvidia.so"
 ];
 
 /++
@@ -85,10 +85,19 @@ static string[] glxDefaultPaths = [
 +/
 void loadGLXLibrary() @trusted
 {
-    import std.file : exists, dirEntries, SpanMode, DirEntry, isDir, isFile, write, read;
+    import std.file : exists, dirEntries, SpanMode, DirEntry, isDir, isFile, write, read, mkdir;
     import std.string : toStringz;
     import std.algorithm : reverse, canFind;
     import std.parallelism : parallel;
+    import std.process : environment;
+
+    immutable configDir = environment.get("HOME") ~ "/.config";
+    if (!exists(configDir))
+    {
+        mkdir (configDir);
+    }
+
+    immutable configFile = configDir ~ "/glxlibpath";
 
     string[] pathes;
 
@@ -137,39 +146,23 @@ void loadGLXLibrary() @trusted
     }
 
     string[] paths;
-    
-    version (dglx_cachelib)
+
+    if (exists(configFile))
     {
-    	if (exists(".dglxcachelib"))
-    	{
-    		paths ~= cast(string) read(".dglxcachelib");
-    	} else
-    	{
-	    	paths ~= recurseFindGLX("/usr/lib/") ~ glxDefaultPaths;
-	    	
-	    	version(X86_64)
-		    {
-		        paths ~= recurseFindGLX("/usr/lib/x86_64-linux-gnu/");
-		    }
-		    else
-		    version(X86)
-		    {
-		        paths ~= recurseFindGLX("/usr/lib/i386-linux-gnu/");
-	    	}
-	    }
+        paths ~= cast(string) read(configFile);
     } else
     {
-    	paths ~= recurseFindGLX("/usr/lib/") ~ glxDefaultPaths;
-    	
-    	version(X86_64)
-	    {
-	        paths ~= recurseFindGLX("/usr/lib/x86_64-linux-gnu/");
-	    }
-	    else
-	    version(X86)
-	    {
-	        paths ~= recurseFindGLX("/usr/lib/i386-linux-gnu/");
-    	}
+        paths ~= recurseFindGLX("/usr/lib/") ~ glxDefaultPaths;
+
+        version(X86_64)
+        {
+            paths ~= recurseFindGLX("/usr/lib/x86_64-linux-gnu/");
+        }
+        else
+        version(X86)
+        {
+            paths ~= recurseFindGLX("/usr/lib/i386-linux-gnu/");
+        }
     }
     
     bool isSucces = false;
@@ -181,11 +174,8 @@ void loadGLXLibrary() @trusted
 
         if(*ptr is null) throw new Exception("Not load library!");
     }
-    
-    version(dglx_cachelib)
-    {
-    	string cachelib;
-    }
+
+    string cachelib;
 
     foreach(path; paths)
     {
@@ -214,12 +204,7 @@ void loadGLXLibrary() @trusted
                 bindOrError(cast(void**) &glXIsDirect, "glXIsDirect");
 
                 isSucces = true;
-                
-                version (dglx_cachelib)
-                {
-                	cachelib = path;
-                }
-                
+                cachelib = path;
             }catch(Exception e)
             {
                 continue;
@@ -227,11 +212,8 @@ void loadGLXLibrary() @trusted
             break;
         }
     }
-    
-    version (dglx_cachelib)
-    {
-    	write (".dglxcachelib", cachelib);
-    }
+
+    write (configFile, cachelib);
 
     if(!isSucces)
         throw new Exception("Library `glx` is not load!");

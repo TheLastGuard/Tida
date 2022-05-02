@@ -240,6 +240,29 @@ public @safe:
         gotoin(ofbegin);
     }
 
+    unittest
+    {
+        static class Test : Scene
+        {
+            ushort tid = 0;
+        }
+
+        Test test;
+
+        initSceneManager();
+        sceneManager.add (test = new Test());
+        sceneManager.inbegin();
+
+        test.tid = 37;
+        test = null;
+
+        sceneManager.gameRestart();
+
+        test = cast(Test) sceneManager.current;
+
+        assert (test.tid == 0);
+    }
+
     /++
     Link to the current scene.
 
