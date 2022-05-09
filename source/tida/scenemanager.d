@@ -1536,6 +1536,21 @@ public @safe:
         _previous = current;
         _thereGoto = true;
 
+        version (unittest)
+        {
+            // avoid
+        } else
+        {
+            if (scene.camera !is null)
+            {
+                renderer.camera = scene.camera;
+            }
+            else
+            {
+                renderer.camera = defaultCamera();
+            }
+        }
+
         if (current !is null)
         {
             foreach (fun; current.events.LeaveFunctions)
@@ -1624,21 +1639,6 @@ public @safe:
         _initable = null;
 
         _current = scene;
-
-        version (unittest)
-        {
-            // avoid
-        } else
-        {
-            if (scene.camera !is null)
-            {
-                renderer.camera = scene.camera;
-            }
-            else
-            {
-                renderer.camera = defaultCamera();
-            }
-        }
 
         _thereGoto = false;
     }

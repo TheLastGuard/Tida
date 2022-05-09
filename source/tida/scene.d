@@ -318,7 +318,10 @@ public:
     {
         foreach (instance; args)
         {
-            add(instance);
+            static if (isInstance!(typeof(instance)))
+                add(instance);
+            else
+                static assert(null, "One of the parameters is not a copy.");
         }
     }
 
@@ -726,7 +729,7 @@ unittest
 
     auto a = new A();
     auto b = new B();
-    scene.add([a,b]);
+    scene.add(a, b);
 
     assert(scene.getInstanceByClass!A is (a));
     assert(scene.getInstanceByClass!B is (b));
