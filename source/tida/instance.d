@@ -90,7 +90,7 @@ struct InstanceEvents
             size_t countConv = 0;
             string[][] newTypes;
 
-            if (args.length == 0)
+            if (__types.length == 0)
                 return true;
             else
             {
