@@ -90,26 +90,31 @@ struct InstanceEvents
             size_t countConv = 0;
             string[][] newTypes;
 
-            static foreach (Arg; T)
+            if (args.length == 0)
+                return true;
+            else
             {
-                newTypes.length += 1;
-                newTypes[$ - 1] ~= Arg.stringof;
-                static foreach (Imip; AllImplicitConversionTargets!Arg)
+                static foreach (Arg; T)
                 {
-                    newTypes[$ - 1] ~= Imip.stringof;
+                    newTypes.length += 1;
+                    newTypes[$ - 1] ~= Arg.stringof;
+                    static foreach (Imip; AllImplicitConversionTargets!Arg)
+                    {
+                        newTypes[$ - 1] ~= Imip.stringof;
+                    }
                 }
+
+                if (newTypes.length != __types.length)
+                    return false;
+
+                foreach (i; 0 .. __types.length)
+                {
+                    if (newTypes[i].canFind(__types[i]))
+                        countConv++;
+                }
+
+                return countConv == __types.length;
             }
-
-            if (newTypes.length != __types.length)
-                return false;
-
-            foreach (i; 0 .. __types.length)
-            {
-                if (newTypes[i].canFind(__types[i]))
-                    countConv++;
-            }
-
-            return countConv == __types.length;
         }
 
         void opCall(T...)(T args) @trusted

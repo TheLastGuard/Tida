@@ -2012,6 +2012,11 @@ unittest
             this.first = first;
             this.second = second;
         }
+
+        @event(Init) void onInitEmpty() @safe // ok
+        {
+
+        }
     }
 
     A a;
