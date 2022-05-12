@@ -118,8 +118,23 @@ struct InstanceEvents
         }
 
         void opCall(T...)(T args) @trusted
-        in (validArgs(args))
         {
+            /+
+            When indicating such a flag, with a discrepancy of the arguments
+            submitted during the transition of the stage, an error will
+            occur so that the programmer can correct the shortcomings.
+            In the absence of such a flag, this function will not be caused,
+            thereby, different implementations of the functions will be
+            caused depending on the arguments.
+            +/
+            if (!validArgs(args))
+            {
+                version (anErrorInCaseOfMismatch)
+                    assert(null, "Arguments do not match!");
+                else
+                    return;
+            }
+
             void delegate(T) @safe callFunction = cast(void delegate(T) @safe) func;
             callFunction(args);
         }

@@ -2000,6 +2000,7 @@ unittest
     {
         int first;
         Data second;
+        bool third = false;
 
         this() @safe
         {
@@ -2015,7 +2016,7 @@ unittest
 
         @event(Init) void onInitEmpty() @safe // ok
         {
-
+            third = true;
         }
     }
 
@@ -2029,7 +2030,7 @@ unittest
     assert (a.state == true);
 
     sceneManager.gotoin ("B", 7, Data(9, "test"));
-    assert (b.first == 7 && b.second == Data(9, "test"));
+    assert (b.first == 7 && b.second == Data(9, "test") && b.third == true);
 }
 
 unittest

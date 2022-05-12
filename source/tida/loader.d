@@ -108,7 +108,7 @@ public @safe:
     Image img = loader.load!Image("a.png");
     ---
     +/
-    T load(T)(immutable string path,string name = "null")
+    T load(T)(immutable string path, string name = "null")
     {
         if (this.get!T(path) !is null)
             return this.get!T(path);
