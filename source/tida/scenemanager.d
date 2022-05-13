@@ -142,7 +142,7 @@ private:
 
     shared(Mutex) instanceMutex;
 
-public @safe:
+public:
     size_t countStartThreads = 0;
     size_t maxThreads = 3;
     size_t functionPerThread = 80;
@@ -153,16 +153,16 @@ public @safe:
     }
 
     /++
-    A state indicating whether an instance transition is in progress. 
+    A state indicating whether an instance transition is in progress.
     Needed to synchronize the stream.
     +/
-    @property bool isThereGoto() nothrow pure
+    @property bool isThereGoto() @safe nothrow pure
     {
         return _thereGoto;
     }
-    
+
     /// List scenes
-    @property Scene[string] scenes() nothrow pure
+    @property Scene[string] scenes() @safe nothrow pure
     {
         return _scenes;
     }
@@ -178,7 +178,7 @@ public @safe:
     sceneManager.gameRestart();
     ---
     +/
-    @property Scene ofbegin() nothrow pure
+    @property Scene ofbegin() @safe nothrow pure
     {
         return _ofbegin;
     }
@@ -186,7 +186,7 @@ public @safe:
     /++
     The last added scene.
     +/
-    @property Scene ofend() nothrow pure
+    @property Scene ofend() @safe nothrow pure
     {
         return _ofend;
     }
@@ -194,7 +194,7 @@ public @safe:
     /++
     The previous scene that was active.
     +/
-    @property Scene previous() nothrow pure
+    @property Scene previous() @safe nothrow pure
     {
         return _previous;
     }
@@ -202,7 +202,7 @@ public @safe:
     /++
     A scene that restarts at the moment.
     +/
-    @property Scene restarted() nothrow pure
+    @property Scene restarted() @safe nothrow pure
     {
         return _restarted;
     }
@@ -276,7 +276,7 @@ public @safe:
     See_Also:
         tida.scene.manager.SceneManager.initable
     +/
-    @property Scene current() nothrow pure
+    @property Scene current() @safe nothrow pure
     {
         return _current;
     }
@@ -288,7 +288,7 @@ public @safe:
     The use of such a link is permissible only in context transmission
     events, otherwise, it is possible to detect the scene leading nowhere.
     +/
-    @property Scene initable() nothrow pure
+    @property Scene initable() @safe nothrow pure
     {
         return _initable;
     }
@@ -324,7 +324,7 @@ public @safe:
     }
     ---
     +/
-    @property Scene context() nothrow pure
+    @property Scene context() @safe nothrow pure
     {
         return _initable is null ? (_restarted is null ? _current : _restarted) : _initable;
     }
@@ -497,7 +497,7 @@ public @safe:
     Params:
         Name = Class name.
     +/
-    bool hasScene(Name)()
+    bool hasScene(Name)() @safe
     {
         return _scenes.values.canFind!(e => (cast(Name) e) !is null);
     }
@@ -508,7 +508,7 @@ public @safe:
     Params:
         name = Scene name.
     +/
-    bool hasScene(string name)
+    bool hasScene(string name) @safe
     {
         return _scenes.values.canFind!(e => e.name == name);
     }
@@ -522,7 +522,7 @@ public @safe:
     Params:
         T = Lazy scene.
     +/
-    void lazyAdd(T)()
+    void lazyAdd(T)() @safe
     if (isScene!T)
     {
         auto fun = {
@@ -566,7 +566,7 @@ public @safe:
         assert(sceneManager.hasScene!LazyScene);
     }
 
-    void lazyGroupAdd(T...)()
+    void lazyGroupAdd(T...)() @safe
     {
         size_t countThreads = 0;
 
@@ -673,7 +673,7 @@ public @safe:
     Params:
         scene = Scene.
     +/
-    void add(T)(T scene)
+    void add(T)(T scene) @safe
     {
         static assert(isScene!T, "`" ~ T.stringof ~ "` is not a scene!");
         exploreScene!T(scene);
@@ -753,19 +753,19 @@ public @safe:
             {
                 enum attributeIn = attrib;
             }
-        }   
+        }
     }
 
     /++
-    A function to receive events that were described inside 
+    A function to receive events that were described inside
     the object's implementation.
-    
-    It is necessary if you need to manually call any functions 
+
+    It is necessary if you need to manually call any functions
     without using the scene manager. (The object doesn't have to be added somewhere for the function to work).
-    
+
     Params:
         instance = Instance implementation object.
-        
+
     Returns:
         Returns a structure with the event fields that it could detect.
     +/
@@ -1353,25 +1353,22 @@ public @safe:
         }
     }
 
-    public
-    {
-        /++
-        Array of requests. At each stroke of the cycle, it is checked,
-        processed and cleaned. If an error occurs during the request,
-        they are added to `apiError`.
-        +/
-        APIResponse[] api;
-        
-        /++
-        An array of pre-known commands to execute without chasing data for each thread.
-        +/
-        APIResponse[][size_t] threadAPI;
+    /++
+    Array of requests. At each stroke of the cycle, it is checked,
+    processed and cleaned. If an error occurs during the request,
+    they are added to `apiError`.
+    +/
+    APIResponse[] api;
 
-        /++
-        An array of request errors associated with the request type.
-        +/
-        uint[uint] apiError;
-    }
+    /++
+    An array of pre-known commands to execute without chasing data for each thread.
+    +/
+    APIResponse[][size_t] threadAPI;
+
+    /++
+    An array of request errors associated with the request type.
+    +/
+    uint[uint] apiError;
 
     /++
     Exits the game with a successful error code.
@@ -1433,7 +1430,7 @@ public @safe:
     Params:
         name = Scene name.
     +/
-    void gotoin(T...)(string name, T args)
+    void gotoin(T...)(string name, T args) @safe
     {
         import std.algorithm : remove;
 
@@ -1445,7 +1442,7 @@ public @safe:
                 break;
             }
         }
-        
+
         foreach (key, value; lazySpawns)
         {
             if (key == name)
@@ -1477,7 +1474,7 @@ public @safe:
     Params:
         Name = Scene.
     +/
-    void gotoin(Name, T...)(T args)
+    void gotoin(Name, T...)(T args) @safe
     {
         import std.algorithm : remove;
 
@@ -1532,7 +1529,7 @@ public @safe:
         import tida.game : renderer, window;
         import tida.shape;
         import tida.vector;
-    
+
         _previous = current;
         _thereGoto = true;
 
@@ -1769,7 +1766,7 @@ public @safe:
             if (thread == 0)
             {
                 current.worldCollision();
-            
+
                 if (current.camera !is null)
                     current.camera.followObject();
 
@@ -1812,7 +1809,7 @@ public @safe:
 
             foreach(instance; current.list())
             {
-                if (!instance.active || instance.onlyDraw) 
+                if (!instance.active || instance.onlyDraw)
                     continue;
 
                 if (thread in instance.events.IStepThreadFunctions)

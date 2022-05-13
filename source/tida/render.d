@@ -2167,11 +2167,12 @@ class Software : IRenderer
     import tida.drawable;
 
 private:
-    ICanvas canvas;
     Camera _camera;
     Color!ubyte _background;
 
 public @safe:
+    ICanvas canvas;
+
     this(IWindow window, bool isAlloc = true)
     {
         _camera = new Camera();
@@ -2616,8 +2617,17 @@ Image renderRead(IRenderer render, Vecf position, int width, int height) @truste
     import std.conv : to;
 
     Image image = new Image(width, height);
-    glReadPixels(   position.x.to!int, position.y.to!int,
-                    width, height, GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) image.pixels);
+
+    if (render.type == RenderType.opengl)
+    {
+        glReadPixels(   position.x.to!int, position.y.to!int,
+                        width, height, GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) image.pixels);
+    } else
+    if (render.type == RenderType.software)
+    {
+        Software soft = cast(Software) render;
+        image.bytes!(PixelFormat.RGBA) = soft.canvas.data();
+    }
 
     return image;
 }
