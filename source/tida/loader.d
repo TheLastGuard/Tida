@@ -79,6 +79,7 @@ class Loader
 {
     import std.path;
     import std.exception : enforce;
+    import sdlang;
 
 private:
     Resource[] resources;
@@ -133,6 +134,132 @@ public @safe:
         }
 
         return obj;
+    }
+
+    void parseImageTag(Tag root, string[] path) @trusted
+    {
+        import std.conv : to;
+        import tida.image : Image;
+
+        string fileName = root.getFullName.toString;
+        string filePath = root.getTagValue!string("path", "");
+
+        if (root.getTagValue!string("name", "").length != 0)
+            fileName = root.getTagValue!(string)("name", "");
+
+        if (!exists(filePath))
+            throw new Exception("Not file from tag: " ~ (path ~ root.getFullName.toString).to!string ~ ", file: " ~ filePath);
+
+        auto instance = loader.load!(Image)(filePath, fileName);
+
+        if (root.getTagValue!bool("textured", true))
+            instance.toTexture();
+    }
+
+    void parseSoundTag(Tag root, string[] path) @trusted
+    {
+        import std.conv : to;
+        import tida.sound : Sound;
+
+        string fileName = root.getFullName.toString;
+        string filePath = root.getTagValue!string("path", "");
+
+        if (root.getTagValue!string("name", "").length != 0)
+            fileName = root.getTagValue!(string)("name", "");
+
+        if (!exists(filePath))
+            throw new Exception("Not file from tag: " ~ (path ~ root.getFullName.toString).to!string ~ ", file: " ~ filePath);
+
+        loader.load!(Sound)(filePath, fileName);
+    }
+
+    void parseAnimationTag(Tag root, string[] path) @trusted
+    {
+        import std.conv : to;
+        import tida.animation : Animation;
+        import tida.image : Image, strip;
+        string fileName = root.getFullName.toString;
+        string filePath = root.getTagValue!string("path", "");
+
+        if (root.getTagValue!string("name", "").length != 0)
+            fileName = root.getTagValue!(string)("name", "");
+
+        if (!exists(filePath))
+            throw new Exception("Not file from tag: " ~ (path ~ root.getFullName.toString).to!string ~ ", file: " ~ filePath);
+
+        Animation animation = new Animation();
+        foreach (frame; new Image()
+                            .load(filePath)
+                            .strip(
+                                root.getTagAttribute!int("offset", "x", 0),
+                                root.getTagAttribute!int("offset", "y", 0),
+                                root.getTagAttribute!int("size", "width", 32),
+                                root.getTagAttribute!int("size", "height", 32)
+                            ))
+        {
+            if (root.getTagValue!bool("textured", true))
+                frame.toTexture();
+
+            animation.frames ~= frame;
+        }
+
+        animation.speed = root.getTagValue!float("speed", 0.75f);
+        animation.isRepeat = root.getTagValue!bool("repeated", true);
+
+        Resource resource;
+        resource.init(animation);
+        resource.name = fileName;
+        resource.path = filePath;
+
+        loader.add(resource);
+    }
+
+    void parseAssetsFromTag(Tag root, string[] path) @trusted
+    {
+        string[] actualPath = path.length == 0 ? [root.getFullName.toString] : path ~ [".", root.getFullName.toString];
+
+        foreach (tag; root.all.tags)
+        {
+            string attrib = tag.getAttribute!string("type", "");
+
+            switch (attrib)
+            {
+                case "":
+                    parseAssetsFromTag(
+                        tag,
+                        actualPath
+                    );
+                    continue;
+
+                case "image":
+                    parseImageTag(tag, actualPath);
+                    continue;
+
+                case "sound":
+                    parseSoundTag(tag, actualPath);
+                    continue;
+
+                case "animation":
+                    parseAnimationTag(tag, actualPath);
+                    continue;
+
+                default:
+                    continue;
+            }
+        }
+    }
+
+    void parseAssetsFromSource(string source) @trusted
+    {
+        Tag root = parseSource(source);
+        parseAssetsFromTag(root, []);
+    }
+
+    void parseAssetsFromFile(string path) @trusted
+    {
+        import std.file : readText;
+
+        parseAssetsFromSource(readText(path));
     }
 
     /++

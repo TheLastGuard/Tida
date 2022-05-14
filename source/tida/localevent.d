@@ -173,3 +173,18 @@ struct args(T...)
 {
     alias members = T;
 }
+
+/++
+Example:
+---
+class MyInstance : Instance
+{
+    @asset("path/image.png") // path or name
+    Image image;
+}
+---
++/
+struct asset
+{
+    string name;
+}

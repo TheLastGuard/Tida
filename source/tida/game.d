@@ -73,6 +73,7 @@ public:
     int positionWindowX = 100; /// Window position x-axis.
     int positionWindowY = 100; /// Window position y-axis.
     string icon; /// Icon path.
+    string mainAssetsFile;
     
     size_t maxThreads = 3;
     size_t functionPerThread = 80;
@@ -160,6 +161,9 @@ public:
         _fps = new FPSManager();
         _loader = new Loader();
         _listener = new Listener();
+
+        if (config.mainAssetsFile.length != 0)
+            _loader.parseAssetsFromFile(config.mainAssetsFile);
         
         sceneManager.maxThreads = config.maxThreads;
         sceneManager.functionPerThread = config.functionPerThread;

@@ -218,6 +218,8 @@ struct SceneEvents
     FEDestroy[] OnDestroyFunctions;
     FEATrigger[] OnAnyTriggerFunctions;
     FECollision[] OnAnyCollisionFunctions;
+
+    void delegate() @safe OnAssetLoad;
 }
 
 /++
@@ -315,6 +317,9 @@ public:
             instance.name = T.stringof;
 
         sceneManager.instanceExplore!T(this, instance);
+
+        if (instance.events.OnAssetLoad !is null)
+            instance.events.OnAssetLoad();
 
         this.sort();
     }

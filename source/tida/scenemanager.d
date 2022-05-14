@@ -696,6 +696,9 @@ public:
         };
 
         _scenes[scene.name] = scene;
+
+        if (scene.events.OnAssetLoad !is null)
+            scene.events.OnAssetLoad();
     }
 
     template hasMatch(alias attrib, alias AttribType)
@@ -753,6 +756,28 @@ public:
             {
                 enum attributeIn = attrib;
             }
+        }
+    }
+
+    template hasAssetAttributes(T)
+    {
+        import std.traits;
+
+        static foreach (member; __traits(allMembers, T))
+        {
+            static if (getUDAs!(__traits(getMember, T, member), asset).length != 0)
+            {
+                static if (!__traits(compiles, found))
+                {
+                    enum hasAssetAttributes = true;
+                    enum found = true;
+                }
+            }
+        }
+
+        static if (!__traits(compiles, found))
+        {
+            enum hasAssetAttributes = false;
         }
     }
 
@@ -967,6 +992,23 @@ public:
                 events.IColliderStructs ~= InstanceEvents.SRCollider(attributeIn!(T, Collision, member),
                                                          &__traits(getMember, instance, member));
             }
+        }
+
+        static if (hasAssetAttributes!(T))
+        {
+            import tida.loader;
+
+            events.OnAssetLoad = {
+                static foreach (member; __traits(allMembers, T))
+                {
+                    static if (getUDAs!(__traits(getMember, scene, member), asset).length != 0)
+                    {
+                        __traits(getMember, scene, member) = loader.get!(
+                            typeof(__traits(getMember, scene, member))
+                        )(getUDAs!(__traits(getMember, scene, member), asset)[0].name);
+                    }
+                }
+            };
         }
 
         return events;
@@ -1222,6 +1264,23 @@ public:
                     countStartThreads = attributeIn!(T, StepThread, member).id;
                 }
             }
+        }
+
+        static if (hasAssetAttributes!(T))
+        {
+            import tida.loader;
+
+            events.OnAssetLoad = {
+                static foreach (member; __traits(allMembers, T))
+                {
+                    static if (getUDAs!(__traits(getMember, scene, member), asset).length != 0)
+                    {
+                        __traits(getMember, scene, member) = loader.get!(
+                            typeof(__traits(getMember, scene, member))
+                        )(getUDAs!(__traits(getMember, scene, member), asset)[0].name);
+                    }
+                }
+            };
         }
 
         return events;

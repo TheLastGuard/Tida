@@ -14,13 +14,13 @@
 			"targetType": "executable"
 		},
 		{
+			"libs": [
+				"user32",
+				"gdi32"
+			],
 			"name": "windows",
 			"platforms": [
 				"windows"
-			],
-			"libs" : [
-				"user32",
-				"gdi32"
 			],
 			"targetType": "executable"
 		},
@@ -35,26 +35,31 @@
 			"targetType": "library"
 		},
 		{
+			"libs": [
+				"user32",
+				"gdi32"
+			],
 			"name": "windows-lib",
 			"platforms": [
 				"windows"
 			],
-			"libs" : [
-				"user32",
-				"gdi32"
-			],
 			"targetType": "library"
 		},
 		{
+			"libs": [
+				"user32",
+				"gdi32"
+			],
 			"name": "unittest-windows",
-			"libs": ["user32", "gdi32"]
+			"targetType": "library"
 		},
 		{
-			"name": "unittest-posix",
 			"dependencies": {
 				"x11": "~>1.0.21"
-			}
-		},
+			},
+			"name": "unittest-posix",
+			"targetType": "library"
+		}
 	],
 	"copyright": "Copyright © 2020, TodNaz",
 	"dependencies": {
@@ -62,10 +67,13 @@
 		"bindbc-openal": "~>1.0.0",
 		"bindbc-opengl": "~>1.0.0",
 		"imagefmt": "~>2.1.2",
-		"mp3decoder": "~>1.0.0"
+		"mp3decoder": "~>1.0.0",
+		"sdlang-d": "~>0.10.6"
 	},
-	"dflags" : ["-preview=shortenedMethods"],
 	"description": "Tida is a library for creating 2D games, which is written with manual window creation and rendering using opengl and other tools for D games.",
+	"dflags": [
+		"-preview=shortenedMethods"
+	],
 	"homepage": "https://github.com/TodNaz/Tida",
 	"license": "MIT",
 	"name": "tida",

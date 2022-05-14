@@ -243,6 +243,8 @@ struct InstanceEvents
     SRTrigger[] IOnTriggerFunctions;
     FEDestroy[] IOnDestroyFunctions;
     FEATrigger[] IOnAnyTriggerFunctions;
+
+    void delegate() @safe OnAssetLoad;
 }
 
 /++
