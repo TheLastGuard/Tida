@@ -1001,11 +1001,11 @@ public:
             events.OnAssetLoad = {
                 static foreach (member; __traits(allMembers, T))
                 {
-                    static if (getUDAs!(__traits(getMember, scene, member), asset).length != 0)
+                    static if (getUDAs!(__traits(getMember, instance, member), asset).length != 0)
                     {
-                        __traits(getMember, scene, member) = loader.get!(
-                            typeof(__traits(getMember, scene, member))
-                        )(getUDAs!(__traits(getMember, scene, member), asset)[0].name);
+                        __traits(getMember, instance, member) = loader.get!(
+                            typeof(__traits(getMember, instance, member))
+                        )(getUDAs!(__traits(getMember, instance, member), asset)[0].name);
                     }
                 }
             };
