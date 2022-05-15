@@ -85,13 +85,13 @@ auto defaultCamera() @safe
 
     auto camera = new Camera();
     camera.shape = Shape!float.Rectangle(
-        vecZero!float, 
-        window.fullscreen ? 
+        vecZero!float,
+        window.fullscreen ?
             vec!float(runtime.monitorSize) :
             vec!float(window.width, window.height)
     );
     camera.port = camera.shape;
-            
+
     return camera;
 }
 
@@ -765,12 +765,18 @@ public:
 
         static foreach (member; __traits(allMembers, T))
         {
-            static if (getUDAs!(__traits(getMember, T, member), asset).length != 0)
+            static if (!isFunction!(__traits(getMember, T, member)))
             {
-                static if (!__traits(compiles, found))
+                static if (is(typeof(__traits(getMember, T, member)) == class))
                 {
-                    enum hasAssetAttributes = true;
-                    enum found = true;
+                    static if (getUDAs!(__traits(getMember, T, member), asset).length != 0)
+                    {
+                        static if (!__traits(compiles, found))
+                        {
+                            enum hasAssetAttributes = true;
+                            enum found = true;
+                        }
+                    }
                 }
             }
         }
@@ -997,15 +1003,22 @@ public:
         static if (hasAssetAttributes!(T))
         {
             import tida.loader;
+            import std.traits;
 
             events.OnAssetLoad = {
                 static foreach (member; __traits(allMembers, T))
                 {
-                    static if (getUDAs!(__traits(getMember, instance, member), asset).length != 0)
+                    static if (!isFunction!(__traits(getMember, T, member)))
                     {
-                        __traits(getMember, instance, member) = loader.get!(
-                            typeof(__traits(getMember, instance, member))
-                        )(getUDAs!(__traits(getMember, instance, member), asset)[0].name);
+                        static if (is(typeof(__traits(getMember, T, member)) == class))
+                        {
+                            static if (getUDAs!(__traits(getMember, instance, member), asset).length != 0)
+                            {
+                                __traits(getMember, instance, member) = loader.get!(
+                                    typeof(__traits(getMember, instance, member))
+                                )(getUDAs!(__traits(getMember, instance, member), asset)[0].name);
+                            }
+                        }
                     }
                 }
             };
@@ -1269,15 +1282,22 @@ public:
         static if (hasAssetAttributes!(T))
         {
             import tida.loader;
+            import std.traits;
 
-            events.OnAssetLoad = {
+            events.OnAssetLoad = { // f
                 static foreach (member; __traits(allMembers, T))
                 {
-                    static if (getUDAs!(__traits(getMember, scene, member), asset).length != 0)
+                    static if (!isFunction!(__traits(getMember, T, member)))
                     {
-                        __traits(getMember, scene, member) = loader.get!(
-                            typeof(__traits(getMember, scene, member))
-                        )(getUDAs!(__traits(getMember, scene, member), asset)[0].name);
+                        static if (is(typeof(__traits(getMember, T, member)) == class))
+                        {
+                            static if (getUDAs!(__traits(getMember, scene, member), asset).length != 0)
+                            {
+                                __traits(getMember, scene, member) = loader.get!(
+                                    typeof(__traits(getMember, scene, member))
+                                )(getUDAs!(__traits(getMember, scene, member), asset)[0].name);
+                            }
+                        }
                     }
                 }
             };
