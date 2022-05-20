@@ -1040,6 +1040,8 @@ public:
                                 __traits(getMember, instance, member).isRepeat = getUDAs!(__traits(getMember, instance, member), animationCut)[0].isRepeat;
                             } else
                             {
+                                import tida.image;
+
                                 __traits(getMember, instance, member) = loader.load!(
                                     typeof(__traits(getMember, instance, member))
                                 )(getUDAs!(__traits(getMember, instance, member), asset)[0].name);
