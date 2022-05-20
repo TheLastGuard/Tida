@@ -321,6 +321,15 @@ public:
         if (instance.events.OnAssetLoad !is null)
             instance.events.OnAssetLoad();
 
+        if (!instance.events.isCreate)
+        {
+            instance.events.isCreate = true;
+            foreach (fun; instance.events.ICreateFunctions)
+            {
+                fun();
+            }
+        }
+
         this.sort();
     }
 
@@ -335,7 +344,7 @@ public:
     {
         foreach (instance; instances)
         {
-            add(instance,threadID);
+            add(instance, threadID);
         }
     }
 

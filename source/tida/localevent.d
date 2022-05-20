@@ -15,6 +15,11 @@ module tida.localevent;
 enum
 {
     /++
+
+    +/
+    Create,
+
+    /++
     Object initialization flag. Will be called when the very first scene
     initialization occurs. When control is transferred to the scene again,
     such functions will no longer be called.
@@ -187,4 +192,14 @@ class MyInstance : Instance
 struct asset
 {
     string name;
+}
+
+struct animationCut
+{
+    uint    x,
+            y,
+            w,
+            h;
+    float speed = 0.75f;
+    bool isRepeat = false;
 }

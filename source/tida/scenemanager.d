@@ -759,23 +759,20 @@ public:
         }
     }
 
-    template hasAssetAttributes(T)
+    template hasAssetAttributes(T, alias object)
     {
         import std.traits;
 
         static foreach (member; __traits(allMembers, T))
         {
-            static if (!isFunction!(__traits(getMember, T, member)))
+            static if (is(typeof(__traits(getMember, object, member)) == class))
             {
-                static if (is(typeof(__traits(getMember, T, member)) == class))
+                static if (getUDAs!(__traits(getMember, object, member), asset).length != 0)
                 {
-                    static if (getUDAs!(__traits(getMember, T, member), asset).length != 0)
+                    static if (!__traits(compiles, found))
                     {
-                        static if (!__traits(compiles, found))
-                        {
-                            enum hasAssetAttributes = true;
-                            enum found = true;
-                        }
+                        enum hasAssetAttributes = true;
+                        enum found = true;
                     }
                 }
             }
@@ -808,6 +805,7 @@ public:
 
         InstanceEvents events;
 
+        events.ICreateFunctions = [];
         events.IInitFunctions = [];
         events.IStepFunctions = [];
         events.IEntryFunctions = [];
@@ -833,6 +831,10 @@ public:
         {
             static if (hasAttrib!(T, tida.localevent.event, member))
             {
+                static if (attributeIn!(T, event, member).type == Create)
+                {
+                    events.ICreateFunctions ~= &__traits(getMember, instance, member);
+                }else
                 static if (attributeIn!(T, event, member).type == Init)
                 {
                     static if (getUDAs!(__traits(getMember, instance, member), args).length != 0)
@@ -1000,23 +1002,52 @@ public:
             }
         }
 
-        static if (hasAssetAttributes!(T))
+        static if (hasAssetAttributes!(T, instance))
         {
             import tida.loader;
             import std.traits;
+            import std.stdio;
 
             events.OnAssetLoad = {
                 static foreach (member; __traits(allMembers, T))
                 {
-                    static if (!isFunction!(__traits(getMember, T, member)))
+                    static if (is(typeof(__traits(getMember, instance, member)) == class))
                     {
-                        static if (is(typeof(__traits(getMember, T, member)) == class))
+                        static if (getUDAs!(__traits(getMember, instance, member), asset).length != 0)
                         {
-                            static if (getUDAs!(__traits(getMember, instance, member), asset).length != 0)
+                            static if (getUDAs!(__traits(getMember, instance, member), animationCut).length != 0)
+                            {
+                                import std.algorithm : map;
+                                import std.range : array;
+                                import tida.image;
+                                import tida.drawable;
+                                import tida.animation;
+
+                                 __traits(getMember, instance, member) = new Animation();
+                                 __traits(getMember, instance, member).frames = loader.load!Image(getUDAs!(__traits(getMember, instance, member), asset)[0].name)
+                                    .strip(
+                                        getUDAs!(__traits(getMember, instance, member), animationCut)[0].x,
+                                        getUDAs!(__traits(getMember, instance, member), animationCut)[0].y,
+                                        getUDAs!(__traits(getMember, instance, member), animationCut)[0].w,
+                                        getUDAs!(__traits(getMember, instance, member), animationCut)[0].h
+                                    )
+                                    .map!((e) {
+                                        e.toTexture();
+                                        return cast(IDrawableEx) e;
+                                    })
+                                    .array;
+                                __traits(getMember, instance, member).speed = getUDAs!(__traits(getMember, instance, member), animationCut)[0].speed;
+                                __traits(getMember, instance, member).isRepeat = getUDAs!(__traits(getMember, instance, member), animationCut)[0].isRepeat;
+                            } else
                             {
                                 __traits(getMember, instance, member) = loader.load!(
                                     typeof(__traits(getMember, instance, member))
                                 )(getUDAs!(__traits(getMember, instance, member), asset)[0].name);
+
+                                static if (is (typeof (__traits(getMember, instance, member)) == Image))
+                                {
+                                     __traits(getMember, instance, member).toTexture();
+                                }
                             }
                         }
                     }
@@ -1279,23 +1310,54 @@ public:
             }
         }
 
-        static if (hasAssetAttributes!(T))
+        static if (hasAssetAttributes!(T, scene))
         {
             import tida.loader;
             import std.traits;
 
-            events.OnAssetLoad = { // f
+            events.OnAssetLoad = {
                 static foreach (member; __traits(allMembers, T))
                 {
-                    static if (!isFunction!(__traits(getMember, T, member)))
+                    static if (!isFunction!(__traits(getMember, scene, member)))
                     {
-                        static if (is(typeof(__traits(getMember, T, member)) == class))
+                        static if (is(typeof(__traits(getMember, scene, member)) == class))
                         {
+                            static if (getUDAs!(__traits(getMember, scene, member), animationCut).length != 0)
+                            {
+                                import std.algorithm : map;
+                                import std.range : array;
+                                import tida.image;
+                                import tida.drawable;
+                                import tida.animation;
+
+                                 __traits(getMember, scene, member) = new Animation();
+                                 __traits(getMember, scene, member).frames = loader.load!Image(getUDAs!(__traits(getMember, scene, member), asset)[0].name)
+                                    .strip(
+                                        getUDAs!(__traits(getMember, scene, member), animationCut)[0].x,
+                                        getUDAs!(__traits(getMember, scene, member), animationCut)[0].y,
+                                        getUDAs!(__traits(getMember, scene, member), animationCut)[0].w,
+                                        getUDAs!(__traits(getMember, scene, member), animationCut)[0].h
+                                    )
+                                    .map!((e) {
+                                        e.toTexture();
+                                        return cast(IDrawableEx) e;
+                                    })
+                                    .array;
+                                __traits(getMember, scene, member).speed = getUDAs!(__traits(getMember, scene, member), animationCut)[0].speed;
+                                __traits(getMember, scene, member).isRepeat = getUDAs!(__traits(getMember, scene, member), animationCut)[0].isRepeat;
+                            } else
                             static if (getUDAs!(__traits(getMember, scene, member), asset).length != 0)
                             {
+                                import tida.image;
+
                                 __traits(getMember, scene, member) = loader.load!(
                                     typeof(__traits(getMember, scene, member))
                                 )(getUDAs!(__traits(getMember, scene, member), asset)[0].name);
+
+                                static if (is (typeof (__traits(getMember, scene, member)) == Image))
+                                {
+                                     __traits(getMember, scene, member).toTexture();
+                                }
                             }
                         }
                     }

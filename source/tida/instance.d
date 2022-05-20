@@ -225,6 +225,9 @@ struct InstanceEvents
         }
     }
 
+    bool isCreate = false;
+
+    void delegate() @safe[] ICreateFunctions;
     FEInit[] IInitFunctions;
 
     FEStep[] IStepFunctions;
