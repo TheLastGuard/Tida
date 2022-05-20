@@ -81,10 +81,10 @@ class Loader
     import std.exception : enforce;
     import sdlang;
 
-private:
+public:
     Resource[] resources;
 
-public @safe:
+@safe:
     /++
     Will load the resource, having only its path as
     input. The entire loading implementation lies with

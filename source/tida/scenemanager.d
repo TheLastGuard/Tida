@@ -1014,7 +1014,7 @@ public:
                         {
                             static if (getUDAs!(__traits(getMember, instance, member), asset).length != 0)
                             {
-                                __traits(getMember, instance, member) = loader.get!(
+                                __traits(getMember, instance, member) = loader.load!(
                                     typeof(__traits(getMember, instance, member))
                                 )(getUDAs!(__traits(getMember, instance, member), asset)[0].name);
                             }
@@ -1293,7 +1293,7 @@ public:
                         {
                             static if (getUDAs!(__traits(getMember, scene, member), asset).length != 0)
                             {
-                                __traits(getMember, scene, member) = loader.get!(
+                                __traits(getMember, scene, member) = loader.load!(
                                     typeof(__traits(getMember, scene, member))
                                 )(getUDAs!(__traits(getMember, scene, member), asset)[0].name);
                             }

@@ -73,7 +73,7 @@ public:
     int positionWindowX = 100; /// Window position x-axis.
     int positionWindowY = 100; /// Window position y-axis.
     string icon; /// Icon path.
-    string mainAssetsFile;
+    string mainAssetsFile; // Main assets file
     
     size_t maxThreads = 3;
     size_t functionPerThread = 80;
@@ -361,6 +361,45 @@ if (isLazyGroup!T)
     alias lazyGroupScenes = TemplateArgsOf!T;
 }
 
+int runGame(T...)(GameConfig config) @safe
+{
+    Game game = new Game(config);
+
+    static foreach (e; T)
+    {
+        static if (isScene!e)
+        {
+            sceneManager.add(new e());
+        } else
+        static if (isLazy!e)
+        {
+            sceneManager.lazyAdd!(lazyScene!e);
+        } else
+        static if (isLazyGroup!e)
+        {
+            sceneManager.lazyGroupAdd!(lazyGroupScenes!e);
+        }
+    }
+
+    debug(single)
+    {
+        static foreach (e; T)
+        {
+        mixin("
+        debug(single_" ~ e.stringof ~ ")
+        {
+            sceneManager.gotoin!(" ~ e.stringof ~ ");
+        }
+        ");
+        }
+    }else
+        sceneManager.inbegin();
+
+    game.run();
+
+    return game.result;
+}
+
 /++
 Game entry point template.
 
@@ -382,40 +421,7 @@ template GameRun(GameConfig config, T...)
     int main(string[] args)
     {
         TidaRuntime.initialize(args, AllLibrary);
-        Game game = new Game(config);
 
-        static foreach (e; T)
-        {
-            static if (isScene!e)
-            {
-                sceneManager.add(new e());
-            } else
-            static if (isLazy!e)
-            {
-                sceneManager.lazyAdd!(lazyScene!e);
-            } else
-            static if (isLazyGroup!e)
-            {
-                sceneManager.lazyGroupAdd!(lazyGroupScenes!e);
-            }
-        }
-
-        debug(single)
-        {
-            static foreach (e; T)
-            {
-            mixin("
-            debug(single_" ~ e.stringof ~ ")
-            {
-                sceneManager.gotoin!(" ~ e.stringof ~ ");
-            }
-            ");
-            }
-        }else
-            sceneManager.inbegin();
-
-        game.run();
-
-        return game.result;
+        return runGame!T(config);
     }
 }
