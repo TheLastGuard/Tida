@@ -1023,6 +1023,16 @@ public:
                                 import tida.drawable;
                                 import tida.animation;
 
+                                if (loader.get!Animation(T.stringof ~ "." ~ __traits(getMember, instance, member).stringof) !is null)
+                                {
+                                    static if (getUDAs!(__traits(getMember, instance, member), inSpriteDefault).length != 0)
+                                    {
+                                        instance.sprite.draws = loader.get!Animation(T.stringof ~ "." ~ __traits(getMember, instance, member).stringof);
+                                    }
+
+                                    __traits(getMember, instance, member) = loader.get!Animation(T.stringof ~ "." ~ __traits(getMember, instance, member).stringof);
+                                }
+
                                  __traits(getMember, instance, member) = new Animation();
                                  __traits(getMember, instance, member).frames = loader.load!Image(getUDAs!(__traits(getMember, instance, member), asset)[0].name)
                                     .strip(
@@ -1038,7 +1048,15 @@ public:
                                     .array;
                                 __traits(getMember, instance, member).speed = getUDAs!(__traits(getMember, instance, member), animationCut)[0].speed;
                                 __traits(getMember, instance, member).isRepeat = getUDAs!(__traits(getMember, instance, member), animationCut)[0].isRepeat;
+
+                                loader.add(__traits(getMember, instance, member), T.stringof ~ "." ~ __traits(getMember, instance, member).stringof);
+
+                                static if (getUDAs!(__traits(getMember, instance, member), inSpriteDefault).length != 0)
+                                {
+                                    instance.sprite.draws = __traits(getMember, instance, member);
+                                }
                             } else
+                            static if (getUDAs!(__traits(getMember, instance, member), asset).length != 0)
                             {
                                 import tida.image;
 
@@ -1048,7 +1066,13 @@ public:
 
                                 static if (is (typeof (__traits(getMember, instance, member)) == Image))
                                 {
-                                     __traits(getMember, instance, member).toTexture();
+                                    if (__traits(getMember, instance, member).texture is null)
+                                        __traits(getMember, instance, member).toTexture();
+                                }
+
+                                static if (getUDAs!(__traits(getMember, instance, member), inSpriteDefault).length != 0)
+                                {
+                                    instance.sprite.draws = __traits(getMember, instance, member);
                                 }
                             }
                         }
@@ -1332,6 +1356,9 @@ public:
                                 import tida.drawable;
                                 import tida.animation;
 
+                                if (loader.get!Animation(T.stringof ~ "." ~ __traits(getMember, scene, member).stringof) !is null)
+                                    return loader.get!Animation(T.stringof ~ "." ~ __traits(getMember, scene, member).stringof);
+
                                  __traits(getMember, scene, member) = new Animation();
                                  __traits(getMember, scene, member).frames = loader.load!Image(getUDAs!(__traits(getMember, scene, member), asset)[0].name)
                                     .strip(
@@ -1347,6 +1374,8 @@ public:
                                     .array;
                                 __traits(getMember, scene, member).speed = getUDAs!(__traits(getMember, scene, member), animationCut)[0].speed;
                                 __traits(getMember, scene, member).isRepeat = getUDAs!(__traits(getMember, scene, member), animationCut)[0].isRepeat;
+
+                                loader.add(__traits(getMember, scene, member), T.stringof ~ "." ~ __traits(getMember, scene, member).stringof);
                             } else
                             static if (getUDAs!(__traits(getMember, scene, member), asset).length != 0)
                             {
@@ -1358,7 +1387,8 @@ public:
 
                                 static if (is (typeof (__traits(getMember, scene, member)) == Image))
                                 {
-                                     __traits(getMember, scene, member).toTexture();
+                                    if (__traits(getMember, scene, member).texture is null)
+                                        __traits(getMember, scene, member).toTexture();
                                 }
                             }
                         }
@@ -2032,7 +2062,7 @@ public:
             {
                 if (instance.active && instance.visible)
                 {
-                    render.draw(instance.spriteDraw(), instance.position);
+                    render.draw(instance.sprite, instance.position);
 
                     foreach (fun; instance.events.IDrawFunctions)
                     {

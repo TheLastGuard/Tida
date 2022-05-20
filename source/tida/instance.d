@@ -263,11 +263,6 @@ class Instance
 
 protected:
     /++
-    Instance sprite. Will be output at the position of the instance.
-    +/
-    Sprite sprite;
-
-    /++
     Components of an instance, complementing its functionality.
     +/
     Component[] components;
@@ -276,6 +271,11 @@ protected:
     bool _destroy = false;
 
 public:
+    /++
+    Instance sprite. Will be output at the position of the instance.
+    +/
+    Sprite sprite;
+
     InstanceEvents events;
 
     @property auto colliders() @safe
@@ -530,11 +530,6 @@ public:
     }
 
 package(tida):
-    Sprite spriteDraw()
-    {
-        return sprite;
-    }
-
     bool isDestroy()
     {
         return _destroy;

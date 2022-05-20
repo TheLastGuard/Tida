@@ -391,6 +391,16 @@ public:
         this.resources ~= (res);
     }
 
+    void add(T)(T object, string path = "", string name = "")
+    {
+        name = T.stringof;
+        Resource res;
+        res.init(object);
+        res.path = path;
+        res.name = name;
+        add(res);
+    }
+
     ~this() @safe
     {
         foreach (res; resources)

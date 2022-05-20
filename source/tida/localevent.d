@@ -194,6 +194,8 @@ struct asset
     string name;
 }
 
+struct inSpriteDefault { }
+
 struct animationCut
 {
     uint    x,
