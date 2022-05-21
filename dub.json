@@ -5,7 +5,7 @@
 	"configurations": [
 		{
 			"dependencies": {
-				"x11": "~>1.0.21"
+				"x11": "==1.0.21"
 			},
 			"name": "posix",
 			"platforms": [
@@ -26,7 +26,7 @@
 		},
 		{
 			"dependencies": {
-				"x11": "~>1.0.21"
+				"x11": "==1.0.21"
 			},
 			"name": "posix-lib",
 			"platforms": [
@@ -55,7 +55,7 @@
 		},
 		{
 			"dependencies": {
-				"x11": "~>1.0.21"
+				"x11": "==1.0.21"
 			},
 			"name": "unittest-posix",
 			"targetType": "library"
@@ -63,12 +63,12 @@
 	],
 	"copyright": "Copyright © 2020, TodNaz",
 	"dependencies": {
-		"bindbc-freetype": "~>1.0.2",
-		"bindbc-openal": "~>1.0.0",
-		"bindbc-opengl": "~>1.0.0",
-		"imagefmt": "~>2.1.2",
-		"mp3decoder": "~>1.0.0",
-		"sdlang-d": "~>0.10.6"
+		"bindbc-freetype": "==1.0.2",
+		"bindbc-openal": "==1.0.0",
+		"bindbc-opengl": "==1.0.0",
+		"imagefmt": "==2.1.2",
+		"mp3decoder": "==1.0.0",
+		"sdlang-d": "==0.10.6"
 	},
 	"description": "Tida is a library for creating 2D games, which is written with manual window creation and rendering using opengl and other tools for D games.",
 	"dflags": [
