@@ -1,6 +1,7 @@
 # Project build method
 DC = dmd
 DFLAGSDEF = -version=GL_46 -version=Dynamic_GLX -m64
+DBACK = x11 # x11 / xcb / wayland (not implement)
 
 # Dependencies
 # Links to the dependency repository.
@@ -12,7 +13,9 @@ imagefmt = https://github.com/tjhann/imagefmt.git
 mp3decoder = https://github.com/Zoadian/mp3decoder.git
 sdlang-d = https://github.com/Abscissa/SDLang-D.git
 taggedalgebraic = https://github.com/s-ludwig/taggedalgebraic.git
+erupted = https://github.com/ParticlePeter/ErupteD
 x11 = https://github.com/nomad-software/x11.git
+xcb-d = https://github.com/Vild/xcb-d.git
 
 # Path to source dependency files.
 bindbc-loader-include = bindbc-loader/source/
@@ -25,6 +28,8 @@ sdlang-d-include = SDLang-D/src/
 taggedalgebraic-include = taggedalgebraic/source/
 x11-include = x11/source/
 x11-einclude = $(x11-include)x11/
+xcb-d-include = xcb-d/source
+erupted-include = ErupteD/source
 
 # File units in the source code.
 bindbc-loader-objs = $(shell find $(bindbc-loader-include) -type f -name '*.d')
@@ -36,6 +41,8 @@ mp3decoder-objs = $(shell find $(mp3decoder-include) -type f -name '*.d')
 sdlang-d-objs = $(shell find $(sdlang-d-include) -type f -name '*.d')
 taggedalgebraic-objs = $(shell find $(taggedalgebraic-include) -type f -name '*.d')
 x11-objs = $(x11-einclude)X.d $(x11-einclude)Xlib.d $(x11-einclude)Xutil.d $(x11-einclude)Xresource.d $(x11-einclude)Xregion.d $(x11-einclude)Xlibint.d $(x11-einclude)Xmd.d $(x11-einclude)Xtos.d $(x11-einclude)Xproto.d $(x11-einclude)Xprotostr.d $(x11-einclude)Xproto_undef.d $(x11-einclude)XlibConf.d $(x11-einclude)keysym.d $(x11-einclude)keysymdef.d
+xcb-d-objs = $(shell find $(xcb-d-include) -type f -name '*.d')
+erupted-objs = $(shell find $(erupted-include) -type f -name '*.d')
 #x11-objs = $(shell find $(x11-include) -type f -name '*.d')
 
 # Library files to be built.
@@ -48,12 +55,14 @@ mp3decoder-lib = mp3decoder.a
 sdlang-d-lib = sdland-d.a
 taggedalgebraic-lib = taggedalgebraic.a
 x11-lib = x11.a
+xcb-d-lib = xcb-d.a
+erupted-lib = erupted.a
 
 # Flags for including libraries in the assembly.
-LIBDFLAGS = bindbc-loader/$(bindbc-loader-lib) bindbc-opengl/$(bindbc-opengl-lib) bindbc-openal/$(bindbc-openal-lib) bindbc-freetype/$(bindbc-freetype-lib) imagefmt/$(imagefmt-lib) mp3decoder/$(mp3decoder-lib) x11/$(x11-lib) SDLang-D/$(sdlang-d-lib) taggedalgebraic/$(taggedalgebraic-lib)
+LIBDFLAGS = bindbc-loader/$(bindbc-loader-lib) bindbc-opengl/$(bindbc-opengl-lib) bindbc-openal/$(bindbc-openal-lib) bindbc-freetype/$(bindbc-freetype-lib) imagefmt/$(imagefmt-lib) mp3decoder/$(mp3decoder-lib) x11/$(x11-lib) SDLang-D/$(sdlang-d-lib) taggedalgebraic/$(taggedalgebraic-lib) ErupteD/$(erupted-lib) xcb-d/$(xcb-d)
 
 # Flags to include source files in the assembly.
-DEPENDFLAGS = -I$(bindbc-loader-include) -I$(bindbc-opengl-include) -I$(bindbc-openal-include) -I$(bindbc-freetype-include) -I$(imagefmt-include) -I$(mp3decoder-include) -I$(taggedalgebraic-include) -I$(sdlang-d-include) -I$(x11-include)
+DEPENDFLAGS = -I$(bindbc-loader-include) -I$(bindbc-opengl-include) -I$(bindbc-openal-include) -I$(bindbc-freetype-include) -I$(imagefmt-include) -I$(mp3decoder-include) -I$(taggedalgebraic-include) -I$(sdlang-d-include) -I$(x11-include) -I(erupted-include) -I(xcb-d-include)
 
 # Downloads the source code for all required dependencies.
 # Execute before building the project.
@@ -67,6 +76,8 @@ fetch-deps:
 	[ -d ./taggedalgebraic ] || git clone $(taggedalgebraic)
 	[ -d ./SDLang-D ] || git clone $(sdlang-d)
 	[ -d ./x11 ] || git clone $(x11)
+	[ -d ./ErupteD ] || git clone $(erupted)
+	[ -d ./xcb-d ] || git clone $(xcb-d)
 
 fetch-clean:
 	[ -f ./bindbc-loader/$(bindbc-loader-lib) ] && rm ./bindbc-loader/$(bindbc-loader-lib) || .
@@ -78,6 +89,8 @@ fetch-clean:
 	[ -f ./taggedalgebraic/$(taggedalgebraic-lib) && rm ./taggedalgebraic/$(taggedalgebraic-lib) || .
 	[ -f ./SDLang-D/$(sdlang-d-lib) ] && rm ./SDLang-D/$(sdlang-d-lib) || .
 	[ -f ./x11/$(x11-lib) ] && rm ./x11/$(x11-lib) || .
+	[ -f ./ErupteD/$(erupted-lib) ] && rm ./ErupteD/$(erupted-lib) || .
+	[ -f ./xcb-d/$(xcb-d-lib) ] && rm ./xcb-d/$(xcb-d-lib) || .
 
 deps-remove:
 	[ -d ./bindbc-loader ] && rm -rf ./bindbc-loader || .
@@ -89,6 +102,8 @@ deps-remove:
 	[ -d ./taggedalgebraic ] && rm -rf ./taggedalgebraic || .
 	[ -d ./SDLang-D ] && rm -rf ./SDLang-D || .
 	[ -d ./x11 ] && rm -rf ./x11 || .
+	[ -d ./xcb-d ] && rm -rf ./xcb-d || .
+	[ -d ./ErupteD ] && rm -rf ./ErupteD || .
 
 # Build the `bindbc-loader` dependency.
 bindbc-loader-build: 
@@ -138,8 +153,16 @@ sdlang-d-build:
 x11-build:
 	cd x11
 	$(DC) $(DFLAGSDEF) -lib -ofx11/$(x11-lib) $(x11-objs)
+	
+xcb-build:
+	cd xcb-d
+	$(DC) $(DFLAGSDEF) -lib -ofxcb-d/$(xcb-d-lib) $(xcb-d-objs)
+	
+erupted-build:
+	cd ErupteD
+	$(DC) $(DFLAGSDEF) -lib -ofErupteD/$(erupted-lib) $(erupted-objs)
 
 # Builds all project dependencies into library files.
 # It is necessary for the complete assembly of the project. Must be called before main assembly.
 # Before this command, it is advisable to execute `fetch-deps` to get the desired dependencies.
-build-deps: bindbc-loader-build bindbc-opengl-build bindbc-openal-build bindbc-freetype-build imagefmt-build mp3decoder-build taggedalgebraic-build sdlang-d-build x11-build
+build-deps: bindbc-loader-build bindbc-opengl-build bindbc-openal-build bindbc-freetype-build imagefmt-build mp3decoder-build taggedalgebraic-build sdlang-d-build x11-build erupted-build xcb-build
