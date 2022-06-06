@@ -69,9 +69,7 @@ but cannot be replaced.
 enum : int
 {
     OpenAL = 0, /// Open Audio Library
-    FreeType, /// Free Type Library
-    GLX, /// Graphics library X11
-    EGL /// EGL library wayland
+    FreeType /// Free Type Library
 }
 
 alias LibraryUnite = int; /// 
@@ -81,14 +79,14 @@ An array of library indexes. Indicates that all libraries should be loaded,
 when specified in the 
 $(HREF ../tida/runtime/ITidaRuntime.initialize.html, initialization) of the runtime.
 +/
-enum AllLibrary = [OpenAL, FreeType, GLX];
+enum AllLibrary = [OpenAL, FreeType];
 
 /++
 An array of only important libraries. Loads only the necessary libraries 
 (for connecting to the window manager) when specified in the 
 $(HREF ../tida/runtime/ITidaRuntime.initialize.html, initialization) of the runtime.
 +/
-enum WithoutLibrary  = [GLX];
+enum WithoutLibrary  = [];
 
 /++
 The interface of interaction between the program and the window manager.
@@ -189,136 +187,260 @@ interface ITidaRuntime
 The interface of interaction between the program and the window manager.
 +/
 version (Posix)
-class TidaRuntime : ITidaRuntime
 {
-    import x11.X, x11.Xlib, x11.Xutil;
-    import std.exception : enforce;
-    import tida.sound : initSoundlibrary, Device;
-    import tida.text : initFontLibrary;
-
-    enum SessionType
+    version(UseXCB)
     {
-        unknown,
-        x11,
-        wayland
-    }
-
-    enum SessionWarning =
-    "WARNING! The session is not defined. Perhaps she simply does not exist?";
-
-private:
-    Display* _display;
-    int _displayID;
-    string[] arguments;
-    SessionType _session;
-    Device _device;
-
-public @trusted:
-    this()
-    {
-        import std.process;
-        import std.stdio : stderr, writeln;
-
-        auto env = environment.get("XDG_SESSION_TYPE");
-        if (env == "x11")
+        class TidaRuntime : ITidaRuntime
         {
-            _session = SessionType.x11;
-        } else
-        if (env == "wayland")
-        {
-            _session = SessionType.wayland;
-        } else
-        {
-            _session = SessionType.unknown;
-            stderr.writeln(SessionWarning);
-        }
+            import xcb.xcb;
+            import std.exception : enforce;
+            import tida.sound : initSoundlibrary, Device;
+            import tida.text : initFontLibrary;
 
-    }
-
-    override @property Device device()
-    {
-        return _device;
-    }
-
-    override void loadExternalLibraries(LibraryUnite[] libs)
-    {
-        import dglx.glx : loadGLXLibrary;
-
-        foreach (e; libs)
-        {
-            if (e == OpenAL)
+            enum SessionType
             {
-                initSoundlibrary();
-                _device = new Device();
-                _device.open();
+                unknown,
+                x11,
+                wayland
             }
-            else
-            if (e == FreeType)
-                initFontLibrary();
-            else
-            if (e == GLX)
+
+            enum SessionWarning =
+            "WARNING! The session is not defined. Perhaps she simply does not exist?";
+
+        private:
+            xcb_connection_t* _connection;
+            xcb_screen_t* _screen;
+            int _displayID;
+            string[] arguments;
+            SessionType _session;
+            Device _device;
+
+        public @trusted:
+            this()
             {
-                if (_session == SessionType.x11)
-                    loadGLXLibrary();
-                else
-                	throw new Exception("[Wayland] The creation of runtime via wayland is not implemented.");
+                import std.process;
+                import std.stdio : stderr, writeln;
+
+                auto env = environment.get("XDG_SESSION_TYPE");
+                if (env == "x11")
+                {
+                    _session = SessionType.x11;
+                } else
+                if (env == "wayland")
+                {
+                    _session = SessionType.wayland;
+                } else
+                {
+                    _session = SessionType.unknown;
+                    stderr.writeln(SessionWarning);
+                }
+
+            }
+
+            override @property Device device()
+            {
+                return _device;
+            }
+
+            override void loadExternalLibraries(LibraryUnite[] libs)
+            {
+                foreach (e; libs)
+                {
+                    if (e == OpenAL)
+                    {
+                        initSoundlibrary();
+                        _device = new Device();
+                        _device.open();
+                    }
+                    else
+                    if (e == FreeType)
+                        initFontLibrary();
+                        continue;
+                }
+            }
+
+            override void connectToWndMng()
+            {
+                this._connection = xcb_connect(null, null);
+                enforce!Exception(this._connection,
+                "Failed to connect to window manager.");
+
+                this._screen = xcb_setup_roots_iterator(xcb_get_setup(connection)).data;
+            }
+
+            override void closeWndMngSession()
+            {
+                xcb_disconnect(this._connection);
+                this._connection = null;
+                this._screen = null;
+            }
+
+            override void acceptArguments(string[] arguments)
+            {
+                this.arguments = arguments;
+            }
+
+            @property override string[] mainArguments()
+            {
+                return this.arguments;
+            }
+
+            @property auto rootWindow()
+            {
+                return _screen.root;
+            }
+
+            uint[2] monitorSize()
+            {
+                return [0, 0];
+            }
+
+        @safe:
+            /// An instance for contacting the manager's server.
+            @property xcb_connection_t* connection()
+            {
+                return this._connection;
+            }
+
+            /// Default screen number
+            @property xcb_screen_t* screen()
+            {
+                return this._screen;
+            }
+
+            ~this()
+            {
+                closeWndMngSession();
             }
         }
     }
+    else
+    {
+        class TidaRuntime : ITidaRuntime
+        {
+            import x11.X, x11.Xlib, x11.Xutil;
+            import std.exception : enforce;
+            import tida.sound : initSoundlibrary, Device;
+            import tida.text : initFontLibrary;
 
-    override void connectToWndMng()
-    {
-        this._display = XOpenDisplay(null);
-        enforce!Exception(this._display,
-        "Failed to connect to window manager.");
+            enum SessionType
+            {
+                unknown,
+                x11,
+                wayland
+            }
 
-        this._displayID = DefaultScreen(this._display);
-    }
+            enum SessionWarning =
+            "WARNING! The session is not defined. Perhaps she simply does not exist?";
 
-    override void closeWndMngSession()
-    {
-        XCloseDisplay(this._display);
-        this._display = null;
-        this._displayID = 0;
-    }
+        private:
+            Display* _display;
+            int _displayID;
+            string[] arguments;
+            SessionType _session;
+            Device _device;
 
-    override void acceptArguments(string[] arguments)
-    {
-        this.arguments = arguments;
-    }
+        public @trusted:
+            this()
+            {
+                import std.process;
+                import std.stdio : stderr, writeln;
 
-    @property override string[] mainArguments()
-    {
-        return this.arguments;
-    }
-    
-    @property Window rootWindow()
-    {
-        return RootWindow(_display, _displayID);
-    }
-    
-    uint[2] monitorSize()
-    {
-        auto screen = ScreenOfDisplay(_display, 0);
-        return [screen.width, screen.height];
-    }
+                auto env = environment.get("XDG_SESSION_TYPE");
+                if (env == "x11")
+                {
+                    _session = SessionType.x11;
+                } else
+                if (env == "wayland")
+                {
+                    _session = SessionType.wayland;
+                } else
+                {
+                    _session = SessionType.unknown;
+                    stderr.writeln(SessionWarning);
+                }
 
-@safe:
-    /// An instance for contacting the manager's server.
-    @property Display* display()
-    {
-        return this._display;
-    }
+            }
 
-    /// Default screen number
-    @property int displayID()
-    {
-        return this._displayID;
-    }
+            override @property Device device()
+            {
+                return _device;
+            }
 
-    ~this()
-    {
-        closeWndMngSession();
+            override void loadExternalLibraries(LibraryUnite[] libs)
+            {
+                import dglx.glx : loadGLXLibrary;
+
+                foreach (e; libs)
+                {
+                    if (e == OpenAL)
+                    {
+                        initSoundlibrary();
+                        _device = new Device();
+                        _device.open();
+                    }
+                    else
+                    if (e == FreeType)
+                        initFontLibrary();
+                        continue;
+                }
+            }
+
+            override void connectToWndMng()
+            {
+                this._display = XOpenDisplay(null);
+                enforce!Exception(this._display,
+                "Failed to connect to window manager.");
+
+                this._displayID = DefaultScreen(this._display);
+            }
+
+            override void closeWndMngSession()
+            {
+                XCloseDisplay(this._display);
+                this._display = null;
+                this._displayID = 0;
+            }
+
+            override void acceptArguments(string[] arguments)
+            {
+                this.arguments = arguments;
+            }
+
+            @property override string[] mainArguments()
+            {
+                return this.arguments;
+            }
+
+            @property Window rootWindow()
+            {
+                return RootWindow(_display, _displayID);
+            }
+
+            uint[2] monitorSize()
+            {
+                auto screen = ScreenOfDisplay(_display, 0);
+                return [screen.width, screen.height];
+            }
+
+        @safe:
+            /// An instance for contacting the manager's server.
+            @property Display* display()
+            {
+                return this._display;
+            }
+
+            /// Default screen number
+            @property int displayID()
+            {
+                return this._displayID;
+            }
+
+            ~this()
+            {
+                closeWndMngSession();
+            }
+        }
     }
 }
 

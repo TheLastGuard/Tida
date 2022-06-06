@@ -20,7 +20,6 @@ import tida.event;
 import tida.image;
 import tida.listener;
 import tida.loader;
-import tida.gl;
 
 import std.concurrency;
 
@@ -147,10 +146,11 @@ public:
     this(GameConfig config)
     {
         _window = new Window(config.windowWidth, config.windowHeight, "");
-        (cast(Window) _window).windowInitialize!(WithContext)(config.positionWindowX,config.positionWindowY);
-        loadGraphicsLibrary();
-        _renderer = createRenderer(_window);
+        (cast(Window) _window).windowInitialize(config.positionWindowX,config.positionWindowY);
+
+        _renderer = new Render(cast(Window) window);
         _renderer.background = config.background;
+
         if (config.icon != "")
             _window.icon = new Image().load(config.icon);
 
@@ -308,7 +308,9 @@ public:
             sceneManager.callStep(0, renderer);
 
             renderer.clear();
+
             sceneManager.callDraw(renderer);
+
             renderer.drawning();
 
             _fps.control();

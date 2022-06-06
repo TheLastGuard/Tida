@@ -12,7 +12,7 @@ License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
 module tida.drawable;
 
 /++
-The interface for normal rendering by coordinates. 
+The interface for normal rendering by coordinates.
 All properties are specified in the constructor at best.
 
 Example:
@@ -44,7 +44,7 @@ interface IDrawable
 }
 
 /++
-Interface for advanced object rendering. 
+Interface for advanced object rendering.
 It contains both the rotation of the object and such a property as size.
 +/
 interface IDrawableEx
@@ -54,6 +54,6 @@ interface IDrawableEx
     import tida.color;
 
     /// draw object implemetation
-    void drawEx(IRenderer renderer, Vecf position, float angle, Vecf center, 
+    void drawEx(IRenderer renderer, Vecf position, float angle, Vecf center,
                 Vecf size, ubyte alpha, Color!ubyte color) @trusted;
 }

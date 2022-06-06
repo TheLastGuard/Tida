@@ -8,7 +8,7 @@ properties that define behavior without functions, it can only contain
 instances that, through it, can refer to other instances.
 
 WARNING:
-Don't pass any arguments to the scene constructor. 
+Don't pass any arguments to the scene constructor.
 This breaks the scene restart mechanism.
 
 Macros:

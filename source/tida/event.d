@@ -514,257 +514,600 @@ interface IEventHandler
 }
 
 version(Posix)
-class EventHandler : IEventHandler
 {
-    import x11.X, x11.Xlib, x11.Xutil;
-    import tida.window, tida.runtime;
-
-private:
-    struct JoystickEvent
+    version(UseXCB)
     {
-        int id;
-        Joystick.js_event data;
-    }
+        import tida.window;
+        import tida.runtime;
+        import core.stdc.stdlib;
 
-    tida.window.Window[] windows;
-    Atom destroyWindowEvent;
-    _XIC* ic;
-    Joystick[] _joysticks;
-    JoystickEvent[] jevents;
-
-public:
-    XEvent event;
-
-@trusted:
-    this(tida.window.Window window)
-    {   
-        this.windows ~= window;
-
-        this.destroyWindowEvent = XInternAtom(runtime.display, "WM_DELETE_WINDOW", 0);
-
-        ic = XCreateIC( XOpenIM(runtime.display, null, null, null), 
-                        XNInputStyle, XIMPreeditNothing | XIMStatusNothing, 
-                        XNClientWindow, this.windows[0].handle, null);
-        XSetICFocus(ic);
-        XSetLocaleModifiers("@im=none");
-    }
-    
-    void appendWindow(tida.window.Window window)
-    {
-        this.windows ~= window;
-    }
-    
-    @property tida.window.IWindow windowEvent()
-    {
-        foreach (window; windows)
+        class EventHandler : IEventHandler
         {
-            if (window.handle == this.event.xany.window)
-                return window;
-        }
-        
-        return null;
-    }
+            import xcb.xcb;
 
-    int joyHandle()
-    {
-        import core.sys.posix.unistd;
-
-        int count = 0;
-        foreach (ref e; _joysticks)
-        {
-            Joystick.js_event eEvent;
-            immutable bytes = read(e.fd(), &eEvent, Joystick.js_event.sizeof);
-
-            if (eEvent.type != 0 &&
-                ((eEvent.type & Joystick.JS_EVENT_INIT) != Joystick.JS_EVENT_INIT))
+            struct JoystickEvent
             {
-                jevents ~= JoystickEvent(e.id, eEvent);
-                count++;
+                int id;
+                Joystick.js_event data;
             }
-        }
 
-        return count;
-    }
+            Window window;
+            xcb_generic_event_t* last;
+            xcb_atom_t destroyAtom;
+            Joystick[] _joysticks;
+            JoystickEvent[] jevents;
 
-    void validateJoysticks()
-    {
-        import std.algorithm : remove;
-        import core.sys.posix.fcntl;
-
-        foreach (size_t i, ref e; _joysticks)
-        {
-            if (fcntl(e.fd(), F_GETFD) == -1)
+            this(Window window) @safe
             {
-                _joysticks = _joysticks.remove(i);
+                this.window = window;
+
+                destroyAtom = window.getAtom("WM_DELETE_WINDOW");
             }
-        } 
-    }
 
-override:
-    bool nextEvent()
-    {
-        joyHandle();
-        immutable pen = XPending(runtime.display);
-
-        if (pen != 0) 
-        {
-            XNextEvent(runtime.display, &this.event);
-
-            return pen != 0;
-        } else
-        {
-            if (jevents.length != 0)
+            int joyHandle()
             {
-                auto currEvent = &jevents[0];
-                jevents = jevents[1 .. $];
+                import core.sys.posix.unistd;
 
+                int count = 0;
                 foreach (ref e; _joysticks)
                 {
-                    if (e.id == currEvent.id)
+                    Joystick.js_event eEvent;
+                    immutable bytes = read(e.fd(), &eEvent, Joystick.js_event.sizeof);
+
+                    if (eEvent.type != 0 &&
+                        ((eEvent.type & Joystick.JS_EVENT_INIT) != Joystick.JS_EVENT_INIT))
                     {
-                        e.currJEvent = &currEvent.data;
-                        if (currEvent.data.trueType == Joystick.JS_EVENT_AXIS)
-                        {
-                            e._axis[currEvent.data.number] = e.currJEvent.value;
-                        }
-                    } else
-                    {
-                        e.currJEvent = null;
+                        jevents ~= JoystickEvent(e.id, eEvent);
+                        count++;
                     }
                 }
 
-                return true;
-            } else
+                return count;
+            }
+
+            void validateJoysticks()
             {
-                foreach (ref e; _joysticks)
+                import std.algorithm : remove;
+                import core.sys.posix.fcntl;
+
+                foreach (size_t i, ref e; _joysticks)
                 {
-                    e.currJEvent = null;
+                    if (fcntl(e.fd(), F_GETFD) == -1)
+                    {
+                        _joysticks = _joysticks.remove(i);
+                    }
+                }
+            }
+
+        override @trusted:
+            /++
+            Moves to the next event. If there are no more events, it returns false,
+            otherwise, it throws true and the programmer can safely check which event
+            s in the current queue.
+            +/
+            bool nextEvent()
+            {
+                if (last !is null)
+                {
+                    free(last);
+                    last = null;
+                }
+
+                joyHandle();
+
+                last = xcb_poll_for_event(runtime.connection);
+
+                if (last is null)
+                {
+                    if (jevents.length != 0)
+                    {
+                        auto currEvent = &jevents[0];
+                        jevents = jevents[1 .. $];
+
+                        foreach (ref e; _joysticks)
+                        {
+                            if (e.id == currEvent.id)
+                            {
+                                e.currJEvent = &currEvent.data;
+                                if (currEvent.data.trueType == Joystick.JS_EVENT_AXIS)
+                                {
+                                    e._axis[currEvent.data.number] = e.currJEvent.value;
+                                }
+                            } else
+                            {
+                                e.currJEvent = null;
+                            }
+                        }
+
+                        return true;
+                    } else
+                    {
+                        foreach (ref e; _joysticks)
+                        {
+                            e.currJEvent = null;
+                        }
+
+                        return false;
+                    }
+                }
+
+                return last !is null;
+            }
+
+            /++
+            Checking if any key is pressed in the current event.
+            +/
+            bool isKeyDown()
+            {
+                if (last is null)
+                    return false;
+
+                return (last.response_type & ~0x80) == XCB_KEY_PRESS;
+            }
+
+            /++
+            Checking if any key is released in the current event.
+            +/
+            bool isKeyUp()
+            {
+                if (last is null)
+                    return false;
+
+                return (last.response_type & ~0x80) == XCB_KEY_RELEASE;
+            }
+
+            /++
+            Will return the key that was pressed. Returns zero if no key is pressed
+            in the current event.
+            +/
+            @property int key()
+            {
+                if (isKeyDown)
+                {
+                    xcb_key_press_event_t* pe = cast(xcb_key_press_event_t*) last;
+
+                    return pe.detail;
+                } else
+                if (isKeyUp)
+                {
+                    xcb_key_release_event_t* re = cast(xcb_key_release_event_t*) last;
+
+                    return re.detail;
+                } else
+                    return 0;
+            }
+
+            /++
+            Check if the mouse button is pressed in the current event.
+            +/
+            bool isMouseDown()
+            {
+                if (last is null)
+                    return false;
+
+                return (last.response_type & ~0x80) == XCB_BUTTON_PRESS;
+            }
+
+            /++
+            Check if the mouse button is released in the current event.
+            +/
+            bool isMouseUp()
+            {
+                if (last is null)
+                    return false;
+
+                return (last.response_type & ~0x80) == XCB_BUTTON_RELEASE;
+            }
+
+            /++
+            Returns the currently pressed or released mouse button.
+            +/
+            @property MouseButton mouseButton()
+            {
+                if (isMouseDown)
+                {
+                    xcb_button_press_event_t* pb = cast(xcb_button_press_event_t*) last;
+
+                    return cast(MouseButton) pb.detail;
+                } else
+                if (isMouseUp)
+                {
+                    xcb_button_release_event_t* rb = cast(xcb_button_release_event_t*) last;
+
+                    return cast(MouseButton) rb.detail;
+                } else
+                    return MouseButton.init;
+            }
+
+            /++
+            Returns the position of the mouse in the window.
+            +/
+            @property int[2] mousePosition()
+            {
+                auto c = xcb_query_pointer(runtime.connection, window.handle);
+                xcb_flush(runtime.connection);
+                auto reply = xcb_query_pointer_reply(runtime.connection, c, null);
+
+                auto x = reply.win_x;
+                auto y = reply.win_y;
+
+                free(reply);
+
+                return [x, y];
+            }
+
+            /++
+            Returns in which direction the user is turning the mouse wheel.
+            1 - down, -1 - up, 0 - does not twist.
+
+            This iteration is convenient for multiplying with some real movement coefficient.
+            +/
+            @property int mouseWheel()
+            {
+                if (isMouseDown || isMouseUp)
+                {
+                    if (mouseButton == 4)
+                        return -1;
+                    else
+                    if (mouseButton == 5)
+                        return 1;
+                }
+
+                return 0;
+            }
+
+            /++
+            Indicates whether the window has been resized in this event.
+            +/
+            bool isResize()
+            {
+                if (last is null)
+                {
+                    return false;
+                }
+
+                if ((last.response_type  & ~0x80) == XCB_CONFIGURE_NOTIFY)
+                {
+                    xcb_configure_notify_event_t* cne = cast(xcb_configure_notify_event_t*) last;
+
+                    return cne.response_type == 22;
                 }
 
                 return false;
             }
+
+            /++
+            Returns the new size of the window
+
+            deprecated:
+            although this will already be available directly in the
+            window structure itself.
+            +/
+            deprecated(DeprecatedMethodSize)
+            uint[2] newSizeWindow()
+            {
+                return [window.width, window.height];
+            }
+
+            /++
+            Indicates whether the user is attempting to exit the program.
+            +/
+            bool isQuit()
+            {
+                if (last is null)
+                    return false;
+
+                if ((last.response_type & 0x7f) == XCB_CLIENT_MESSAGE)
+                {
+                    xcb_client_message_event_t* cme = cast(xcb_client_message_event_t*) last;
+                    return cme.data.data32[0] == destroyAtom;
+                }
+
+                return false;
+            }
+
+            /++
+            Indicates whether the user has entered text information.
+            +/
+            bool isInputText()
+            {
+                return isKeyDown;
+            }
+
+            /++
+            User entered data.
+            +/
+            @property string inputChar()
+            {
+                return [];
+            }
+
+            @property wstring inputWChar()
+            {
+                return [];
+            }
+
+            @property Joystick[] joysticks()
+            {
+                import core.sys.posix.fcntl;
+                import std.conv : to;
+
+                if (_joysticks.length != 0)
+                {
+                    validateJoysticks();
+                    return _joysticks;
+                }
+
+                foreach (i; 0 .. 2)
+                {
+                    int fd = open(("/dev/input/js" ~ i.to!string).ptr, 0);
+                    if (fd == -1)
+                        continue;
+
+                    immutable flags = fcntl(fd, F_GETFL, 0);
+                    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+
+                    _joysticks ~= new Joystick(fd, i);
+                }
+
+                return _joysticks;
+            }
         }
-    }
-
-    bool isKeyDown()
+    } else
     {
-        return  this.event.type == KeyPress;
-    }
-
-    bool isKeyUp()
-    {
-        return  this.event.type == KeyRelease;
-    }
-
-    @property int key()
-    {
-        return this.event.xkey.keycode;
-    }
-
-    bool isMouseDown()
-    {
-        return  this.event.type == ButtonPress;
-    }
-
-    bool isMouseUp()
-    {
-        return  this.event.type == ButtonRelease;
-    }
-
-    @property MouseButton mouseButton()
-    {
-        return cast(MouseButton) this.event.xbutton.button;
-    }
-
-    @property int[2] mousePosition() @trusted
-    {
-        return [this.event.xmotion.x, this.event.xmotion.y];
-    }
-
-    @property int mouseWheel()
-    {
-        return this.isMouseDown ? 
-            (this.mouseButton == 4 ? -1 : (this.mouseButton == 5 ? 1 : 0)) : 0;
-    }
-
-    bool isResize()
-    {
-        return 	this.event.type == ConfigureNotify &&
-        		this.event.xconfigure.type == 22 &&
-        		!this.event.xconfigure.send_event;
-    }
-
-    uint[2] newSizeWindow()
-    {
-        XWindowAttributes attr;
-        XGetWindowAttributes(   runtime.display, 
-                                (cast(tida.window.Window) this.windows[0]).handle, &attr);
-
-        return [attr.width, attr.height];
-    }
-
-    bool isQuit()
-    {
-        return  this.event.xclient.data.l[0] == this.destroyWindowEvent;
-    }
-
-    bool isInputText() 
-    {
-        return this.isKeyDown;
-    } 
-
-    @property string inputChar()
-    {
-        int count;
-        string buf = new string(20);
-        KeySym ks;
-        Status status = 0;
-
-        count = Xutf8LookupString(  this.ic, cast(XKeyPressedEvent*) &this.event.xkey, 
-                                    cast(char*) buf.ptr, 20, &ks, &status);
-
-        return buf[0 .. count];
-    }
-
-    @property wstring inputWChar()
-    {
-        import std.utf : toUTF16;
-
-        int count;
-        string buf = new string(20);
-        KeySym ks;
-        Status status = 0;
-
-        count = Xutf8LookupString(  this.ic, cast(XKeyPressedEvent*) &this.event.xkey,
-                                    cast(char*) buf.ptr, 20, &ks, &status);
-
-        return buf[0 .. count].toUTF16;
-    }
-
-    @property Joystick[] joysticks()
-    {
-        import core.sys.posix.fcntl;
-        import std.conv : to;
-
-        if (_joysticks.length != 0)
+        class EventHandler : IEventHandler
         {
-            validateJoysticks();
-            return _joysticks;
+            import x11.X, x11.Xlib, x11.Xutil;
+            import tida.window, tida.runtime;
+
+        private:
+            struct JoystickEvent
+            {
+                int id;
+                Joystick.js_event data;
+            }
+
+            tida.window.Window[] windows;
+            Atom destroyWindowEvent;
+            _XIC* ic;
+            Joystick[] _joysticks;
+            JoystickEvent[] jevents;
+
+        public:
+            XEvent event;
+
+        @trusted:
+            this(tida.window.Window window)
+            {
+                this.windows ~= window;
+
+                this.destroyWindowEvent = XInternAtom(runtime.display, "WM_DELETE_WINDOW", 0);
+
+                ic = XCreateIC( XOpenIM(runtime.display, null, null, null),
+                                XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+                                XNClientWindow, this.windows[0].handle, null);
+                XSetICFocus(ic);
+                XSetLocaleModifiers("@im=none");
+            }
+
+            void appendWindow(tida.window.Window window)
+            {
+                this.windows ~= window;
+            }
+
+            @property tida.window.IWindow windowEvent()
+            {
+                foreach (window; windows)
+                {
+                    if (window.handle == this.event.xany.window)
+                        return window;
+                }
+
+                return null;
+            }
+
+            int joyHandle()
+            {
+                import core.sys.posix.unistd;
+
+                int count = 0;
+                foreach (ref e; _joysticks)
+                {
+                    Joystick.js_event eEvent;
+                    immutable bytes = read(e.fd(), &eEvent, Joystick.js_event.sizeof);
+
+                    if (eEvent.type != 0 &&
+                        ((eEvent.type & Joystick.JS_EVENT_INIT) != Joystick.JS_EVENT_INIT))
+                    {
+                        jevents ~= JoystickEvent(e.id, eEvent);
+                        count++;
+                    }
+                }
+
+                return count;
+            }
+
+            void validateJoysticks()
+            {
+                import std.algorithm : remove;
+                import core.sys.posix.fcntl;
+
+                foreach (size_t i, ref e; _joysticks)
+                {
+                    if (fcntl(e.fd(), F_GETFD) == -1)
+                    {
+                        _joysticks = _joysticks.remove(i);
+                    }
+                }
+            }
+
+        override:
+            bool nextEvent()
+            {
+                joyHandle();
+                immutable pen = XPending(runtime.display);
+
+                if (pen != 0)
+                {
+                    XNextEvent(runtime.display, &this.event);
+
+                    return pen != 0;
+                } else
+                {
+                    if (jevents.length != 0)
+                    {
+                        auto currEvent = &jevents[0];
+                        jevents = jevents[1 .. $];
+
+                        foreach (ref e; _joysticks)
+                        {
+                            if (e.id == currEvent.id)
+                            {
+                                e.currJEvent = &currEvent.data;
+                                if (currEvent.data.trueType == Joystick.JS_EVENT_AXIS)
+                                {
+                                    e._axis[currEvent.data.number] = e.currJEvent.value;
+                                }
+                            } else
+                            {
+                                e.currJEvent = null;
+                            }
+                        }
+
+                        return true;
+                    } else
+                    {
+                        foreach (ref e; _joysticks)
+                        {
+                            e.currJEvent = null;
+                        }
+
+                        return false;
+                    }
+                }
+            }
+
+            bool isKeyDown()
+            {
+                return  this.event.type == KeyPress;
+            }
+
+            bool isKeyUp()
+            {
+                return  this.event.type == KeyRelease;
+            }
+
+            @property int key()
+            {
+                return this.event.xkey.keycode;
+            }
+
+            bool isMouseDown()
+            {
+                return  this.event.type == ButtonPress;
+            }
+
+            bool isMouseUp()
+            {
+                return  this.event.type == ButtonRelease;
+            }
+
+            @property MouseButton mouseButton()
+            {
+                return cast(MouseButton) this.event.xbutton.button;
+            }
+
+            @property int[2] mousePosition() @trusted
+            {
+                return [this.event.xmotion.x, this.event.xmotion.y];
+            }
+
+            @property int mouseWheel()
+            {
+                return this.isMouseDown ?
+                    (this.mouseButton == 4 ? -1 : (this.mouseButton == 5 ? 1 : 0)) : 0;
+            }
+
+            bool isResize()
+            {
+                return 	this.event.type == ConfigureNotify &&
+        		        this.event.xconfigure.type == 22 &&
+        		        !this.event.xconfigure.send_event;
+            }
+
+            uint[2] newSizeWindow()
+            {
+                XWindowAttributes attr;
+                XGetWindowAttributes(   runtime.display,
+                                        (cast(tida.window.Window) this.windows[0]).handle, &attr);
+
+                return [attr.width, attr.height];
+            }
+
+            bool isQuit()
+            {
+                return  this.event.xclient.data.l[0] == this.destroyWindowEvent;
+            }
+
+            bool isInputText()
+            {
+                return this.isKeyDown;
+            }
+
+            @property string inputChar()
+            {
+                int count;
+                string buf = new string(20);
+                KeySym ks;
+                Status status = 0;
+
+                count = Xutf8LookupString(  this.ic, cast(XKeyPressedEvent*) &this.event.xkey,
+                                            cast(char*) buf.ptr, 20, &ks, &status);
+
+                return buf[0 .. count];
+            }
+
+            @property wstring inputWChar()
+            {
+                import std.utf : toUTF16;
+
+                int count;
+                string buf = new string(20);
+                KeySym ks;
+                Status status = 0;
+
+                count = Xutf8LookupString(  this.ic, cast(XKeyPressedEvent*) &this.event.xkey,
+                                            cast(char*) buf.ptr, 20, &ks, &status);
+
+                return buf[0 .. count].toUTF16;
+            }
+
+            @property Joystick[] joysticks()
+            {
+                import core.sys.posix.fcntl;
+                import std.conv : to;
+
+                if (_joysticks.length != 0)
+                {
+                    validateJoysticks();
+                    return _joysticks;
+                }
+
+                foreach (i; 0 .. 2)
+                {
+                    int fd = open(("/dev/input/js" ~ i.to!string).ptr, 0);
+                    if (fd == -1)
+                        continue;
+
+                    immutable flags = fcntl(fd, F_GETFL, 0);
+                    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+
+                    _joysticks ~= new Joystick(fd, i);
+                }
+
+                return _joysticks;
+            }
         }
-
-        foreach (i; 0 .. 2)
-        {
-            int fd = open(("/dev/input/js" ~ i.to!string).ptr, 0);
-            if (fd == -1)
-                continue;
-
-            immutable flags = fcntl(fd, F_GETFL, 0);
-            fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-
-            _joysticks ~= new Joystick(fd, i);
-        }
-
-        return _joysticks;
     }
 }
 

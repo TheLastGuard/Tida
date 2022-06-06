@@ -38,8 +38,10 @@ import tida.color;
 import tida.each;
 import tida.drawable;
 import tida.vector;
-import std.range : isInputRange, isBidirectionalRange, ElementType;
 import tida.render;
+import tida.graphics.gapi;
+import std.traits : ReturnType;
+import std.range : isInputRange, ElementType;
 
 /++
 Checks if the data for the image is valid.
@@ -53,6 +55,70 @@ Params:
 bool validateImageData(int format)(ubyte[] data, uint w, uint h) @safe nothrow pure
 {
     return data.length == (w * h * bytesPerColor!format);
+}
+
+interface InputIterateRange
+{
+    Color!ubyte index(uint x, uint y) @safe;
+
+    @property uint width() @safe;
+
+    @property uint height() @safe;
+}
+
+enum bool isInputIterate(R) =
+    is(typeof(R.index(uint.init, uint.init)) == Color!ubyte) &&
+    is(ReturnType!((R r) => r.width) == uint) &&
+    is(ReturnType!((R r) => r.height) == uint);
+
+void eachedInputIterate(Iterate, alias pred)(
+    Iterate iterate
+) @safe
+if (isInputIterate!Iterate)
+{
+    foreach (y; 0 .. iterate.height)
+    {
+        foreach(x; 0 .. iterate.width)
+        {
+            pred(x, y, iterate.index(x, y));
+        }
+    }
+}
+
+auto dataImageIterate(Iterate)(Iterate iterate) @safe
+if (isInputIterate!Iterate)
+{
+    Color!ubyte[] pixels;
+    pixels.length = iterate.width * iterate.height;
+
+    eachedInputIterate!(Iterate, (x, y, e) {
+        pixels[(iterate.width * y) + x] = e;
+    })(iterate);
+
+    return pixels;
+}
+
+auto toImageIterate(Range)(Range range, uint width, uint height) @safe
+{
+    import std.range : array;
+
+    auto pixels = range.array;
+
+    static struct InputIterate
+    {
+        Color!ubyte[] pixels;
+        uint width;
+        uint height;
+
+        Color!ubyte index(uint x, uint y) @safe
+        {
+            return pixels[(width * y) + x];
+        }
+    }
+
+    static assert(isInputIterate!InputIterate);
+
+    return InputIterate(pixels, width, height);
 }
 
 /// Let's check the performance:
@@ -77,13 +143,7 @@ if (isBidirectionalRange!Range)
         elements ~= e;
     }
 
-    static if (is(Range == class))
-        return new Range(elements);
-    else
-    static if (isArray!Range)
-        return elements;
-    else
-        static assert(null, "It is unknown how to return the result.");
+    return elements;
 }
 
 /++
@@ -103,7 +163,12 @@ if (isInputRange!Range)
     import std.range : array;
 
     Image image = new Image(width, height);
-    image.pixels = range.array;
+
+    static if (is(ElementType!Range == ubyte))
+        image.bytes!(PixelFormat.RGBA)(range.array);
+    else
+    static if (is(ElementType!Range == Color!ubyte))
+        image.pixeldata = range.array;
 
     return image;
 }
@@ -111,20 +176,221 @@ if (isInputRange!Range)
 /++
 Image description structure. (Colors are in RGBA format.)
 +/
-class Image : IDrawable, IDrawableEx, ITarget
+class Image : IDrawable, IDrawableEx
 {
     import std.algorithm : fill, map;
     import std.range : iota, array;
     import tida.vector;
-    import tida.texture;
+    import tida.matrix;
 
 private:
     Color!ubyte[] pixeldata;
     uint _width;
     uint _height;
-    Texture _texture;
 
 public:
+    ITexture texture;
+
+    IBuffer arrayBuffer,
+            elementBuffer;
+    uint elementCount;
+    IVertexInfo vertexInfo;
+    ModeDraw mode = ModeDraw.triangle;
+
+    void toTexture() @trusted
+    {
+        import tida.game : renderer;
+
+        texture = renderer.api.createTexture(TextureType.twoDimensional);
+        texture.append(pixeldata, _width, _height);
+
+        texture.filter(TextureFilter.magFilter, TextureFilterValue.nearest);
+        texture.filter(TextureFilter.minFilter, TextureFilterValue.nearest);
+
+        texture.wrap(TextureWrap.wrapS, TextureWrapValue.clampToEdge);
+        texture.wrap(TextureWrap.wrapT, TextureWrapValue.clampToEdge);
+
+        texture.active(0);
+
+        arrayBuffer = renderer.api.createBuffer(BufferType.array);
+        arrayBuffer.bindData([
+            0f, 0f,          0f, 0f,
+            _width, 0f,      1f, 0f,
+            _width, _height, 1f, 1f,
+            0f, _height,     0f, 1f
+        ]);
+
+        elementBuffer = renderer.api.createBuffer(BufferType.element);
+        elementBuffer.bindData([0, 1, 2, 0, 2, 3]);
+        elementCount = 6;
+
+        vertexInfo = renderer.api.createVertexInfo();
+        vertexInfo.bindBuffer(arrayBuffer);
+        vertexInfo.bindBuffer(elementBuffer);
+        vertexInfo.vertexAttribPointer([
+            AttribPointerInfo(0, 2, TypeBind.Float, 4 * float.sizeof, 0),
+            AttribPointerInfo(1, 2, TypeBind.Float, 4 * float.sizeof, 2 * float.sizeof)
+        ]);
+    }
+
+    enum vertexShaderSource = "#version 450
+
+    layout(location = 0) in vec2 positions;
+    layout(location = 1) in vec2 texCoord;
+
+    uniform mat4 projection;
+    uniform mat4 model;
+
+    layout(location = 0) out vec2 outTexCoord;
+
+    void main() {
+        gl_Position = projection * model * vec4(positions, 0.0, 1.0);
+        outTexCoord = texCoord;
+    }";
+
+    enum fragmentShaderSource = "#version 450
+
+    layout(location = 0) in vec2 outTexCoord;
+
+    uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    uniform sampler2D texture0;
+
+    layout(location = 0) out vec4 outColor;
+
+    void main() {
+        outColor = texture(texture0, outTexCoord) * color;
+    }";
+
+    IShaderProgram initShader(IRenderer render) @safe
+    {
+        if (render.currentShader !is render.mainShader)
+            return render.currentShader;
+
+        if (render.getShader("DefaultTexture") is null)
+        {
+            IShaderManip vertex = render.api.createShader(StageType.vertex);
+            IShaderManip fragment = render.api.createShader(StageType.fragment);
+
+            IShaderProgram program = render.api.createShaderProgram();
+
+            vertex.loadFromSource(vertexShaderSource);
+            fragment.loadFromSource(fragmentShaderSource);
+
+            program.attach(vertex);
+            program.attach(fragment);
+            program.link();
+
+            render.setShader("DefaultTexture", program);
+
+            return program;
+        } else
+            return render.getShader("DefaultTexture");
+    }
+
+    override void draw(IRenderer render, Vecf position) @safe
+    {
+        assert(texture);
+
+        IShaderProgram shader = initShader(render);
+
+        render.api.bindProgram(shader);
+        render.api.bindVertexInfo(vertexInfo);
+        render.api.bindTexture(texture);
+
+        render.api.begin();
+
+        shader.setUniform(
+            shader.getUniformID("projection"),
+            (cast(Render) render).projection
+        );
+
+        shader.setUniform(
+            shader.getUniformID("model"),
+            render.currentModelMatrix.translate(position.x, position.y, 0f)
+        );
+
+        shader.setUniform(
+            shader.getUniformID("texture0"),
+            0
+        );
+
+        if (elementBuffer !is null)
+            render.api.drawIndexed(mode, elementCount);
+        else
+            render.api.draw(mode, 0, elementCount);
+
+        render.resetShader();
+        render.resetModelMatrix();
+    }
+
+    override void drawEx(
+        IRenderer render,
+        Vecf position,
+        float angle,
+        Vecf center,
+        Vecf size,
+        ubyte alpha,
+        Color!ubyte color = rgb(255, 255, 255)
+    ) @safe
+    {
+        assert(texture);
+
+        IShaderProgram shader = initShader(render);
+
+        color.a = alpha;
+
+        Vecf realSize = size.isVectorNaN!float ?
+            vecf(1f, 1f) :
+            vecf(
+                size.x / _width,
+                size.y / _height
+            );
+
+        center = center.isVectorNaN!float ?
+            vecf(_width / 2, _height / 2) * realSize :
+            center;
+
+        render.api.bindProgram(shader);
+        render.api.bindVertexInfo(vertexInfo);
+        render.api.bindTexture(texture);
+
+        render.api.begin();
+
+        shader.setUniform(
+            shader.getUniformID("projection"),
+            (cast(Render) render).projection
+        );
+
+        shader.setUniform(
+            shader.getUniformID("model"),
+            render
+                .currentModelMatrix
+                .scale(realSize.x, realSize.y)
+                .translate(-center.x, -center.y, 0f)
+                .rotateMat(angle, 0f, 0f, 1f)
+                .translate(center.x, center.y, 0f)
+                .translate(position.x, position.y, 0f)
+        );
+
+        shader.setUniform(
+            shader.getUniformID("texture0"),
+            0
+        );
+
+        shader.setUniform(
+            shader.getUniformID("color"),
+            [color.rf, color.gf, color.bf, color.af]
+        );
+
+        if (elementBuffer !is null)
+            render.api.drawIndexed(mode, elementCount);
+        else
+            render.api.draw(mode, 0, elementCount);
+
+        render.resetShader();
+        render.resetModelMatrix();
+    }
+
     /++
     Loads a surface from a file. Supported formats are described here:
     `https://code.dlang.org/packages/imageformats`
@@ -160,16 +426,26 @@ public:
         otherImage = Other image for merge.
         position = Image place position.
     +/
-    void blit(int Type = WithoutParallel)(Image otherImage, Vecf position) @trusted
+    void blit(Range)(Range otherImage, Vecf position) @trusted
+    if(isInputIterateRange!Range)
     {
         import std.conv : to;
+        import std.algorithm : each;
 
-        foreach (x, y; Coord!Type(  position.x.to!int + otherImage.width, 
-                                    position.y.to!int+ otherImage.height,
-                                    position.x.to!int, position.y.to!int))
+        uint x = 0;
+        uint y = 0;
+
+        foreach (e; otherImage)
         {
-            this.setPixel(x, y, otherImage.getPixel(x - position.x.to!int,
-                                                    y - position.y.to!int));
+            x++;
+
+            if (x == otherImage.width)
+            {
+                x = 0;
+                y++;
+            }
+
+            setPixel(x, y, e);
         }
     }
 
@@ -182,204 +458,14 @@ public:
         cWidth = Width new picture.
         cHeight = Hight new picture.
     +/
-    Image copy(int x, int y, int cWidth, int cHeight) @trusted
+    auto copy(int x, int y, int cWidth, int cHeight) @trusted
     {
         import std.algorithm : map, joiner;
 
         return this.scanlines[y .. y + cHeight]
             .map!(e => e[x .. x + cWidth])
             .joiner
-            .imageFrom(cWidth, cHeight);
-    }
-
-    /++
-    Converts an image to a texture (i.e. for rendering an image with hardware
-    acceleration). At the same time, now, when the image is called, the texture
-    itself will be drawn. You can get such a texture and change its parameters
-    from the $(LREF "texture") property.
-    +/
-    void toTexture() @trusted
-    {
-        import tida.shape;
-        import tida.vertgen;
-
-        _texture = new Texture();
-
-        Shape!float shape = Shape!float.Rectangle(vecf(0, 0), vecf(width, height));
-
-        TextureInfo info;
-        info.width = _width;
-        info.height = _height;
-        info.params = DefaultParams;
-        info.data = bytes!(PixelFormat.RGBA)();
-
-        _texture.initializeFromData!(PixelFormat.RGBA)(info);
-        
-        auto vertexInfo = new VertexInfo!float();
-        auto buffer = new BufferInfo!float();
-        auto elements = new ElementInfo!uint();
-
-        vertexInfo.buffer = buffer;
-        vertexInfo.elements = elements;
-
-        buffer.append (vecZero!float, 0.0f, 0.0f);
-        buffer.append (vec!float (width, 0), 1.0f, 0.0f);
-        buffer.append (vec!float (width, height), 1.0f, 1.0f);
-        buffer.append (vec!float (0, height), 0.0f, 1.0f);
-
-        elements.data = [0, 1, 3, 1, 3, 2];
-
-        buffer.bind();
-        vertexInfo.bind();
-        elements.bind();
-
-        elements.attach();
-        buffer.attach();
-
-        vertexInfo.vertexAttribPointer(
-            0,
-            2,
-            4,
-            0
-        );
-
-        vertexInfo.vertexAttribPointer(
-            1,
-            2,
-            4,
-            2
-        );
-
-        buffer.unbind();
-        elements.unbind();
-        vertexInfo.unbind();
-
-        _texture.vertexInfo = vertexInfo;
-        _texture.drawType = ShapeType.rectangle;
-    }
-
-    /++
-    Converts an image to a texture (i.e. for rendering an image with hardware
-    acceleration). At the same time, now, when the image is called, the texture
-    itself will be drawn. You can get such a texture and change its parameters
-    from the $(LREF "texture") property.
-    +/
-    void toTextureWithoutShape() @trusted
-    {
-        import tida.shape;
-        import tida.vertgen;
-
-        _texture = new Texture();
-
-        Shape!float shape = Shape!float.Rectangle(vecf(0, 0), vecf(width, height));
-
-        TextureInfo info;
-        info.width = _width;
-        info.height = _height;
-        info.params = DefaultParams;
-        info.data = bytes!(PixelFormat.RGBA)();
-
-        _texture.initializeFromData!(PixelFormat.RGBA)(info);
-    }
-
-    /++
-    The texture that was generated by the $(LREF "toTexture") function.
-    Using the field, you can set the shape of the texture and its other parameters.
-    +/
-    @property Texture texture() nothrow pure @safe
-    {
-        return _texture;
-    }
-
-    override void bind(IRenderer render) @safe
-    {
-        if (texture is null)
-            throw new Exception("The texture was not created to bind to the render!");
-        	
-        texture.bind(render);
-    }
-	
-    override void unbind(IRenderer render) @safe
-    {
-        if (texture is null)
-            throw new Exception("The texture was not created to bind to the render!");
-        	
-        texture.unbind(render);
-    }
-	
-    override void drawning(IRenderer render) @trusted
-    {
-        import tida.gl;
-    	
-        if (texture is null)
-            throw new Exception("The texture was not created to bind to the render!");
-        	
-        glReadPixels(   0, 0,
-                        width, height, GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) pixels);
-    }
-
-    override void draw(IRenderer renderer, Vecf position) @trusted
-    {
-        import std.conv : to;
-
-        if (_texture !is null && renderer.type == RenderType.opengl)
-        {
-            _texture.draw(renderer, position);
-            return;
-        }
-
-        foreach (x; position.x .. position.x + _width)
-        {
-            foreach (y; position.y .. position.y + _height)
-            {
-                renderer.point(vecf(x, y),
-                                getPixel(x.to!int - position.x.to!int,
-                                        y.to!int - position.y.to!int));
-            }
-        }
-    }
-
-    override void drawEx(   IRenderer renderer,
-                            Vecf position,
-                            float angle,
-                            Vecf center,
-                            Vecf size,
-                            ubyte alpha,
-                            Color!ubyte color) @trusted
-    {
-        import std.conv : to;
-        import tida.angle : rotate;
-
-        if (texture !is null && renderer.type == RenderType.opengl)
-        {
-            texture.drawEx(renderer, position, angle, center, size, alpha, color);
-            return;
-        }
-
-        if (!size.isVecfNaN)
-        {
-            Image scaled = this.dup.resize(size.x.to!int, size.y.to!int);
-            scaled.drawEx(renderer, position, angle, center, vecfNaN, alpha, color);
-            return;
-        }
-
-        if (center.isVecfNaN)
-            center = vecf(width, height) / 2;
-
-        center += position;
-
-        foreach (x; position.x .. position.x + _width)
-        {
-            foreach (y; position.y .. position.y + _height)
-            {
-                Vecf pos = vecf(x,y);
-                pos = rotate(pos, angle, center);
-
-                renderer.point(pos,
-                                getPixel(x.to!int - position.x.to!int,
-                                         y.to!int - position.y.to!int));
-            }
-        }
+            .imageFrom(width, height);
     }
 
 @safe nothrow pure:
@@ -648,96 +734,6 @@ template process(alias fun)
 }
 
 /++
-Rotate the picture by the specified angle from the specified center.
-
-Params:
-    image = The picture to be rotated.
-    angle = Angle of rotation.
-    center =    Center of rotation.
-                (If the vector is empty (non-zero `vecfNan`), then the
-                center is determined automatically).
-+/
-Image rotateImage(int Type = WithoutParallel)(Image image, float angle, Vecf center = vecfNaN) @safe
-{
-    import tida.angle;
-    import std.conv : to;
-
-    Image rotated = new Image(image.width, image.height);
-    rotated.fill(rgba(0, 0, 0, 0));
-
-    if (center.isVecfNaN)
-        center = Vecf(image.width / 2, image.height / 2);
-
-    foreach (x, y; Coord!Type(image.width, image.height))
-    {
-        auto pos = Vecf(x,y)
-            .rotate(angle, center);
-
-        auto colorpos = image.getPixel(x,y);
-
-        rotated.setPixel(pos.x.to!int, pos.y.to!int, colorpos);
-    }
-
-    return rotated;
-}
-
-enum XAxis = 0; /// X-Axis operation.
-enum YAxis = 1; /// Y-Axis operation.
-
-/++
-Checks the axis for correctness.
-+/
-template isValidAxis(int axistype)
-{
-    enum isValidAxis = axistype == XAxis || axistype == YAxis;
-}
-
-/++
-Reverses the picture along the specified axis.
-
-Example:
----
-image
-    .flip!XAxis
-    .flip!YAxis;
----
-+/
-template flipImpl(int axis)
-{
-    static if (axis == XAxis)
-    {
-        Image flipImpl(Image image) @trusted nothrow pure
-        {
-            import std.algorithm : joiner, map;
-
-            return image.scanlines
-                .map!(e => e.reversed)
-                .joiner
-                .imageFrom(image.width, image.height);
-
-        }
-    } else
-    static if (axis == YAxis)
-    {
-        Image flipImpl(Image image) @trusted nothrow pure
-        {
-            import std.algorithm : reverse, joiner;
-
-            return image
-                .scanlines
-                .reversed
-                .joiner
-                .imageFrom(image.width, image.height);
-        }   
-    }
-}
-
-alias flip = flipImpl;
-
-alias flipX = flipImpl!XAxis;
-alias flipY = flipImpl!YAxis;
-
-/++
 Save image in file.
 
 Params:
@@ -756,7 +752,6 @@ do
 
 /++
 Divides the picture into frames.
-
 Params:
     image = Atlas.
     x = Begin x-axis position divide.
@@ -774,51 +769,92 @@ Image[] strip(Image image, int x, int y, int w, int h) @safe
         .array;
 }
 
-/++
-Combining two paintings into one using color mixing.
-
-Params:
-    a = First image.
-    b = Second image.
-    posA = First image position.
-    posB = Second image position.
-+/
-Image unite(int Type = WithoutParallel)(Image a,
-                                        Image b,
-                                        Vecf posA = vecf(0, 0),
-                                        Vecf posB = vecf(0, 0)) @trusted
+auto rotateImage(Iterate)(Iterate iterate, float angle, Vector!float center = vecNaN!float) @safe
+if (isInputIterate!Iterate)
 {
-    import std.conv : to;
-    import tida.color;
-
-    Image result = new Image();
-
-    int width = int.init,
-        height = int.init;
-
-    width = (posA.x + a.width > posB.x + b.width) ? posA.x.to!int + a.width : posB.x.to!int + b.width;
-    height = (posA.y + a.height > posB.y + b.height) ? posA.y.to!int + a.height : posB.x.to!int + b.height;
-
-    result.allocatePlace(width, height);
-    result.fill(rgba(0, 0, 0, 0));
-
-    foreach (x, y; Coord!Type(  posA.x.to!int + a.width, posA.y.to!int + a.height,
-                                posA.x.to!int, posA.y.to!int))
+    static struct RotateInputIterage
     {
-        Color!ubyte color = a.getPixel(x - posA.x.to!int, y - posA.y.to!int);
-        result.setPixel(x,y,color);
+        Iterate iterate;
+        float angle;
+        Vector!float center;
+
+        Color!ubyte index(uint x, uint y) @safe
+        {
+            import tida.angle;
+
+            auto pos = vecf(x, y).rotate(angle, center);
+
+            if (pos.x < 0 || pos.y < 0 ||
+                pos.x > width || pos.y > height)
+                return Color!ubyte(0, 0, 0, 0);
+
+            return iterate.index(cast(uint) pos.x, cast(uint) pos.y);
+        }
+
+        uint width() @safe
+        {
+            return iterate.width;
+        }
+
+        uint height() @safe
+        {
+            return iterate.height;
+        }
     }
 
-    foreach (x, y; Coord!Type(  posB.x.to!int + b.width, posB.y.to!int + b.height,
-                                posB.x.to!int, posB.y.to!int))
+    return RotateInputIterage(iterate, angle, center);
+}
+
+auto flipX(Iterate)(Iterate iterate) @safe
+if(isInputIterate!Iterate)
+{
+    static struct FlipInputIterate
     {
-        Color!ubyte color = b.getPixel(x - posB.x.to!int, y - posB.y.to!int);
-        Color!ubyte backColor = result.getPixel(x, y);
-        color = color.BlendAlpha!ubyte(backColor);
-        result.setPixel(x, y, color);
+        Iterate iterate;
+
+        Color!ubyte index(uint x, uint y) @safe
+        {
+            return iterate.index(width - x, y);
+        }
+
+        uint width() @safe
+        {
+            return iterate.width;
+        }
+
+        uint height() @safe
+        {
+            return iterate.height;
+        }
     }
 
-    return result;
+    return FlipInputIterate(iterate);
+}
+
+auto flipY(Iterate)(Iterate iterate) @safe
+if(isInputIterate!Iterate)
+{
+    static struct FlipInputIterate
+    {
+        Iterate iterate;
+
+        Color!ubyte index(uint x, uint y) @safe
+        {
+            return iterate.index(x, height - y);
+        }
+
+        uint width() @safe
+        {
+            return iterate.width;
+        }
+
+        uint height() @safe
+        {
+            return iterate.height;
+        }
+    }
+
+    return FlipInputIterate(iterate);
 }
 
 /++
@@ -870,69 +906,57 @@ float[][] gausKernel(float r) @safe nothrow pure
     return gausKernel(cast(int) (r * 2), cast(int) (r * 2), r);
 }
 
-/++
-Applies blur.
-
-Params:
-    Type = Operation type.
-    image = Image.
-    r = radius gaus kernel.
-+/
-Image blur(int Type = WithoutParallel)(Image image, float r) @safe
+auto blur(Iterate)(Iterate iterate, float[][] kernel) @safe
 {
-    return blur!Type(image, gausKernel(r));
-}
-
-/++
-Apolies blur.
-
-Params:
-    Type = Operation type.
-    image = Image.
-    width = gaus kernel width.
-    height = gaus kernel height.
-    r = radius gaus kernel.
-+/
-Image blur(int Type = WithoutParallel)(Image image, int width, int height, float r) @safe
-{
-    return blur!Type(image, gausKernel(width, height, r));
-}
-
-/++
-Applies blur.
-
-Params:
-    Type = Operation type.
-    image = Image.
-    otherKernel = Filter kernel.
-+/
-Image blur(int Type = WithoutParallel)(Image image, float[][] otherKernel) @trusted
-{
-    import tida.color;
-
-    auto kernel = otherKernel; 
-    
-    int width = image.width;
-    int height = image.height;
-
-    int kernelWidth = cast(int) kernel.length;
-    int kernelHeight = cast(int) kernel[0].length;
-
-    Image result = new Image(width,height);
-    result.fill(rgba(0,0,0,0));
-
-    foreach (x, y; Coord!Type(width, height))
+    static struct BlurInputIterate
     {
-        Color!ubyte color = rgb(0,0,0);
+        Iterate iterate;
+        float[][] kernel;
+        size_t kernelWidth;
+        size_t kernelHeight;
 
-        foreach (ix,iy; Coord(kernelWidth, kernelHeight))
+        this(Iterate iterate, float[][] kernel) @safe
         {
-            color = color + (image.getPixel(x - kernelWidth / 2 + ix,y - kernelHeight / 2 + iy) * (kernel[ix][iy]));
+            this.iterate = iterate;
+            this.kernel = kernel;
+
+            kernelWidth = kernel.length;
+            kernelHeight = kernel[0].length;
         }
 
-        color.a = image.getPixel(x,y).a;
-        result.setPixel(x,y,color);
+        Color!ubyte index(uint x, uint y) @safe
+        {
+            Color!ubyte color;
+
+            foreach (iy; 0 .. kernelHeight)
+            {
+                foreach (ix; 0 .. kernelWidth)
+                {
+                    immutable xPos = cast(uint) (x - kernelWidth / 2 + ix);
+
+                    immutable yPos = cast(uint) (y - kernelHeight / 2 + iy);
+
+                    if (xPos < 0 || yPos < 0 ||
+                        xPos >= width || yPos >= height)
+                        continue;
+
+                    color = color + iterate.index(xPos, yPos) * kernel[ix][iy];
+                }
+            }
+
+            return color;
+        }
+
+        uint width() @safe
+        {
+            return iterate.width;
+        }
+
+        uint height() @safe
+        {
+            return iterate.height;
+        }
     }
 
-    return result;
+    return BlurInputIterate(iterate, kernel);
 }

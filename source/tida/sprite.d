@@ -23,10 +23,10 @@ describe the rendering parameters.
 class Sprite : IDrawable
 {
     import tida.vector;
-    import tida.shader;
     import tida.render;
     import tida.color;
     import tida.matrix;
+    import tida.graphics.gapi;
 
 public:
     /++
@@ -67,7 +67,7 @@ public:
     /++
     The shader used for rendering.
     +/
-    Shader!Program shader;
+    IShaderProgram shader;
 
     /++
     The color used for rendering. 
@@ -91,14 +91,11 @@ override:
 
         if (draws !is null)
         {
-            if (renderer.type == RenderType.opengl)
-            {
-                mat = mulmat(renderer.currentModelMatrix, matrix);
-                renderer.currentModelMatrix = mat;
+            mat = mulmat(renderer.currentModelMatrix, matrix);
+            renderer.currentModelMatrix = mat;
 
-                if(renderer.currentShader is null)
-                    renderer.currentShader = shader;
-            }
+            if(renderer.currentShader is renderer.mainShader)
+                renderer.currentShader = shader;
 
             draws.drawEx(   renderer,
                             this.position + position,
@@ -113,8 +110,7 @@ override:
         {
             foreach (e; skelet)
             {
-                if (renderer.type == RenderType.opengl)
-                    renderer.currentModelMatrix = mat;
+                renderer.currentModelMatrix = mat;
                 e.draw(renderer, position);
             }
         }

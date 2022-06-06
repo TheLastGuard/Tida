@@ -1,15 +1,6 @@
-/++
-A module for rendering objects.
-
-Macros:
-    LREF = <a href="#$1">$1</a>
-    HREF = <a href="$1">$2</a>
-
-Authors: $(HREF https://github.com/TodNaz,TodNaz)
-Copyright: Copyright (c) 2020 - 2021, TodNaz.
-License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
-+/
 module tida.render;
+
+import tida.graphics.gapi;
 
 /++
 Camera control object in render,
@@ -17,8 +8,8 @@ Camera control object in render,
 class Camera
 {
     import  tida.vector,
-            tida.shape,
-            tida.instance;
+            tida.shape;
+            //tida.instance;
 
     struct CameraObject
     {
@@ -32,7 +23,7 @@ private:
     CameraObject object;
     Vector!float _trackDistance = vec!float(4.0f, 4.0f);
     Vector!float _sizeRoom = vecNaN!float;
-    
+
 
 public @safe nothrow pure:
     /// The allowed room size for camera scrolling.
@@ -40,13 +31,13 @@ public @safe nothrow pure:
     {
         return _sizeRoom;
     }
-    
+
     /// The allowed room size for camera scrolling.
     @property Vector!float sizeRoom(Vector!float value)
     {
         return _sizeRoom = value;
     }
-    
+
     /// A method to change the allowed size of a scrolling room for a camera.
     void resizeRoom(Vector!float value)
     {
@@ -55,26 +46,26 @@ public @safe nothrow pure:
 
     /++
     A method for binding a specific object to a camera to track it.
-    
+
     Params:
         position =  The reference to the variable for which the tracking
-                    will be performed. We need a variable that will be 
+                    will be performed. We need a variable that will be
                     alive during the camera's tracking cycle.
         size     =  The size of the object. (Each object is represented as a rectangle.)
     +/
-    void bindObject(    ref Vector!float position, 
+    void bindObject(    ref Vector!float position,
                         Vector!float size = vecNaN!float)  @trusted
     {
         object.position = &position;
         object.size = size.isVectorNaN ? vec!float(1, 1) : size;
     }
-    
+
     /++
     A method for binding a specific object to a camera to track it.
-    
+
     Params:
         position =  The reference to the variable for which the tracking
-                    will be performed. We need a variable that will be 
+                    will be performed. We need a variable that will be
                     alive during the camera's tracking cycle.
         size     =  The size of the object. (Each object is represented as a rectangle.)
     +/
@@ -84,27 +75,27 @@ public @safe nothrow pure:
         object.position = position;
         object.size = size.isVectorNaN ? vec!float(1, 1) : size;
     }
-    
-    /++
-    A method for binding a specific object to a camera to track it.
-    
-    Params:
-        instance =  An object in the scene that will be monitored by the camera. 
-                    The size is calculated from the object's touch mask.
-    +/
-    void bindObject(Instance instance)
-    {
-        object.position = &instance.position;
-        object.size = instance.mask.calculateSize();
-    }
-    
+
+    ///++
+    //A method for binding a specific object to a camera to track it.
+    //
+    //Params:
+    //    instance =  An object in the scene that will be monitored by the camera.
+    //                The size is calculated from the object's touch mask.
+    //+/
+    //void bindObject(Instance instance)
+    //{
+    //    object.position = &instance.position;
+    //    object.size = instance.mask.calculateSize();
+    //}
+
     /++
     A method that reproduces the process of tracking an object.
     +/
     void followObject()
     {
         Vector!float velocity = vecZero!float;
-    
+
         if (object.position.x < port.begin.x + _trackDistance.x)
         {
             velocity.x = (port.begin.x + _trackDistance.x) - object.position.x;
@@ -113,7 +104,7 @@ public @safe nothrow pure:
         {
             velocity.x = (port.begin.x + port.end.x - _trackDistance.x) - (object.position.x + object.size.x);
         }
-        
+
         if (object.position.y < port.begin.y + _trackDistance.y)
         {
             velocity.y = (port.begin.y + _trackDistance.y) - object.position.y;
@@ -122,9 +113,9 @@ public @safe nothrow pure:
         {
             velocity.y = (port.begin.y + port.end.y - _trackDistance.y) - (object.position.y + object.size.y);
         }
-        
+
         immutable preBegin = port.begin - velocity;
-        
+
         if (!_sizeRoom.isVectorNaN)
         {
             if (preBegin.x > 0 &&
@@ -141,13 +132,13 @@ public @safe nothrow pure:
         } else
             port = Shapef.Rectangle(preBegin, port.end);
     }
-    
+
     /// Distance between camera boundaries and subject for the scene to move the camera's view.
     @property Vector!float trackDistance()
     {
         return _trackDistance;
     }
-    
+
     /// Distance between camera boundaries and subject for the scene to move the camera's view.
     @property Vector!float trackDistance(Vector!float value)
     {
@@ -155,7 +146,7 @@ public @safe nothrow pure:
     }
 
     /++
-    The port is the immediate visible part in the "room". The entire area in 
+    The port is the immediate visible part in the "room". The entire area in
     the world that must be covered in the field of view.
     +/
     @property Shape!float port()
@@ -185,7 +176,6 @@ public @safe nothrow pure:
 
     /++
     Moves the visible field.
-
     Params:
         value = Factor movement.
     +/
@@ -195,32 +185,6 @@ public @safe nothrow pure:
     }
 }
 
-/// Renderer type
-enum RenderType
-{
-    unknown,
-    software,
-    opengl,
-    directx, // Not implement
-    vulkan // Not implement
-}
-
-/// A property that explains whether blending should be applied or not.
-enum BlendMode
-{
-    withoutBlend, /// Without blending
-    withBlend /// With blending
-}
-
-interface ITarget
-{
-    void bind(IRenderer render) @safe;
-    
-    void unbind(IRenderer render) @safe;
-    
-    void drawning(IRenderer render) @safe;
-}
-
 /++
 An interface for rendering objects to a display or other storehouse of pixels.
 +/
@@ -228,16 +192,10 @@ interface IRenderer
 {
     import  tida.color,
             tida.vector,
-            tida.shader,
             tida.drawable,
             tida.matrix;
 
 @safe:
-    // null - default
-    void bindTarget(ITarget target) @safe;
-    
-    @property ITarget currentTarget() @safe;
-
     /// Updates the rendering surface if, for example, the window is resized.
     void reshape();
 
@@ -247,9 +205,10 @@ interface IRenderer
     /// Camera for rendering.
     @property Camera camera();
 
+    @property IGraphManip api();
+
     /++
     Drawing a point.
-
     Params:
         vec = Point position.
         color = Point color.
@@ -258,7 +217,6 @@ interface IRenderer
 
     /++
     Line drawing.
-
     Params:
         points = Tops of lines.
         color = Line color.
@@ -267,7 +225,6 @@ interface IRenderer
 
     /++
     Drawing a rectangle.
-
     Params:
         position = Rectangle position.
         width = Rectangle width.
@@ -275,29 +232,27 @@ interface IRenderer
         color = Rectangle color.
         isFill = Whether to fill the rectangle with color.
     +/
-    void rectangle( Vecf position, 
-                    uint width, 
-                    uint height, 
-                    Color!ubyte color, 
+    void rectangle( Vecf position,
+                    uint width,
+                    uint height,
+                    Color!ubyte color,
                     bool isFill) @safe;
 
     /++
     Drawning a circle.
-
     Params:
         position = Circle position.
         radius = Circle radius.
         color = Circle color.
         isFill = Whether to fill the circle with color.
     +/
-    void circle(Vecf position, 
-                float radius, 
-                Color!ubyte color, 
+    void circle(Vecf position,
+                float radius,
+                Color!ubyte color,
                 bool isFill) @safe;
 
     /++
     Drawing a triangle by its three vertices.
-
     Params:
         points = Triangle vertices
         color = Triangle color.
@@ -308,7 +263,6 @@ interface IRenderer
     /++
     Draws a rectangle with rounded edges.
     (Rendering is available only through hardware acceleration).
-
     Params:
         position = Position roundrectangle.
         width = Width roundrectangle.
@@ -317,25 +271,11 @@ interface IRenderer
         color = Color roundrect.
         isFill = Roundrect is filled color?
     +/
-    void roundrect( Vecf position, 
-                    uint width, 
-                    uint height, 
-                    float radius, 
-                    Color!ubyte color, 
-                    bool isFill) @safe;
-
-    /++
-    Drawing a polygon from an array of vertices.
-
-    Params:
-        position = Polygon position.
-        points = Polygon vertices/
-        color = Polygon color.
-        isFill = Whether it is necessary to fill the polygon with color.
-    +/
-    void polygon(   Vecf position, 
-                    Vecf[] points, 
-                    Color!ubyte color, 
+    void roundrect( Vecf position,
+                    uint width,
+                    uint height,
+                    float radius,
+                    Color!ubyte color,
                     bool isFill) @safe;
 
     /// Cleans the surface by filling it with color.
@@ -343,12 +283,6 @@ interface IRenderer
 
     /// Outputs the buffer to the window.
     void drawning() @safe;
-
-    /// Gives the type of render.
-    RenderType type() @safe;
-
-    /// Set the coloring method. Those. with or without alpha blending.
-    void blendMode(BlendMode mode) @safe;
 
     /// Set factor blend
     void blendOperation(BlendFactor sfactor, BlendFactor dfactor) @safe;
@@ -361,28 +295,28 @@ interface IRenderer
 
     /++
     Memorize the shader for future reference.
-
     Params:
-        name =  The name of the shader by which it will be possible to pick up 
+        name =  The name of the shader by which it will be possible to pick up
                 the shader in the future.
         program = Shader program.
     +/
-    void setShader(string name, Shader!Program program) @safe;
+    void setShader(string name, IShaderProgram program) @safe;
 
     /++
-    Pulls a shader from memory, getting it by name. Returns a null pointer 
+    Pulls a shader from memory, getting it by name. Returns a null pointer
     if no shader is found.
-
     Params:
         name = Shader name.
     +/
-    Shader!Program getShader(string name) @safe;
+    IShaderProgram getShader(string name) @safe;
 
     /// The current shader for the next object rendering.
-    void currentShader(Shader!Program program) @safe @property; 
+    void currentShader(IShaderProgram program) @safe @property;
 
     /// The current shader for the next object rendering.
-    Shader!Program currentShader() @safe @property;
+    IShaderProgram currentShader() @safe @property;
+
+    IShaderProgram mainShader() @safe @property;
 
     /// Reset the shader to main.
     void resetShader() @safe;
@@ -401,14 +335,13 @@ interface IRenderer
 
     /++
     Renders an object.
-
     See_Also: `tida.graph.drawable`.
     +/
     void draw(IDrawable drawable, Vecf position) @safe;
 
     /// ditto
-    void drawEx(    IDrawableEx drawable, 
-                    Vecf position, 
+    void drawEx(    IDrawableEx drawable,
+                    Vecf position,
                     float angle,
                     Vecf center,
                     Vecf size,
@@ -416,689 +349,415 @@ interface IRenderer
                     Color!ubyte color = rgb(255, 255, 255)) @safe;
 }
 
-/++
-Render objects using hardware acceleration through an open graphics library.
-+/
-class GLRender : IRenderer
+class Render : IRenderer
 {
     import tida.window;
-    import tida.gl;
-    import tida.shader;
-    import tida.vertgen;
-    import tida.color;
-    import tida.vector;
-    import tida.matrix;
-    import tida.shape;
-    import tida.drawable;
+    import  tida.color,
+            tida.vector,
+            tida.drawable,
+            tida.matrix,
+            tida.shape,
+            tida.meshgen;
 
-    enum deprecatedVertex =
-    "
-    #version 130
-    in vec3 position;
+    enum vertexShaderSource = "#version 450
+
+    layout(location = 0) in vec2 positions;
 
     uniform mat4 projection;
     uniform mat4 model;
 
-    void main()
-    {
-        gl_Position = projection * model * vec4(position, 1.0f);
-    }
-    ";
+    void main() {
+        gl_Position = projection * model * vec4(positions, 0.0, 1.0);
+    }";
 
-    enum deprecatedFragment =
-    "
-    #version 130
+    enum fragmentShaderSource = "#version 450
+
     uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-    void main()
-    {
-        gl_FragColor = color;
-    }
-    ";
+    layout(location = 0) out vec4 outColor;
 
-    enum modernVertex =
-    "
-    #version 330 core
-    layout (location = 0) in vec3 position;
+    void main() {
+        outColor = color;
+    }";
 
-    uniform mat4 projection;
-    uniform mat4 model;
+    IGraphManip gapi;
+    IShaderProgram defaultShader;
+    mat4 projection;
 
-    void main()
-    {
-        gl_Position = projection * model * vec4(position, 1.0f);
-    }
-    ";
-
-    enum modernFragment =
-    "
-    #version 330 core
-    uniform vec4 color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-    out vec4 fragColor;
-
-    void main()
-    {
-        fragColor = color;
-    }
-    ";
-
-private:
-    IWindow window;
-    Color!ubyte _background;
     Camera _camera;
-    mat4 _projection;
+    Color!ubyte _background;
 
-    Shader!Program[string] shaders;
-    Shader!Program current;
+    IShaderProgram[string] shaders;
 
-    mat4 _model;
+    IShaderProgram _currentShader;
+    mat4 _currentModel = identity();
 
-    bool _isModern = false;
-    ITarget _target;
-
-public @trusted:
-    this(IWindow window)
+    this(Window window) @safe
     {
-        this.window = window;
+        gapi = createGraphManip();
+        gapi.initialize();
+        gapi.createAndBindSurface(
+            window,
+            GraphicsAttributes(8, 8, 8, 8, 32, BufferMode.doubleBuffer)
+        );
 
-        _camera = new Camera();
-        _camera.shape = Shapef.Rectangle(vecf(0, 0), vecf(window.width, window.height));
-        _camera.port = _camera.shape;
+        gapi.viewport(0, 0, window.width, window.height);
 
-        Shader!Program defaultShader = new Shader!Program();
+        auto vertex = gapi.createShader(StageType.vertex);
+        vertex.loadFromSource(vertexShaderSource);
 
-        string vsource, fsource;
+        auto fragment = gapi.createShader(StageType.fragment);
+        fragment.loadFromSource(fragmentShaderSource);
 
-        if (glslVersion == "1.10" || glslVersion == "1.20" || glslVersion == "1.30")
-        {
-            vsource = deprecatedVertex;
-            fsource = deprecatedFragment;
-            _isModern = false;
-        } else
-        {
-            vsource = modernVertex;
-            fsource = modernFragment;
-            _isModern = true;
-        }
-
-        Shader!Vertex defaultVertex = new Shader!Vertex();
-        defaultVertex.bindSource(vsource);
-
-        Shader!Fragment defaultFragment = new Shader!Fragment();
-        defaultFragment.bindSource(fsource);
-
-        defaultShader.attach(defaultVertex);
-        defaultShader.attach(defaultFragment);
+        defaultShader = gapi.createShaderProgram();
+        defaultShader.attach(vertex);
+        defaultShader.attach(fragment);
         defaultShader.link();
 
-        setShader("Default", defaultShader);
+        _currentShader = defaultShader;
 
-        _model = identity();
-        blendMode(BlendMode.withBlend);
-        blendOperation(BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcAlpha);
+        shaders["Default"] = defaultShader;
 
-        this.reshape();
+        _camera = new Camera();
+        _camera.port = Shapef.Rectangle(vecf(0, 0), vecf(window.width, window.height));
+        _camera.shape = _camera.port;
+
+        gapi.blendFactor(BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcAlpha, true);
+        reshape();
     }
 
-    @property Shader!Program[string] getShaders()
+    void setDefaultUniform(Color!ubyte color) @safe
     {
-        return shaders;
-    }
+        _currentShader.setUniform(
+            _currentShader.getUniformID("projection"),
+            projection
+        );
 
-    @property mat4 projection()
-    {
-        return _projection;
-    }
+        _currentShader.setUniform(
+            _currentShader.getUniformID("model"),
+            translate(_currentModel, _camera.port.x, _camera.port.y, 0)
+        );
 
-    int glBlendFactor(BlendFactor factor)
-    {
-        if (factor == BlendFactor.Zero)
-            return GL_ZERO;
-        else
-        if (factor == BlendFactor.One)
-            return GL_ONE;
-        else
-        if (factor == BlendFactor.SrcColor)
-            return GL_SRC_COLOR;
-        else
-        if (factor == BlendFactor.DstColor)
-            return GL_DST_COLOR;
-        else
-        if (factor == BlendFactor.OneMinusSrcColor)
-            return GL_ONE_MINUS_SRC_COLOR;
-        else
-        if (factor == BlendFactor.OneMinusDstColor)
-            return GL_ONE_MINUS_DST_COLOR;
-        else
-        if (factor == BlendFactor.SrcAlpha)
-            return GL_SRC_ALPHA;
-        else
-        if (factor == BlendFactor.DstAlpha)
-            return GL_DST_ALPHA;
-        else
-        if (factor == BlendFactor.OneMinusSrcAlpha)
-            return GL_ONE_MINUS_SRC_ALPHA;
-        else
-        if (factor == BlendFactor.OneMinusDstAlpha)
-            return GL_ONE_MINUS_DST_ALPHA;
-
-        return 0;
-    }
-
-    void setDefaultUniform(Color!ubyte color)
-    {
-        if (currentShader.getUniformLocation("projection") != -1)
-            currentShader.setUniform("projection", _projection);
-
-        if (currentShader.getUniformLocation("color") != -1)
-            currentShader.setUniform("color", color);
-
-        if (currentShader.getUniformLocation("model") != -1)
-            currentShader.setUniform("model", _model);
-    }
-
-    @property bool isModern()
-    {
-        return _isModern;
+        _currentShader.setUniform(
+            _currentShader.getUniformID("color"),
+            [color.rf, color.gf, color.bf, color.af]
+        );
     }
 
 override:
-    void draw(IDrawable drawable, Vecf position) @safe
+    IGraphManip api()
     {
-        drawable.draw(this, position - camera.port.begin);
+        return gapi;
     }
 
-    /// ditto
-    void drawEx(IDrawableEx drawable, 
-                Vecf position, 
-                float angle,
-                Vecf center,
-                Vecf size,
-                ubyte alpha,
-                Color!ubyte color = rgb(255, 255, 255)) @safe
+    void reshape() @safe
     {
-        drawable.drawEx(this, position - camera.port.begin, angle, center, size, alpha, color);
-    }
-
-    void reshape()
-    {
-        import std.conv : to;
-
-        int yborder = 0;
-
-        version (Windows)
-        {
-            if (_target is null)
-                yborder = (cast(Window) window).windowBorderSize;
-        }
-
-        glViewport(
-            -_camera.shape.begin.x.to!int,
-            -_camera.shape.begin.y.to!int - yborder, 
-            _camera.shape.end.x.to!int, 
-            _camera.shape.end.y.to!int
+        gapi.viewport(
+            -_camera.shape.x,
+            -_camera.shape.y,
+            _camera.shape.width,
+            _camera.shape.height
         );
-        
-        this._projection = ortho(0.0, _camera.port.end.x, _camera.port.end.y, 0.0, -1.0, 1.0);
+
+        projection = ortho(0.0, _camera.port.end.x, _camera.port.end.y, 0.0, -1.0, 1.0);
     }
 
-    @property void camera(Camera camera)
+    void camera(Camera value) @safe
     {
-        _camera = camera;
+        this._camera = value;
     }
 
-    @property Camera camera()
+    Camera camera() @safe
     {
         return _camera;
     }
-    
-    void bindTarget(ITarget target) @safe
+
+    void point(Vecf vec, Color!ubyte color) @trusted
     {
-        if (_target !is null)
-            _target.unbind(this);
-            
-        if (target !is null)
-            target.bind(this);
-            
-        _target = target;
-    }
-    
-    @property ITarget currentTarget() @safe
-    {
-        return _target;
-    }
+        gapi.begin();
 
-    void point(Vecf vec, Color!ubyte color)
-    {
-        if (currentShader is null)
-            currentShader = getShader("Default");
-            
-        vec -= camera.port.begin;
+        immutable buffer = gapi.createImmutableBuffer(BufferType.array);
+        buffer.bindData([
+            vec
+        ]);
 
-        scope vertexInfo = new VertexInfo!(float)();
-        scope buffer = new BufferInfo!float();
+        auto vertInfo = gapi.createVertexInfo();
+        vertInfo.bindBuffer(buffer);
+        vertInfo.vertexAttribPointer([
+            AttribPointerInfo(0, 2, TypeBind.Float, 2 * float.sizeof, 0)
+        ]);
 
-        buffer.append (vec);
-
-        buffer.bind();
-        vertexInfo.bind();
-        buffer.move();
-
-        vertexInfo.vertexAttribPointer(
-            currentShader.getAttribLocation("position"),
-            2,
-            2,
-            0
-        );
-        buffer.unbind();
-
-        debug (GLDebug) checkGLError();
-
-        currentShader.using();
-        currentShader.enableVertex("position");
-
-        setDefaultUniform(color);
-        if (currentShader.getUniformLocation("size") != -1)
-            currentShader.setUniform("size", tida.vector.vec!float(1, 1));
-
-        vertexInfo.draw (ShapeType.point);
-
-        currentShader.disableVertex("position");
-        vertexInfo.unbind();
-
-        resetShader();
-        resetModelMatrix();
-    }
-
-    void line(Vecf[2] points, Color!ubyte color)
-    {
-        if (currentShader is null)
-            currentShader = getShader("Default");
-
-        scope vertexInfo = new VertexInfo!(float)();
-        scope buffer = new BufferInfo!float();
-
-        buffer.append (points[0] - camera.port.begin);
-        buffer.append (points[1] - camera.port.begin);
-
-        buffer.bind();
-        vertexInfo.bind();
-        buffer.move();
-
-        vertexInfo.vertexAttribPointer(
-            currentShader.getAttribLocation("position"),
-            2,
-            2,
-            0
-        );
-        buffer.unbind();
-
-        debug (GLDebug) checkGLError();
-
-        currentShader.using();
-        currentShader.enableVertex("position");
-
-        setDefaultUniform(color);
-        if (currentShader.getUniformLocation("size") != -1)
-            currentShader.setUniform("size", abs(points[1] - points[0]));
-
-        vertexInfo.draw (ShapeType.line);
-
-        currentShader.disableVertex("position");
-        vertexInfo.unbind();
-
-        resetShader();
-        resetModelMatrix();
-    }
-
-    void rectangle(Vecf position, uint width, uint height, Color!ubyte color, bool isFill)
-    {
-        if (currentShader is null)
-            currentShader = getShader("Default");
-
-        position -= camera.port.begin;
-        
-        scope vertexInfo = new VertexInfo!(float)();
-        scope buffer = new BufferInfo!float();
-        scope elements = new ElementInfo!uint();
-        vertexInfo.elements = elements;
-
-        buffer.append (position);
-        buffer.append (position + vec!float (width, 0));
-        buffer.append (position + vec!float (width, height));
-        buffer.append (position + vec!float (0, height));
-
-        if (isFill)
+        scope(exit)
         {
-            elements.data = [0, 1, 3, 1, 3, 2];
-        } else
-        {
-            elements.data = [0, 1, 1, 2, 2, 3, 3, 0];
+            destroy(buffer);
+            destroy(vertInfo);
         }
 
-        buffer.bind();
-        vertexInfo.bind();
-        elements.bind();
+        gapi.bindProgram(_currentShader);
+        gapi.bindVertexInfo(vertInfo);
 
-        elements.attach();
-        buffer.move();
+        _currentModel = translate(_currentModel, -camera.port.begin.x, -camera.port.begin.y, 0);
 
-        vertexInfo.vertexAttribPointer(
-            currentShader.getAttribLocation("position"),
-            2,
-            2,
-            0
-        );
-        buffer.unbind();
-
-        debug (GLDebug) checkGLError();
-
-        currentShader.using();
-        currentShader.enableVertex("position");
-
+        gapi.begin();
         setDefaultUniform(color);
-        if (currentShader.getUniformLocation("size") != -1)
-            currentShader.setUniform("size", vec!float(width, height));
+        gapi.draw(ModeDraw.points, 0, 1);
 
-        if (isFill)
+        resetShader();
+        resetModelMatrix();
+    }
+
+    void line(Vecf[2] points, Color!ubyte color) @trusted
+    {
+        immutable buffer = gapi.createImmutableBuffer();
+        buffer.bindData([
+            points[0], points[1]
+        ]);
+
+        IVertexInfo vertInfo = gapi.createVertexInfo();
+        vertInfo.bindBuffer(buffer);
+        vertInfo.vertexAttribPointer([
+            AttribPointerInfo(0, 2, TypeBind.Float, 2 * float.sizeof, 0)
+        ]);
+
+        scope(exit)
         {
-            vertexInfo.draw (ShapeType.rectangle);
-        } else
-        {
-            vertexInfo.draw (ShapeType.line);
+            destroy(buffer);
+            destroy(vertInfo);
         }
 
-        currentShader.disableVertex("position");
-        elements.unbind();
-        vertexInfo.unbind();
+        gapi.bindVertexInfo(vertInfo);
+        gapi.bindProgram(_currentShader);
+
+        _currentModel = translate(_currentModel, -camera.port.begin.x, -camera.port.begin.y, 0);
+
+        gapi.begin();
+        setDefaultUniform(color);
+        gapi.draw(ModeDraw.lineStrip, 0, 2);
 
         resetShader();
         resetModelMatrix();
     }
 
-    void circle(Vecf position, float radius, Color!ubyte color, bool isFill)
+    void rectangle( Vecf position,
+                    uint width,
+                    uint height,
+                    Color!ubyte color,
+                    bool isFill) @trusted
     {
-        if (currentShader is null)
-            currentShader = getShader("Default");
+        immutable buffer = gapi.createImmutableBuffer();
+        buffer.bindData([
+            position,
+            position + vecf(width, 0),
+            position + vecf(width, height),
+            position + vecf(0, height)
+        ]);
 
-        position -= camera.port.begin;
+        immutable indexBuffer = gapi.createImmutableBuffer(BufferType.element);
 
-        scope vertexInfo = new VertexInfo!(float)();
-        scope buffer = new BufferInfo!float();
-        vertexInfo.buffer = buffer;
+        uint[] index = isFill ?
+            [0, 1, 2, 0, 3, 2] :
+            [0, 1, 1, 2, 2, 3, 3, 0];
 
-        auto shape = isFill ? 
-                Shape!float.Circle (position, radius) :
-                Shape!float.CircleLine (position, radius);
+        indexBuffer.bindData(index);
 
-        buffer.vertexData = generateBuffer!float(shape);
+        IVertexInfo vertInfo = gapi.createVertexInfo();
+        vertInfo.bindBuffer(buffer);
+        vertInfo.bindBuffer(indexBuffer);
+        vertInfo.vertexAttribPointer([
+            AttribPointerInfo(0, 2, TypeBind.Float, 2 * float.sizeof, 0)
+        ]);
 
-        buffer.bind();
-        vertexInfo.bind();
-        buffer.attach();
-
-        vertexInfo.vertexAttribPointer(
-            currentShader.getAttribLocation("position"),
-            2,
-            2,
-            0
-        );
-        buffer.unbind();
-
-        debug (GLDebug) checkGLError();
-
-        currentShader.using();
-        currentShader.enableVertex("position");
-
-        setDefaultUniform(color);
-        if (currentShader.getUniformLocation("size") != -1)
-            currentShader.setUniform("size", vec!float(radius * 2, radius * 2));
-
-        if (isFill)
+        scope(exit)
         {
-            vertexInfo.draw (ShapeType.circle);
-        } else
-        {
-            vertexInfo.draw (ShapeType.line, cast(uint) shape.shapes.length);
+            destroy(buffer);
+            destroy(indexBuffer);
+            destroy(vertInfo);
         }
 
-        currentShader.disableVertex("position");
-        vertexInfo.unbind();
+        gapi.bindProgram(_currentShader);
+        gapi.bindVertexInfo(vertInfo);
+
+        _currentModel = translate(_currentModel, -camera.port.begin.x, -camera.port.begin.y, 0);
+
+        gapi.begin();
+        setDefaultUniform(color);
+        gapi.drawIndexed(
+            isFill ? ModeDraw.triangle : ModeDraw.line,
+            cast(uint) index.length
+        );
 
         resetShader();
         resetModelMatrix();
     }
 
-    void roundrect(Vecf position, uint width, uint height, float radius, Color!ubyte color, bool isFill)
+    void circle(Vecf position,
+                float radius,
+                Color!ubyte color,
+                bool isFill) @trusted
     {
-        if (currentShader is null)
-            currentShader = getShader("Default");
-
-        position -= camera.port.begin;
-        
-        scope vertexInfo = new VertexInfo!(float)();
-        scope buffer = new BufferInfo!float();
-        vertexInfo.buffer = buffer;
-
-        auto shape = isFill ? 
-                Shape!float.RoundRectangle (position, position + vec!float(width, height), radius) :
-                Shape!float.RoundRectangleLine (position, position + vec!float(width, height), radius);
-
-        buffer.vertexData = generateBuffer!float(shape);
-
-        buffer.bind();
-        vertexInfo.bind();
-        buffer.attach();
-
-        vertexInfo.vertexAttribPointer(
-            currentShader.getAttribLocation("position"),
-            2,
-            2,
-            0
+        immutable meshData = generateBuffer(
+            isFill ?
+                Shapef.Circle(position, radius) :
+                Shapef.CircleLine(position, radius)
         );
-        buffer.unbind();
 
-        debug (GLDebug) checkGLError();
+        immutable buffer = gapi.createImmutableBuffer();
+        buffer.bindData(meshData);
 
-        currentShader.using();
-        currentShader.enableVertex("position");
+        IVertexInfo vertInfo = gapi.createVertexInfo();
+        vertInfo.bindBuffer(buffer);
+        vertInfo.vertexAttribPointer([
+            AttribPointerInfo(0, 2, TypeBind.Float, 2 * float.sizeof, 0)
+        ]);
 
-        setDefaultUniform(color);
-        if (currentShader.getUniformLocation("size") != -1)
-            currentShader.setUniform("size", vec!float(width, height));
-
-        if (isFill)
+        scope(exit)
         {
-            vertexInfo.draw (ShapeType.roundrect);
-        } else
-        {
-            vertexInfo.draw (ShapeType.line, cast(uint) shape.shapes.length);
+            destroy(buffer);
+            destroy(vertInfo);
         }
 
-        currentShader.disableVertex("position");
-        vertexInfo.unbind();
+        gapi.bindVertexInfo(vertInfo);
+        gapi.bindProgram(_currentShader);
 
-        resetShader();
-        resetModelMatrix();
-    }
+        _currentModel = translate(_currentModel, -camera.port.begin.x, -camera.port.begin.y, 0);
 
-    void triangle(Vecf[3] points, Color!ubyte color, bool isFill)
-    {
-        if (currentShader is null)
-            currentShader = getShader("Default");
-
-        scope vertexInfo = new VertexInfo!(float)();
-        scope buffer = new BufferInfo!float();
-
-        auto shape = Shape!float();
-        if (isFill)
-            shape = Shape!float.Triangle (points);
-        else
-            shape = Shape!float.TriangleLine (points);
-
-        buffer.vertexData = generateBuffer!float(shape);
-
-        buffer.bind();
-        vertexInfo.bind();
-        buffer.move();
-
-        vertexInfo.vertexAttribPointer(
-            currentShader.getAttribLocation("position"),
-            2,
-            2,
-            0
-        );
-        buffer.unbind();
-
-        debug (GLDebug) checkGLError();
-
-        currentShader.using();
-        currentShader.enableVertex("position");
-
+        gapi.begin();
         setDefaultUniform(color);
-        if (currentShader.getUniformLocation("size") != -1)
-            currentShader.setUniform("size", abs(points[2] - points[0]));
-
-        if (isFill)
-            vertexInfo.draw (ShapeType.triangle);
-        else
-            vertexInfo.draw (ShapeType.line, cast(uint) shape.shapes.length);
-
-        currentShader.disableVertex("position");
-        vertexInfo.unbind();
-
-        resetShader();
-        resetModelMatrix();
-    }
-
-    void polygon(Vecf position, Vecf[] points, Color!ubyte color, bool isFill)
-    {
-        import std.algorithm : each;
-
-        if (currentShader is null)
-            currentShader = getShader("Default");
-            
-        position -= camera.port.begin;
-
-        scope vertexInfo = new VertexInfo!(float)();
-        scope buffer = new BufferInfo!float();
-        vertexInfo.buffer = buffer;
-
-        auto shape = Shape!float();
-
-        if (isFill)
-            Shape!float.Polygon (points, position);
-        else
-            Shape!float.PolygonLine (points, position);
-
-        buffer.vertexData = generateBuffer!float(shape);
-
-        buffer.bind();
-        vertexInfo.bind();
-        buffer.attach();
-
-        vertexInfo.vertexAttribPointer(
-            currentShader.getAttribLocation("position"),
-            2,
-            2,
-            0
+        gapi.draw(
+            isFill ? ModeDraw.triangleStrip : ModeDraw.lineStrip,
+            0,
+            cast(uint) meshData.length * 2 / 4
         );
-        buffer.unbind();
-
-        debug (GLDebug) checkGLError();
-
-        currentShader.using();
-        currentShader.enableVertex("position");
-
-        setDefaultUniform(color);
-        if (currentShader.getUniformLocation("size") != -1)
-            currentShader.setUniform("size", vec!float(1, 1));
-
-        if (isFill)
-            vertexInfo.draw (ShapeType.polygon);
-        else
-            vertexInfo.draw (ShapeType.line, cast(uint) shape.shapes.length);
-
-        currentShader.disableVertex("position");
-        vertexInfo.unbind();
 
         resetShader();
         resetModelMatrix();
     }
 
-    @property RenderType type()
+    void triangle(Vecf[3] points, Color!ubyte color, bool isFill) @trusted
     {
-        return RenderType.opengl;
+        immutable buffer = gapi.createImmutableBuffer();
+        buffer.bindData([
+            points[0], points[1], points[2]
+        ]);
+
+        immutable indexBuffer = gapi.createImmutableBuffer(BufferType.element);
+
+        IVertexInfo vertInfo = gapi.createVertexInfo();
+        vertInfo.bindBuffer(buffer);
+
+        if (!isFill)
+        {
+            indexBuffer.bindData([0, 1, 1, 2, 2, 0]);
+            vertInfo.bindBuffer(indexBuffer);
+        }
+
+        vertInfo.vertexAttribPointer([
+            AttribPointerInfo(0, 2, TypeBind.Float, 2 * float.sizeof, 0)
+        ]);
+
+        scope(exit)
+        {
+            destroy(buffer);
+            destroy(indexBuffer);
+            destroy(vertInfo);
+        }
+
+        gapi.bindVertexInfo(vertInfo);
+        gapi.bindProgram(_currentShader);
+
+        _currentModel = translate(_currentModel, -camera.port.begin.x, -camera.port.begin.y, 0);
+
+        gapi.begin();
+        setDefaultUniform(color);
+
+        if (isFill)
+            gapi.draw(ModeDraw.triangle, 0, 3);
+        else
+            gapi.drawIndexed(ModeDraw.line, 6);
+
+        resetShader();
+        resetModelMatrix();
     }
 
-    @property void background(Color!ubyte color)
+    void roundrect( Vecf position,
+                    uint width,
+                    uint height,
+                    float radius,
+                    Color!ubyte color,
+                    bool isFill) @trusted
     {
-        _background = color;
-        glClearColor(color.rf, color.gf, color.bf, color.af);
+        immutable meshData = generateBuffer(
+            isFill ?
+                Shapef.RoundRectangle(position, position + vecf(width, height), radius) :
+                Shapef.RoundRectangleLine(position, position + vecf(width, height), radius)
+        );
+
+        immutable buffer = gapi.createImmutableBuffer();
+        buffer.bindData(meshData);
+
+        IVertexInfo vertInfo = gapi.createVertexInfo();
+        vertInfo.bindBuffer(buffer);
+        vertInfo.vertexAttribPointer([
+            AttribPointerInfo(0, 2, TypeBind.Float, 2 * float.sizeof, 0)
+        ]);
+
+        scope(exit)
+        {
+            destroy(buffer);
+            destroy(vertInfo);
+        }
+
+        gapi.bindVertexInfo(vertInfo);
+        gapi.bindProgram(_currentShader);
+
+        _currentModel = translate(_currentModel, -camera.port.begin.x, -camera.port.begin.y, 0);
+
+        gapi.begin();
+        setDefaultUniform(color);
+        gapi.draw(
+            isFill ? ModeDraw.triangleStrip : ModeDraw.lineStrip,
+            0,
+            cast(uint) meshData.length * 2 / 2
+        );
+
+        resetShader();
+        resetModelMatrix();
     }
 
-    @property Color!ubyte background()
+    void clear() @safe
+    {
+        gapi.clear();
+    }
+
+    void drawning() @safe
+    {
+        gapi.drawning();
+    }
+
+    void blendOperation(BlendFactor sfactor, BlendFactor dfactor) @safe
+    {
+        gapi.blendFactor(sfactor, dfactor, true);
+    }
+
+    void background(Color!ubyte value) @safe @property
+    {
+        _background = value;
+
+        gapi.clearColor(value);
+    }
+
+    /// ditto
+    Color!ubyte background() @safe @property
     {
         return _background;
     }
 
-    void clear()
-    {
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
-
-    void drawning()
-    {
-        if (_target is null)
-            window.swapBuffers();
-        else
-            _target.drawning(this);
-    }
-
-    void blendMode(BlendMode mode)
-    {
-        if (mode == BlendMode.withBlend)
-        {
-            glEnable(GL_BLEND);
-        } else
-        if (mode == BlendMode.withoutBlend)
-        {
-            glDisable(GL_BLEND);
-        }
-    }
-
-    void blendOperation(BlendFactor sfactor, BlendFactor dfactor)
-    {
-        glBlendFunc(glBlendFactor(sfactor), glBlendFactor(dfactor));
-    }
-
-    void currentShader(Shader!Program program)
-    {
-        current = program;
-    }
-
-    Shader!Program currentShader()
-    {
-        return current;
-    }
-
-    void currentModelMatrix(float[4][4] matrix)
-    {
-        _model = matrix;
-    }
-
-    float[4][4] currentModelMatrix()
-    {
-        return _model;
-    }
-
-    void setShader(string name, Shader!Program program)
+    void setShader(string name, IShaderProgram program) @safe
     {
         shaders[name] = program;
     }
 
-    Shader!Program getShader(string name)
+    IShaderProgram getShader(string name) @safe
     {
         if (name in shaders)
             return shaders[name];
@@ -1106,1528 +765,53 @@ override:
             return null;
     }
 
-    void resetShader()
+    IShaderProgram mainShader() @safe @property
     {
-        current = null;
+        return defaultShader;
     }
-}
 
-debug (GLDebug) class GLDebugRender : IRenderer
-{
-    import tida.vector;
-    import tida.color;
-    import tida.drawable;
-    import tida.shader;
-
-    public struct Operation
-    {
-        string name;
-        
-        IDrawable object;
-        IDrawableEx objectEx;
-        
-        Vecf size;
-        Vecf center;
-        float angle;
-        ubyte alpha;
-
-        Color!ubyte color;
-        bool isFill = true;
-
-        Shader!Program shader;
-        string shaderName;
-        float[4][4] matrix;
-
-        Vecf[] vertexs;
-        float radius;
-
-        BlendFactor sfactor;
-        BlendFactor dfactor;
-    }
-
-private:
-    GLRender render;
-    size_t frame;
-    Color!ubyte _background;
-
-public:
-    Operation[][] operations;
-
-@safe:
-    this(GLRender render)
-    {
-        this.render = render;
-
-        operations ~= [[]];
-        frame = 1;
-    }
-
-    string findShadername(Shader!Program shader)
-    {
-        auto shaders = render.getShaders();
-
-        foreach (key, value; shaders)
-        {
-            if (value is shader)
-                return key;
-        }
-
-        return "unknown";
-    }
-
-    string textReport() @safe
-    {
-        import std.conv : to;
-
-        string data;
-        size_t iframe = 0;
-
-        foreach (frame; operations)
-        {
-            iframe++;
-            data ~= "Frame " ~ iframe.to!string ~ ":\n";
-            foreach (operand; frame)
-            {
-                data ~= operand.name ~ ":\n";
-                data ~= "L color: " ~ operand.color.to!string ~ "\n";
-                data ~= "L isFill: " ~ operand.isFill.to!string ~ "\n";
-                data ~= "L shader: " ~ operand.shaderName ~ "\n";
-                data ~= "L matrix: " ~ operand.matrix.to!string ~ "\n";
-                data ~= "L vertexs: " ~ operand.vertexs.to!string ~ "\n\n";
-            }
-        }
-
-        return data;
-    }
-
-    void drawFrame(int idframe) @safe
-    {
-        auto frame = operations[idframe];
-
-        foreach (i; 0 .. cast(int) frame.length)
-            drawOperation(idframe, i);
-    }
-
-    void drawOperation(int idframe, int idoper) @safe
-    {
-        auto operation = operations[idframe][idoper];
-        
-        if (operation.object !is null)
-        {
-            render.draw(operation.object, operation.vertexs[0]);
-        } else
-        if (operation.objectEx !is null)
-        {
-            render.drawEx(operation.objectEx,   operation.vertexs[0], 
-                                                operation.angle, 
-                                                operation.center,
-                                                operation.size,
-                                                operation.alpha,
-                                                operation.color);
-        } else
-        {
-            switch (operation.name)
-            {
-                case "tida.render.GLRender.point":
-                    render.point(operation.vertexs[0], operation.color);
-                break;
-
-                case "tida.render.GLRender.line":
-                    render.line([operation.vertexs[0], operation.vertexs[1]], operation.color);
-                break;
-
-                case "tida.render.GLRender.rectangle": {
-                    uint width = cast(uint) (operation.vertexs[1].x - operation.vertexs[0].x);
-                    uint height = cast(uint) (operation.vertexs[1].y - operation.vertexs[0].y);
-
-                    render.rectangle(operation.vertexs[0], width, height, operation.color, operation.isFill);
-                }
-                break;
-
-                case "tida.render.GLRender.triangle": 
-                    render.triangle([operation.vertexs[0], operation.vertexs[1], operation.vertexs[2]],
-                                    operation.color, operation.isFill);
-                break;
-
-                case "tida.render.GLRender.circle":
-                    render.circle(operation.vertexs[0], operation.radius, operation.color, operation.isFill);
-                break;
-
-                case "tida.render.GLRender.roundrect": {
-                    uint width = cast(uint) (operation.vertexs[1].x - operation.vertexs[0].x);
-                    uint height = cast(uint) (operation.vertexs[1].y - operation.vertexs[0].y);
-
-                    render.roundrect(operation.vertexs[0], width, height, operation.radius, operation.color, operation.isFill);   
-                }
-                break;
-
-                case "tida.render.GLRender.polygon":
-                    render.polygon(operation.vertexs[0], operation.vertexs[1 .. $], operation.color, operation.isFill);
-                break;
-
-                default:
-                    return;
-            }
-        }
-    }
-
-override:
-    void bindTarget(ITarget target) @trusted
-    {
-        Operation operation;
-        operation.name = "bindTarget";
-
-        operations[frame - 1] ~=  operation;
-
-        render.bindTarget(target);
-    }
-    
-    @property ITarget currentTarget() @trusted
-    {
-        Operation operation;
-        operation.name = "currentTarget";
-
-        operations[frame - 1] ~=  operation;
-
-        return render.currentTarget;
-    }
-
-    void draw(IDrawable drawable, Vecf position) @trusted
-    {
-        Operation operation;
-        operation.name = (cast(Object) drawable).toString;
-        operation.object = drawable;
-        operation.vertexs ~= position;
-        operation.shader = render.currentShader !is null ? 
-            render.currentShader : 
-            render.getShader("Default");
-        operation.shaderName = render.currentShader !is null ? 
-            findShadername(render.currentShader) :
-            "Default";
-
-        operations[frame - 1] ~=  operation;
-
-        render.draw(drawable, position);
-    }
-
-    /// ditto
-    void drawEx(    IDrawableEx drawable, 
-                    Vecf position, 
-                    float angle,
-                    Vecf center,
-                    Vecf size,
-                    ubyte alpha,
-                    Color!ubyte color = rgb(255, 255, 255)) @trusted
-    {
-        Operation operation;
-        operation.name = (cast(Object) drawable).toString;
-        operation.objectEx = drawable;
-        operation.vertexs ~= [position, position + (size.isVecfNaN ? vecfZero : size)];
-        operation.shader = render.currentShader !is null ? 
-            render.currentShader : 
-            render.getShader("Default");
-
-        operation.angle = angle;
-        operation.center = center;
-        operation.size = size;
-        operation.alpha = alpha;
-
-        operation.shaderName = render.currentShader !is null ? 
-            findShadername(render.currentShader) :
-            "Default";
-
-        operation.color = color;
-
-        operations[frame - 1] ~=  operation;
-
-        render.drawEx(drawable, position, angle, center, size, alpha, color);
-    }
-
-    void clear()
-    {
-        frame++;
-        operations.length += 1;
-
-        Operation operation;
-        operation.name = "tida.render.GLRender.clear";
-        operation.color = render.background;
-        operations[frame - 1] ~= operation;
-
-        render.clear();
-    }
-
-    void drawning()
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.drawning";
-        operations[frame - 1] ~= operation;
-
-        render.drawning();
-    }
-
-    void point(Vecf position, Color!ubyte color)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.point";
-        operation.color = color;
-        operation.shader = render.currentShader !is null ? 
-            render.currentShader : 
-            render.getShader("Default");
-
-        operation.shaderName = render.currentShader !is null ? 
-            findShadername(render.currentShader) :
-            "Default";
-
-        operation.vertexs ~= position;
-        operations[frame - 1] ~= operation;
-
-        render.point(position, color);                            
-    }
-    
-    void line(Vecf[2] points, Color!ubyte color)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.line";
-        operation.color = color;
-        operation.shader = render.currentShader !is null ? 
-            render.currentShader : 
-            render.getShader("Default");
-
-        operation.shaderName = render.currentShader !is null ? 
-            findShadername(render.currentShader) :
-            "Default";
-
-        operation.vertexs ~= [points[0], points[1]];
-        operations[frame - 1] ~= operation;
-
-        render.line(points, color);
-    }
-
-    void rectangle(Vecf position, uint width, uint height, Color!ubyte color, bool isFill)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.rectangle";
-        operation.color = color;
-        operation.shader = render.currentShader !is null ? 
-            render.currentShader : 
-            render.getShader("Default");
-
-        operation.shaderName = render.currentShader !is null ? 
-            findShadername(render.currentShader) :
-            "Default";
-
-        operation.vertexs ~= [position, position + vecf(width, height)];
-        operation.isFill = isFill;
-
-        operations[frame - 1] ~= operation;
-
-        render.rectangle(position, width, height, color, isFill);
-    }
-
-    void triangle(Vecf[3] points, Color!ubyte color, bool isFill)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.triangle";
-        operation.color = color;
-        operation.shader = render.currentShader !is null ? 
-            render.currentShader : 
-            render.getShader("Default");
-
-        operation.shaderName = render.currentShader !is null ? 
-            findShadername(render.currentShader) :
-            "Default";
-
-        operation.vertexs ~= [points[0], points[1], points[2]];
-        operation.isFill = isFill;
-
-        operations[frame - 1] ~= operation;
-
-        render.triangle(points, color, isFill);
-    }
-
-    void circle(Vecf position, float radius, Color!ubyte color, bool isFill)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.circle";
-        operation.color = color;
-        operation.shader = render.currentShader !is null ? 
-            render.currentShader : 
-            render.getShader("Default");
-
-        operation.shaderName = render.currentShader !is null ? 
-            findShadername(render.currentShader) :
-            "Default";
-
-        operation.vertexs ~= [position];
-        operation.isFill = isFill;
-        operation.radius = radius;
-
-        operations[frame - 1] ~= operation;
-
-        render.circle(position, radius, color, isFill);
-    }
-
-    void polygon(Vecf position, Vecf[] points, Color!ubyte color, bool isFill)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.polygon";
-        operation.color = color;
-        operation.shader = render.currentShader !is null ? 
-            render.currentShader : 
-            render.getShader("Default");
-
-        operation.shaderName = render.currentShader !is null ? 
-            findShadername(render.currentShader) :
-            "Default";
-
-        operation.vertexs ~= [position] ~ points;
-        operation.isFill = isFill;
-
-        operations[frame - 1] ~= operation;
-
-        render.polygon(position, points, color, isFill);
-    }
-
-    void roundrect(Vecf position, uint width, uint height, float radius, Color!ubyte color, bool isFill)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.line";
-        operation.color = color;
-        operation.shader = render.currentShader !is null ? 
-            render.currentShader : 
-            render.getShader("Default");
-
-        operation.shaderName = render.currentShader !is null ? 
-            findShadername(render.currentShader) :
-            "Default";
-
-        operation.vertexs ~= [position, position + vecf(width, height)];
-        operation.isFill = isFill;
-        operation.radius = radius;
-
-        operations[frame - 1] ~= operation;
-
-        render.roundrect(position, width, height, radius, color, isFill);
-    }
-
-    Shader!Program getShader(string name)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.getShader";
-        operation.shader = render.getShader(name);
-        operation.shaderName = name;
-
-        operations[frame - 1] ~= operation;
-
-        return render.getShader(name);
-    }
-
-    void setShader(string name, Shader!Program shader)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.setShader";
-        operation.shader = shader;
-        operation.shaderName = name;
-
-        operations[frame - 1] ~= operation;
-
-        render.setShader(name, shader);
-    }
-
-    @property RenderType type()
-    {
-        return RenderType.opengl;
-    }
-
-    @property void currentModelMatrix(float[4][4] matrix)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.currentModelMatrix[set]";
-        operation.matrix = matrix;
-
-        operations[frame - 1] ~= operation;
-
-        render.currentModelMatrix = matrix;
-    }
-
-    @property float[4][4] currentModelMatrix()
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.currentModeMatrix[get]";
-
-        operations[frame - 1] ~= operation;
-
-        return render.currentModelMatrix;
-    }
-
-    @property Camera camera()
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.camera[get]";
-
-        operations[frame - 1] ~= operation;
-
-        return render.camera;
-    }
-
-    @property void camera(Camera value)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.camera[set]";
-
-        operations[frame - 1] ~= operation;
-
-        render.camera = value;
-    }
-
-    @property void blendMode(BlendMode mode)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.blendMode[set]";
-
-        operations[frame - 1] ~= operation;
-
-        render.blendMode(mode);
-    }
-
-    @property void reshape()
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.reshape";
-        operation.matrix = render.projection;
-        operation.vertexs = [camera.port.begin, camera.port.end];
-
-        operations[frame - 1] ~= operation;
-
-        render.reshape();
-    }
-
-    @property Color!ubyte background()
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.background[get]";
-        operation.color = render.background;
-
-        operations[frame - 1] ~= operation;
-
-        return render.background;
-    }                            
-
-    @property void background(Color!ubyte color)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.background[set]";
-        operation.color = color;
-
-        operations[frame - 1] ~= operation;
-
-        render.background = color;
-    }
-
-    @property void currentShader(Shader!Program shader)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.currentShader[set]";
-        operation.shader = shader;
-        operation.shaderName = findShadername(shader);
-
-        operations[frame - 1] ~= operation;
-
-        render.currentShader = shader;
-    }
-
-    @property Shader!Program currentShader()
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.currentShader[get]";
-        operation.shader = render.currentShader;
-        operation.shaderName = findShadername(render.currentShader);
-
-        operations[frame - 1] ~= operation;
-
-        return render.currentShader;
-    }
-
-    void resetShader()
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.resetShader";
-        operation.shader = render.currentShader;
-        operation.shaderName = findShadername(render.currentShader);
-
-        operations[frame - 1] ~= operation;
-
-        render.resetShader();
-    }
-
-    void blendOperation(BlendFactor sfactor, BlendFactor dfactor)
-    {
-        Operation operation;
-        operation.name = "tida.render.GLRender.blendOperation";
-        operation.sfactor = sfactor;
-        operation.dfactor = dfactor;
-
-        operations[frame - 1] ~= operation;
-
-        render.blendOperation(sfactor, dfactor);
-    }
-}
-
-/++
-Implementation of the interface for interacting with the rendering canvas.
-+/
-interface ICanvas
-{
-    import tida.color;
-    import tida.vector;
-
-@safe:
-    /++
-    Allocate memory for the canvas at the specified size.
-
-    Params:
-        width = Canvas width.
-        height = Canvas height.
-    +/
-    void allocatePlace(uint width, uint height);
-
-    /++
-    Cleared the canvas with one color.
-
-    Params:
-        color = Cleared color.
-    +/
-    void clearPlane(Color!ubyte color);
-
-    /++
-    Draws a buffer to a storage object.
-    +/
-    void drawTo();
-
-    /// Blending mode (blend or not).
-    @property void blendMode(BlendMode mode);
-
-    /// ditto
-    @property BlendMode blendMode();
-
-    /++
-    Sets the color mixing factor (which formula to mix colors with).
-    +/
-    void blendOperation(BlendFactor sfactor, BlendFactor dfactor);
-
-    /++
-    Mixing factor (sfactor, dfactor).
-    +/
-    BlendFactor[2] blendOperation();
-
-    /++
-    Draw a point on the canvas.
-    Draw only a point, the rest of the shapes are rendered.
-
-    Params:
-        position = Point position.
-        color = Point color.
-    +/
-    void pointTo(Vecf position, Color!ubyte color);
-    /++
-    Set port of visibility.
-
-    Params:
-        w = Port width.
-        h = Port height.
-    +/
-    void viewport(uint w, uint h);
-
-    /++
-    Move the visibility port to the specified coordinates.
-
-    Params:
-        x = Port x-axis position.
-        y = Port y-axis position.
-    +/
-    void move(int x,int y);
-
-    /++
-    Canvas data.
-    +/
-    @property ref ubyte[] data();
-
-    /// Canvas size.
-    @property uint[2] size();
-
-    /++
-    The real size of the world, where from the world it will be drawn to 
-    the size of the canvas.
-    +/
-    @property uint[2] portSize();
-
-    /++
-    Camera position (offset of all drawing points).
-    +/
-    @property int[2] cameraPosition();
-}
-
-template PointToImpl(int pixelformat, int bpc)
-{
-    import tida.vector;
-    import tida.color;
-
-    static assert(isValidFormat!pixelformat);
-
-    static if(bpc == 0)
-        enum bytesperpixel = bytesPerColor!pixelformat;
-    else
-        enum bytesperpixel = bpc;
-
-    override void pointTo(Vecf position, Color!ubyte color)
+    void currentShader(IShaderProgram program) @safe @property
     {
-        import tida.each : Coord;
-        import std.conv : to;
-
-        position = position - vecf(cameraPosition);
-
-        immutable scaleWidth = (cast(float) portSize[0]) / (cast(float) size[0]);
-        immutable scaleHeight = (cast(float) portSize[1]) / (cast(float) size[1]);
-        int w = size[0] / portSize[0] + 1;
-        int h = size[0] / portSize[1] + 1;
-
-        position = position / vecf(scaleWidth, scaleHeight);
-        
-        Color!ubyte bcolor;
-
-        foreach (ix, iy; Coord(  position.x.to!int + w, position.y.to!int + h,
-                                position.x.to!int, position.y.to!int))
-        {
-            if (ix >= size[0] || iy >= size[1] || ix < 0 || iy < 0) continue;
-            immutable pos = ((iy * size[0]) + ix) * bytesperpixel;
-
-            if (blendMode == BlendMode.withBlend) {
-                Color!ubyte blendcolor;
-
-                static if (pixelformat == PixelFormat.BGRA)
-                {
-                    blendcolor = rgba(  data[pos+3], 
-                                        data[pos+2], 
-                                        data[pos+1], 
-                                        data[pos]);
-                }else
-                static if (pixelformat == PixelFormat.BGR)
-                {
-                    blendcolor = rgba(  data[pos+2],
-                                        data[pos+1],
-                                        data[pos],
-                                        255);
-                }else
-                static if (pixelformat == PixelFormat.RGBA)
-                {
-                    blendcolor = rgba(  data[pos],
-                                        data[pos+1],
-                                        data[pos+2],
-                                        data[pos+3]);
-                }else
-                static if (pixelformat == PixelFormat.RGB)
-                {
-                    blendcolor = rgba(  data[pos],
-                                        data[pos+1],
-                                        data[pos+2],
-                                        255);
-                }
-
-                BlendFactor[2] factors = blendOperation();
-                bcolor = BlendFunc!ubyte(factors[0], factors[1])(color, blendcolor);
-            }else
-                bcolor = color;
-
-            if (pos < data.length)
-            {
-                static if (pixelformat == PixelFormat.BGRA)
-                {
-                    data[pos] = bcolor.b;
-                    data[pos+1] = bcolor.g;
-                    data[pos+2] = bcolor.r;
-                    data[pos+3] = bcolor.a;
-                }else
-                static if (pixelformat == PixelFormat.BGR)
-                {
-                    data[pos] = bcolor.b;
-                    data[pos+1] = bcolor.g;
-                    data[pos+2] = bcolor.r;
-                }else
-                static if (pixelformat == PixelFormat.RGBA)
-                {
-                    data[pos] = bcolor.r;
-                    data[pos+1] = bcolor.g;
-                    data[pos+2] = bcolor.b;
-                    data[pos+3] = bcolor.a;
-                }else
-                static if (pixelformat == PixelFormat.RGB)
-                {
-                    data[pos] = bcolor.r;
-                    data[pos+1] = bcolor.g;
-                    data[pos+2] = bcolor.b;
-                }
-            }
-        }
-    }
-}
-
-import tida.color : PixelFormat;
-
-version(Posix)
-class Canvas : ICanvas
-{
-    import x11.X, x11.Xlib, x11.Xutil;
-    import tida.window;
-    import tida.runtime;
-    import tida.color;
-    import std.exception : enforce;
-
-private:
-    GC context;
-    XImage* ximage;
-    tida.window.Window window;
-
-    ubyte[] buffer;
-    uint width;
-    uint height;
-
-    uint pwidth;
-    uint pheight;
-
-    int xput = 0;
-    int yput = 0;
-
-    bool isAlloc = true;
-
-    BlendFactor[2] bfactor;
-    BlendMode bmode;
-
-@trusted:
-public:
-    this(tida.window.Window window, bool isAlloc = true)
-    {
-        this.isAlloc = isAlloc;
-
-        this.window = window;
-        if (isAlloc)
-        {
-            context = XCreateGC(runtime.display, this.window.handle, 0, null);
-            enforce!Exception(context, "Software context is not a create!");
-        }
-    }
-
-override:
-    void allocatePlace(uint width, uint height)
-    {
-        this.width = width;
-        this.height = height;
-
-        buffer = new ubyte[](width * height * bytesPerColor!(PixelFormat.BGRA));
-        if (isAlloc)
-        {
-            if(ximage !is null) {
-                XFree(ximage);
-                ximage = null;
-            }
-
-            Visual* visual = window.getVisual();
-            int depth = window.getDepth();
-
-            ximage = XCreateImage(runtime.display, visual, depth,
-                ZPixmap, 0, cast(char*) buffer, width, height, 32, 0);
-
-            enforce!Exception(ximage, "[X11] XImage is not create!");
-        }
-    }
-
-    void viewport(uint w, uint h)
-    {
-        pwidth = w;
-        pheight = h;
-    }
-
-    void move(int x, int y)
-    {
-        xput = x;
-        yput = y;
-    }
-
-    void clearPlane(Color!ubyte color)
-    {
-        for (size_t i = 0; 
-            i < width * height * bytesPerColor!(PixelFormat.BGRA); 
-            i += bytesPerColor!(PixelFormat.BGRA))
-        {
-            buffer[i]   = color.b;
-            buffer[i+1] = color.g;
-            buffer[i+2] = color.r;
-            buffer[i+3] = color.a;
-        }
-    }
-
-    void drawTo()
-    {
-        if (isAlloc)
-        {
-            XPutImage(  runtime.display, window.handle, context, ximage,
-                        xput, yput, xput, yput, width, height);
-
-            XSync(runtime.display, false);
-        }
-    }
-
-    BlendFactor[2] blendOperation()
-    {
-        return bfactor;
-    }
-
-    void blendOperation(BlendFactor sfactor, BlendFactor dfactor)
-    {
-        bfactor = [sfactor, dfactor];
-    }
-
-    BlendMode blendMode()
-    {
-        return bmode;
-    }
-
-    void blendMode(BlendMode mode)
-    {
-        bmode = mode;
-    }
-
-    @property ref ubyte[] data()
-    {
-        return buffer;
-    }
-
-    @property uint[2] size()
-    {
-        return [width, height];
-    }
-
-    @property uint[2] portSize()
-    {
-        return [pwidth, pheight];
-    }
-
-    @property int[2] cameraPosition()
-    {
-        return [xput, yput];
-    }
-
-    mixin PointToImpl!(PixelFormat.BGRA, 4);
-}
-
-version(Windows)
-class Canvas : ICanvas
-{
-    import core.sys.windows.windows;
-    import tida.color;
-    import std.exception : enforce;
-
-private:
-    PAINTSTRUCT paintstr;
-    HDC hdc;
-    HDC pdc;
-    HBITMAP bitmap;
-
-    tida.window.Window window;
-
-    ubyte[] buffer;
-    uint _width;
-    uint _height;
-    uint _pwidth;
-    uint _pheight;
-    int xput;
-    int yput;
-
-    Color!ubyte _background;
-    BlendMode bmode;
-    BlendFactor sfactor;
-    BlendFactor dfactor;
-
-    bool _isAlloc = true;
-
-public @trusted:
-    this(tida.window.Window window, bool isAlloc = true)
-    {
-        this.window = window;
-        _isAlloc = isAlloc;
-    }
-
-    void recreateBitmap()
-    {
-        if (bitmap !is null)
-            DeleteObject(bitmap);
-
-        if (hdc is null)
-            hdc = GetDC((cast(Window) window).handle);
-
-        bitmap = CreateBitmap(_width, _height, 1, 32, cast(LPBYTE) buffer);
-        enforce(bitmap, "[WINAPI] bitmap is not a create!");
-
-        if (pdc is null)
-            pdc = CreateCompatibleDC(hdc);
-
-        SelectObject(pdc, bitmap);
-    }
-
-override:
-    void allocatePlace(uint width, uint height)
-    {
-        _width = width;
-        _height = height;
-
-        buffer = new ubyte[](_width * _height * 4);
-    }
-
-    void viewport(uint width, uint height)
-    {
-        _pwidth = width;
-        _pheight = height;
-    }
-
-    void move(int x, int y)
-    {
-        xput = x;
-        yput = y;
-    }
-
-    void clearPlane(Color!ubyte color)
-    {
-        for (size_t i = 0; i < _width * _height * 4; i += 4)
-        {
-            buffer[i] = color.b;
-            buffer[i + 1] = color.g;
-            buffer[i + 2] = color.r;
-            buffer[i + 3] = color.Max;
-        }
-    }
-
-    void drawTo()
-    {
-        if (_isAlloc)
-        {
-            recreateBitmap();
-            BitBlt(hdc, 0, 0, _width, _height, pdc, 0, 0, SRCCOPY);
-        }
-    }
-
-    BlendMode blendMode()
-    {
-        return bmode;
-    }
-
-    void blendMode(BlendMode mode)
-    {
-        bmode = mode;
-    }
-
-    BlendFactor[2] blendOperation()
-    {
-        return [sfactor, dfactor];
+        _currentShader = program;
+        if (_currentShader is null)
+            _currentShader = defaultShader;
     }
 
-    void blendOperation(BlendFactor sfactor, BlendFactor dfactor)
+    IShaderProgram currentShader() @safe @property
     {
-        this.sfactor = sfactor;
-        this.dfactor = dfactor;
-    }
-
-    @property ref ubyte[] data()
-    {
-        return buffer;
-    }
-
-    @property uint[2] size()
-    {
-        return [_width, _height];
-    }
-
-    @property uint[2] portSize()
-    {
-        return [_pwidth, _pheight];
-    }
-
-    @property int[2] cameraPosition()
-    {
-        return [xput, yput];
-    }
-
-    mixin PointToImpl!(PixelFormat.BGRA, 4);
-}
-
-class Software : IRenderer
-{
-    import tida.window;
-    import tida.color;
-    import tida.vector;
-    import tida.shape;
-    import tida.drawable;
-
-private:
-    Camera _camera;
-    Color!ubyte _background;
-
-public @safe:
-    ICanvas canvas;
-
-    this(IWindow window, bool isAlloc = true)
-    {
-        _camera = new Camera();
-        canvas = new Canvas(cast(Window) window);
-
-        _camera.port = Shape!float.Rectangle(vecf(0, 0), vecf(window.width, window.height));
-        _camera.shape = _camera.port;
-
-        canvas.blendMode(BlendMode.withBlend);
-        canvas.blendOperation(BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcAlpha);
-
-        reshape();
-    }
-
-    this(ICanvas canvas, bool isAlloc = true)
-    {
-        _camera = new Camera();
-        this.canvas = canvas;
-
-        canvas.blendMode(BlendMode.withBlend);
-        canvas.blendOperation(BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcAlpha);
-    }
-
-override:
-    @property RenderType type()
-    {
-        return RenderType.software; 
-    }
-    
-    void bindTarget(ITarget target) @safe
-    {
-        assert(null, "Target not a support with software renderer!");
-    }
-    
-    @property ITarget currentTarget() @safe
-    {
-        return null;
-    }
-
-    void reshape()
-    {
-        import std.conv : to;
-
-        canvas.allocatePlace(_camera.shape.end.x.to!int,_camera.shape.end.y.to!int);
-        canvas.viewport(_camera.port.end.x.to!int,_camera.port.end.y.to!int);
-        canvas.move(_camera.port.begin.x.to!int,_camera.port.begin.y.to!int);
-    }
-
-    @property Camera camera()
-    {
-        return _camera;
-    }
-
-    @property void camera(Camera cam)
-    {
-        _camera = cam;
-    }
-
-    @property Color!ubyte background()
-    {
-        return _background;
-    }
-
-    @property void background(Color!ubyte color)
-    {
-        _background = color;
-    }
-
-    void point(Vecf position, Color!ubyte color)
-    {
-        canvas.pointTo(position, color);
-    }
-
-    void line(Vecf[2] points, Color!ubyte color)
-    {
-        import tida.each : Line;
-
-        foreach (x, y; Line(points[0], points[1]))
-            canvas.pointTo(vecf(x, y), color);
-    }
-
-    void rectangle( Vecf position, 
-                    uint width, 
-                    uint height, 
-                    Color!ubyte color, 
-                    bool isFill)
-    {
-        import tida.each : Coord;
-        import std.conv : to;
-
-        if (isFill)
-        {
-            foreach (ix, iy; Coord(width.to!int, height.to!int))
-            {
-                point(vecf(position.x.to!int + ix, position.y.to!int + iy), color);
-            }
-        }else
-        {
-            foreach (ix, iy; Coord(width.to!int, height.to!int))
-            {
-                point(vecf(position.x.to!int + ix,position.y.to!int), color);
-                point(vecf(position.x.to!int + ix,position.y.to!int + height.to!int), color);
- 
-                point(vecf(position.x.to!int,position.y.to!int + iy), color);
-                point(vecf(position.x.to!int + width.to!int,position.y.to!int + iy), color);
-            }
-        }
-    }
-
-    void roundrect(Vecf position, uint width, uint height, float radius, Color!ubyte color, bool isFill) @safe
-    {
-        import std.math : cos, sin;
-
-        immutable size = vecf(width, height);
-        immutable iter = 0.25;
-
-        position += camera.port.begin;
-
-        if (isFill)
-        {
-            rectangle(position + vecf(radius, 0), cast(int) (width - radius * 2), height, color, true);
-            rectangle(position + vecf(0, radius), width, cast(int) (height - radius * 2), color, true);
-
-            void rounded(Vecf pos, float a, float b, float iter) @safe
-            {
-                import tida.angle;
-
-                for (float i = a; i <= b;)
-                {
-                    Vecf temp;
-                    temp = pos + vecf(cos(i.from!(Degrees, Radians)), sin(i.from!(Degrees, Radians))) * radius;
-
-                    line([pos, temp], color);
-                    i += iter;
-                }
-            }
-
-            rounded(position + vecf(radius, radius), 180, 270, iter);
-            rounded(position + vecf(size.x - radius, radius), 270, 360, iter);
-            rounded(position + vecf(radius, size.y - radius), 90, 180, iter);
-            rounded(position + vecf(size.x - radius, size.y - radius), 0, 90, iter);
-        }else
-        {
-            void rounded(Vecf pos, float a, float b,float iter) @safe
-            {
-                import tida.angle;
-
-                for (float i = a; i <= b;)
-                {
-                    Vecf temp;
-                    temp = pos + vecf(cos(i.from!(Degrees, Radians)), sin(i.from!(Degrees, Radians))) * radius;
-                    point(temp, color);
-                    i += iter;
-                }
-            }
-
-            rounded(position + vecf(radius, radius), 180, 270, iter);
-            rounded(position + vecf(size.x - radius, radius), 270, 360, iter);
-            rounded(position + vecf(radius, size.y - radius), 90, 180, iter);
-            rounded(position + vecf(size.x - radius, size.y - radius), 0, 90, iter);
-
-            line([position + vecf(radius, 0), position + vecf(width - radius, 0)], color);
-            line([position + vecf(width, radius), position + vecf(width, height - radius)], color);
-            line([position + vecf(radius, height), position + vecf(width - radius, height)], color);
-            line([position + vecf(0, radius), position + vecf(0, height - radius)], color);
-        }
-    }
-
-    void circle(Vecf position, float radius, Color!ubyte color, bool isFill)
-    {
-        import tida.image, tida.each;
-        import std.algorithm : fill;
-
-        int rad = cast(int) radius;
-        Image buffer = new Image(rad * 2, rad * 2);
-        buffer.pixels.fill(rgba(255,255,255,0));
-
-        int x = 0;
-        int y = rad;
-
-        int X1 = rad;
-        int Y1 = rad;
-
-        int delta = 1 - 2 * cast(int) radius;
-        int error = 0;
-
-        void bufferLine(Vecf[2] points, Color!ubyte color) @safe 
-        {
-            foreach (ix, iy; Line(points[0], points[1]))
-            {
-                buffer.setPixel(ix, iy, color);
-            }
-        }
-
-        while (y >= 0)
-        {
-            if (isFill)
-            {
-                bufferLine([Vecf(X1 + x, Y1 + y),Vecf(X1 + x, Y1 - y)],color);
-                bufferLine([Vecf(X1 - x, Y1 + y),Vecf(X1 - x, Y1 - y)],color);
-            }else
-            {
-                buffer.setPixel(X1 + x, Y1 + y,color);
-                buffer.setPixel(X1 + x, Y1 - y,color);
-                buffer.setPixel(X1 - x, Y1 + y,color);
-                buffer.setPixel(X1 - x, Y1 - y,color);
-            }
-
-            error = 2 * (delta + y) - 1;
-            if ((delta < 0) && (error <= 0))
-            {
-                delta += 2 * ++x + 1;
-                continue;
-            }
-
-            if ((delta > 0) && (error > 0))
-            {
-                delta -= 2 * --y + 1;
-                continue;
-            }
-            delta += 2 * (++x - --y);
-        }
-
-        foreach (ix, iy; Coord(buffer.width, buffer.height))
-        {
-            Color!ubyte pixel;
-
-            if ((pixel = buffer.getPixel(ix,iy)).a != 0)
-            {
-                point(position + vecf(ix, iy), pixel);
-            }
-        }
-    }
-
-    void triangle(Vecf[3] position,Color!ubyte color,bool isFill) @trusted
-    {
-        import tida.each;
-
-        if (isFill)
-        {
-            foreach (x, y; Line(position[0], position[1])) {
-                auto p = vecf(x,y);
-
-                line([p, position[2]], color);
-            }
-        } else
-        {
-            line([position[0], position[1]], color);
-            line([position[1], position[2]], color);
-            line([position[2], position[0]], color);
-        }
-    }
-
-    void polygon(Vecf position, Vecf[] points, Color!ubyte color, bool isFill)
-    {
-        import std.algorithm : each;
-        points = points.dup;
-        points.each!((ref e) => e = e + position);
-
-        if (!isFill)
-        {
-            int next = 0;
-            for (int i = 0; i < points.length; i++)
-            {
-                next = (i + 1 == points.length) ? 0 : i + 1;
-                line([points[i],points[next]], color);
-            }
-        }else
-        {
-            import std.algorithm : minElement, maxElement;
-            import tida.collision : placeLineLineImpl;
-
-            float maxX = points.maxElement!"a.x".x;
-            float minY = points.minElement!"a.y".y;
-            float maxY = points.maxElement!"a.y".y;
-            float minX = points.minElement!"a.x".x;
-
-            alias LineIter = Vecf[2];
-
-            LineIter[] drowning;
-
-            for (float i = minY; i <= maxY; i += 1.0f)
-            {
-                Vecf firstPoint = vecfNaN;
-                float lastX = minX > position.x ? position.x : minX;
-
-                for (float j = lastX; j <= maxX; j += 1.0f)
-                {
-                    size_t next = 0;
-                    for (size_t currPointI = 0; currPointI < points.length; currPointI++)
-                    {
-                        next = (currPointI + 1 == points.length) ? 0 : currPointI + 1;
-
-                        auto iter = placeLineLineImpl(  [vecf(lastX, i), vecf(j, i)],
-                                                        [points[currPointI], points[next]]);
-                        if (!iter.isVecfNaN) {
-                            if (firstPoint.isVecfNaN)
-                            {
-                                firstPoint = vecf(j, i);
-                            } else
-                            {
-                                drowning ~= [firstPoint, vecf(j, i)];
-                                firstPoint = vecfNaN;
-                            }
-
-                            lastX = j;
-                        }
-                    }             
-                }
-            }
-
-            foreach (e; drowning)
-            {
-                line(e, color);
-            }
-        }
-    }
-
-    void clear()
-    {
-        import std.conv : to;
-
-        canvas.move(_camera.port.begin.x.to!int,_camera.port.begin.y.to!int);
-        canvas.clearPlane(_background);
+        return _currentShader;
     }
 
-    void drawning()
+    void resetShader() @safe
     {
-        canvas.drawTo();
+        _currentShader = defaultShader;
     }
 
-    @property void blendMode(BlendMode mode)
+    float[4][4] currentModelMatrix() @safe @property
     {
-        canvas.blendMode(mode);
+        return _currentModel;
     }
 
-    void blendOperation(BlendFactor sfactor, BlendFactor dfactor)
+    void currentModelMatrix(float[4][4] matrix) @safe @property
     {
-        canvas.blendOperation(sfactor, dfactor);
+        _currentModel = matrix;
     }
 
     void draw(IDrawable drawable, Vecf position) @safe
     {
-        position -= camera.port.begin;
+        _currentModel = _currentModel.translate(_camera.port.begin.x, _camera.port.begin.y, 0f);
         drawable.draw(this, position);
     }
 
-    /// ditto
-    void drawEx(    IDrawableEx drawable, 
-                    Vecf position, 
-                float angle,
-                Vecf center,
-                Vecf size,
-                ubyte alpha,
-                Color!ubyte color = rgb(255, 255, 255)) @safe
+    void drawEx(    IDrawableEx drawable,
+                    Vecf position,
+                    float angle,
+                    Vecf center,
+                    Vecf size,
+                    ubyte alpha,
+                    Color!ubyte color = rgb(255, 255, 255)) @safe
     {
-        position -= camera.port.begin;
+       _currentModel = _currentModel.translate(_camera.port.begin.x, _camera.port.begin.y, 0f);
         drawable.drawEx(this, position, angle, center, size, alpha, color);
     }
-
-    import tida.shader;
-
-    override Shader!Program getShader(string name) @safe
-    {
-        assert(null, "There are no shaders in this version of the render.");
-    }
-
-    override void setShader(string name,Shader!Program program) @safe
-    {
-        assert(null, "There are no shaders in this version of the render.");
-    }
-
-    override void currentShader(Shader!Program program) @safe @property
-    {
-        assert(null, "There are no shaders in this version of the render.");
-    }
-
-    override Shader!Program currentShader() @safe @property
-    {
-        assert(null, "There are no shaders in this version of the render.");
-    }
-
-    override void resetShader() @safe
-    {
-        assert(null, "There are no shaders in this version of the render.");
-    }
-
-    override void currentModelMatrix(float[4][4] matrix) @safe @property
-    {
-        assert(null, "There are no matrix in this version of the render.");
-    }
-
-    override float[4][4] currentModelMatrix() @safe @property
-    {
-        assert(null, "There are not matrix in this version of the render.");
-    }
-}
-
-import tida.window;
-
-/++
-Creates a render based on hardware acceleration capabilities.
-It should be used if the program does not use intentional hardware
-acceleration objects.
-
-Params:
-    window = Window object.
-+/
-IRenderer createRenderer(IWindow window) @trusted
-{
-    import bindbc.opengl;
-
-    if (isOpenGLLoaded())
-    {
-        immutable ver = loadedOpenGLVersion();
-        if (ver != GLSupport.gl11 && ver != GLSupport.gl12 &&
-            ver != GLSupport.gl13 && ver != GLSupport.gl14 &&
-            ver != GLSupport.gl15)
-        {
-            return new GLRender(window);
-        }
-    }
-
-    return new Software(window, true);
-}
-
-import tida.image;
-import tida.vector;
-
-/++
-Reads frame image data. Time consuming operation.
-
-Params:
-    render = render instance.
-    position = Begin position read.
-    width = frame width.
-    height = frame height.
-+/
-Image renderRead(IRenderer render, Vecf position, int width, int height) @trusted
-{
-    import tida.gl;
-    import std.conv : to;
-
-    Image image = new Image(width, height);
-
-    if (render.type == RenderType.opengl)
-    {
-        glReadPixels(   position.x.to!int, position.y.to!int,
-                        width, height, GL_RGBA, GL_UNSIGNED_BYTE, cast(void*) image.pixels);
-    } else
-    if (render.type == RenderType.software)
-    {
-        Software soft = cast(Software) render;
-        image.bytes!(PixelFormat.RGBA) = soft.canvas.data();
-    }
-
-    return image;
 }

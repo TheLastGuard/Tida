@@ -35,12 +35,12 @@ object CurrentProject: TNativeProject
         '<CPP>SDLang-D/src/'
         '<CPP>x11/source'
       )
-      otherOptions.guiApplication = True
       otherOptions.dmdOtherOptions.Strings = (
         '-L-lX11'
         '-L-ldl'
       )
       runOptions.workingDirectory = '<CPP>'
+      runOptions.options = [poUsePipes, poStderrToOutPut]
     end  
     item
       name = 'windows'
@@ -77,7 +77,174 @@ object CurrentProject: TNativeProject
       runOptions.workingDirectory = '<CPP>'
     end  
     item
-      name = 'posix-debug-lib'
+      name = 'posix-unittest'
+      debugingOptions.debugConditions = True
+      debugingOptions.generateInfos = True
+      debugingOptions.generateMapFile = True
+      debugingOptions.generateStackFrame = True
+      outputOptions.boundsCheck = onAlways
+      outputOptions.addMain = True
+      outputOptions.unittest = True
+      outputOptions.versionIdentifiers.Strings = (
+        'GL_46'
+        'dglx_cached'
+        'Dynamic_GLX'
+      )
+      pathsOptions.outputFilename = 'tida'
+      pathsOptions.objectDirectory = 'objs'
+      pathsOptions.extraSources.Strings = (
+        '<CPP>bindbc-loader/bindbc-loader.a'
+        '<CPP>bindbc-opengl/bindbc-opengl.a'
+        '<CPP>bindbc-openal/bindbc-openal.a'
+        '<CPP>bindbc-freetype/bindbc-freetype.a'
+        '<CPP>imagefmt/imagefmt.a'
+        '<CPP>mp3decoder/mp3decoder.a'
+        '<CPP>SDLang-D/sdland-d.a'
+        '<CPP>taggedalgebraic/taggedalgebraic.a'
+        '<CPP>x11/x11.a'
+      )
+      pathsOptions.importModulePaths.Strings = (
+        '<CPP>bindbc-loader/source'
+        '<CPP>bindbc-opengl/source'
+        '<CPP>bindbc-openal/source'
+        '<CPP>bindbc-freetype/source'
+        '<CPP>imagefmt'
+        '<CPP>mp3decoder/source'
+        '<CPP>taggedalgebraic/source/'
+        '<CPP>SDLang-D/src/'
+        '<CPP>x11/source'
+      )
+      otherOptions.dmdOtherOptions.Strings = (
+        '-L-lX11'
+        '-L-ldl'
+      )
+      runOptions.workingDirectory = '<CPP>'
+      runOptions.options = [poWaitOnExit, poUsePipes, poStderrToOutPut]
+    end  
+    item
+      name = 'windows-unittest'
+      debugingOptions.debugConditions = True
+      debugingOptions.generateInfos = True
+      debugingOptions.generateMapFile = True
+      debugingOptions.generateStackFrame = True
+      outputOptions.boundsCheck = onAlways
+      outputOptions.addMain = True
+      outputOptions.unittest = True
+      outputOptions.versionIdentifiers.Strings = (
+        'GL_46'
+      )
+      pathsOptions.outputFilename = 'tida'
+      pathsOptions.objectDirectory = 'objs'
+      pathsOptions.extraSources.Strings = (
+        '<CPP>bindbc-loader/bindbc-loader.a'
+        '<CPP>bindbc-opengl/bindbc-opengl.a'
+        '<CPP>bindbc-openal/bindbc-openal.a'
+        '<CPP>bindbc-freetype/bindbc-freetype.a'
+        '<CPP>imagefmt/imagefmt.a'
+        '<CPP>mp3decoder/mp3decoder.a'
+        '<CPP>SDLang-D/sdland-d.a'
+        '<CPP>taggedalgebraic/taggedalgebraic.a'
+      )
+      pathsOptions.importModulePaths.Strings = (
+        '<CPP>bindbc-loader/source'
+        '<CPP>bindbc-opengl/source'
+        '<CPP>bindbc-openal/source'
+        '<CPP>bindbc-freetype/source'
+        '<CPP>imagefmt'
+        '<CPP>mp3decoder/source'
+        '<CPP>taggedalgebraic/source/'
+        '<CPP>SDLang-D/src/'
+      )
+      runOptions.options = [poWaitOnExit, poUsePipes, poStderrToOutPut]
+    end  
+    item
+      name = 'posix-gl'
+      debugingOptions.generateInfos = True
+      debugingOptions.generateMapFile = True
+      debugingOptions.generateStackFrame = True
+      outputOptions.boundsCheck = onAlways
+      outputOptions.versionIdentifiers.Strings = (
+        'GL_46'
+        'dglx_cached'
+        'Dynamic_GLX'
+      )
+      pathsOptions.outputFilename = 'tida'
+      pathsOptions.objectDirectory = 'objs'
+      pathsOptions.extraSources.Strings = (
+        '<CPP>bindbc-loader/bindbc-loader.a'
+        '<CPP>bindbc-opengl/bindbc-opengl.a'
+        '<CPP>bindbc-openal/bindbc-openal.a'
+        '<CPP>bindbc-freetype/bindbc-freetype.a'
+        '<CPP>imagefmt/imagefmt.a'
+        '<CPP>mp3decoder/mp3decoder.a'
+        '<CPP>SDLang-D/sdland-d.a'
+        '<CPP>taggedalgebraic/taggedalgebraic.a'
+        '<CPP>x11/x11.a'
+      )
+      pathsOptions.importModulePaths.Strings = (
+        '<CPP>bindbc-loader/source'
+        '<CPP>bindbc-opengl/source'
+        '<CPP>bindbc-openal/source'
+        '<CPP>bindbc-freetype/source'
+        '<CPP>imagefmt'
+        '<CPP>mp3decoder/source'
+        '<CPP>taggedalgebraic/source/'
+        '<CPP>SDLang-D/src/'
+        '<CPP>x11/source'
+      )
+      otherOptions.customOptions.Strings = (
+        '-L-lX11'
+      )
+      runOptions.workingDirectory = '<CPP>'
+      runOptions.options = [poUsePipes, poStderrToOutPut]
+    end  
+    item
+      name = 'posix-vulkan'
+      debugingOptions.generateInfos = True
+      debugingOptions.generateMapFile = True
+      debugingOptions.generateStackFrame = True
+      outputOptions.boundsCheck = onAlways
+      outputOptions.versionIdentifiers.Strings = (
+        'GL_46'
+        'dglx_cached'
+        'Dynamic_GLX'
+        'UseXCB'
+        'GraphBackendVulkan'
+      )
+      pathsOptions.outputFilename = 'tida'
+      pathsOptions.objectDirectory = 'objs'
+      pathsOptions.extraSources.Strings = (
+        '<CPP>bindbc-loader/bindbc-loader.a'
+        '<CPP>bindbc-opengl/bindbc-opengl.a'
+        '<CPP>bindbc-openal/bindbc-openal.a'
+        '<CPP>bindbc-freetype/bindbc-freetype.a'
+        '<CPP>imagefmt/imagefmt.a'
+        '<CPP>mp3decoder/mp3decoder.a'
+        '<CPP>SDLang-D/sdland-d.a'
+        '<CPP>taggedalgebraic/taggedalgebraic.a'
+        '<CPP>x11/x11.a'
+      )
+      pathsOptions.importModulePaths.Strings = (
+        '<CPP>bindbc-loader/source'
+        '<CPP>bindbc-opengl/source'
+        '<CPP>bindbc-openal/source'
+        '<CPP>bindbc-freetype/source'
+        '<CPP>imagefmt'
+        '<CPP>mp3decoder/source'
+        '<CPP>taggedalgebraic/source/'
+        '<CPP>SDLang-D/src/'
+        '<CPP>x11/source'
+      )
+      otherOptions.customOptions.Strings = (
+        '-L-lxcb'
+        '-L-lxcb-icccm'
+        '-L-lX11'
+      )
+      runOptions.options = [poUsePipes, poStderrToOutPut]
+    end  
+    item
+      name = 'posix-lib-gl-debug'
+      debugingOptions.debugConditions = True
       debugingOptions.generateInfos = True
       debugingOptions.generateMapFile = True
       debugingOptions.generateStackFrame = True
@@ -88,7 +255,7 @@ object CurrentProject: TNativeProject
         'dglx_cached'
         'Dynamic_GLX'
       )
-      pathsOptions.outputFilename = 'tida.a'
+      pathsOptions.outputFilename = 'tida'
       pathsOptions.objectDirectory = 'objs'
       pathsOptions.extraSources.Strings = (
         '<CPP>bindbc-loader/bindbc-loader.a'
@@ -112,18 +279,16 @@ object CurrentProject: TNativeProject
         '<CPP>SDLang-D/src/'
         '<CPP>x11/source'
       )
-      otherOptions.guiApplication = True
-      otherOptions.dmdOtherOptions.Strings = (
+      otherOptions.customOptions.Strings = (
         '-L-lX11'
-        '-L-ldl'
       )
+      runOptions.options = [poUsePipes, poStderrToOutPut]
     end  
     item
-      name = 'posix-release-lib'
-      debugingOptions.generateInfos = True
-      debugingOptions.generateMapFile = True
+      name = 'posix-lib-gl-release'
       debugingOptions.generateStackFrame = True
       outputOptions.binaryKind = staticlib
+      outputOptions.boundsCheck = onAlways
       outputOptions.optimizations = True
       outputOptions.release = True
       outputOptions.versionIdentifiers.Strings = (
@@ -131,7 +296,7 @@ object CurrentProject: TNativeProject
         'dglx_cached'
         'Dynamic_GLX'
       )
-      pathsOptions.outputFilename = 'tida.a'
+      pathsOptions.outputFilename = 'tida'
       pathsOptions.objectDirectory = 'objs'
       pathsOptions.extraSources.Strings = (
         '<CPP>bindbc-loader/bindbc-loader.a'
@@ -155,50 +320,48 @@ object CurrentProject: TNativeProject
         '<CPP>SDLang-D/src/'
         '<CPP>x11/source'
       )
-      otherOptions.guiApplication = True
-      otherOptions.dmdOtherOptions.Strings = (
+      otherOptions.customOptions.Strings = (
         '-L-lX11'
-        '-L-ldl'
       )
+      runOptions.options = [poUsePipes, poStderrToOutPut]
     end>
   Sources.Strings = (
     'source/dglx/glx.d'
     'source/app.d'
     'source/tida/color.d'
-    'source/tida/shader.d'
     'source/tida/window.d'
-    'source/tida/text.d'
     'source/tida/matrix.d'
     'source/tida/image.d'
     'source/tida/vector.d'
-    'source/tida/sprite.d'
     'source/tida/angle.d'
-    'source/tida/loader.d'
-    'source/tida/texture.d'
-    'source/tida/listener.d'
-    'source/tida/render.d'
-    'source/tida/animation.d'
-    'source/tida/gl.d'
-    'source/tida/softimage.d'
     'source/tida/event.d'
     'source/tida/runtime.d'
-    'source/tida/instance.d'
-    'source/tida/scenemanager.d'
     'source/tida/algorithm.d'
-    'source/tida/localevent.d'
     'source/tida/each.d'
-    'source/tida/component.d'
-    'source/tida/drawable.d'
-    'source/tida/game.d'
     'source/tida/fps.d'
     'source/tida/collision.d'
     'source/tida/shape.d'
-    'source/tida/vertgen.d'
     'source/tida/sound.d'
     'source/tida/package.d'
+    'source/tida/graphics/vulkan.d'
+    'source/tida/graphics/gapi.d'
+    'source/tida/graphics/gl.d'
+    'source/tida/drawable.d'
+    'source/tida/render.d'
+    'source/tida/meshgen.d'
+    'source/tida/component.d'
+    'source/tida/instance.d'
+    'source/tida/localevent.d'
     'source/tida/scene.d'
+    'source/tida/scenemanager.d'
+    'source/tida/text.d'
+    'source/tida/sprite.d'
+    'source/tida/game.d'
+    'source/tida/listener.d'
+    'source/tida/animation.d'
+    'source/tida/loader.d'
   )
-  ConfigurationIndex = 3
+  ConfigurationIndex = 6
   LibraryAliases.Strings = (
     'bindbc-loader'
     'bindbc-opengl'
@@ -208,5 +371,7 @@ object CurrentProject: TNativeProject
     'mp3decoder'
     'sdlang'
     'x11'
+    'erupted'
+    'xcb-d'
   )
 end

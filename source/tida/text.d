@@ -1,11 +1,9 @@
 /++
 Module for rendering text using the `FreeType` library.
-
 Macros:
     LREF = <a href="#$1">$1</a>
     HREF = <a href="$1">$2</a>
     PHOBREF = <a href="https://dlang.org/phobos/$1.html#$2">$2</a>
-
 Authors: $(HREF https://github.com/TodNaz,TodNaz)
 Copyright: Copyright (c) 2020 - 2021, TodNaz.
 License: $(HREF https://github.com/TodNaz/Tida/blob/master/LICENSE,MIT)
@@ -21,7 +19,6 @@ __gshared FT_Library _FTLibrary;
 
 /++
 Loads a library for loading and rendering fonts.
-
 $(PHOBREF object,Exception) if the library was not found on the system.
 +/
 void initFontLibrary()
@@ -80,7 +77,7 @@ public:
     }
 
     FontSymbolInfo renderSymbol(uint index, int fload, int frender)
-    {     
+    {
         import tida.vector;
         import tida.color;
 
@@ -97,7 +94,7 @@ public:
             FT_Render_Glyph(_face.glyph, frender);
 
             glyph = _face.glyph;
-            
+
             if (glyph.bitmap.width > 0 && glyph.bitmap.rows > 0)
             {
                 auto bitmap = glyph.bitmap;
@@ -126,11 +123,9 @@ public:
 
     /++
     Loads a font.
-
     Params:
         path = The path to the font.
         size = Font size.
-
     Throws:
     $(PHOBREF object,Exception) if the font was not found in the file system,
     or if the font is damaged.
@@ -166,7 +161,6 @@ public:
 
     /++
     Changes the font size to the specified parameter.
-
     Params:
         newSize = Font new size.
     +/
@@ -243,7 +237,6 @@ public:
 
 /++
 Cuts off formatting blocks.
-
 Params:
     symbols = Symbols.
 +/
@@ -284,7 +277,6 @@ unittest
 
 /++
 Returns the size of the rendered text for the given font.
-
 Params:
     T = String type.
     text = Text.
@@ -302,7 +294,6 @@ inout(int) widthText(T)(T text, Font font) @safe
 
 /++
 Shows the width of the displayed characters.
-
 Params:
     text = Displayed characters.
 +/
@@ -329,7 +320,7 @@ class SymbolRender : IDrawable, IDrawableEx
     import tida.render;
     import tida.vector;
     import tida.color;
-    import tida.shader;
+    import tida.graphics.gapi;
     import std.conv : to;
 
 private:
@@ -339,7 +330,6 @@ public @safe:
 
     /++
     Constructor of the text rendering object.
-
     Params:
         symbols =   Already drawn ready-made in image text with offset
                     parameters for correct presentation.
@@ -351,14 +341,11 @@ public @safe:
 
     override void draw(IRenderer render, Vecf position)
     {
-        Shader!Program currShader;
+        IShaderProgram currShader;
 
-        if (render.type != RenderType.software)
+        if (render.currentShader !is render.mainShader)
         {
-            if (render.currentShader !is null)
-            {
-                currShader = render.currentShader;
-            }
+            currShader = render.currentShader;
         }
 
         position.y += (symbols[0].size + (symbols[0].size / 2));
@@ -367,8 +354,7 @@ public @safe:
         {
             if (s.image !is null)
             {
-                if (render.type != RenderType.software)
-                    render.currentShader = currShader;
+                render.currentShader = currShader;
 
                 s.image.drawEx(render, position - vecf(0, s.position.y), 0.0f,
                 vecfNaN, vecfNaN, s.color.a, s.color);
@@ -386,14 +372,11 @@ public @safe:
                             ubyte alpha,
                             Color!ubyte color)
     {
-        Shader!Program currShader;
+        IShaderProgram currShader;
 
-        if (render.type != RenderType.software)
+        if (render.currentShader !is render.mainShader)
         {
-            if (render.currentShader !is null)
-            {
-                currShader = render.currentShader;
-            }
+            currShader = render.currentShader;
         }
 
         position.y += (symbols[0].size + (symbols[0].size / 2));
@@ -402,8 +385,7 @@ public @safe:
         {
             if (s.image !is null)
             {
-                if (render.type != RenderType.software)
-                    render.currentShader = currShader;
+                render.currentShader = currShader;
 
                 s.image.drawEx(render, position, angle, center, vecfNaN, alpha,
                 s.color);
@@ -446,7 +428,6 @@ public @trusted:
     /++
     Draws each character and gives them a relative position to position
     them correctly in the text.
-
     Params:
         T = String type.
         text = Text.
@@ -472,16 +453,13 @@ public @trusted:
 
     /++
     Outputs text with color and positional formatting.
-
     Using the special block `$ <...>`, you can highlight text with color,
     for example:
     ---
     new Text(font).toSymbolsFormat("Black text! $<ffffff> white text!\nNew line!");
     ---
-
     There must be a hex color inside the special block, which will be used later.
     Also, line wrapping is supported.
-
     Params:
         T = string type.
         symbols = Text.
@@ -547,7 +525,6 @@ public @trusted:
     /++
     Creates symbols for rendering and immediately returns the object of
     their renderer.
-
     Params:
         T = String type.
         text = Text.
@@ -561,7 +538,6 @@ public @trusted:
 
     /++
     Outputs characters with color formatting and sequel, renders such text.
-
     Params:
         T = String type.
         text = Text.

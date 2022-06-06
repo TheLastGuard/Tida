@@ -69,93 +69,6 @@ enum WithoutContext = 0; /// Without creating a graphical context.
 enum WithContext = 1; /// With the creation of a graphical context.
 
 /++
-Graphics attributes for creating a special graphics pipeline 
-(default parameters are indicated in the structure).
-+/
-struct GraphicsAttributes
-{
-    int redSize = 8; /// Red size
-    int greenSize = 8; /// Green size
-    int blueSize = 8; /// Blue size
-    int alphaSize = 8; /// Alpha channel size
-    int depthSize = 24; /// Depth size
-    int stencilSize = 8; /// Stencil size
-    int colorDepth = 32; /// Color depth
-    bool doubleBuffer = true; /// Double buffering
-    int glmajor = 3; /// GL major recomendet version.
-    int glminor = 0; /// GL minor recomendet version.
-}
-
-/++
-Automatic determination of the structure of graphic attributes by the total 
-size of the color unit.
-
-Params:
-    colorSize = Color unit size.
-+/
-template AttribBySizeOfTheColor(int colorSize)
-{
-    enum AttribBySizeOfTheColor = GraphicsAttributes(   colorSize,
-                                                        colorSize,
-                                                        colorSize,
-                                                        colorSize);
-}
-
-/++
-Graphics context creation interface for hardware graphics acceleration.
-
-With this technology, the context can be easily created with the given
-attributes, and it is obligatory $(U after) the window is created.
-
-Example:
----
-// Window creation code . . .
-Context contex = new Context();
-context.setAttribute(attributes...);
-context.create(window);
-// The graphics context has been created!
----
-+/
-interface IContext
-{
-@safe:
-    /++
-    Sets the input attributes for creating the graphics context.
-    At the same time, he must simultaneously give these attributes
-    unsparingly to the very object of the pixel description,
-    if such is possible. As a rule, this method is followed by the creation
-    of the context, but the function itself should not do this.
-
-    Params:
-        attributes = graphic context description attributes.
-
-    Throws:
-    $(PHOBREF object,Exception) if the graphics attributes did not fit the creation
-    of the context (see what parameters you could set, maybe inconsistent with
-    each other).
-    +/
-    void setAttributes(GraphicsAttributes attributes);
-
-    /++
-    Creates directly, a graphics context object for a specific platform,
-    based on the previously specified graphics context attributes.
-
-    Params:
-        window = Pointer to the window to create the graphics context.
-
-    Throws:
-    $(PHOBREF object,Exception) if the creation of the graphics context was
-    not successful. The attributes were probably not initialized.
-    +/
-    void create(IWindow window);
-
-    /++
-    Destroys the context.
-    +/
-    void destroy();
-}
-
-/++
 Window interaction interface. It does not provide its creation, it is created by
 a separate function within the interface implementation, in particular 
 the `initialize` function.
@@ -210,12 +123,6 @@ interface IWindow
     /// Dynamic window icon.
     @property void icon(Image iconimage);
 
-    /// Grahphics context
-    @property void context(IContext ctx);
-
-    /// Grahphics context
-    @property IContext context();
-
     /++
     Window resizing function.
 
@@ -246,396 +153,702 @@ interface IWindow
     void hide();
 
     /++
-    Swap two buffers.
-    +/
-    void swapBuffers();
-
-    /++
     Destroys the window and its associated data (not the structure itself, all values are reset to zero).
     +/
     void destroy();
 }
 
 version (Posix)
-class Context : IContext
 {
-    import tida.runtime;
-    import x11.X, x11.Xlib, x11.Xutil;
-    import dglx.glx;
-
-private:
-    GLXContext _context;
-    XVisualInfo* visual;
-    GLXFBConfig bestFbcs;
-
-public @trusted:
-    @property XVisualInfo* getVisualInfo()
+    version(UseXCB)
     {
-        return visual;
-    }
-
-override:
-    void setAttributes(GraphicsAttributes attributes)
-    {
-        import std.exception : enforce;
-        import std.conv : to;
-
-        int[] glxAttributes = 
-        [
-            GLX_X_RENDERABLE    , True,
-            GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
-            GLX_RENDER_TYPE     , GLX_RGBA_BIT,
-            GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
-            GLX_RED_SIZE        , attributes.redSize,
-            GLX_GREEN_SIZE      , attributes.greenSize,
-            GLX_BLUE_SIZE       , attributes.blueSize,
-            GLX_ALPHA_SIZE      , attributes.alphaSize,
-            GLX_DEPTH_SIZE      , attributes.depthSize,
-            GLX_STENCIL_SIZE    , attributes.stencilSize,
-            GLX_DOUBLEBUFFER    , attributes.doubleBuffer.to!int,
-            None
-        ];
-
-        int fbcount = 0;
-        scope fbc = glXChooseFBConfig(  runtime.display, runtime.displayID, 
-                                        glxAttributes.ptr, &fbcount);
-        scope(success) XFree(fbc);
-        enforce!Exception(fbc, ConfFindError);
-
-        int bestFbc = -1, bestNum = -1;
-        foreach (int i; 0 .. fbcount)
+        class Window : IWindow
         {
-            int sampBuff, samples;
-            glXGetFBConfigAttrib(   runtime.display, fbc[i], 
-                                    GLX_SAMPLE_BUFFERS, &sampBuff);
-            glXGetFBConfigAttrib(   runtime.display, fbc[i], 
-                                    GLX_SAMPLES, &samples);
+            import tida.runtime, tida.image;
+            import xcb.xcb;
+            import core.stdc.stdlib;
+            import std.utf : toUTFz;
 
-            if (bestFbc < 0 || (sampBuff && samples > bestNum)) 
+        private:
+            string _title;
+            bool _fullscreen;
+            bool _border;
+            bool _resizable;
+            bool _alwaysTop;
+            //IContext _context;
+            uint _widthInit;
+            uint _heightInit;
+
+        public:
+            xcb_window_t handle;
+            xcb_void_cookie_t cookie;
+
+            this(uint w, uint h, string caption) @safe
             {
-                bestFbc = i;
-                bestNum = samples;
+                this._widthInit = w;
+                this._heightInit = h;
+                this._title = caption;
+            }
+
+            void createFromVisual(xcb_visualid_t visual, uint posX, uint posY) @trusted
+            {
+                immutable(uint) mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
+                immutable(uint[]) values = [
+                    runtime.screen.white_pixel,
+                    XCB_EVENT_MASK_EXPOSURE |
+                    XCB_EVENT_MASK_KEY_PRESS |
+                    XCB_EVENT_MASK_KEY_RELEASE |
+                    XCB_EVENT_MASK_BUTTON_PRESS |
+                    XCB_EVENT_MASK_BUTTON_RELEASE |
+                    XCB_EVENT_MASK_POINTER_MOTION |
+                    XCB_EVENT_MASK_FOCUS_CHANGE |
+                    XCB_EVENT_MASK_STRUCTURE_NOTIFY
+                ];
+
+                handle = xcb_generate_id(runtime.connection);
+                cookie = xcb_create_window(
+                    runtime.connection,
+                    XCB_COPY_FROM_PARENT,
+                    handle,
+                    runtime.screen.root,
+                    cast(short) posX, cast(short) posY,
+                    cast(short) _widthInit, cast(short) _heightInit,
+                    1,
+                    XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                    visual,
+                    mask,
+                    values.ptr
+                );
+
+                xcb_map_window(runtime.connection, handle);
+                title = _title;
+                xcb_flush(runtime.connection);
+
+                auto wmProtocols = getAtom("WM_PROTOCOLS");
+                auto wmDelete = getAtom("WM_DELETE_WINDOW");
+                xcb_change_property(runtime.connection, XCB_PROP_MODE_REPLACE, handle, wmProtocols, 4, 32, 1, &wmDelete);
+                xcb_flush(runtime.connection);
+            }
+
+            auto getAtom(string name) @trusted
+            {
+                import std.string : toStringz;
+
+                auto c = xcb_intern_atom(runtime.connection, 0, cast(ushort) name.length, name.toStringz);
+                xcb_flush(runtime.connection);
+                auto atomReply = xcb_intern_atom_reply(runtime.connection, c, null);
+
+                auto atom = atomReply.atom;
+                free(atomReply);
+
+                return atom;
+            }
+
+            /// The position of the window in the plane of the desktop.
+            @property int x() @trusted
+            {
+                auto c = xcb_get_geometry(runtime.connection, handle);
+                xcb_flush(runtime.connection);
+                auto reply = xcb_get_geometry_reply(runtime.connection, c, null);
+
+                uint xPos = reply.x;
+                free(reply);
+
+                return xPos;
+            }
+
+            /// The position of the window in the plane of the desktop.
+            @property int y() @trusted
+            {
+                auto c = xcb_get_geometry(runtime.connection, handle);
+                xcb_flush(runtime.connection);
+                auto reply = xcb_get_geometry_reply(runtime.connection, c, null);
+
+                uint yPos = reply.y;
+                free(reply);
+
+                return yPos;
+            }
+
+            /// Window width
+            @property uint width() @trusted
+            {
+                auto c = xcb_get_geometry(runtime.connection, handle);
+                xcb_flush(runtime.connection);
+                auto reply = xcb_get_geometry_reply(runtime.connection, c, null);
+
+                uint w = reply.width;
+                free(reply);
+
+                return w;
+            }
+
+            /// Window height
+            @property uint height() @trusted
+            {
+                auto c = xcb_get_geometry(runtime.connection, handle);
+                xcb_flush(runtime.connection);
+                auto reply = xcb_get_geometry_reply(runtime.connection, c, null);
+
+                uint h = reply.height;
+                free(reply);
+
+                return h;
+            }
+
+            /// Window mode, namely whether windowed or full screen
+            @property void fullscreen(bool value) @trusted
+            {
+                auto state = getAtom("_NET_WM_STATE");
+                auto fullscr = getAtom("_NET_WM_STATE_FULLSCREEN");
+
+                xcb_client_message_event_t event;
+                event.response_type = XCB_CLIENT_MESSAGE;
+                event.type = state;
+                event.format = 32;
+                event.window = handle;
+                event.data.data32[0] = value;
+                event.data.data32[1] = fullscr;
+                event.data.data32[2] = XCB_ATOM_NONE;
+
+                xcb_send_event(
+                    runtime.connection,
+                    0,
+                    runtime.screen.root,
+                    XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT
+                    | XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
+                    cast(const char*) &event
+                );
+
+                xcb_flush(runtime.connection);
+
+                _fullscreen = value;
+            }
+
+            /// Window mode, namely whether windowed or full screen
+            @property bool fullscreen()
+            {
+                return _fullscreen;
+            }
+
+            /// Whether the window can be resized by the user.
+            @property void resizable(bool value) @trusted
+            {
+                import xcb.icccm;
+
+                xcb_icccm_wm_hints_t wmHints;
+
+                auto c = xcb_icccm_get_wm_hints(runtime.connection, handle);
+                xcb_flush(runtime.connection);
+                xcb_icccm_get_wm_hints_reply(
+                    runtime.connection,
+                    c,
+                    &wmHints,
+                    null
+                );
+
+                if (!value)
+                {
+                    xcb_size_hints_t hints;
+
+                    auto gc = xcb_get_geometry(runtime.connection, handle);
+                    xcb_flush(runtime.connection);
+                    auto reply = xcb_get_geometry_reply(runtime.connection, gc, null);
+
+                    uint w = reply.width;
+                    uint h = reply.height;
+
+                    free(reply);
+
+                    hints.flags = XCB_ICCCM_SIZE_HINT_P_MIN_SIZE | XCB_ICCCM_SIZE_HINT_P_MAX_SIZE;
+                    wmHints.flags |= hints.flags;
+                    hints.max_width = w;
+                    hints.max_height = h;
+                    hints.min_width = w;
+                    hints.min_height = h;
+
+                    xcb_icccm_set_wm_size_hints(runtime.connection, handle, XCB_ATOM_WM_NORMAL_HINTS, &hints);
+                } else
+                {
+                    wmHints.flags &= ~(XCB_ICCCM_SIZE_HINT_P_MIN_SIZE | XCB_ICCCM_SIZE_HINT_P_MAX_SIZE);
+                }
+
+                _resizable = value;
+
+                xcb_icccm_set_wm_hints(runtime.connection, handle, &wmHints);
+                xcb_flush(runtime.connection);
+            }
+
+            /// Whether the window can be resized by the user.
+            @property bool resizable() @safe
+            {
+                return _resizable;
+            }
+
+            /// Frames around the window.
+            @property void border(bool value) @trusted
+            {
+                import std.conv : to;
+
+                struct MWMHints {
+                    ulong flags;
+                    ulong functions;
+                    ulong decorations;
+                    long inputMode;
+                    ulong status;
+                }
+
+                const hint = MWMHints(2, 0, value.to!ulong, 0, 0);
+                const wmHINTS = getAtom("_MOTIF_WM_HINTS");
+
+                xcb_change_property(
+                    runtime.connection,
+                    XCB_PROP_MODE_REPLACE,
+                    handle,
+                    wmHINTS,
+                    wmHINTS,
+                    32,
+                    MWMHints.sizeof / long.sizeof,
+                    cast(char*) &hint
+                );
+                xcb_flush(runtime.connection);
+
+                _border = value;
+            }
+
+            /// Frames around the window.
+            @property bool border()
+            {
+                return _border;
+            }
+
+            /// Window title.
+            @property void title(string value) @trusted
+            {
+                import std.string : toStringz;
+
+                xcb_change_property(
+                    runtime.connection,
+                    XCB_PROP_MODE_REPLACE,
+                    handle,
+                    XCB_ATOM_WM_NAME,
+                    XCB_ATOM_STRING,
+                    8,
+                    cast(uint) value.length,
+                    cast(void*) value.toStringz
+                );
+                xcb_flush(runtime.connection);
+
+                _title = value;
+            }
+
+            /// Window title.
+            @property string title()
+            {
+                return _title;
+            }
+
+            /// Whether the window is always on top of the others.
+            @property void alwaysOnTop(bool value) @trusted
+            {
+                import std.string : toStringz;
+
+                auto wmAbove = getAtom("_NET_WM_STATE_ABOVE");
+                auto wmState = getAtom("_NET_WM_STATE");
+
+                xcb_client_message_event_t* event = cast(xcb_client_message_event_t*) malloc(xcb_client_message_event_t.sizeof);
+                event.window = handle;
+                event.format = 32;
+                event.data.data32[0] = value;
+                event.data.data32[1] = wmAbove;
+                event.data.data32[2] = XCB_ATOM_NONE;
+                event.type = wmState;
+
+                xcb_send_event(runtime.connection, 0, runtime.screen.root, XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT | XCB_EVENT_MASK_STRUCTURE_NOTIFY, cast(char*) event);
+                xcb_flush(runtime.connection);
+
+                _alwaysTop = value;
+            }
+
+            /// Whether the window is always on top of the others.
+            @property bool alwaysOnTop()
+            {
+                return _alwaysTop;
+            }
+
+            /// Dynamic window icon.
+            @property void icon(Image iconimage) @trusted
+            {
+                import tida.color;
+                import std.string : toStringz;
+
+                ulong[] pixels = [  cast(ulong) iconimage.width,
+                                    cast(ulong) iconimage.height];
+
+                foreach(pixel; iconimage.pixels)
+                    pixels ~= pixel.to!(ulong, PixelFormat.ARGB);
+
+                immutable wmName = "_NET_WM_ICON";
+                auto c = xcb_intern_atom(runtime.connection, 0, wmName.length, wmName.toStringz);
+                xcb_flush(runtime.connection);
+                auto atomReply = xcb_intern_atom_reply(runtime.connection, c, null);
+                auto atom = atomReply.atom;
+                free(atomReply);
+
+                xcb_change_property(
+                    runtime.connection,
+                    XCB_PROP_MODE_REPLACE,
+                    handle,
+                    atom,
+                    XCB_ATOM_CARDINAL,
+                    32,
+                    cast(uint) pixels.length,
+                    cast(void*) pixels.ptr
+                );
+                xcb_flush(runtime.connection);
+            }
+
+            /++
+            Window resizing function.
+
+            Params:
+                w = Window width.
+                h = Window height.
+            +/
+            void resize(uint w, uint h) @trusted
+            {
+                immutable(uint) mask = XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT;
+                immutable(uint[]) values = [
+                    w, h
+                ];
+
+                xcb_configure_window(runtime.connection, handle, mask, values.ptr);
+                xcb_flush(runtime.connection);
+            }
+
+            /++
+            Changes the position of the window in the plane of the desktop.
+
+            Params:
+                xposition = Position x-axis.
+                yposition = Position y-axis.
+            +/
+            void move(int xposition, int yposition) @trusted
+            {
+                immutable(uint) mask = XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y;
+                immutable(uint[]) values = [
+                    xposition, yposition
+                ];
+
+                xcb_configure_window(runtime.connection, handle, mask, values.ptr);
+                xcb_flush(runtime.connection);
+            }
+
+            /++
+            Shows a window in the plane of the desktop.
+            +/
+            void show() @trusted
+            {
+                xcb_map_window(runtime.connection, handle);
+                xcb_flush(runtime.connection);
+            }
+
+            /++
+            Hide a window in the plane of the desktop.
+            (Can be tracked in the task manager.)
+            +/
+            void hide() @trusted
+            {
+                xcb_unmap_window(runtime.connection, handle);
+                xcb_flush(runtime.connection);
+            }
+
+            /++
+            Destroys the window and its associated data (not the structure itself, all values are reset to zero).
+            +/
+            void destroy() @trusted
+            {
+                xcb_destroy_window(runtime.connection, handle);
             }
         }
-
-        this.bestFbcs = fbc[bestFbc];
-        enforce!Exception(bestFbcs, ConfFindError);
-
-        this.visual = glXGetVisualFromFBConfig(runtime.display, bestFbcs);
-        enforce!Exception(visual, ConfFindError);
-    }
-
-    void create(IWindow window)
+    } else
     {
-        _context = glXCreateNewContext( runtime.display, this.bestFbcs, 
-                                        GLX_RGBA_TYPE, null, true);
-    }
-
-    void destroy()
-    {
-        glXDestroyContext(runtime.display, _context);
-        if(visual) XFree(visual);
-    }
-}
-
-version (Posix)
-class Window : IWindow
-{
-    import tida.runtime, tida.image;
-    import x11.X, x11.Xlib, x11.Xutil;
-    import dglx.glx;
-    import std.utf : toUTFz;
-
-private:
-    string _title;
-    bool _fullscreen;
-    bool _border;
-    bool _resizable;
-    bool _alwaysTop;
-    IContext _context;
-    uint _widthInit;
-    uint _heightInit;
-
-public:
-    x11.X.Window handle;
-    Visual* visual;
-    int depth;
-
-@trusted:
-    this(uint w, uint h, string caption)
-    {
-        this._widthInit = w;
-        this._heightInit = h;
-    }
-
-    void createFromXVisual(XVisualInfo* vinfo, int posX = 100, int posY = 100)
-    {
-        visual = vinfo.visual;
-        depth = vinfo.depth;
-
-        auto rootWindow = runtime.rootWindow;
-
-        XSetWindowAttributes windowAttribs;
-        windowAttribs.border_pixel = 0x000000;
-        windowAttribs.background_pixel = 0xFFFFFF;
-        windowAttribs.override_redirect = True;
-        windowAttribs.colormap = XCreateColormap(runtime.display, rootWindow, 
-                                                 visual, AllocNone);
-
-        windowAttribs.event_mask = ExposureMask | ButtonPressMask | KeyPressMask |
-                                   KeyReleaseMask | ButtonReleaseMask | EnterWindowMask |
-                                   LeaveWindowMask | PointerMotionMask | StructureNotifyMask;
-
-        this.handle = XCreateWindow (runtime.display, rootWindow, posX, posY, _widthInit, _heightInit, 0, depth,
-                                InputOutput, visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask, 
-                                &windowAttribs);
-
-        title = _title;
-
-        Atom wmAtom = XInternAtom(runtime.display, "WM_DELETE_WINDOW", 0);
-        XSetWMProtocols(runtime.display, this.handle, &wmAtom, 1);
-    }
-
-    int getDepth()
-    {
-        return depth;
-    }
-
-    Visual* getVisual()
-    {
-        return visual;
-    }
-
-    ~this()
-    {
-        this.destroy();
-    }
-override:
-    @property int x()
-    {
-        XWindowAttributes winAttrib;
-        XGetWindowAttributes(runtime.display, this.handle, &winAttrib);
-
-        return winAttrib.x;
-    }
-
-    @property int y()
-    {
-        XWindowAttributes winAttrib;
-        XGetWindowAttributes(runtime.display, this.handle, &winAttrib);
-
-        return winAttrib.y;
-    }
-
-    @property uint width()
-    {
-        XWindowAttributes winAttrib;
-        XGetWindowAttributes(runtime.display, this.handle, &winAttrib);
-
-        return winAttrib.width;
-    }
-
-    @property uint height()
-    {
-        XWindowAttributes winAttrib;
-        XGetWindowAttributes(runtime.display, this.handle, &winAttrib);
-
-        return winAttrib.height;
-    }
-
-    @property void fullscreen(bool value)
-    {
-        XEvent event;
-        
-        const wmState = XInternAtom(runtime.display, 
-                                    "_NET_WM_STATE", 0);
-        const wmFullscreen = XInternAtom(   runtime.display, 
-                                            "_NET_WM_STATE_FULLSCREEN", 0);
-
-        event.xany.type = ClientMessage;
-        event.xclient.message_type = wmState;
-        event.xclient.format = 32;
-        event.xclient.window = this.handle;
-        event.xclient.data.l[1] = wmFullscreen;
-        event.xclient.data.l[3] = 0;
-
-        event.xclient.data.l[0] = value;
-
-        XSendEvent(runtime.display,runtime.rootWindow,0,
-                SubstructureNotifyMask | SubstructureRedirectMask, &event);
-
-        this._fullscreen = value;
-    }
-
-    @property bool fullscreen()
-    {
-        return this._fullscreen;
-    }
-
-    @property void resizable(bool value)
-    {
-        long flags;
-
-        scope XSizeHints* sh = XAllocSizeHints();
-        scope(exit) XFree(sh);
-
-        XGetWMNormalHints(runtime.display, this.handle, sh, &flags);
-        
-        if(!value)
+        class Window : IWindow
         {
-            sh.flags |= PMinSize | PMaxSize;
-            sh.min_width = this.width;
-            sh.max_width = this.width;
-            sh.min_height = this.height;
-            sh.max_height = this.height;
-        }else
-        {
-            sh.flags &= ~(PMinSize | PMaxSize);
+            import tida.runtime, tida.image;
+            import x11.X, x11.Xlib, x11.Xutil;
+            import dglx.glx;
+            import std.utf : toUTFz;
+
+        private:
+            string _title;
+            bool _fullscreen;
+            bool _border;
+            bool _resizable;
+            bool _alwaysTop;
+            //IContext _context;
+            uint _widthInit;
+            uint _heightInit;
+
+        public:
+            x11.X.Window handle;
+            Visual* visual;
+            int depth;
+
+        @trusted:
+            this(uint w, uint h, string caption)
+            {
+                this._widthInit = w;
+                this._heightInit = h;
+            }
+
+            void createFromXVisual(XVisualInfo* vinfo, int posX = 100, int posY = 100)
+            {
+                visual = vinfo.visual;
+                depth = vinfo.depth;
+
+                auto rootWindow = runtime.rootWindow;
+
+                XSetWindowAttributes windowAttribs;
+                windowAttribs.border_pixel = 0x000000;
+                windowAttribs.background_pixel = 0xFFFFFF;
+                windowAttribs.override_redirect = True;
+                windowAttribs.colormap = XCreateColormap(runtime.display, rootWindow,
+                                                         visual, AllocNone);
+
+                windowAttribs.event_mask = ExposureMask | ButtonPressMask | KeyPressMask |
+                                           KeyReleaseMask | ButtonReleaseMask | EnterWindowMask |
+                                           LeaveWindowMask | PointerMotionMask | StructureNotifyMask;
+
+                this.handle = XCreateWindow (runtime.display, rootWindow, posX, posY, _widthInit, _heightInit, 0, depth,
+                                        InputOutput, visual, CWBackPixel | CWColormap | CWBorderPixel | CWEventMask,
+                                        &windowAttribs);
+
+                title = _title;
+
+                Atom wmAtom = XInternAtom(runtime.display, "WM_DELETE_WINDOW", 0);
+                XSetWMProtocols(runtime.display, this.handle, &wmAtom, 1);
+            }
+
+            int getDepth()
+            {
+                return depth;
+            }
+
+            Visual* getVisual()
+            {
+                return visual;
+            }
+
+            ~this()
+            {
+                this.destroy();
+            }
+        override:
+            @property int x()
+            {
+                XWindowAttributes winAttrib;
+                XGetWindowAttributes(runtime.display, this.handle, &winAttrib);
+
+                return winAttrib.x;
+            }
+
+            @property int y()
+            {
+                XWindowAttributes winAttrib;
+                XGetWindowAttributes(runtime.display, this.handle, &winAttrib);
+
+                return winAttrib.y;
+            }
+
+            @property uint width()
+            {
+                XWindowAttributes winAttrib;
+                XGetWindowAttributes(runtime.display, this.handle, &winAttrib);
+
+                return winAttrib.width;
+            }
+
+            @property uint height()
+            {
+                XWindowAttributes winAttrib;
+                XGetWindowAttributes(runtime.display, this.handle, &winAttrib);
+
+                return winAttrib.height;
+            }
+
+            @property void fullscreen(bool value)
+            {
+                XEvent event;
+
+                const wmState = XInternAtom(runtime.display,
+                                            "_NET_WM_STATE", 0);
+                const wmFullscreen = XInternAtom(   runtime.display,
+                                                    "_NET_WM_STATE_FULLSCREEN", 0);
+
+                event.xany.type = ClientMessage;
+                event.xclient.message_type = wmState;
+                event.xclient.format = 32;
+                event.xclient.window = this.handle;
+                event.xclient.data.l[1] = wmFullscreen;
+                event.xclient.data.l[3] = 0;
+
+                event.xclient.data.l[0] = value;
+
+                XSendEvent(runtime.display,runtime.rootWindow,0,
+                        SubstructureNotifyMask | SubstructureRedirectMask, &event);
+
+                this._fullscreen = value;
+            }
+
+            @property bool fullscreen()
+            {
+                return this._fullscreen;
+            }
+
+            @property void resizable(bool value)
+            {
+                long flags;
+
+                scope XSizeHints* sh = XAllocSizeHints();
+                scope(exit) XFree(sh);
+
+                XGetWMNormalHints(runtime.display, this.handle, sh, &flags);
+
+                if(!value)
+                {
+                    sh.flags |= PMinSize | PMaxSize;
+                    sh.min_width = this.width;
+                    sh.max_width = this.width;
+                    sh.min_height = this.height;
+                    sh.max_height = this.height;
+                }else
+                {
+                    sh.flags &= ~(PMinSize | PMaxSize);
+                }
+
+                this._resizable = value;
+                XSetWMNormalHints(runtime.display, this.handle, sh);
+            }
+
+            @property bool resizable()
+            {
+                return this._resizable;
+            }
+
+            @property void border(bool value)
+            {
+                import std.conv : to;
+
+                struct MWMHints {
+                    ulong flags;
+                    ulong functions;
+                    ulong decorations;
+                    long inputMode;
+                    ulong status;
+                }
+
+                const hint = MWMHints(1 << 1, 0, value.to!ulong, 0, 0);
+                const wmHINTS = XInternAtom(runtime.display, "_MOTIF_WM_HINTS", 0);
+
+                XChangeProperty(runtime.display, this.handle, wmHINTS, wmHINTS, 32,
+                    PropModeReplace, cast(ubyte*) &hint, MWMHints.sizeof / long.sizeof);
+
+                this._border = value;
+            }
+
+            @property bool border()
+            {
+                return this._border;
+            }
+
+            @property void title(string value)
+            {
+                XStoreName(runtime.display, this.handle, value.toUTFz!(char*));
+                XSetIconName(runtime.display, this.handle, value.toUTFz!(char*));
+
+                this._title = value;
+            }
+
+            @property string title()
+            {
+                return this._title;
+            }
+
+            @property void alwaysOnTop(bool value)
+            {
+                const wmState = XInternAtom(runtime.display, "_NET_WM_STATE", 0);
+                const wmAbove = XInternAtom(runtime.display, "_NET_WM_STATE_ABOVE", 0);
+
+                XEvent event;
+                event.xclient.type = ClientMessage;
+                event.xclient.serial = 0;
+                event.xclient.send_event = true;
+                event.xclient.display = runtime.display;
+                event.xclient.window = this.handle;
+                event.xclient.message_type = wmState;
+                event.xclient.format = 32;
+                event.xclient.data.l[0] = value;
+                event.xclient.data.l[1] = wmAbove;
+                event.xclient.data.l[2 .. 5] = 0;
+
+                XSendEvent( runtime.display, runtime.rootWindow, false,
+                            SubstructureRedirectMask | SubstructureNotifyMask, &event);
+                XFlush(runtime.display);
+
+                this._alwaysTop = value;
+            }
+
+            @property bool alwaysOnTop()
+            {
+                return this._alwaysTop;
+            }
+
+            void icon(Image iconimage)
+            {
+                import tida.color;
+
+                ulong[] pixels = [  cast(ulong) iconimage.width,
+                                    cast(ulong) iconimage.height];
+
+                foreach(pixel; iconimage.pixels)
+                    pixels ~= pixel.to!(ulong, PixelFormat.ARGB);
+
+                const first = XInternAtom(runtime.display, "_NET_WM_ICON", 0);
+                const second = XInternAtom(runtime.display, "CARDINAL", 0);
+
+                XChangeProperty(runtime.display, this.handle, first, second, 32,
+                                PropModeReplace, cast(ubyte*) pixels,
+                                cast(int) pixels.length);
+            }
+
+            void resize(uint w, uint h)
+            {
+                XResizeWindow(runtime.display, this.handle, w, h);
+            }
+
+            void move(int xposition, int yposition)
+            {
+                XMoveWindow(runtime.display, this.handle, xposition, yposition);
+            }
+
+            void show()
+            {
+                XMapWindow(runtime.display, this.handle);
+                XClearWindow(runtime.display, this.handle);
+            }
+
+            void hide()
+            {
+                 XUnmapWindow(runtime.display, this.handle);
+            }
+
+            void destroy()
+            {
+                XDestroyWindow(runtime.display, this.handle);
+                this.handle = 0;
+            }
         }
-
-        this._resizable = value;
-        XSetWMNormalHints(runtime.display, this.handle, sh);
-    }
-
-    @property bool resizable()
-    {
-        return this._resizable;
-    }
-
-    @property void border(bool value)
-    {
-        import std.conv : to;
-
-        struct MWMHints {
-            ulong flags;
-            ulong functions;
-            ulong decorations;
-            long inputMode;
-            ulong status;
-        }
-
-        const hint = MWMHints(1 << 1, 0, value.to!ulong, 0, 0);
-        const wmHINTS = XInternAtom(runtime.display, "_MOTIF_WM_HINTS", 0);
-
-        XChangeProperty(runtime.display, this.handle, wmHINTS, wmHINTS, 32,
-            PropModeReplace, cast(ubyte*) &hint, MWMHints.sizeof / long.sizeof);
-
-        this._border = value;
-    }
-
-    @property bool border()
-    {
-        return this._border;
-    }
-
-    @property void title(string value)
-    {
-        XStoreName(runtime.display, this.handle, value.toUTFz!(char*));
-        XSetIconName(runtime.display, this.handle, value.toUTFz!(char*));
-
-        this._title = value;
-    }
-
-    @property string title()
-    {
-        return this._title;
-    }
-
-    @property void alwaysOnTop(bool value)
-    {
-        const wmState = XInternAtom(runtime.display, "_NET_WM_STATE", 0);
-        const wmAbove = XInternAtom(runtime.display, "_NET_WM_STATE_ABOVE", 0);
-
-        XEvent event;
-        event.xclient.type = ClientMessage;
-        event.xclient.serial = 0;
-        event.xclient.send_event = true;
-        event.xclient.display = runtime.display;
-        event.xclient.window = this.handle;
-        event.xclient.message_type = wmState;
-        event.xclient.format = 32;
-        event.xclient.data.l[0] = value;
-        event.xclient.data.l[1] = wmAbove;
-        event.xclient.data.l[2 .. 5] = 0;
-
-        XSendEvent( runtime.display, runtime.rootWindow, false, 
-                    SubstructureRedirectMask | SubstructureNotifyMask, &event);
-        XFlush(runtime.display);
-
-        this._alwaysTop = value;
-    }
-
-    @property bool alwaysOnTop()
-    {
-        return this._alwaysTop;
-    }
-
-    void icon(Image iconimage)
-    {
-        import tida.color;
-
-        ulong[] pixels = [  cast(ulong) iconimage.width,
-                            cast(ulong) iconimage.height];
-
-        foreach(pixel; iconimage.pixels)
-            pixels ~= pixel.to!(ulong, PixelFormat.ARGB);
-
-        const first = XInternAtom(runtime.display, "_NET_WM_ICON", 0);
-        const second = XInternAtom(runtime.display, "CARDINAL", 0);
-
-        XChangeProperty(runtime.display, this.handle, first, second, 32,
-                        PropModeReplace, cast(ubyte*) pixels, 
-                        cast(int) pixels.length);
-    }
-
-    @property void context(IContext ctx)
-    {
-        this._context = ctx;
-
-        auto glxctx = (cast(Context) ctx)._context;
-        if (glxctx is null)
-            throw new Exception("Context is null!");
-
-        glXMakeCurrent(runtime.display, this.handle, glxctx);
-    }
-
-    @property IContext context()
-    {
-        return this._context;
-    }
-
-    void resize(uint w, uint h)
-    {
-        XResizeWindow(runtime.display, this.handle, w, h);
-    }
-
-    void move(int xposition, int yposition)
-    {
-        XMoveWindow(runtime.display, this.handle, xposition, yposition);
-    }
-
-    void show()
-    {
-        XMapWindow(runtime.display, this.handle);
-        XClearWindow(runtime.display, this.handle);
-    }
-
-    void hide()
-    {
-         XUnmapWindow(runtime.display, this.handle);
-    }
-
-    void swapBuffers()
-    {
-        import dglx.glx : glXSwapBuffers; 
-
-        glXSwapBuffers(runtime.display, this.handle);
-    }
-
-    void destroy()
-    {
-        XDestroyWindow(runtime.display, this.handle);
-        this.handle = 0;
     }
 }
 
@@ -1194,41 +1407,33 @@ windowInitialize!WithoutContext(window, 100, 100); /// Without context
 windowInitialize!WithContext(window, 100, 100); /// With context
 ---
 +/
-void windowInitialize(int type = WithoutContext)(   Window window, 
-                                                    int posX, 
-                                                    int posY) @trusted
+void windowInitialize(  Window window,
+                        int posX,
+                        int posY) @trusted
 {
     version(Posix)
     {
-        import tida.runtime;
-        import x11.X, x11.Xlib, x11.Xutil;
-
-        static if (type == WithoutContext)
+        version(UseXCB)
         {
+            import tida.runtime;
+
+            window.createFromVisual(runtime.screen.root_visual, posX, posY);
+            window.show();
+        } else
+        {
+            import tida.runtime;
+            import x11.X, x11.Xlib, x11.Xutil;
+
             scope XVisualInfo* vinfo = new XVisualInfo();
             vinfo.visual = XDefaultVisual(runtime.display, runtime.displayID);
             vinfo.depth = XDefaultDepth(runtime.display, runtime.displayID);
-            
+
             window.createFromXVisual(vinfo);
 
             destroy(vinfo);
-        }else
-        {
-            GraphicsAttributes attribs = AttribBySizeOfTheColor!8;
-            attribs.glmajor = 4;
-            attribs.glminor = 5;   
 
-            Context context;
-            
-            context = new Context();
-            context.setAttributes(attribs);
-            context.create(null);
-
-            window.createFromXVisual(context.getVisualInfo(), 100, 100);
-            window.context = context;
+            window.show();
         }
-
-        window.show();
     }
     else
     version(Windows)
