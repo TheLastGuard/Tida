@@ -11,6 +11,13 @@
 			"platforms": [
 				"posix"
 			],
+			"versions": [
+				"FT_210",
+				"GL_AllowDeprecated",
+				"GL_46",
+				"Dynamic_GLX",
+				"GraphBackendGL"
+			],
 			"targetType": "executable"
 		},
 		{
@@ -18,9 +25,16 @@
 				"user32",
 				"gdi32"
 			],
-			"name": "windows",
+			"name": "windows-gl",
 			"platforms": [
 				"windows"
+			],
+			"versions": [
+				"FT_210",
+				"GL_AllowDeprecated",
+				"GL_46",
+				"Dynamic_GLX",
+				"GraphBackendGL"
 			],
 			"targetType": "executable"
 		},
@@ -28,9 +42,16 @@
 			"dependencies": {
 				"x11": "1.0.21"
 			},
-			"name": "posix-lib",
+			"name": "posix-gl-lib",
 			"platforms": [
 				"posix"
+			],
+			"versions": [
+				"FT_210",
+				"GL_AllowDeprecated",
+				"GL_46",
+				"Dynamic_GLX",
+				"GraphBackendGL"
 			],
 			"targetType": "library"
 		},
@@ -39,9 +60,16 @@
 				"user32",
 				"gdi32"
 			],
-			"name": "windows-lib",
+			"name": "windows-gl-lib",
 			"platforms": [
 				"windows"
+			],
+			"versions": [
+				"FT_210",
+				"GL_AllowDeprecated",
+				"GL_46",
+				"Dynamic_GLX",
+				"GraphBackendGL"
 			],
 			"targetType": "library"
 		},
@@ -51,12 +79,26 @@
 				"gdi32"
 			],
 			"name": "unittest-windows",
+			"versions": [
+				"FT_210",
+				"GL_AllowDeprecated",
+				"GL_46",
+				"Dynamic_GLX",
+				"GraphBackendGL"
+			],
 			"targetType": "library"
 		},
 		{
 			"dependencies": {
 				"x11": "1.0.21"
 			},
+			"versions": [
+				"FT_210",
+				"GL_AllowDeprecated",
+				"GL_46",
+				"Dynamic_GLX",
+				"GraphBackendGL"
+			],
 			"name": "unittest-posix",
 			"targetType": "library"
 		}
