@@ -57,58 +57,131 @@ bool validateImageData(int format)(ubyte[] data, uint w, uint h) @safe nothrow p
     return data.length == (w * h * bytesPerColor!format);
 }
 
+/++
+Input iteration integration. Their three properties consists of: obtaining a
+pixel by coordinates and size properties. Such an interfacing is sufficient
+for some manipulations with these images.
++/
 interface InputIterateRange
 {
+    /++
+    Obtaining a pixel by coordinates.
+
+    The arguments indicate the coordinates of the pixel, which needs to be
+    requested. The function can give a pixel right away, or at first it will
+    process it in any way, and will later give a result.
+
+    Params:
+        x = X-axis coordinate.
+        y = Y-axis coordinate.
+    +/
     Color!ubyte index(uint x, uint y) @safe;
 
+    /// The estimated image width.
     @property uint width() @safe;
 
+    /// The estimated image height.
     @property uint height() @safe;
 }
 
+/++
+Checks for the object for viability to perform the functions of iteration of
+the image manipulation object. The required functions are provided in the
+`InputIterateRange` interface.
++/
 enum bool isInputIterate(R) =
     is(typeof(R.index(uint.init, uint.init)) == Color!ubyte) &&
     is(ReturnType!((R r) => r.width) == uint) &&
     is(ReturnType!((R r) => r.height) == uint);
 
-void eachedInputIterate(Iterate, alias pred)(
-    Iterate iterate
-) @safe
+enum bool isInputRefRange(R) =
+    isInputRange!R &&
+    __traits(isRef, typeof((return ref R r) => r.front));
+
+
+enum bool isInputRefIterate(R) =
+    is(typeof(R.index(uint.init, uint.init)) == Color!ubyte) &&
+    __traits(isRef, ReturnType!((R r) => r.index(uint.init, uint.init))) &&
+    is(ReturnType!((R r) => r.width) == uint) &&
+    is(ReturnType!((R r) => r.height) == uint);
+
+/// It transforms iteration into a range of pixel data.
+auto iterateToRange(Iterate)(Iterate iterate) @safe
 if (isInputIterate!Iterate)
 {
-    foreach (y; 0 .. iterate.height)
+    static struct IterateRange
     {
-        foreach(x; 0 .. iterate.width)
+        Iterate iterate;
+        int x = 0, y = 0;
+
+        bool empty() @safe
         {
-            pred(x, y, iterate.index(x, y));
+            return ((y * iterate.width) + x) == iterate.width * iterate.height;
+        }
+
+        void popFront() @safe
+        {
+            x++;
+
+            if (x == iterate.width)
+            {
+                x = 0;
+                y++;
+            }
+        }
+
+        Color!ubyte front() @safe
+        {
+            return iterate.index(x, y);
         }
     }
+
+    return IterateRange(iterate);
 }
 
-auto dataImageIterate(Iterate)(Iterate iterate) @safe
-if (isInputIterate!Iterate)
-{
-    Color!ubyte[] pixels;
-    pixels.length = iterate.width * iterate.height;
-
-    eachedInputIterate!(Iterate, (x, y, e) {
-        pixels[(iterate.width * y) + x] = e;
-    })(iterate);
-
-    return pixels;
-}
-
-auto toImageIterate(Range)(Range range, uint width, uint height) @safe
+unittest
 {
     import std.range : array;
+    import std.algorithm : equal;
 
-    auto pixels = range.array;
+    Color!ubyte[] data = new Color!ubyte[](64 * 64);
+    auto iterate = toImageIterate(data, 64, 64);
 
-    static struct InputIterate
+    auto result = iterateToRange(iterate).array;
+
+    assert(result.length == data.length);
+    assert(result.equal(data));
+}
+
+/++
+Translates the image into an iterative object for processing
+(not the image itself, but its copies).
+
+Params;
+    image = Image processing.
+    width = Image width.
+    height = Image height.
++/
+auto toImageIterate(Image image, uint width, uint height) @safe
+{
+    return toImageIterate(image.pixeldata, width, height);
+}
+
+/++
+Translates the image data into an iterative object for processing
+(not the image itself, but its copies).
+
+Params;
+    range = Image data processing.
+    width = Image width.
+    height = Image height.
++/
+auto toImageIterate(Color!ubyte[] pixels, uint width, uint height) @safe
+{
+    struct InputIterate
     {
-        Color!ubyte[] pixels;
-        uint width;
-        uint height;
+        uint width = 0;
+        uint height = 0;
 
         Color!ubyte index(uint x, uint y) @safe
         {
@@ -116,34 +189,32 @@ auto toImageIterate(Range)(Range range, uint width, uint height) @safe
         }
     }
 
-    static assert(isInputIterate!InputIterate);
-
-    return InputIterate(pixels, width, height);
+    return InputIterate(width, height);
 }
 
-/// Let's check the performance:
-unittest
+/++
+Translates the image data into an iterative object for processing
+(not the image itself, but its copies).
+
+Params;
+    range = Image data processing.
+    width = Image width.
+    height = Image height.
++/
+auto toImageIterate(ref Color!ubyte[] pixels, uint width, uint height) @safe
 {
-    immutable simpleImageWidth  = 32;
-    immutable simpleImageHeight = 32;
-    ubyte[] data = new ubyte[](simpleImageWidth * simpleImageHeight * bytesPerColor!(PixelFormat.RGBA));
-
-    assert(validateImageData!(PixelFormat.RGBA)(data, simpleImageWidth, simpleImageHeight));
-}
-
-auto reversed(Range)(Range range) @trusted nothrow pure
-if (isBidirectionalRange!Range)
-{
-    import std.traits : isArray;
-
-    ElementType!Range[] elements;
-
-    foreach_reverse (e; range)
+    struct InputIterate
     {
-        elements ~= e;
+        uint width = 0;
+        uint height = 0;
+
+        ref Color!ubyte index(uint x, uint y) @safe
+        {
+            return pixels[(width * y) + x];
+        }
     }
 
-    return elements;
+    return InputIterate(width, height);
 }
 
 /++
@@ -157,7 +228,7 @@ Params:
 Returns:
     A picture to be converted from a set of colors.
 +/
-Image imageFrom(Range)(Range range, uint width, uint height) @trusted nothrow pure
+Image imageFrom(Range)(Range range, uint width, uint height) @trusted
 if (isInputRange!Range)
 {
     import std.range : array;
@@ -169,6 +240,18 @@ if (isInputRange!Range)
     else
     static if (is(ElementType!Range == Color!ubyte))
         image.pixeldata = range.array;
+
+    return image;
+}
+
+Image imageFrom(Iterate)(Iterate iterate, uint width, uint height) @trusted
+if (isInputIterate!Iterate)
+{
+    import std.range : array;
+
+    Image image = new Image(width, height);
+
+    image.pixeldata = iterateToRange(iterate).array;
 
     return image;
 }
@@ -200,6 +283,7 @@ public:
     void toTexture() @trusted
     {
         import tida.game : renderer;
+        import tida.graphics.gl;
 
         texture = renderer.api.createTexture(TextureType.twoDimensional);
         texture.append(pixeldata, _width, _height);
@@ -209,8 +293,6 @@ public:
 
         texture.wrap(TextureWrap.wrapS, TextureWrapValue.clampToEdge);
         texture.wrap(TextureWrap.wrapT, TextureWrapValue.clampToEdge);
-
-        texture.active(0);
 
         arrayBuffer = renderer.api.createBuffer(BufferType.array);
         arrayBuffer.bindData([
@@ -231,6 +313,22 @@ public:
             AttribPointerInfo(0, 2, TypeBind.Float, 4 * float.sizeof, 0),
             AttribPointerInfo(1, 2, TypeBind.Float, 4 * float.sizeof, 2 * float.sizeof)
         ]);
+    }
+
+    void toTextureWithoutShape() @safe
+    {
+        import tida.game : renderer;
+
+        texture = renderer.api.createTexture(TextureType.twoDimensional);
+        texture.append(pixeldata, _width, _height);
+
+        texture.filter(TextureFilter.magFilter, TextureFilterValue.nearest);
+        texture.filter(TextureFilter.minFilter, TextureFilterValue.nearest);
+
+        texture.wrap(TextureWrap.wrapS, TextureWrapValue.clampToEdge);
+        texture.wrap(TextureWrap.wrapT, TextureWrapValue.clampToEdge);
+
+        texture.active(0);
     }
 
     enum vertexShaderSource = "#version 450
@@ -297,7 +395,10 @@ public:
         render.api.bindVertexInfo(vertexInfo);
         render.api.bindTexture(texture);
 
-        render.api.begin();
+        shader.setUniform(
+            shader.getUniformID("texture0"),
+            0
+        );
 
         shader.setUniform(
             shader.getUniformID("projection"),
@@ -310,9 +411,11 @@ public:
         );
 
         shader.setUniform(
-            shader.getUniformID("texture0"),
-            0
+            shader.getUniformID("color"),
+            cast(float[4]) [1f, 1f, 1f, 1f]
         );
+
+        render.api.begin();
 
         if (elementBuffer !is null)
             render.api.drawIndexed(mode, elementCount);
@@ -354,8 +457,6 @@ public:
         render.api.bindVertexInfo(vertexInfo);
         render.api.bindTexture(texture);
 
-        render.api.begin();
-
         shader.setUniform(
             shader.getUniformID("projection"),
             (cast(Render) render).projection
@@ -379,8 +480,10 @@ public:
 
         shader.setUniform(
             shader.getUniformID("color"),
-            [color.rf, color.gf, color.bf, color.af]
+            cast(float[4]) [color.rf, color.gf, color.bf, color.af]
         );
+
+        render.api.begin();
 
         if (elementBuffer !is null)
             render.api.drawIndexed(mode, elementCount);
@@ -465,7 +568,7 @@ public:
         return this.scanlines[y .. y + cHeight]
             .map!(e => e[x .. x + cWidth])
             .joiner
-            .imageFrom(width, height);
+            .imageFrom(cWidth, cHeight);
     }
 
 @safe nothrow pure:
@@ -706,31 +809,187 @@ unittest
 {
     Image image = new Image(32, 32);
 
+    import std.algorithm : each;
+
     assert(image.bytes!(PixelFormat.RGBA)
         .validateImageData!(PixelFormat.RGBA)(image.width, image.height));
 }
 
-alias invert = (x, y, ref e) => e = e.inverted;
-alias grayscaled = (x, y, ref e) => e = e.toGrayscale;
-alias changeLightness(float factor) = (x, y, ref e) 
-{ 
-    immutable alpha = e.alpha;
-    e = (e * factor);
-    e.a = alpha;
-};
+import std.traits;
+import std.functional : unaryFun;
 
-template process(alias fun)
+// skip all ASCII chars except a .. z, A .. Z, 0 .. 9, '_' and '.'.
+private uint _ctfeSkipOp(ref string op)
 {
-    void process(Image image) @safe nothrow pure
+    if (!__ctfe) assert(false);
+    import std.ascii : isASCII, isAlphaNum;
+    immutable oldLength = op.length;
+    while (op.length)
     {
-        foreach (size_t index, ref Color!ubyte pixel; image.pixels)
-        {
-            immutable y = index / image.width;
-            immutable x = index - (y * image.width);
-
-            fun(x, y, pixel);
-        }
+        immutable front = op[0];
+        if (front.isASCII() && !(front.isAlphaNum() || front == '_' || front == '.'))
+            op = op[1..$];
+        else
+            break;
     }
+    return oldLength != op.length;
+}
+
+// skip all digits
+private uint _ctfeSkipInteger(ref string op)
+{
+    if (!__ctfe) assert(false);
+    import std.ascii : isDigit;
+    immutable oldLength = op.length;
+    while (op.length)
+    {
+        immutable front = op[0];
+        if (front.isDigit())
+            op = op[1..$];
+        else
+            break;
+    }
+    return oldLength != op.length;
+}
+
+// skip name
+private uint _ctfeSkipName(ref string op, string name)
+{
+    if (!__ctfe) assert(false);
+    if (op.length >= name.length && op[0 .. name.length] == name)
+    {
+        op = op[name.length..$];
+        return 1;
+    }
+    return 0;
+}
+
+private uint _ctfeMatchUnary(string fun, string name)
+{
+    if (!__ctfe) assert(false);
+    fun._ctfeSkipOp();
+    for (;;)
+    {
+        immutable h = fun._ctfeSkipName(name) + fun._ctfeSkipInteger();
+        if (h == 0)
+        {
+            fun._ctfeSkipOp();
+            break;
+        }
+        else if (h == 1)
+        {
+            if (!fun._ctfeSkipOp())
+                break;
+        }
+        else
+            return 0;
+    }
+    return fun.length == 0;
+}
+
+template processStrFunc(alias fun, string parmName = "a")
+{
+    static if (is(typeof(fun) : string))
+    {
+        static if (!fun._ctfeMatchUnary(parmName))
+        {
+            import std.algorithm, std.conv, std.exception, std.math, std.range, std.string;
+            import std.meta, std.traits, std.typecons;
+            import tida.color;
+        }
+
+        auto findXY(string str)
+        {
+            auto p = split(str, ' ');
+
+            foreach (e; p)
+            {
+                if (e == "x" || e == "y")
+                    return true;
+            }
+
+            return false;
+        }
+
+        static if (findXY(fun))
+        {
+            auto call(ElementType)(auto ref ElementType __a, uint x, uint y)
+            {
+                mixin("alias " ~ parmName ~ " = __a ;");
+                return mixin(fun);
+            }
+
+            enum isSingle = false;
+        } else
+        {
+            auto call(ElementType)(auto ref ElementType __a)
+            {
+                mixin("alias " ~ parmName ~ " = __a ;");
+                return mixin(fun);
+            }
+
+            enum isSingle = true;
+        }
+    } else
+    {
+        alias call = fun;
+        enum isSingle = Parameters!fun.length == 1;
+    }
+}
+
+template process(alias pred)
+{
+    alias fun = processStrFunc!pred;
+
+    enum isSingle = fun.isSingle;
+
+    auto process(Image image) @safe
+    {
+        static struct ProcessIterate
+        {
+            Image image;
+
+            Color!ubyte index(uint x, uint y) @safe
+            {
+                static if (isSingle)
+                {
+                    return fun.call(image.getPixel(x, y));
+                } else
+                {
+                    return fun.call(image.getPixel(x, y), x, y);
+                }
+            }
+
+            uint width() @safe
+            {
+                return image.width;
+            }
+
+            uint height() @safe
+            {
+                return image.height;
+            }
+        }
+
+        return ProcessIterate(image);
+    }
+}
+
+unittest
+{
+    Image image = new Image(32, 32);
+    image.fill(rgb(30, 30, 30));
+    image = process!("a * x")(image).imageFrom(32, 32);
+
+    image.pixeldata[48].a = 255;
+    assert(image.pixeldata[48] == rgba(224, 224, 224, 255));
+
+    image = new Image(32, 32);
+    image.fill(rgb(30, 30, 30));
+    image = process!("a * 0.5")(image).imageFrom(32, 32);
+
+    image.pixeldata[48].a = 255;
+    assert(image.pixeldata[48] == rgba(15, 15, 15, 255));
 }
 
 /++
@@ -808,13 +1067,63 @@ if (isInputIterate!Iterate)
 auto flipX(Iterate)(Iterate iterate) @safe
 if(isInputIterate!Iterate)
 {
+    struct FlipInputIterate
+    {
+        static if (isInputRefIterate!Iterate)
+        {
+            ref Color!ubyte index(uint x, uint y) @safe
+            {
+                return iterate.index((iterate.width - 1) - x, y);
+            }
+        } else
+        {
+            Color!ubyte index(uint x, uint y) @safe
+            {
+                return iterate.index((iterate.width - 1) - x, y);
+            }
+        }
+
+        uint width() @safe
+        {
+            return iterate.width;
+        }
+
+        uint height() @safe
+        {
+            return iterate.height;
+        }
+    }
+
+    return FlipInputIterate();
+}
+
+auto flipX(Image image) @safe
+{
+    return
+        toImageIterate(image.pixeldata, image.width, image.height)
+        .flipX
+        .imageFrom(image.width, image.height);
+}
+
+auto flipY(Iterate)(Iterate iterate) @safe
+if(isInputIterate!Iterate)
+{
     static struct FlipInputIterate
     {
         Iterate iterate;
 
-        Color!ubyte index(uint x, uint y) @safe
+        static if (isInputRefIterate!Iterate)
         {
-            return iterate.index(width - x, y);
+            ref Color!ubyte index(uint x, uint y) @safe
+            {
+                return iterate.index(x, (height - 1) - y);
+            }
+        } else
+        {
+            Color!ubyte index(uint x, uint y) @safe
+            {
+                return iterate.index(x, (height - 1) - y);
+            }
         }
 
         uint width() @safe
@@ -831,30 +1140,12 @@ if(isInputIterate!Iterate)
     return FlipInputIterate(iterate);
 }
 
-auto flipY(Iterate)(Iterate iterate) @safe
-if(isInputIterate!Iterate)
+auto flipY(Image image) @safe
 {
-    static struct FlipInputIterate
-    {
-        Iterate iterate;
-
-        Color!ubyte index(uint x, uint y) @safe
-        {
-            return iterate.index(x, height - y);
-        }
-
-        uint width() @safe
-        {
-            return iterate.width;
-        }
-
-        uint height() @safe
-        {
-            return iterate.height;
-        }
-    }
-
-    return FlipInputIterate(iterate);
+    return
+        toImageIterate(image.pixeldata, image.width, image.height)
+        .flipX
+        .imageFrom(image.width, image.height);
 }
 
 /++

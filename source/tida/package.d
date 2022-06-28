@@ -484,9 +484,12 @@ public:
     import tida.drawable;
     import tida.game;
     import tida.scene;
+    import tida.scenemanager;
     import tida.instance;
     import tida.component;
     import tida.text;
     import tida.loader;
     import tida.listener;
     import tida.localevent;
+    import tida.sprite;
+    import tida.animation;

@@ -767,13 +767,13 @@ override:
 
     /// Attach data to buffer. If the data is created as immutable, the data can
     /// only be entered once.
-    void bindData(void[] data) @safe
+    void bindData(inout void[] data) @safe
     {
 
     }
 
     /// ditto
-    void bindData(void[] data) @safe immutable
+    void bindData(inout void[] data) @safe immutable
     {
 
     }
@@ -805,21 +805,38 @@ override:
 class VulkanTexture : ITexture
 {
 override:
+    /// Acceps these images in the texture.
+    ///
+    /// If the texture is immutable, then the data can be entered only once.
+    ///
+    /// Params:
+    ///     data = Image data.
+    ///     width = Image width.
+    ///     height = Image height.
     void append(inout void[] data, uint width, uint height) @safe
     {
 
     }
 
+    /// Type of deployment of texture on the canvas
     void wrap(TextureWrap wrap, TextureWrapValue value) @safe
     {
 
     }
 
+    /// Type of the texture processing filter.
     void filter(TextureFilter filter, TextureFilterValue value) @safe
     {
 
     }
 
+    /// Indicate the parameters of the texture.
+    void params(uint[] parameters) @safe
+    {
+
+    }
+
+    /// Insert the texture identifier.
     void active(uint value) @safe
     {
 
@@ -1029,59 +1046,10 @@ class VulkanShaderProgram : IShaderProgram
 override:
     uint getUniformID(string name) @safe
     {
-
+        return 0;
     }
 
-    /// Sets the value to the uniform.
-    void setUniform(uint uniformID, float value) @safe
-    {
-
-    }
-
-    /// ditto
-    void setUniform(uint uniformID, uint value) @safe
-    {
-
-    }
-
-    /// ditto
-    void setUniform(uint uniformID, int value) @safe
-    {
-
-    }
-
-    /// ditto
-    void setUniform(uint uniformID, float[2] value) @safe
-    {
-
-    }
-
-    /// ditto
-    void setUniform(uint uniformID, float[3] value) @safe
-    {
-
-    }
-
-    /// ditto
-    void setUniform(uint uniformID, float[4] value) @safe
-    {
-
-    }
-
-    /// ditto
-    void setUniform(uint uniformID, float[2][2] value) @safe
-    {
-
-    }
-
-    /// ditto
-    void setUniform(uint uniformID, float[3][3] value) @safe
-    {
-
-    }
-
-    /// ditto
-    void setUniform(uint uniformID, float[4][4] value) @safe
+    void setUniform(uint id, UniformObject object) @safe
     {
 
     }
@@ -1563,6 +1531,11 @@ override:
         bInfo.blendConstants[3] = 0.0f; // Optional
     }
 
+    void clear() @trusted
+    {
+
+    }
+
     void begin() @trusted
     {
         vkWaitForFences(context.device.logical, 1, &flFence, true, uint64_t.max);
@@ -1591,6 +1564,21 @@ override:
     void draw(ModeDraw mode, uint first, uint count) @trusted
     {
         vkCmdDraw(cmdBuff[imageIndex], 3, count, first, 1);
+    }
+
+    void drawIndexed(ModeDraw mode, uint icount) @trusted
+    {
+
+    }
+
+    void bindVertexInfo(IVertexInfo vertInfo) @trusted
+    {
+
+    }
+
+    void bindTexture(ITexture texture) @trusted
+    {
+
     }
 
     void drawning() @trusted
@@ -1627,6 +1615,26 @@ override:
 
         vkQueuePresentKHR(queuePresent.handle, &prsInfo);
         vkDeviceWaitIdle(context.device.logical);
+    }
+
+    IBuffer createBuffer(BufferType buffType = BufferType.array)
+    {
+        return new VulkanBuffer();
+    }
+
+    immutable(IBuffer) createImmutableBuffer(BufferType buffType = BufferType.array)
+    {
+        return new immutable VulkanBuffer();
+    }
+
+    IVertexInfo createVertexInfo()
+    {
+        return new VulkanVertexBuffer();
+    }
+
+    ITexture createTexture(TextureType type)
+    {
+        return new VulkanTexture();
     }
 
     IShaderManip createShader(StageType stage)

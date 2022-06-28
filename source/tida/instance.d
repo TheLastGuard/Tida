@@ -598,10 +598,6 @@ debug template debugCollisionMask(Color!ubyte color = Color!ubyte(255, 0, 0))
                                     shape.vertex!2 + releative], color, false);
             break;
 
-            case ShapeType.polygon:
-                render.polygon(shape.begin + releative, shape.data, color, false);
-            break;
-
             case ShapeType.multi:
                 foreach (sh; shape.shapes)
                 {

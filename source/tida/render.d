@@ -8,8 +8,8 @@ Camera control object in render,
 class Camera
 {
     import  tida.vector,
-            tida.shape;
-            //tida.instance;
+            tida.shape,
+            tida.instance;
 
     struct CameraObject
     {
@@ -76,18 +76,18 @@ public @safe nothrow pure:
         object.size = size.isVectorNaN ? vec!float(1, 1) : size;
     }
 
-    ///++
-    //A method for binding a specific object to a camera to track it.
-    //
-    //Params:
-    //    instance =  An object in the scene that will be monitored by the camera.
-    //                The size is calculated from the object's touch mask.
-    //+/
-    //void bindObject(Instance instance)
-    //{
-    //    object.position = &instance.position;
-    //    object.size = instance.mask.calculateSize();
-    //}
+    /++
+    A method for binding a specific object to a camera to track it.
+
+    Params:
+        instance =  An object in the scene that will be monitored by the camera.
+                    The size is calculated from the object's touch mask.
+    +/
+    void bindObject(Instance instance)
+    {
+        object.position = &instance.position;
+        object.size = instance.mask.calculateSize();
+    }
 
     /++
     A method that reproduces the process of tracking an object.
@@ -435,12 +435,12 @@ class Render : IRenderer
 
         _currentShader.setUniform(
             _currentShader.getUniformID("model"),
-            translate(_currentModel, _camera.port.x, _camera.port.y, 0)
+            _currentModel
         );
 
         _currentShader.setUniform(
             _currentShader.getUniformID("color"),
-            [color.rf, color.gf, color.bf, color.af]
+            cast(float[4]) [color.rf, color.gf, color.bf, color.af]
         );
     }
 
@@ -474,11 +474,9 @@ override:
 
     void point(Vecf vec, Color!ubyte color) @trusted
     {
-        gapi.begin();
-
         immutable buffer = gapi.createImmutableBuffer(BufferType.array);
         buffer.bindData([
-            vec
+            vec - camera.port.begin
         ]);
 
         auto vertInfo = gapi.createVertexInfo();
@@ -496,8 +494,6 @@ override:
         gapi.bindProgram(_currentShader);
         gapi.bindVertexInfo(vertInfo);
 
-        _currentModel = translate(_currentModel, -camera.port.begin.x, -camera.port.begin.y, 0);
-
         gapi.begin();
         setDefaultUniform(color);
         gapi.draw(ModeDraw.points, 0, 1);
@@ -508,6 +504,9 @@ override:
 
     void line(Vecf[2] points, Color!ubyte color) @trusted
     {
+        points[0] -= camera.port.begin;
+        points[1] -= camera.port.begin;
+
         immutable buffer = gapi.createImmutableBuffer();
         buffer.bindData([
             points[0], points[1]
@@ -528,11 +527,10 @@ override:
         gapi.bindVertexInfo(vertInfo);
         gapi.bindProgram(_currentShader);
 
-        _currentModel = translate(_currentModel, -camera.port.begin.x, -camera.port.begin.y, 0);
+        setDefaultUniform(color);
 
         gapi.begin();
-        setDefaultUniform(color);
-        gapi.draw(ModeDraw.lineStrip, 0, 2);
+        gapi.draw(ModeDraw.line, 0, 2);
 
         resetShader();
         resetModelMatrix();
@@ -544,6 +542,8 @@ override:
                     Color!ubyte color,
                     bool isFill) @trusted
     {
+        position -= camera.port.begin;
+
         immutable buffer = gapi.createImmutableBuffer();
         buffer.bindData([
             position,
@@ -577,10 +577,9 @@ override:
         gapi.bindProgram(_currentShader);
         gapi.bindVertexInfo(vertInfo);
 
-        _currentModel = translate(_currentModel, -camera.port.begin.x, -camera.port.begin.y, 0);
+        setDefaultUniform(color);
 
         gapi.begin();
-        setDefaultUniform(color);
         gapi.drawIndexed(
             isFill ? ModeDraw.triangle : ModeDraw.line,
             cast(uint) index.length
@@ -597,8 +596,8 @@ override:
     {
         immutable meshData = generateBuffer(
             isFill ?
-                Shapef.Circle(position, radius) :
-                Shapef.CircleLine(position, radius)
+                Shapef.Circle(position - camera.port.begin, radius) :
+                Shapef.CircleLine(position - camera.port.begin, radius)
         );
 
         immutable buffer = gapi.createImmutableBuffer();
@@ -619,8 +618,6 @@ override:
         gapi.bindVertexInfo(vertInfo);
         gapi.bindProgram(_currentShader);
 
-        _currentModel = translate(_currentModel, -camera.port.begin.x, -camera.port.begin.y, 0);
-
         gapi.begin();
         setDefaultUniform(color);
         gapi.draw(
@@ -635,6 +632,10 @@ override:
 
     void triangle(Vecf[3] points, Color!ubyte color, bool isFill) @trusted
     {
+        points[0] -= camera.port.begin;
+        points[1] -= camera.port.begin;
+        points[2] -= camera.port.begin;
+
         immutable buffer = gapi.createImmutableBuffer();
         buffer.bindData([
             points[0], points[1], points[2]
@@ -665,8 +666,6 @@ override:
         gapi.bindVertexInfo(vertInfo);
         gapi.bindProgram(_currentShader);
 
-        _currentModel = translate(_currentModel, -camera.port.begin.x, -camera.port.begin.y, 0);
-
         gapi.begin();
         setDefaultUniform(color);
 
@@ -686,6 +685,8 @@ override:
                     Color!ubyte color,
                     bool isFill) @trusted
     {
+        position -= camera.port.begin;
+
         immutable meshData = generateBuffer(
             isFill ?
                 Shapef.RoundRectangle(position, position + vecf(width, height), radius) :
@@ -709,8 +710,6 @@ override:
 
         gapi.bindVertexInfo(vertInfo);
         gapi.bindProgram(_currentShader);
-
-        _currentModel = translate(_currentModel, -camera.port.begin.x, -camera.port.begin.y, 0);
 
         gapi.begin();
         setDefaultUniform(color);
@@ -799,8 +798,7 @@ override:
 
     void draw(IDrawable drawable, Vecf position) @safe
     {
-        _currentModel = _currentModel.translate(_camera.port.begin.x, _camera.port.begin.y, 0f);
-        drawable.draw(this, position);
+        drawable.draw(this, position - camera.port.begin);
     }
 
     void drawEx(    IDrawableEx drawable,
@@ -811,7 +809,6 @@ override:
                     ubyte alpha,
                     Color!ubyte color = rgb(255, 255, 255)) @safe
     {
-       _currentModel = _currentModel.translate(_camera.port.begin.x, _camera.port.begin.y, 0f);
-        drawable.drawEx(this, position, angle, center, size, alpha, color);
+        drawable.drawEx(this, position - camera.port.begin, angle, center, size, alpha, color);
     }
 }

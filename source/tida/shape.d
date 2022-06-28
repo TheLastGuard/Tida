@@ -76,7 +76,6 @@ public:
     Shape!T[] shapes; /++ A set of figures. Needed for the type when you need 
                         to make one shape from several. +/
     Vector!T[] data; /// Polygon data
-    bool isSolid = false; /// Is the polygon solid?
 
     string toString() @safe
     {
@@ -508,6 +507,7 @@ public:
         Shape!T shape;
 
         shape.type = ShapeType.multi;
+        shape.begin = pos;
 
         int next = 0;
         for(int current = 0; current < points.length; current++)

@@ -3,6 +3,9 @@ module tida.graphics.gapi;
 import tida.window;
 public import tida.color;
 
+/++
+The permissible number of buffers for the output.
++/
 enum BufferMode
 {
     singleBuffer,
@@ -31,7 +34,8 @@ enum StageType
 {
     vertex, /// Vertex stage
     fragment, /// Fragment stage
-    geometry /// Geometry stage
+    geometry, /// Geometry stage
+    compute /// Compute stage
 }
 
 /++
@@ -73,7 +77,10 @@ enum BufferType
     uniform,
 
     /// Use as buffer for texture pixel buffer
-    textureBuffer
+    textureBuffer,
+
+    /// Use as buffer for compute buffer
+    storageBuffer
 }
 
 /++
@@ -96,6 +103,8 @@ interface IBuffer
 
     /// ditto
     void bindData(inout void[] data) @safe immutable;
+
+    void[] getData(size_t) @safe;
 
     /// Clears data. If the data is immutable, then the method will throw an
     /// exception.
@@ -164,11 +173,194 @@ interface IShaderManip
     @property StageType stage() @safe;
 }
 
+struct UniformObject
+{
+    // optional
+    IBuffer buffer;
+
+    uint components = 1;
+    uint length = 1;
+    TypeBind type = TypeBind.Float;
+
+    union ValueType
+    {
+        // single fields
+        uint ui;
+        int i;
+
+        float f;
+        double d;
+
+        // vectors
+        float[2] fv2;
+        float[3] fv3;
+        float[4] fv4;
+
+        double[2] dv2;
+        double[3] dv3;
+        double[4] dv4;
+
+        uint[2] uiv2;
+        uint[3] uiv3;
+        uint[4] uiv4;
+
+        int[2] iv2;
+        int[3] iv3;
+        int[4] iv4;
+
+        // matrixs
+        float[2][2] f2;
+        float[3][3] f3;
+        float[4][4] f4;
+
+        double[2][2] d2;
+        double[3][3] d3;
+        double[4][4] d4;
+
+        this(T)(T value) @trusted
+        {
+            static foreach (member; __traits(allMembers, ValueType))
+            {
+                static if (
+                    is(typeof(__traits(getMember, this, member)) == T)
+                )
+                {
+                    __traits(getMember, this, member) = value;
+                }
+            }
+        }
+    }
+
+    ValueType[] values;
+
+    invariant(components < 9 && components != 0);
+}
+
+template isMatrix(T)
+{
+    import std.traits;
+
+    static if (isStaticArray!T)
+    {
+        static if(isStaticArray!(ForeachType!T))
+        {
+            enum isMatrix = T.length > 1 &&
+                            (ForeachType!T).length > 1 &&
+                            T.length == (ForeachType!T).length;
+        } else
+            enum isMatrix = false;
+    } else
+        enum isMatrix = false;
+}
+
+template matrixComponents(T)
+if (isMatrix!T)
+{
+    enum matrixComponents = T.length;
+}
+
+template singleType(T)
+{
+    import std.traits;
+
+    static if (isArray!T)
+    {
+        static if (isArray!(ForeachType!T))
+        {
+            alias singleType = singleType!(ForeachType!T);
+        } else
+            alias singleType = ForeachType!T;
+    } else
+        alias singleType = T;
+}
+
+template uniform(T)
+{
+    import std.traits;
+
+    alias element = Unconst!(singleType!T);
+
+    static if (is(element == float))
+    {
+        enum bind = TypeBind.Float;
+    } else
+    static if (is(element == double))
+    {
+        enum bind = TypeBind.Double;
+    } else
+    static if (is(element == int) || is(element == short) || is(element == byte))
+    {
+        enum bind = TypeBind.Int;
+    } else
+    static if (is(element == uint) || is(element == ushort) || is(element == ubyte))
+    {
+        enum bind = TypeBind.UnsignedInt;
+    }
+
+    UniformObject uniform(T data) @trusted
+    {
+        UniformObject object;
+        object.type = bind;
+
+        static if (isStaticArray!T)
+        {
+            static if(isMatrix!T)
+            {
+                object.components = cast(uint) (3 + matrixComponents!T);
+                object.length = 1;
+                object.values ~= cast(UniformObject.ValueType) data;
+            } else
+            {
+                object.components = cast(uint) T.length;
+                object.length = 1;
+                object.values ~= cast(UniformObject.ValueType) data;
+            }
+        }
+        else
+        static if (isDynamicArray!T)
+        {
+            alias ftype = ForeachType!T;
+
+            static if (isStaticArray!ftype)
+            {
+                static if(isMatrix!ftype)
+                {
+                    object.components = cast(uint) (3 + matrixComponents!ftype);
+                    object.length = cast(uint) data.length;
+                    foreach (e; data)
+                        object.values ~= UniformObject.ValueType(e);
+                } else
+                {
+                    object.components = cast(uint) ftype.length;
+                    object.length = cast(uint) data.length;
+                    foreach (e; data)
+                        object.values ~= UniformObject.ValueType(e);
+                }
+            } else
+            {
+                object.components = 1;
+                object.length = cast(uint) data.length;
+                foreach (e; data)
+                    object.values ~= UniformObject.ValueType(e);
+            }
+        } else
+        {
+            object.components = 1;
+            object.length = 1;
+            object.values ~= UniformObject.ValueType(data);
+        }
+
+        return object;
+    }
+}
+
 /++
 Object for interaction with the shader program.
 +/
 interface IShaderProgram
 {
+    import tida.vector;
+
     /// Attaching a shader to a program.
     void attach(IShaderManip) @safe;
 
@@ -177,77 +369,138 @@ interface IShaderProgram
 
     uint getUniformID(string name) @safe;
 
-    /// Sets the value to the uniform.
-    void setUniform(uint uniformID, float value) @safe;
+    void setUniform(uint, UniformObject) @safe;
 
-    /// ditto
-    void setUniform(uint uniformID, uint value) @safe;
+    final void setUniform(uint uniformID, Vector!float vec) @safe
+    {
+        setUniform(uniformID, uniform(cast(float[2]) [vec.x, vec.y]));
+    }
 
-    /// ditto
-    void setUniform(uint uniformID, int value) @safe;
+    final void setUniform(string name, Vector!float vec) @safe
+    {
+        setUniform(getUniformID(name), uniform(cast(float[2]) [vec.x, vec.y]));
+    }
 
-    /// ditto
-    void setUniform(uint uniformID, float[2] value) @safe;
+    final void setUniform(T)(uint uniformID, T value) @safe
+    {
+        setUniform(uniformID, uniform(value));
+    }
 
-    /// ditto
-    void setUniform(uint uniformID, float[3] value) @safe;
-
-    /// ditto
-    void setUniform(uint uniformID, float[4] value) @safe;
-
-    /// ditto
-    void setUniform(uint uniformID, float[2][2] value) @safe;
-
-    /// ditto
-    void setUniform(uint uniformID, float[3][3] value) @safe;
-
-    /// ditto
-    void setUniform(uint uniformID, float[4][4] value) @safe;
+    final void setUniform(T)(string name, T value) @safe
+    {
+        setUniform(getUniformID(name), uniform(value));
+    }
 }
 
+/++
+Type of texture.
++/
 enum TextureType
 {
+    /// The data is one -dimensional.
     oneDimensional,
+
+    /// The data is a two -dimensional array.
     twoDimensional,
+
+    /// The data is a two -dimensional three -dimensional array.
     threeDimensional
 }
 
-enum TextureWrap
+/// Type of deployment of texture on the canvas
+enum TextureWrap : uint
 {
-    wrapS,
-    wrapT,
-    wrapR
+    wrapS = 0,
+    wrapT = 1,
+    wrapR = 2
 }
 
-enum TextureWrapValue
+/// Type of deployment of texture on the canvas
+enum TextureWrapValue : uint
 {
-    repeat,
-    mirroredRepeat,
-    clampToEdge
+    repeat = 0,
+    mirroredRepeat = 1,
+    clampToEdge = 2
 }
 
-enum TextureFilter
+/// Type of the texture processing filter.
+enum TextureFilter : uint
 {
-    minFilter,
-    magFilter
+    minFilter = 3,
+    magFilter = 4
 }
 
-enum TextureFilterValue
+/// Type of the texture processing filter.
+enum TextureFilterValue : uint
 {
-    nearest,
-    linear
+    nearest = 3,
+    linear = 4
 }
 
+/++
+Interface of interaction with a texture object.
++/
 interface ITexture
 {
-    void append(inout void[] data, uint width, uint height) @safe;
+    void storage(StorageType storage, uint width, uint height = 1) @safe;
 
+    void subImage(inout void[] data, uint width, uint height = 1) @safe;
+
+    void subData(inout void[] data, uint width, uint height = 1) @safe;
+
+    void[] getData() @safe;
+
+    /// Acceps these images in the texture.
+    ///
+    /// If the texture is immutable, then the data can be entered only once.
+    ///
+    /// Params:
+    ///     data = Image data.
+    ///     width = Image width.
+    ///     height = Image height.
+    final void append(inout void[] data, uint width, uint height = 1) @safe
+    {
+        storage(StorageType.rgba8, width, height);
+        subImage(data, width, height);
+    }
+
+    /// Type of deployment of texture on the canvas
     void wrap(TextureWrap wrap, TextureWrapValue value) @safe;
 
+    /// Type of the texture processing filter.
     void filter(TextureFilter filter, TextureFilterValue value) @safe;
 
+    /// Indicate the parameters of the texture.
+    void params(uint[] parameters) @safe;
+
+    /// Insert the texture identifier.
     void active(uint value) @safe;
 }
+
+interface IFrameBuffer
+{
+    void attach(ITexture) @safe;
+
+    void generateBuffer(uint, uint) @safe;
+
+    void clear(Color!ubyte) @safe;
+}
+
+enum StorageType
+{
+    r32f,
+    rgba32f,
+    rg32f,
+    rgba32ui,
+    rgba32i,
+    r32ui,
+    r32i,
+    rgba8i,
+    rgba8,
+    r8i
+}
+
+alias ComputeDataType = StorageType;
 
 /++
 Graphic manipulator. Responsible for the abstraction of graphics over other
@@ -294,6 +547,8 @@ interface IGraphManip
     /// Drawing start.
     void begin() @safe;
 
+    void compute(ComputeDataType[]) @safe;
+
     /// Drawing a primitive to the screen.
     ///
     /// Params:
@@ -313,8 +568,12 @@ interface IGraphManip
     /// Texture binding to use rendering.
     void bindTexture(ITexture texture) @safe;
 
+    void bindBuffer(IBuffer buffer) @safe;
+
     /// Framebuffer output to the window surface.
     void drawning() @safe;
+
+    void setFrameBuffer(IFrameBuffer) @safe;
 
     /// Creates a shader.
     IShaderManip createShader(StageType) @safe;
@@ -333,16 +592,42 @@ interface IGraphManip
 
     /// Create a texture.
     ITexture createTexture(TextureType) @safe;
+
+    IFrameBuffer createFrameBuffer() @safe;
+
+    IFrameBuffer mainFrameBuffer() @safe;
+
+    // Debug tools ----------------------------------------------------------+
+
+    debug
+    {
+        import std.experimental.logger.core;
+
+        // Log tools --------------------------------------------------------+
+
+        void setupLogger(Logger = stdThreadLocalLog) @safe;
+
+        // -------------------------------------------------------------------
+    }
+
+    // -----------------------------------------------------------------------
 }
 
 IGraphManip createGraphManip() @safe
 {
     version (GraphBackendVulkan)
     {
-        import tida.graphics.vulkan;
+        // TODO: Implement vulkan backend.
 
-        return new VulkanGraphManup();
+        return null;
     } else
+    version (GraphBackendDX)
+    {
+        // TODO: Implement direct backend.
+
+        return null;
+    }
+    version (GraphBackendGL)
     {
         import tida.graphics.gl;
 

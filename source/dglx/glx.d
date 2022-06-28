@@ -35,6 +35,17 @@ static immutable GLX_RGBA_TYPE = 0x8014;
 static immutable GLX_SAMPLE_BUFFERS = 0x186a0;
 static immutable GLX_SAMPLES = 0x186a1;
 
+static immutable GLX_CONTEXT_MAJOR_VERSION_ARB = 0x2091;
+static immutable GLX_CONTEXT_MINOR_VERSION_ARB = 0x2092;
+static immutable GLX_CONTEXT_FLAGS_ARB = 0x2094;
+static immutable GLX_CONTEXT_PROFILE_MASK_ARB = 0x9126;
+
+static immutable GLX_CONTEXT_DEBUG_BIT_ARB = 0x0001;
+static immutable GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB = 0x0002;
+
+static immutable GLX_CONTEXT_CORE_PROFILE_BIT_ARB = 0x00000001;
+static immutable GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB = 0x00000002;
+
 alias GLXDrawable = ulong;
 alias GLXFBConfig = __GLXFBConfigRec*;
 alias GLXContext = __GLXcontextRec*;
@@ -54,6 +65,10 @@ alias FglXWaitX = extern(C) void function();
 alias FglXChooseVisual = extern(C) XVisualInfo* function(Display *dpy,int ds,int* attribs);;
 alias FglXCreateContext = extern(C) GLXContext function(Display *dpy,XVisualInfo* vis,GLXContext shareList,bool direct);
 alias FglXIsDirect = extern(C) bool function(Display *dpy,GLXContext context);
+alias FglXGetProcAddressARB = extern(C) void* function(const char* procName);
+alias FglXCreateContextAttribsARB = extern(C) GLXContext function(  Display *dpy, GLXFBConfig config,
+                                                                    GLXContext share_context, Bool direct,
+                                                                    const int *attrib_list);
 
 __gshared
 {
@@ -70,6 +85,8 @@ __gshared
     FglXChooseVisual glXChooseVisual;
     FglXCreateContext glXCreateContext;
     FglXIsDirect glXIsDirect;
+    FglXGetProcAddressARB glXGetProcAddress;
+    FglXCreateContextAttribsARB glXCreateContextAttribsARB;
 }
 
 static string[] glxDefaultPaths = [
@@ -202,6 +219,8 @@ void loadGLXLibrary() @trusted
                 bindOrError(cast(void**) &glXChooseVisual, "glXChooseVisual");
                 bindOrError(cast(void**) &glXCreateContext, "glXCreateContext");
                 bindOrError(cast(void**) &glXIsDirect, "glXIsDirect");
+                bindOrError(cast(void**) &glXGetProcAddress, "glXGetProcAddress");
+                bindOrError(cast(void**) &glXCreateContextAttribsARB, "glXCreateContextAttribsARB");
 
                 isSucces = true;
                 cachelib = path;

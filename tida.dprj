@@ -159,6 +159,7 @@ object CurrentProject: TNativeProject
     end  
     item
       name = 'posix-gl'
+      debugingOptions.debugConditions = True
       debugingOptions.generateInfos = True
       debugingOptions.generateMapFile = True
       debugingOptions.generateStackFrame = True
@@ -324,6 +325,51 @@ object CurrentProject: TNativeProject
         '-L-lX11'
       )
       runOptions.options = [poUsePipes, poStderrToOutPut]
+    end  
+    item
+      name = 'posix-lib-gl-debug-inspect'
+      debugingOptions.debugConditions = True
+      debugingOptions.debugIdentifiers.Strings = (
+        'inspectApp'
+      )
+      debugingOptions.generateInfos = True
+      debugingOptions.generateMapFile = True
+      debugingOptions.generateStackFrame = True
+      outputOptions.binaryKind = staticlib
+      outputOptions.boundsCheck = onAlways
+      outputOptions.versionIdentifiers.Strings = (
+        'GL_46'
+        'dglx_cached'
+        'Dynamic_GLX'
+      )
+      pathsOptions.outputFilename = 'tida'
+      pathsOptions.objectDirectory = 'objs'
+      pathsOptions.extraSources.Strings = (
+        '<CPP>bindbc-loader/bindbc-loader.a'
+        '<CPP>bindbc-opengl/bindbc-opengl.a'
+        '<CPP>bindbc-openal/bindbc-openal.a'
+        '<CPP>bindbc-freetype/bindbc-freetype.a'
+        '<CPP>imagefmt/imagefmt.a'
+        '<CPP>mp3decoder/mp3decoder.a'
+        '<CPP>SDLang-D/sdland-d.a'
+        '<CPP>taggedalgebraic/taggedalgebraic.a'
+        '<CPP>x11/x11.a'
+      )
+      pathsOptions.importModulePaths.Strings = (
+        '<CPP>bindbc-loader/source'
+        '<CPP>bindbc-opengl/source'
+        '<CPP>bindbc-openal/source'
+        '<CPP>bindbc-freetype/source'
+        '<CPP>imagefmt'
+        '<CPP>mp3decoder/source'
+        '<CPP>taggedalgebraic/source/'
+        '<CPP>SDLang-D/src/'
+        '<CPP>x11/source'
+      )
+      otherOptions.customOptions.Strings = (
+        '-L-lX11'
+      )
+      runOptions.options = [poUsePipes, poStderrToOutPut]
     end>
   Sources.Strings = (
     'source/dglx/glx.d'
@@ -343,7 +389,6 @@ object CurrentProject: TNativeProject
     'source/tida/shape.d'
     'source/tida/sound.d'
     'source/tida/package.d'
-    'source/tida/graphics/vulkan.d'
     'source/tida/graphics/gapi.d'
     'source/tida/graphics/gl.d'
     'source/tida/drawable.d'
@@ -361,7 +406,7 @@ object CurrentProject: TNativeProject
     'source/tida/animation.d'
     'source/tida/loader.d'
   )
-  ConfigurationIndex = 6
+  ConfigurationIndex = 4
   LibraryAliases.Strings = (
     'bindbc-loader'
     'bindbc-opengl'
